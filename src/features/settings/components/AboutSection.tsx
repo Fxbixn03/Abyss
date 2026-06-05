@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card'
-import { Icon } from '@/shared/components/Icon'
+import { AbyssLogo } from '@/shared/components/AbyssLogo'
 import { ipc } from '@/shared/ipc/ipc.client'
 
 function InfoRow({ label, value }: { label: string; value: string }) {
@@ -31,9 +31,7 @@ export function AboutSection() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Icon name="box" className="size-5" />
-          </span>
+          <AbyssLogo className="size-9" />
           Abyss
           {info && (
             <span className="font-code text-xs text-muted-foreground">

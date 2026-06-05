@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import type { NavItem } from '@/app/navigation'
 import { PRIMARY_NAV, SETTINGS_NAV } from '@/app/navigation'
 import { Icon } from '@/shared/components/Icon'
+import { AbyssLogo } from '@/shared/components/AbyssLogo'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 
@@ -32,9 +33,7 @@ export function Sidebar() {
   return (
     <aside className="flex w-[220px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="flex items-center gap-2 px-4 py-3.5">
-        <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <Icon name="box" className="size-4" />
-        </span>
+        <AbyssLogo className="size-7" />
         <span className="font-code text-sm font-semibold tracking-tight text-sidebar-foreground">
           Abyss
         </span>

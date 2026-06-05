@@ -8,6 +8,7 @@ import {
 } from '@/shared/components/ui/dialog'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
+import { AbyssLogo } from '@/shared/components/AbyssLogo'
 import { useSettingsStore } from '../store/settings.store'
 import { PathsSection } from './PathsSection'
 
@@ -39,7 +40,7 @@ export function FirstRunWizard() {
       <DialogContent showClose={false} className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Icon name="box" className="size-5 text-primary" />
+            <AbyssLogo className="size-5" />
             Welcome to Abyss
           </DialogTitle>
           <DialogDescription>
