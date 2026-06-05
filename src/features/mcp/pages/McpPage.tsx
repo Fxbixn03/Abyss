@@ -49,7 +49,7 @@ export function McpPage() {
     <div className="flex h-full flex-col gap-4">
       <PageHeader
         title="MCP Servers"
-        description={`Model Context Protocol servers for ${agent.displayName}`}
+        description="User-scoped servers, auto-detected from ~/.claude.json"
         icon="plug"
         actions={
           <Button
@@ -64,6 +64,11 @@ export function McpPage() {
           </Button>
         }
       />
+
+      <p className="-mt-1 text-xs text-muted-foreground">
+        claude.ai connectors (Google Drive, etc.) are managed in your Claude
+        account and aren't editable here.
+      </p>
 
       {!basePath ? (
         <EmptyState

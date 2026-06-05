@@ -17,6 +17,7 @@ interface ThemeState {
   toggleAppearance: () => void
   setAgentTheme: (agentId: AgentId, themeId: string) => void
   addCustomTheme: (theme: ThemeConfig) => void
+  removeCustomTheme: (themeId: string) => void
 
   allThemes: () => ThemeConfig[]
   getThemesForAgent: (agentId: AgentId) => ThemeConfig[]
@@ -51,6 +52,19 @@ export const useThemeStore = create<ThemeState>()(
             theme,
           ],
         })),
+
+      removeCustomTheme: (themeId) =>
+        set((s) => {
+          // Drop any agent that pointed at the deleted theme so it falls back
+          // to its default.
+          const agentThemeMap = Object.fromEntries(
+            Object.entries(s.agentThemeMap).filter(([, id]) => id !== themeId),
+          )
+          return {
+            customThemes: s.customThemes.filter((t) => t.id !== themeId),
+            agentThemeMap,
+          }
+        }),
 
       allThemes: () => [...BUILTIN_THEMES, ...get().customThemes],
 

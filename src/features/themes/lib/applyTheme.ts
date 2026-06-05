@@ -1,16 +1,20 @@
 import type { AppearanceMode, ThemeConfig } from '@/shared/types/theme'
 
-const RADIUS_PX: Record<ThemeConfig['borderRadius'], string> = {
+export const RADIUS_PX: Record<ThemeConfig['borderRadius'], string> = {
   none: '0px',
   sm: '0.25rem',
   md: '0.5rem',
   lg: '0.75rem',
 }
 
-const SANS_STACK =
+export const SANS_STACK =
   "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
-const MONO_STACK =
+export const MONO_STACK =
   "'JetBrains Mono', 'SFMono-Regular', 'Fira Code', ui-monospace, 'Cascadia Code', monospace"
+
+export function fontStack(family: ThemeConfig['fontFamily']): string {
+  return family === 'mono' ? MONO_STACK : SANS_STACK
+}
 
 /**
  * Applies a theme as CSS custom properties on :root. Because every Tailwind /

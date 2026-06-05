@@ -6,6 +6,7 @@ import { PathsSection } from '../components/PathsSection'
 import { AppearanceSection } from '../components/AppearanceSection'
 import { PreferencesSection } from '../components/PreferencesSection'
 import { AboutSection } from '../components/AboutSection'
+import { ThemeBuilder } from '@/features/themes/components/ThemeBuilder'
 
 interface Section {
   id: string
@@ -21,6 +22,12 @@ const SECTIONS: Section[] = [
     label: 'Appearance',
     icon: 'palette',
     render: <AppearanceSection />,
+  },
+  {
+    id: 'theme-builder',
+    label: 'Theme Builder',
+    icon: 'paintbrush',
+    render: <ThemeBuilder />,
   },
   {
     id: 'preferences',
