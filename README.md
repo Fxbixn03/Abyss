@@ -54,7 +54,7 @@ entire app instantly.
 
 ## Features
 
-### 🧭 Multi-agent, agent-aware
+### Multi-agent, agent-aware
 
 - Switch the active agent from the top bar — the sidebar, status bar and theme
   all follow it.
@@ -76,13 +76,13 @@ entire app instantly.
 - **Settings (raw)** — direct JSON editor for `settings.json` /
   `settings.local.json` with validation, for anything without a dedicated UI.
 
-### 🎨 Theming
+### Theming
 
 - Light & dark, plus per-agent color palettes.
 - A **Theme Builder** with live preview and native color pickers — build and save
   your own themes, no code required.
 
-### 🛟 Safe by design
+### Safe by design
 
 - **Diff preview** before saving real files (toggleable).
 - **Atomic writes** (temp file + rename) — a crash can't leave a half-written
