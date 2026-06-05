@@ -28,3 +28,6 @@ Thumbs.db
 
 # Electron
 out/
+
+# Local tool artifacts (mcp-local-rag vector store)
+lancedb/

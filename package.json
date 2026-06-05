@@ -5,6 +5,26 @@
   "private": true,
   "author": "Fxbixn03",
   "license": "MIT",
+  "homepage": "https://github.com/Fxbixn03/Abyss#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fxbixn03/Abyss.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Fxbixn03/Abyss/issues"
+  },
+  "keywords": [
+    "electron",
+    "ai",
+    "agents",
+    "claude-code",
+    "codex",
+    "gemini-cli",
+    "mcp",
+    "configuration",
+    "developer-tools",
+    "desktop-app"
+  ],
   "main": "dist-electron/main.js",
   "bin": {
     "abyss": "dist-cli/index.js"

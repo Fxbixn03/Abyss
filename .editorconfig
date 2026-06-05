@@ -1,0 +1,23 @@
+# EditorConfig — https://editorconfig.org
+# Complements Prettier for files Prettier doesn't touch and editors that aren't
+# wired up to it. Prettier remains the source of truth for JS/TS/JSON/MD/CSS.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Markdown — trailing whitespace can be a meaningful line break.
+[*.md]
+trim_trailing_whitespace = false
+
+# Keep YAML at 2 spaces (workflows, dependabot, issue forms).
+[*.{yml,yaml}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
