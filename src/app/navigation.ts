@@ -1,0 +1,20 @@
+export interface NavItem {
+  id: string
+  label: string
+  icon: string
+  route: string
+}
+
+/** Always-present navigation (agent-independent). */
+export const PRIMARY_NAV: NavItem[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', route: '/' },
+  { id: 'instructions', label: 'Instructions', icon: 'file-text', route: '/config' },
+]
+
+/** Pinned to the bottom of the sidebar. */
+export const SETTINGS_NAV: NavItem = {
+  id: 'settings',
+  label: 'Settings',
+  icon: 'settings',
+  route: '/settings',
+}

@@ -1,0 +1,7 @@
+dist
+dist-electron
+dist-cli
+release
+node_modules
+pnpm-lock.yaml
+*.md

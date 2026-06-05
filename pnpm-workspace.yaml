@@ -1,0 +1,7 @@
+# pnpm v11 reads build-script approvals here. electron is on pnpm's built-in
+# trusted list, so it builds automatically (downloads its binary).
+allowBuilds:
+  # esbuild needs to prepare its platform binary (used by vite + tsup).
+  esbuild: true
+  # Windows Squirrel installer tool — not used (we ship NSIS + portable). Skip.
+  electron-winstaller: false

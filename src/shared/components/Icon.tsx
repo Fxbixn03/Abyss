@@ -1,0 +1,113 @@
+import type { LucideIcon, LucideProps } from 'lucide-react'
+import {
+  AlertTriangle,
+  Bot,
+  Box,
+  Braces,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Circle,
+  CircleAlert,
+  CircleCheck,
+  Command as CommandIcon,
+  Copy,
+  Cpu,
+  ExternalLink,
+  Eye,
+  FilePlus,
+  FileText,
+  Folder,
+  FolderOpen,
+  Gem,
+  GraduationCap,
+  Info,
+  KeyRound,
+  LayoutDashboard,
+  Monitor,
+  Moon,
+  Palette,
+  Pencil,
+  Plug,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  Search,
+  Server,
+  Settings,
+  Shield,
+  SlidersHorizontal,
+  Sparkles,
+  SquareSlash,
+  Sun,
+  Terminal,
+  Trash2,
+  Webhook,
+  X,
+} from 'lucide-react'
+
+/**
+ * Curated, tree-shakeable icon registry. Icon names come from data (agent
+ * definitions, sidebar sections), so we resolve them by string and fall back to
+ * a neutral dot when a name is unknown. All icons are outlined (Lucide), per the
+ * design interview.
+ */
+const REGISTRY: Record<string, LucideIcon> = {
+  'alert-triangle': AlertTriangle,
+  bot: Bot,
+  box: Box,
+  braces: Braces,
+  check: Check,
+  'chevron-down': ChevronDown,
+  'chevron-left': ChevronLeft,
+  'chevron-right': ChevronRight,
+  circle: Circle,
+  'circle-alert': CircleAlert,
+  'circle-check': CircleCheck,
+  command: CommandIcon,
+  copy: Copy,
+  cpu: Cpu,
+  'external-link': ExternalLink,
+  eye: Eye,
+  'file-plus': FilePlus,
+  'file-text': FileText,
+  folder: Folder,
+  'folder-open': FolderOpen,
+  gem: Gem,
+  'graduation-cap': GraduationCap,
+  info: Info,
+  key: KeyRound,
+  'layout-dashboard': LayoutDashboard,
+  monitor: Monitor,
+  moon: Moon,
+  palette: Palette,
+  pencil: Pencil,
+  plug: Plug,
+  plus: Plus,
+  'refresh-cw': RefreshCw,
+  'rotate-ccw': RotateCcw,
+  save: Save,
+  search: Search,
+  server: Server,
+  settings: Settings,
+  shield: Shield,
+  sliders: SlidersHorizontal,
+  sparkles: Sparkles,
+  'square-slash': SquareSlash,
+  sun: Sun,
+  terminal: Terminal,
+  trash: Trash2,
+  webhook: Webhook,
+  x: X,
+}
+
+export interface IconProps extends LucideProps {
+  name: string
+}
+
+export function Icon({ name, ...props }: IconProps) {
+  const Component = REGISTRY[name] ?? Circle
+  return <Component {...props} />
+}

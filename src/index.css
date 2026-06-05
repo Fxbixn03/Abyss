@@ -1,0 +1,143 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/*
+ * Theme system
+ * ------------
+ * Runtime CSS custom properties on :root are set imperatively by
+ * `useThemeApplier` from the active agent's ThemeConfig (light/dark variant).
+ * The values below are first-paint defaults only. `@theme inline` maps the
+ * Tailwind/shadcn token namespace onto these runtime vars, so every utility
+ * (bg-background, text-primary, border-border, ...) reacts live to a theme
+ * switch with no reload — and no component ever hard-codes a color.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --radius: 0.5rem;
+
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-code: 'JetBrains Mono', 'SFMono-Regular', 'Fira Code', ui-monospace,
+    'Cascadia Code', monospace;
+
+  /* First-paint dark defaults (Gemini-ish neutral) */
+  --background: #0c0e14;
+  --foreground: #e3e8f4;
+  --card: #141720;
+  --card-foreground: #e3e8f4;
+  --popover: #141720;
+  --popover-foreground: #e3e8f4;
+  --primary: #4285f4;
+  --primary-foreground: #ffffff;
+  --secondary: #141720;
+  --secondary-foreground: #e3e8f4;
+  --muted: #141720;
+  --muted-foreground: #6b7494;
+  --accent: #1c2035;
+  --accent-foreground: #e3e8f4;
+  --destructive: #e5484d;
+  --destructive-foreground: #ffffff;
+  --border: #22263a;
+  --input: #22263a;
+  --ring: #4285f4;
+  --sidebar: #090b10;
+  --sidebar-foreground: #e3e8f4;
+  --sidebar-accent: #1c2035;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #22263a;
+  --success: #30a46c;
+  --warning: #f5a524;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* Selectable surfaces: editors, code, inputs */
+  input,
+  textarea,
+  .cm-editor,
+  [data-selectable] {
+    user-select: text;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+    background-clip: content-box;
+  }
+}
+
+@utility font-code {
+  font-family: var(--font-code);
+}
+
+@utility drag-region {
+  -webkit-app-region: drag;
+}
+
+@utility no-drag {
+  -webkit-app-region: no-drag;
+}
