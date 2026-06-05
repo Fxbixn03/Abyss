@@ -4,14 +4,40 @@ import { Icon } from '@/shared/components/Icon'
 import { AgentSwitcher } from '@/features/agents/components/AgentSwitcher'
 import { AppearanceToggle } from '@/features/themes/components/AppearanceToggle'
 import { useCommandPalette } from '@/app/command/commandPalette.store'
+import { useBrowserNav } from '@/app/hooks/useBrowserNav'
 
 export function TopBar() {
   const navigate = useNavigate()
   const openPalette = useCommandPalette((s) => s.toggle)
+  const nav = useBrowserNav()
 
   return (
     <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-3">
-      <AgentSwitcher />
+      <div className="flex items-center gap-2">
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={nav.back}
+            disabled={!nav.canBack}
+            aria-label="Back"
+            title="Back (Alt+Left)"
+          >
+            <Icon name="chevron-left" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={nav.forward}
+            disabled={!nav.canForward}
+            aria-label="Forward"
+            title="Forward (Alt+Right)"
+          >
+            <Icon name="chevron-right" />
+          </Button>
+        </div>
+        <AgentSwitcher />
+      </div>
 
       <div className="flex items-center gap-1">
         <Button
