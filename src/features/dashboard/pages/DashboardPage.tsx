@@ -8,6 +8,7 @@ import {
   useAllAgents,
 } from '@/features/agents/hooks/useActiveAgent'
 import { AgentCard } from '@/features/agents/components/AgentCard'
+import { AgentAvatar } from '@/features/agents/components/AgentAvatar'
 import { useBasePath } from '@/features/settings/hooks/useBasePath'
 import { ipc } from '@/shared/ipc/ipc.client'
 
@@ -45,7 +46,7 @@ export function DashboardPage() {
       <PageHeader
         title={`Configure ${agent.displayName}`}
         description="One place to manage every AI coding agent on your machine."
-        icon={agent.icon}
+        iconNode={<AgentAvatar agent={agent} className="size-9" />}
         actions={
           basePath ? (
             <button

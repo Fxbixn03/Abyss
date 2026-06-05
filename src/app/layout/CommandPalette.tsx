@@ -8,6 +8,7 @@ import {
   CommandList,
 } from '@/shared/components/ui/command'
 import { Icon } from '@/shared/components/Icon'
+import { AgentGlyph } from '@/features/agents/components/AgentGlyph'
 import { PRIMARY_NAV, SETTINGS_NAV } from '@/app/navigation'
 import { useCommandPalette } from '@/app/command/commandPalette.store'
 import {
@@ -55,7 +56,7 @@ export function CommandPalette() {
               value={`agent ${agent.displayName} ${agent.id}`}
               onSelect={run(() => setActiveAgent(agent.id))}
             >
-              <Icon name={agent.icon} />
+              <AgentGlyph agent={agent} className="size-4 rounded-[3px]" />
               Switch to {agent.displayName}
               {agent.id === activeAgent.id && (
                 <Icon name="check" className="ml-auto text-primary" />

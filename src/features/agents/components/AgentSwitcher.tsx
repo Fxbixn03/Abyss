@@ -1,7 +1,7 @@
-import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgentId, useAllAgents } from '../hooks/useActiveAgent'
 import { useAgentStore } from '../store/agent.store'
+import { AgentGlyph } from './AgentGlyph'
 
 /**
  * Segmented control in the top bar. Selecting an agent makes it active, which
@@ -29,7 +29,7 @@ export function AgentSwitcher() {
                 : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
             )}
           >
-            <Icon name={agent.icon} className="size-4" />
+            <AgentGlyph agent={agent} className="size-4 rounded-[3px]" />
             <span>{agent.displayName}</span>
           </button>
         )

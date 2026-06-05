@@ -1,10 +1,10 @@
 import type { AgentAdapter, AgentCapabilities } from '@/shared/types/agent'
 import { Badge } from '@/shared/components/ui/badge'
 import { Card } from '@/shared/components/ui/card'
-import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgentId } from '../hooks/useActiveAgent'
 import { useAgentStore } from '../store/agent.store'
+import { AgentAvatar } from './AgentAvatar'
 
 const CAPABILITY_LABELS: Record<keyof AgentCapabilities, string> = {
   instructions: 'Instructions',
@@ -41,16 +41,15 @@ export function AgentCard({ agent }: { agent: AgentAdapter }) {
       )}
     >
       <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            'flex size-10 items-center justify-center rounded-lg',
+        <AgentAvatar
+          agent={agent}
+          className="size-10"
+          glyphToneClassName={
             active
               ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-muted-foreground',
-          )}
-        >
-          <Icon name={agent.icon} className="size-5" />
-        </div>
+              : 'bg-muted text-muted-foreground'
+          }
+        />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium">{agent.displayName}</span>
@@ -65,6 +64,16 @@ export function AgentCard({ agent }: { agent: AgentAdapter }) {
           </span>
         </div>
       </div>
+
+      {capabilities.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1">
+          {capabilities.map((key) => (
+            <Badge key={key} variant="secondary" className="font-code text-[10px]">
+              {CAPABILITY_LABELS[key]}
+            </Badge>
+          ))}
+        </div>
+      )}
     </Card>
   )
 }

@@ -46,6 +46,7 @@ import {
   Sun,
   Terminal,
   Trash2,
+  Upload,
   Webhook,
   X,
 } from 'lucide-react'
@@ -103,6 +104,7 @@ const REGISTRY: Record<string, LucideIcon> = {
   sun: Sun,
   terminal: Terminal,
   trash: Trash2,
+  upload: Upload,
   webhook: Webhook,
   x: X,
 }

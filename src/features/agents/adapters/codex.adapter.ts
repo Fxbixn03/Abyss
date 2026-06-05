@@ -5,6 +5,6 @@ import { createAdapter } from './base.adapter'
 
 /** OpenAI Codex: AGENTS.md instruction files. */
 export const codexAdapter: AgentAdapter = createAdapter(codexDefinition, {
-  icon: 'terminal',
+  icon: 'img:codex',
   validate: validateMarkdownInstructions,
 })

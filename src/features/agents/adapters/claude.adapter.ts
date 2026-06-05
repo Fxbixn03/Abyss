@@ -5,7 +5,7 @@ import { createAdapter } from './base.adapter'
 
 /** Claude Code: the most fully-featured agent (instructions, MCP, perms, model). */
 export const claudeAdapter: AgentAdapter = createAdapter(claudeDefinition, {
-  icon: 'sparkles',
+  icon: 'img:claude',
   validate: validateMarkdownInstructions,
   getSidebarSections: (): SidebarSection[] => [
     { id: 'agents', label: 'Agents', icon: 'bot', route: '/agents' },

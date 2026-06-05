@@ -4,6 +4,7 @@ import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { PathsSection } from '../components/PathsSection'
 import { AppearanceSection } from '../components/AppearanceSection'
+import { AgentIconsSection } from '../components/AgentIconsSection'
 import { PreferencesSection } from '../components/PreferencesSection'
 import { AboutSection } from '../components/AboutSection'
 import { ThemeBuilder } from '@/features/themes/components/ThemeBuilder'
@@ -22,6 +23,12 @@ const SECTIONS: Section[] = [
     label: 'Appearance',
     icon: 'palette',
     render: <AppearanceSection />,
+  },
+  {
+    id: 'agent-icons',
+    label: 'Agent Icons',
+    icon: 'bot',
+    render: <AgentIconsSection />,
   },
   {
     id: 'theme-builder',
