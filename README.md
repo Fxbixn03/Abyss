@@ -355,7 +355,8 @@ python3 scripts/gen-themes-gif.py   # -> assets/abyss-themes.gif
 
 Issues and PRs are welcome. Please keep the project's invariants intact:
 typed IPC only, no Node in the renderer, CSS-variable theming, and a clean
-`pnpm lint` + `pnpm typecheck`. See [CLAUDE.md](CLAUDE.md).
+`pnpm lint` + `pnpm typecheck`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
+full workflow and [CLAUDE.md](CLAUDE.md) for the architecture deep-dive.
 
 ## License
 

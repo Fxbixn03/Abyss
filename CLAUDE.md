@@ -32,9 +32,10 @@ pnpm format       # Prettier
 pnpm cli -- detect # run the abyss CLI in dev (tsx)
 ```
 
-> Local dev note: pnpm lives at `~/.local/bin/pnpm`; node is v25 locally but CI
-> pins **Node 20**. Build-script approvals (electron/esbuild) live in
-> `pnpm-workspace.yaml` under `allowBuilds`.
+> Local dev note: pnpm lives at `~/.local/bin/pnpm`; node is v25 locally and CI
+> uses **Node 22** (pnpm 11 requires Node ≥ 22.13 — it uses `node:sqlite`).
+> Build-script approvals (electron/esbuild) live in `pnpm-workspace.yaml` under
+> `allowBuilds`.
 
 ## Architecture map
 
