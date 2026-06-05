@@ -12,7 +12,7 @@ const program = new Command()
 program
   .name('abyss')
   .description('Abyss CLI — manage AI coding agent config from the terminal.')
-  .version('0.1.0')
+  .version('1.0.0')
 
 program
   .command('detect')
