@@ -59,6 +59,7 @@ export enum IpcChannel {
   ReadCollectionItem = 'collection:read',
   WriteCollectionItem = 'collection:write',
   DeleteCollectionItem = 'collection:delete',
+  MigrateCollectionItem = 'collection:migrate',
   ImportSkill = 'collection:import-skill',
 
   // Lifecycle hooks
@@ -176,6 +177,15 @@ export interface IpcMap {
   [IpcChannel.DeleteCollectionItem]: {
     request: { basePath: string; kind: CollectionKind; id: string }
     response: { success: boolean }
+  }
+  [IpcChannel.MigrateCollectionItem]: {
+    request: {
+      basePath: string
+      fromKind: CollectionKind
+      toKind: CollectionKind
+      id: string
+    }
+    response: { success: boolean; id: string; path: string }
   }
   [IpcChannel.ImportSkill]: {
     request: {

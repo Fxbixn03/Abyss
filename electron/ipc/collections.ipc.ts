@@ -2,6 +2,7 @@ import { IpcChannel } from '@/shared/types/ipc'
 import {
   deleteCollectionItem,
   listCollection,
+  migrateCollectionItem,
   readCollectionItem,
   writeCollectionItem,
 } from '@core/collections'
@@ -20,6 +21,11 @@ export function registerCollectionsIpc(): void {
   )
   handle(IpcChannel.DeleteCollectionItem, ({ basePath, kind, id }) =>
     deleteCollectionItem(basePath, kind, id),
+  )
+  handle(
+    IpcChannel.MigrateCollectionItem,
+    ({ basePath, fromKind, toKind, id }) =>
+      migrateCollectionItem(basePath, fromKind, toKind, id),
   )
   handle(IpcChannel.ImportSkill, ({ basePath, archivePath, onCollision }) =>
     importSkillArchive(basePath, archivePath, onCollision),

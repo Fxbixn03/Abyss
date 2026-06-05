@@ -35,3 +35,6 @@ lancedb/
 # Editor
 .vscode/
 scripts/deploy-appimage.sh
+
+# Own files
+/.notes

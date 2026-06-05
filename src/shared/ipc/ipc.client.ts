@@ -5,7 +5,11 @@
  */
 
 import { IpcChannel } from '@/shared/types/ipc'
-import type { IpcRequest, IpcResponse, RawSettingsFile } from '@/shared/types/ipc'
+import type {
+  IpcRequest,
+  IpcResponse,
+  RawSettingsFile,
+} from '@/shared/types/ipc'
 import type { AgentId } from '@/shared/types/agent'
 import type {
   AppSettings,
@@ -94,6 +98,18 @@ export const ipc = {
   ) => invoke(IpcChannel.WriteCollectionItem, { basePath, kind, id, content }),
   deleteCollectionItem: (basePath: string, kind: CollectionKind, id: string) =>
     invoke(IpcChannel.DeleteCollectionItem, { basePath, kind, id }),
+  migrateCollectionItem: (
+    basePath: string,
+    fromKind: CollectionKind,
+    toKind: CollectionKind,
+    id: string,
+  ) =>
+    invoke(IpcChannel.MigrateCollectionItem, {
+      basePath,
+      fromKind,
+      toKind,
+      id,
+    }),
   importSkill: (
     basePath: string,
     archivePath: string,
@@ -106,6 +122,9 @@ export const ipc = {
 
   readRawSettings: (basePath: string, file: RawSettingsFile) =>
     invoke(IpcChannel.ReadRawSettings, { basePath, file }),
-  writeRawSettings: (basePath: string, file: RawSettingsFile, content: string) =>
-    invoke(IpcChannel.WriteRawSettings, { basePath, file, content }),
+  writeRawSettings: (
+    basePath: string,
+    file: RawSettingsFile,
+    content: string,
+  ) => invoke(IpcChannel.WriteRawSettings, { basePath, file, content }),
 }

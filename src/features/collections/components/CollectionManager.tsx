@@ -11,6 +11,13 @@ import { Badge } from '@/shared/components/ui/badge'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/shared/components/ui/context-menu'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
@@ -35,6 +42,12 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
   const labels = COLLECTION_LABELS[kind]
   const supported = agent.capabilities[kind]
 
+  // Skills and commands are both markdown files, so one can be converted into
+  // the other. `null` for agents (no equivalent), which disables migration.
+  const migrateKind: CollectionKind | null =
+    kind === 'skills' ? 'commands' : kind === 'commands' ? 'skills' : null
+  const canMigrate = migrateKind !== null && agent.capabilities[migrateKind]
+
   const [items, setItems] = useState<CollectionItem[]>([])
   const [loaded, setLoaded] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -47,6 +60,9 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
   const [diffOpen, setDiffOpen] = useState(false)
   const [newOpen, setNewOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+
+  // Item targeted by the right-click "Migrate" action, awaiting confirmation.
+  const [migrateItem, setMigrateItem] = useState<CollectionItem | null>(null)
 
   // Skill import (from a downloaded `.skill` archive).
   const [importing, setImporting] = useState(false)
@@ -133,6 +149,36 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     void refresh()
   }
 
+  // Convert a skill into a command (or vice versa): the markdown moves to the
+  // sibling collection under the same id, then the source is deleted.
+  const runMigrate = async (item: CollectionItem) => {
+    if (!basePath || !migrateKind) return
+    setNotice(null)
+    try {
+      await ipc.migrateCollectionItem(basePath, kind, migrateKind, item.id)
+      if (selectedId === item.id) {
+        setSelectedId(null)
+        setOriginal('')
+        setDraft('')
+        setFilePath('')
+      }
+      setNotice({
+        type: 'success',
+        message: `Migrated "${item.name}" to a ${COLLECTION_LABELS[
+          migrateKind
+        ].singular.toLowerCase()} — find it on the ${
+          COLLECTION_LABELS[migrateKind].plural
+        } page.`,
+      })
+      await refresh()
+    } catch (err) {
+      setNotice({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to migrate item.',
+      })
+    }
+  }
+
   // Read a downloaded `.skill` archive and unpack it into this agent's skills.
   // A name clash returns 'collision' first so we can confirm importing a copy.
   const runImport = async (
@@ -150,7 +196,10 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
           suggestedId: result.suggestedId,
         })
       } else {
-        setNotice({ type: 'success', message: `Imported skill "${result.name}".` })
+        setNotice({
+          type: 'success',
+          message: `Imported skill "${result.name}".`,
+        })
         await refresh()
         setSelectedId(result.id)
       }
@@ -275,32 +324,63 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
             items.map((item) => {
               const active = item.id === selectedId
               return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setSelectedId(item.id)}
-                  className={cn(
-                    'flex flex-col gap-0.5 rounded-md border px-3 py-2 text-left transition-colors',
-                    active
-                      ? 'border-primary/50 bg-accent'
-                      : 'border-transparent hover:bg-accent/60',
-                  )}
-                >
-                  <span className="flex items-center gap-2 text-sm font-medium">
-                    <Icon name={icon} className="size-4 text-muted-foreground" />
-                    <span className="truncate">{item.name}</span>
-                    {item.model && (
-                      <Badge variant="muted" className="ml-auto font-code">
-                        {item.model}
-                      </Badge>
+                <ContextMenu key={item.id}>
+                  <ContextMenuTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(item.id)}
+                      className={cn(
+                        'flex flex-col gap-0.5 rounded-md border px-3 py-2 text-left transition-colors',
+                        active
+                          ? 'border-primary/50 bg-accent'
+                          : 'border-transparent hover:bg-accent/60',
+                      )}
+                    >
+                      <span className="flex items-center gap-2 text-sm font-medium">
+                        <Icon
+                          name={icon}
+                          className="size-4 text-muted-foreground"
+                        />
+                        <span className="truncate">{item.name}</span>
+                        {item.model && (
+                          <Badge variant="muted" className="ml-auto font-code">
+                            {item.model}
+                          </Badge>
+                        )}
+                      </span>
+                      {item.description && (
+                        <span className="line-clamp-2 text-xs text-muted-foreground">
+                          {item.description}
+                        </span>
+                      )}
+                    </button>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    {canMigrate && migrateKind && (
+                      <ContextMenuItem onSelect={() => setMigrateItem(item)}>
+                        <Icon name="arrow-left-right" />
+                        Migrate to {COLLECTION_LABELS[migrateKind].singular}
+                      </ContextMenuItem>
                     )}
-                  </span>
-                  {item.description && (
-                    <span className="line-clamp-2 text-xs text-muted-foreground">
-                      {item.description}
-                    </span>
-                  )}
-                </button>
+                    <ContextMenuItem
+                      onSelect={() => void ipc.revealPath(item.path)}
+                    >
+                      <Icon name="folder-open" />
+                      Reveal in folder
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={() => {
+                        setSelectedId(item.id)
+                        setDeleteOpen(true)
+                      }}
+                    >
+                      <Icon name="trash" />
+                      Delete
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
               )
             })
           )}
@@ -333,6 +413,15 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void ipc.revealPath(filePath)}
+                    disabled={!filePath}
+                  >
+                    <Icon name="folder-open" />
+                    Reveal
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -378,7 +467,9 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
         onOpenChange={setNewOpen}
         kind={kind}
         existingIds={items.map((i) => i.id)}
-        onCreate={(values) => void create(values.id, buildTemplate(kind, values))}
+        onCreate={(values) =>
+          void create(values.id, buildTemplate(kind, values))
+        }
       />
 
       <DiffPreviewDialog
@@ -418,6 +509,29 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
         }
         confirmLabel="Delete"
         onConfirm={() => void remove()}
+      />
+
+      <ConfirmDialog
+        open={migrateItem !== null}
+        onOpenChange={(open) => {
+          if (!open) setMigrateItem(null)
+        }}
+        title={`Migrate "${migrateItem?.name ?? 'item'}" to a ${
+          migrateKind
+            ? COLLECTION_LABELS[migrateKind].singular.toLowerCase()
+            : 'item'
+        }?`}
+        description={
+          kind === 'skills'
+            ? `This creates the command "${migrateItem?.id}" from the skill's instructions and then deletes the skill folder. Files bundled with the skill are not carried over.`
+            : `This creates the skill "${migrateItem?.id}" from this command and then deletes the command file.`
+        }
+        confirmLabel="Migrate"
+        onConfirm={() => {
+          const pending = migrateItem
+          setMigrateItem(null)
+          if (pending) void runMigrate(pending)
+        }}
       />
     </div>
   )

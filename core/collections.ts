@@ -81,7 +81,9 @@ export async function readCollectionItem(
   id: string,
 ): Promise<{ content: string; path: string }> {
   const filePath = itemFilePath(basePath, kind, id)
-  const content = (await pathExists(filePath)) ? await readTextFile(filePath) : ''
+  const content = (await pathExists(filePath))
+    ? await readTextFile(filePath)
+    : ''
   return { content, path: filePath }
 }
 
@@ -94,6 +96,40 @@ export async function writeCollectionItem(
   const filePath = itemFilePath(basePath, kind, id)
   await writeTextFileAtomic(filePath, content)
   return { success: true, path: filePath }
+}
+
+/**
+ * Convert an item from one collection kind to another (skill <-> command),
+ * keeping the same id. The source's markdown (frontmatter + body) is written to
+ * the target location, then the source is deleted. Fails if the source is empty
+ * or a target with the same id already exists, so nothing is overwritten.
+ *
+ * Note: only the markdown file moves — files bundled alongside a skill
+ * (`SKILL.md` siblings) are not carried into a flat command file.
+ */
+export async function migrateCollectionItem(
+  basePath: string,
+  fromKind: CollectionKind,
+  toKind: CollectionKind,
+  id: string,
+): Promise<{ success: boolean; id: string; path: string }> {
+  if (fromKind === toKind) {
+    throw new Error('Source and target collection are the same.')
+  }
+  const safe = sanitizeId(id)
+  const targetPath = itemFilePath(basePath, toKind, safe)
+  if (await pathExists(targetPath)) {
+    throw new Error(`A ${toKind} item named "${safe}" already exists.`)
+  }
+
+  const { content } = await readCollectionItem(basePath, fromKind, safe)
+  if (!content.trim()) {
+    throw new Error(`The ${fromKind} item "${safe}" has no content to migrate.`)
+  }
+
+  await writeCollectionItem(basePath, toKind, safe, content)
+  await deleteCollectionItem(basePath, fromKind, safe)
+  return { success: true, id: safe, path: targetPath }
 }
 
 export async function deleteCollectionItem(

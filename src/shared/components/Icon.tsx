@@ -1,6 +1,7 @@
 import type { LucideIcon, LucideProps } from 'lucide-react'
 import {
   AlertTriangle,
+  ArrowLeftRight,
   Bot,
   Box,
   Braces,
@@ -59,6 +60,7 @@ import {
  */
 const REGISTRY: Record<string, LucideIcon> = {
   'alert-triangle': AlertTriangle,
+  'arrow-left-right': ArrowLeftRight,
   bot: Bot,
   box: Box,
   braces: Braces,
