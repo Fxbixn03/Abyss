@@ -33,6 +33,18 @@ export function registerFilesystemIpc(ctx: IpcContext): void {
     return { path: result.filePaths[0] }
   })
 
+  handle(IpcChannel.PickFile, async ({ title, defaultPath, filters }) => {
+    const window = ctx.getWindow()
+    const options = { title, defaultPath, filters, properties: ['openFile' as const] }
+    const result = await (window
+      ? dialog.showOpenDialog(window, options)
+      : dialog.showOpenDialog(options))
+    if (result.canceled || result.filePaths.length === 0) {
+      return { path: null }
+    }
+    return { path: result.filePaths[0] }
+  })
+
   handle(IpcChannel.RevealPath, async ({ path }) => {
     if (!(await pathExists(path))) return { success: false }
     // Reveal the item in the OS file manager (works for files and dirs).

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { CollectionItem, CollectionKind } from '@/shared/types/collections'
+import type {
+  CollectionItem,
+  CollectionKind,
+  SkillCollisionMode,
+} from '@/shared/types/collections'
 import { COLLECTION_LABELS } from '@/shared/types/collections'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
@@ -43,6 +47,18 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
   const [diffOpen, setDiffOpen] = useState(false)
   const [newOpen, setNewOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+
+  // Skill import (from a downloaded `.skill` archive).
+  const [importing, setImporting] = useState(false)
+  const [notice, setNotice] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
+  const [collision, setCollision] = useState<{
+    archivePath: string
+    existingId: string
+    suggestedId: string
+  } | null>(null)
 
   const dirty = draft !== original
 
@@ -117,6 +133,49 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     void refresh()
   }
 
+  // Read a downloaded `.skill` archive and unpack it into this agent's skills.
+  // A name clash returns 'collision' first so we can confirm importing a copy.
+  const runImport = async (
+    archivePath: string,
+    onCollision: SkillCollisionMode,
+  ) => {
+    if (!basePath) return
+    setImporting(true)
+    try {
+      const result = await ipc.importSkill(basePath, archivePath, onCollision)
+      if (result.status === 'collision') {
+        setCollision({
+          archivePath,
+          existingId: result.existingId,
+          suggestedId: result.suggestedId,
+        })
+      } else {
+        setNotice({ type: 'success', message: `Imported skill “${result.name}”.` })
+        await refresh()
+        setSelectedId(result.id)
+      }
+    } catch (err) {
+      setNotice({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to import skill.',
+      })
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const startImport = async () => {
+    setNotice(null)
+    const { path } = await ipc.pickFile({
+      title: 'Import Skill',
+      filters: [
+        { name: 'Claude Skill', extensions: ['skill', 'zip'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+    })
+    if (path) await runImport(path, 'fail')
+  }
+
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">
@@ -158,12 +217,51 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
         description={`${labels.plural} for ${agent.displayName}`}
         icon={icon}
         actions={
-          <Button onClick={() => setNewOpen(true)}>
-            <Icon name="file-plus" />
-            New {labels.singular}
-          </Button>
+          <div className="flex items-center gap-2">
+            {kind === 'skills' && (
+              <Button
+                variant="outline"
+                onClick={() => void startImport()}
+                disabled={importing}
+              >
+                <Icon name="download" />
+                {importing ? 'Importing…' : 'Import'}
+              </Button>
+            )}
+            <Button onClick={() => setNewOpen(true)}>
+              <Icon name="file-plus" />
+              New {labels.singular}
+            </Button>
+          </div>
         }
       />
+
+      {notice && (
+        <div
+          className={cn(
+            'flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm',
+            notice.type === 'success'
+              ? 'border-primary/40 bg-accent text-foreground'
+              : 'border-destructive/40 bg-destructive/10 text-destructive',
+          )}
+        >
+          <span className="flex items-center gap-2">
+            <Icon
+              name={notice.type === 'success' ? 'circle-check' : 'circle-alert'}
+              className="size-4 shrink-0"
+            />
+            <span>{notice.message}</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Dismiss"
+          >
+            <Icon name="x" className="size-4" />
+          </button>
+        </div>
+      )}
 
       <div className="grid min-h-0 flex-1 grid-cols-[260px_1fr] gap-4">
         <aside className="flex min-h-0 flex-col gap-1 overflow-y-auto pr-1">
@@ -291,6 +389,22 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
         after={draft}
         saving={saving}
         onConfirm={() => void performSave()}
+      />
+
+      <ConfirmDialog
+        open={collision !== null}
+        onOpenChange={(open) => {
+          if (!open) setCollision(null)
+        }}
+        title={`Skill “${collision?.existingId}” already exists`}
+        description={`Import this skill as a copy named “${collision?.suggestedId}”?`}
+        confirmLabel="Import copy"
+        destructive={false}
+        onConfirm={() => {
+          const pending = collision
+          setCollision(null)
+          if (pending) void runImport(pending.archivePath, 'suffix')
+        }}
       />
 
       <ConfirmDialog

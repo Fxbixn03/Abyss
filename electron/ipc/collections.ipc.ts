@@ -5,6 +5,7 @@ import {
   readCollectionItem,
   writeCollectionItem,
 } from '@core/collections'
+import { importSkillArchive } from '@core/skill-import'
 import { handle } from './handle'
 
 export function registerCollectionsIpc(): void {
@@ -19,5 +20,8 @@ export function registerCollectionsIpc(): void {
   )
   handle(IpcChannel.DeleteCollectionItem, ({ basePath, kind, id }) =>
     deleteCollectionItem(basePath, kind, id),
+  )
+  handle(IpcChannel.ImportSkill, ({ basePath, archivePath, onCollision }) =>
+    importSkillArchive(basePath, archivePath, onCollision),
   )
 }

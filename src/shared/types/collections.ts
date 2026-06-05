@@ -21,6 +21,18 @@ export interface CollectionItem {
   path: string
 }
 
+/** How to react when an imported skill's folder name already exists on disk. */
+export type SkillCollisionMode = 'fail' | 'suffix'
+
+/**
+ * Result of importing a downloaded `.skill` archive. `imported` means files were
+ * written; `collision` means a same-named skill already exists and the caller
+ * must confirm before re-importing with {@link SkillCollisionMode} `'suffix'`.
+ */
+export type SkillImportResult =
+  | { status: 'imported'; id: string; name: string; path: string }
+  | { status: 'collision'; existingId: string; suggestedId: string }
+
 export const COLLECTION_LABELS: Record<
   CollectionKind,
   { singular: string; plural: string }

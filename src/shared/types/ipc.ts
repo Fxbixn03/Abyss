@@ -12,7 +12,12 @@ import type {
   ModelEnvConfig,
   PermissionRules,
 } from './config'
-import type { CollectionItem, CollectionKind } from './collections'
+import type {
+  CollectionItem,
+  CollectionKind,
+  SkillCollisionMode,
+  SkillImportResult,
+} from './collections'
 import type { HookEntry } from './hooks'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
@@ -29,6 +34,7 @@ export enum IpcChannel {
   ResolvePaths = 'fs:resolve-paths',
   FileExists = 'fs:file-exists',
   PickDirectory = 'fs:pick-directory',
+  PickFile = 'fs:pick-file',
   RevealPath = 'fs:reveal-path',
 
   // Agents
@@ -53,6 +59,7 @@ export enum IpcChannel {
   ReadCollectionItem = 'collection:read',
   WriteCollectionItem = 'collection:write',
   DeleteCollectionItem = 'collection:delete',
+  ImportSkill = 'collection:import-skill',
 
   // Lifecycle hooks
   GetHooks = 'hooks:get',
@@ -89,6 +96,14 @@ export interface IpcMap {
   }
   [IpcChannel.PickDirectory]: {
     request: { title?: string; defaultPath?: string }
+    response: { path: string | null }
+  }
+  [IpcChannel.PickFile]: {
+    request: {
+      title?: string
+      defaultPath?: string
+      filters?: { name: string; extensions: string[] }[]
+    }
     response: { path: string | null }
   }
   [IpcChannel.RevealPath]: {
@@ -161,6 +176,14 @@ export interface IpcMap {
   [IpcChannel.DeleteCollectionItem]: {
     request: { basePath: string; kind: CollectionKind; id: string }
     response: { success: boolean }
+  }
+  [IpcChannel.ImportSkill]: {
+    request: {
+      basePath: string
+      archivePath: string
+      onCollision: SkillCollisionMode
+    }
+    response: SkillImportResult
   }
 
   [IpcChannel.GetHooks]: {

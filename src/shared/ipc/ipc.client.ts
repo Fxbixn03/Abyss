@@ -13,7 +13,10 @@ import type {
   ModelEnvConfig,
   PermissionRules,
 } from '@/shared/types/config'
-import type { CollectionKind } from '@/shared/types/collections'
+import type {
+  CollectionKind,
+  SkillCollisionMode,
+} from '@/shared/types/collections'
 import type { HookEntry } from '@/shared/types/hooks'
 
 function invoke<C extends IpcChannel>(
@@ -36,6 +39,11 @@ export const ipc = {
   fileExists: (path: string) => invoke(IpcChannel.FileExists, { path }),
   pickDirectory: (title?: string, defaultPath?: string) =>
     invoke(IpcChannel.PickDirectory, { title, defaultPath }),
+  pickFile: (options?: {
+    title?: string
+    defaultPath?: string
+    filters?: { name: string; extensions: string[] }[]
+  }) => invoke(IpcChannel.PickFile, options ?? {}),
   revealPath: (path: string) => invoke(IpcChannel.RevealPath, { path }),
 
   readAgentConfig: (agentId: AgentId, specId: string, basePath: string) =>
@@ -86,6 +94,11 @@ export const ipc = {
   ) => invoke(IpcChannel.WriteCollectionItem, { basePath, kind, id, content }),
   deleteCollectionItem: (basePath: string, kind: CollectionKind, id: string) =>
     invoke(IpcChannel.DeleteCollectionItem, { basePath, kind, id }),
+  importSkill: (
+    basePath: string,
+    archivePath: string,
+    onCollision: SkillCollisionMode,
+  ) => invoke(IpcChannel.ImportSkill, { basePath, archivePath, onCollision }),
 
   getHooks: (basePath: string) => invoke(IpcChannel.GetHooks, { basePath }),
   setHooks: (basePath: string, entries: HookEntry[]) =>

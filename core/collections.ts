@@ -12,7 +12,8 @@ import { parseFrontmatter } from './frontmatter'
 
 function sanitizeId(id: string): string {
   const base = path.basename(id).replace(/\.md$/i, '')
-  if (!/^[A-Za-z0-9._-]+$/.test(base)) {
+  // Parentheses are allowed so imported skill copies (`name(1)`) stay editable.
+  if (!/^[A-Za-z0-9._()-]+$/.test(base)) {
     throw new Error(`Invalid collection item id: ${id}`)
   }
   return base
