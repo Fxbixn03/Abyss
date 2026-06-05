@@ -65,13 +65,6 @@ export function AgentCard({ agent }: { agent: AgentAdapter }) {
           </span>
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {capabilities.map((key) => (
-          <Badge key={key} variant="muted">
-            {CAPABILITY_LABELS[key]}
-          </Badge>
-        ))}
-      </div>
     </Card>
   )
 }

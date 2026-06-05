@@ -7,8 +7,9 @@
 **One UI to configure every AI coding agent on your machine.**
 
 Abyss is a cross-platform desktop app that reads and writes the *real* config of
-Claude Code, OpenAI Codex and more — instructions, MCP servers, hooks, agents,
-skills, permissions and themes — through one fast, agent-aware interface.
+Claude Code, OpenAI Codex and more: instructions, MCP servers, hooks, agents,
+skills, permissions and themes, all from one interface that adapts to whichever
+agent you have selected.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-444)
@@ -27,24 +28,24 @@ AI coding agents keep their settings in a scatter of dotfiles and JSON: a
 subagents as loose markdown, hooks nested inside a config blob. Editing them by
 hand is fiddly and error-prone.
 
-**Abyss is a single, themed control panel for all of it.** It auto-detects where
+Abyss is a single, themed control panel for all of it. It auto-detects where
 each agent stores its config, edits the actual files (with a diff preview and
-atomic, non-destructive writes), and adapts the whole UI to whichever agent you
-have selected.
+atomic, non-destructive writes), and re-skins the whole UI around whichever agent
+you have selected.
 
 <div align="center">
-  <img src="assets/ApplicationDashboard.png" alt="The Abyss dashboard configuring Claude Code — agent switcher, capability cards and quick actions" width="900" />
+  <img src="assets/ApplicationDashboard.png" alt="The Abyss dashboard configuring Claude Code: agent switcher, capability cards and quick actions" width="900" />
   <br />
-  <em>The dashboard — every Claude Code surface, one click away.</em>
+  <em>The dashboard. Every Claude Code surface, one click away.</em>
 </div>
 
 ---
 
 ## Themes
 
-Abyss ships light + dark and a set of per-agent palettes — and a **no-code Theme
-Builder** so you can craft your own. Switching the active agent re-themes the
-entire app instantly.
+Abyss ships light and dark plus a set of per-agent palettes, and a no-code Theme
+Builder for rolling your own. Switch the active agent and the whole app re-themes
+instantly.
 
 <div align="center">
   <img src="assets/abyss-themes.gif" alt="Abyss cycling through its built-in themes" width="680" />
@@ -56,45 +57,45 @@ entire app instantly.
 
 ### Multi-agent, agent-aware
 
-- Switch the active agent from the top bar — the sidebar, status bar and theme
-  all follow it.
-- Each surface is **capability-gated**: agents only show the sections they
-  actually support.
+- Switch the active agent from the top bar; the sidebar, status bar and theme
+  all follow.
+- Each surface is capability-gated, so an agent only shows the sections it
+  actually supports.
 
-### 🤖 Full Claude Code surface
+### Full Claude Code surface
 
-- **Instructions** — edit `CLAUDE.md` in a syntax-highlighted editor.
-- **Agents / Commands / Skills** — full CRUD over your markdown collections
+- **Instructions.** Edit `CLAUDE.md` in a syntax-highlighted editor.
+- **Agents / Commands / Skills.** Full CRUD over your markdown collections
   (`agents/*.md`, `commands/*.md`, `skills/<name>/SKILL.md`), with frontmatter
   scaffolding for new items.
-- **MCP servers** — **auto-detected** from `~/.claude.json`; add / edit / remove
-  / toggle without touching the rest of the file.
-- **Hooks** — a structured editor for `settings.json` hooks (PreToolUse,
-  PostToolUse, Stop, …) with matcher + command.
-- **Permissions** — allow / ask / deny rule lists.
-- **Model & Env** — default model and environment variables.
-- **Settings (raw)** — direct JSON editor for `settings.json` /
+- **MCP servers.** Auto-detected from `~/.claude.json`; add, edit, remove or
+  toggle one without touching the rest of the file.
+- **Hooks.** A structured editor for `settings.json` hooks (PreToolUse,
+  PostToolUse, Stop, …) with matcher and command.
+- **Permissions.** Allow / ask / deny rule lists.
+- **Model & Env.** Default model and environment variables.
+- **Settings (raw).** A direct JSON editor for `settings.json` /
   `settings.local.json` with validation, for anything without a dedicated UI.
 
 ### Theming
 
-- Light & dark, plus per-agent color palettes.
-- A **Theme Builder** with live preview and native color pickers — build and save
-  your own themes, no code required.
+- Light and dark, plus per-agent color palettes.
+- A Theme Builder with live preview and native color pickers. Build and save
+  your own themes without writing any code.
 
 ### Safe by design
 
-- **Diff preview** before saving real files (toggleable).
-- **Atomic writes** (temp file + rename) — a crash can't leave a half-written
+- Diff preview before saving real files (toggleable).
+- Atomic writes (temp file plus rename), so a crash can't leave a half-written
   config.
-- Edits to big shared files like `~/.claude.json` **preserve every other key**
+- Edits to big shared files like `~/.claude.json` preserve every other key
   (projects, account, caches) and unknown fields.
 
-### ⌨️ Power-user touches
+### Power-user touches
 
-- **Cmd/Ctrl+K** command palette to jump to any agent, page or theme.
-- A companion **`abyss` CLI** (`detect` / `export` / `apply`) that shares the
-  exact same core logic as the app.
+- A Cmd/Ctrl+K command palette to jump to any agent, page or theme.
+- A companion `abyss` CLI (`detect` / `export` / `apply`) that shares the same
+  core logic as the app.
 
 ---
 
@@ -102,18 +103,18 @@ entire app instantly.
 
 | Agent | Status | Surfaces |
 | --- | --- | --- |
-| **Claude Code** | ✅ Full | Instructions, Agents, Commands, Skills, MCP, Hooks, Permissions, Model & Env, Raw settings |
-| **OpenAI Codex** | ✅ Basic | Instructions (`AGENTS.md`) |
-| **Gemini CLI** | 🧩 Example | Ships as the worked example for *“add an agent”* (one line to enable) |
+| **Claude Code** | Full | Instructions, Agents, Commands, Skills, MCP, Hooks, Permissions, Model & Env, Raw settings |
+| **OpenAI Codex** | Basic | Instructions (`AGENTS.md`) |
+| **Gemini CLI** | Example | Ships as the worked example for "add an agent" (one line to enable) |
 
-> Adding another agent is intentionally tiny — see
+> Adding another agent is intentionally tiny. See
 > [Extending Abyss](#extending-abyss).
 
 ---
 
 ## Install
 
-### Linux — AppImage (recommended)
+### Linux (AppImage, recommended)
 
 Grab `Abyss-<version>-x86_64.AppImage` from
 [Releases](https://github.com/Fxbixn03/Abyss/releases) (published by CI on
@@ -176,33 +177,33 @@ The packaged artifact lands in `release/<version>/`.
 
 ## First run
 
-On first launch Abyss **auto-detects** each agent's config directory and shows a
-quick setup so you can confirm or override the locations. Detected-and-existing
-paths get a green check; missing ones a warning; and you can always pick your own
-with the folder browser. Your choices are saved — change them any time under
+On first launch Abyss auto-detects each agent's config directory and shows a
+quick setup so you can confirm or override the locations. Paths that exist get a
+green check, missing ones a warning, and you can always point to your own with
+the folder browser. Your choices are saved; change them any time under
 **Settings → Config Paths**.
 
 ---
 
 ## Usage
 
-- **Switch agents** — use the toggle in the top bar (or Cmd/Ctrl+K → “Switch
-  to …”). The UI re-themes instantly.
-- **Edit instructions** — open **Instructions**, edit, and **Save**. With diff
-  preview on (default) you review the change against the on-disk file first.
-- **Manage MCP servers** — **MCP Servers** lists your existing user-scoped
+- **Switch agents.** Use the toggle in the top bar (or Cmd/Ctrl+K → "Switch
+  to …"). The UI re-themes instantly.
+- **Edit instructions.** Open Instructions, edit, and save. With diff preview on
+  (the default) you review the change against the on-disk file first.
+- **Manage MCP servers.** The MCP Servers page lists your existing user-scoped
   servers (read from `~/.claude.json`). Add a stdio/http/sse server, edit env,
   or toggle one off.
-- **Subagents / commands / skills** — pick **Agents** (or Commands / Skills),
-  edit the prompt + frontmatter, or hit **New** to scaffold one.
-- **Hooks** — **Hooks** groups your `settings.json` hooks by event; add a
-  matcher + command in a couple of clicks.
-- **Build a theme** — **Settings → Theme Builder**: tweak colors for light &
-  dark, preview live, then *Save & use*.
+- **Subagents / commands / skills.** Pick Agents (or Commands / Skills), edit
+  the prompt and frontmatter, or hit New to scaffold one.
+- **Hooks.** The Hooks page groups your `settings.json` hooks by event; add a
+  matcher and command in a couple of clicks.
+- **Build a theme.** Open Settings → Theme Builder, tweak colors for light and
+  dark, preview live, then save and use.
 
 ### Where Abyss reads & writes
 
-Abyss edits your agents' real files — nothing proprietary, nothing hidden:
+Abyss edits your agents' real files. Nothing proprietary, nothing hidden:
 
 | Surface | Location |
 | --- | --- |
@@ -215,7 +216,7 @@ Abyss edits your agents' real files — nothing proprietary, nothing hidden:
 | Abyss · its own preferences | OS userData (`abyss-settings.json`) |
 
 > The two `claude.ai` account connectors (Google Drive, etc.) are managed in your
-> Claude account, not a local file, so Abyss surfaces a note rather than pretending
+> Claude account, not a local file, so Abyss shows a note instead of pretending
 > to edit them.
 
 ---
@@ -249,7 +250,7 @@ After packaging, the binary is exposed as `abyss` (`abyss detect`, …).
 
 The animated logo and theme reel above are generated procedurally (see
 [Brand assets](#brand-assets)). Short screen recordings of real usage make the
-best feature demos — here's a quick storyboard. Record with
+best feature demos. Here's a quick storyboard. Record with
 [`wf-recorder`](https://github.com/ammen99/wf-recorder) + `gifski` (Wayland) or
 [Peek](https://github.com/phw/peek), drop the file in `assets/`, then uncomment
 the matching line.
@@ -276,21 +277,21 @@ ffmpeg -i /tmp/demo.mp4 -vf "fps=18,scale=820:-1" -f yuv4mpegpipe - \
 
 ## Architecture & extensibility
 
-Abyss is built feature-first with a strict, typed boundary between the renderer
+Abyss is built feature-first, with a strict typed boundary between the renderer
 and the OS:
 
-- **Renderer (React 19 + TS)** never touches `fs`/`path`/`os` — all disk work
-  goes through a single **typed IPC** bridge.
-- **Core (`core/`)** holds the framework-agnostic config IO and is reused by both
+- The **renderer** (React 19 + TS) never touches `fs`/`path`/`os`; all disk work
+  goes through a single typed IPC bridge.
+- **Core** (`core/`) holds the framework-agnostic config IO and is reused by both
   the Electron main process and the CLI.
-- **Theming** is driven entirely by CSS variables, so themes switch with no
-  reload and components never hard-code colors.
+- **Theming** runs entirely on CSS variables, so themes switch with no reload and
+  components never hard-code colors.
 
 See [CLAUDE.md](CLAUDE.md) for the full architecture and contributor rules.
 
 ### Extending Abyss
 
-**Add an agent** — three small steps, no plumbing:
+**Add an agent** in three small steps, no plumbing:
 
 1. Add an `AgentDefinition` (id, paths, config files) to
    `src/shared/agents/defs.ts`.
@@ -301,7 +302,7 @@ See [CLAUDE.md](CLAUDE.md) for the full architecture and contributor rules.
 The switcher, sidebar, command palette, detection (app + CLI) and theming all
 pick it up automatically. (Gemini ships as the worked example.)
 
-**Add an IPC channel / theme** — see the step-by-step recipes in
+**Add an IPC channel or theme** using the step-by-step recipes in
 [CLAUDE.md](CLAUDE.md).
 
 ---
@@ -353,8 +354,8 @@ python3 scripts/gen-themes-gif.py   # -> assets/abyss-themes.gif
 
 ## Contributing
 
-Issues and PRs are welcome. Please keep the project's invariants intact:
-typed IPC only, no Node in the renderer, CSS-variable theming, and a clean
+Issues and PRs are welcome. Please keep the project's invariants intact: typed
+IPC only, no Node in the renderer, CSS-variable theming, and a clean
 `pnpm lint` + `pnpm typecheck`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
 full workflow and [CLAUDE.md](CLAUDE.md) for the architecture deep-dive.
 

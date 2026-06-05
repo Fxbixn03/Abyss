@@ -45,7 +45,7 @@ export function FirstRunWizard() {
           </DialogTitle>
           <DialogDescription>
             Abyss auto-detected where your agents keep their config. Confirm the
-            locations below or pick your own — you can change these any time in
+            locations below or pick your own. You can change these any time in
             Settings.
           </DialogDescription>
         </DialogHeader>

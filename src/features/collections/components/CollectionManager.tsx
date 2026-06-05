@@ -150,7 +150,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
           suggestedId: result.suggestedId,
         })
       } else {
-        setNotice({ type: 'success', message: `Imported skill “${result.name}”.` })
+        setNotice({ type: 'success', message: `Imported skill "${result.name}".` })
         await refresh()
         setSelectedId(result.id)
       }
@@ -396,8 +396,8 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
         onOpenChange={(open) => {
           if (!open) setCollision(null)
         }}
-        title={`Skill “${collision?.existingId}” already exists`}
-        description={`Import this skill as a copy named “${collision?.suggestedId}”?`}
+        title={`Skill "${collision?.existingId}" already exists`}
+        description={`Import this skill as a copy named "${collision?.suggestedId}"?`}
         confirmLabel="Import copy"
         destructive={false}
         onConfirm={() => {

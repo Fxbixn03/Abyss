@@ -43,7 +43,7 @@ export function AboutSection() {
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
           A unified visual configuration UI for AI coding agents. Manage
-          instructions, MCP servers, permissions and more — for every agent, in
+          instructions, MCP servers, permissions and more, for every agent, in
           one place.
         </p>
         {info && (

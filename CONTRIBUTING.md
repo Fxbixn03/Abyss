@@ -6,7 +6,7 @@ This guide covers how to get set up, the invariants you must keep intact, and ho
 to get a change merged.
 
 > The deep architecture reference lives in [CLAUDE.md](CLAUDE.md). This document
-> is the lighter, day-to-day workflow guide — read both before a larger change.
+> is the lighter, day-to-day workflow guide. Read both before a larger change.
 
 ---
 
@@ -36,12 +36,12 @@ code, and help reviewers help you. Harassment of any kind is not welcome.
 ## Ways to contribute
 
 - **Fix a bug** or improve an existing surface (Instructions, MCP, Hooks, …).
-- **Add an agent** — this is intentionally tiny; Gemini ships as the worked
+- **Add an agent.** This is intentionally tiny; Gemini ships as the worked
   example. See [Add an agent](#add-an-agent).
-- **Add a theme** — drop a preset, no code required for users; one file for
+- **Add a theme.** Drop a preset. No code required for users; one file for
   contributors.
-- **Improve docs** — README, CLAUDE.md, inline comments, or this guide.
-- **File a good issue** — a clear repro is a real contribution.
+- **Improve docs:** README, CLAUDE.md, inline comments, or this guide.
+- **File a good issue.** A clear repro is a real contribution.
 
 If you're planning a larger change, please open an issue first so we can agree on
 the approach before you write code.
@@ -130,20 +130,20 @@ one will be asked to change before review continues.
 4. **Adapter pattern for agents.** Agents implement `AgentAdapter`; the registry
    is the only place that knows which agents exist.
 5. **CSS-variable theming.** Use semantic tokens (`bg-background`,
-   `text-primary`, `border-border`, …) — **never hard-coded hex**. Theme values
+   `text-primary`, `border-border`, …), never hard-coded hex. Theme values
    are CSS custom properties applied at runtime, mapped into Tailwind via
    `@theme inline` in `src/index.css`. Themes must switch with no reload.
 6. **TypeScript strict.** No `any`, no `@ts-ignore`. `pnpm lint` must pass with
    zero warnings.
 7. **Safe disk writes.** Config IO stays atomic (temp file + rename) and
-   non-destructive — edits to big shared files like `~/.claude.json` must
+   non-destructive. Edits to big shared files like `~/.claude.json` must
    preserve every other key and unknown fields.
 
 ---
 
 ## Common recipes
 
-These mirror the step-by-step guides in [CLAUDE.md](CLAUDE.md) — read there for
+These mirror the step-by-step guides in [CLAUDE.md](CLAUDE.md); read there for
 the full detail.
 
 ### Add an agent
@@ -184,8 +184,8 @@ It appears automatically in the ThemePicker and the command palette.
 - Formatting is handled by **Prettier**: no semicolons, single quotes, trailing
   commas, 80-column width, 2-space indent. Run `pnpm format` before committing.
 - Path aliases: `@/*` → `src/*`, `@core/*` → `core/*` (node + CLI only).
-- UI primitives in `src/shared/components/ui/` are shadcn/ui copies — **do not
-  edit them by hand**; wrap or compose instead.
+- UI primitives in `src/shared/components/ui/` are shadcn/ui copies; do not
+  edit them by hand. Wrap or compose instead.
 - Match the surrounding code's naming and comment density. Prefer small, focused
   modules over large ones.
 
@@ -194,7 +194,7 @@ It appears automatically in the ThemePicker and the command palette.
 ## Commits
 
 - Write clear, imperative commit subjects (e.g. `Add Gemini adapter`,
-  `Fix MCP toggle persistence`) — matching the existing history.
+  `Fix MCP toggle persistence`), matching the existing history.
 - Keep each commit logically self-contained; it's fine to squash noise before
   opening the PR.
 - Reference issues where relevant (`Fixes #123`).
@@ -205,7 +205,8 @@ It appears automatically in the ThemePicker and the command palette.
 
 1. **Branch** off `main` (`git checkout -b feature/short-description`).
 2. Make your change and keep [the rules](#the-non-negotiable-rules) intact.
-3. Run `pnpm lint && pnpm typecheck && pnpm build` locally — all green.
+3. Run `pnpm lint && pnpm typecheck && pnpm build` locally, and make sure it's
+   all green.
 4. Push and open a PR against `main`. In the description:
    - Explain **what** changed and **why**.
    - Note any UI changes with a screenshot or short GIF (see the recording tips
@@ -227,15 +228,15 @@ For a **bug**, please include:
 - What you expected vs. what happened.
 - Steps to reproduce (and which agent / surface).
 - Your OS, Abyss version, and any relevant console output.
-- If config-related, the file involved (redact anything sensitive — never paste
+- If config-related, the file involved (redact anything sensitive; never paste
   tokens or credentials).
 
 For a **feature request**, describe the problem you're trying to solve, not just
-the solution — it helps us find the right fit for Abyss's architecture.
+the solution. That helps us find the right fit for Abyss's architecture.
 
 ---
 
-Thanks again for contributing! 🌊
+Thanks again for contributing!
 
 By contributing, you agree that your contributions are licensed under the
 project's [MIT License](LICENSE).
