@@ -44,6 +44,8 @@ async function readSessionMeta(
   let messageCount = 0
   let startedAt: string | undefined
   let updatedAt: string | undefined
+  let inputTokens = 0
+  let outputTokens = 0
 
   for await (const line of readJsonlLines(filePath)) {
     const type = asString(line.type)
@@ -68,6 +70,14 @@ async function readSessionMeta(
     if (!title && asString(message.role) === 'user') {
       title = firstTextSnippet(message.content)
     }
+    const usage = asRecord(message.usage)
+    if (usage) {
+      if (typeof usage.input_tokens === 'number')
+        inputTokens += usage.input_tokens
+      if (typeof usage.output_tokens === 'number') {
+        outputTokens += usage.output_tokens
+      }
+    }
   }
 
   if (messageCount === 0) return null
@@ -84,6 +94,8 @@ async function readSessionMeta(
     startedAt,
     updatedAt: updatedAt ?? stat.mtime.toISOString(),
     sizeBytes: stat.size,
+    inputTokens: inputTokens || undefined,
+    outputTokens: outputTokens || undefined,
     filePath,
   }
 }

@@ -57,6 +57,9 @@ export interface ChatSessionMeta {
   startedAt?: string
   updatedAt?: string
   sizeBytes: number
+  /** Token totals across the session, when the agent records them. */
+  inputTokens?: number
+  outputTokens?: number
   /** Absolute path of the backing transcript file. */
   filePath: string
 }

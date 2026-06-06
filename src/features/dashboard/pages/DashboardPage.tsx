@@ -11,6 +11,7 @@ import { AgentCard } from '@/features/agents/components/AgentCard'
 import { AgentAvatar } from '@/features/agents/components/AgentAvatar'
 import { useBasePath } from '@/features/settings/hooks/useBasePath'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { UsagePanel } from '../components/UsagePanel'
 
 interface QuickAction {
   label: string
@@ -72,6 +73,8 @@ export function DashboardPage() {
           ))}
         </div>
       </section>
+
+      <UsagePanel />
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-muted-foreground">
