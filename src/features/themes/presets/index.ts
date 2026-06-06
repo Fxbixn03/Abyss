@@ -2,6 +2,7 @@ import type { ThemeConfig } from '@/shared/types/theme'
 import { claudeThemes } from './claude.theme'
 import { codexThemes } from './codex.theme'
 import { geminiThemes } from './gemini.theme'
+import { cursorThemes } from './cursor.theme'
 import { abyssThemes } from './abyss.theme'
 
 /**
@@ -12,5 +13,6 @@ export const BUILTIN_THEMES: ThemeConfig[] = [
   ...claudeThemes,
   ...codexThemes,
   ...geminiThemes,
+  ...cursorThemes,
   ...abyssThemes,
 ]

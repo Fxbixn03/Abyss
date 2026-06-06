@@ -8,6 +8,7 @@ import {
   writeModelEnv,
   writePermissions,
 } from '@core/claude-settings'
+import { readCodexSettings, writeCodexSettings } from '@core/codex-settings'
 import { readHooks, writeHooks } from '@core/hooks'
 import { readRawSettings, writeRawSettings } from '@core/raw-settings'
 import { handle } from './handle'
@@ -42,6 +43,14 @@ export function registerConfigIpc(ctx: IpcContext): void {
   handle(IpcChannel.GetPermissions, ({ basePath }) => readPermissions(basePath))
   handle(IpcChannel.SetPermissions, ({ basePath, rules }) =>
     writePermissions(basePath, rules),
+  )
+
+  // Codex approval + sandbox settings
+  handle(IpcChannel.GetCodexSettings, ({ basePath }) =>
+    readCodexSettings(basePath),
+  )
+  handle(IpcChannel.SetCodexSettings, ({ basePath, settings }) =>
+    writeCodexSettings(basePath, settings),
   )
 
   // Model + env

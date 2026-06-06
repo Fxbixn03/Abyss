@@ -8,6 +8,7 @@ import type { AgentId, DetectedPath } from './agent'
 import type {
   AppInfo,
   AppSettings,
+  CodexSettings,
   McpHealthResult,
   McpServerEntry,
   ModelEnvConfig,
@@ -73,6 +74,10 @@ export enum IpcChannel {
   // Tool permissions
   GetPermissions = 'permissions:get',
   SetPermissions = 'permissions:set',
+
+  // Codex approval + sandbox settings
+  GetCodexSettings = 'codex-settings:get',
+  SetCodexSettings = 'codex-settings:set',
 
   // Model + env
   GetModelEnv = 'model-env:get',
@@ -249,6 +254,15 @@ export interface IpcMap {
   }
   [IpcChannel.SetPermissions]: {
     request: { agentId: AgentId; basePath: string; rules: PermissionRules }
+    response: { success: boolean; path: string }
+  }
+
+  [IpcChannel.GetCodexSettings]: {
+    request: { basePath: string }
+    response: CodexSettings
+  }
+  [IpcChannel.SetCodexSettings]: {
+    request: { basePath: string; settings: CodexSettings }
     response: { success: boolean; path: string }
   }
 

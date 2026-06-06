@@ -50,6 +50,14 @@ const geminiInstructions: ConfigFileSpec = {
   description: 'Global instructions for Gemini CLI.',
 }
 
+const cursorInstructions: ConfigFileSpec = {
+  id: 'instructions',
+  filename: '.cursorrules',
+  scope: 'global',
+  language: 'markdown',
+  description: 'Rules for Cursor (.cursorrules).',
+}
+
 export const claudeDefinition: AgentDefinition = {
   id: 'claude',
   name: 'claude',
@@ -134,15 +142,51 @@ export const geminiDefinition: AgentDefinition = {
   ],
 }
 
+/**
+ * Cursor — instructions via `.cursorrules` and MCP via `<base>/mcp.json`
+ * (same JSON shape as Claude). Cursor's global config is app-internal, so the
+ * `.cursor` dir is used as the editable home.
+ */
+export const cursorDefinition: AgentDefinition = {
+  id: 'cursor',
+  name: 'cursor',
+  displayName: 'Cursor',
+  defaultThemeId: 'cursor-graphite',
+  iconName: 'box',
+  capabilities: {
+    instructions: true,
+    mcp: true,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rawSettings: false,
+    chats: false,
+  },
+  configFiles: [cursorInstructions],
+  resolvePaths: (env: OsEnv) => [
+    joinPath(env.platform, env.home, '.cursor'),
+    joinPath(env.platform, env.appData, 'Cursor'),
+  ],
+}
+
 /** Every known agent definition, keyed by id. */
 export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   claude: claudeDefinition,
   codex: codexDefinition,
   gemini: geminiDefinition,
+  cursor: cursorDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
-export const ACTIVE_AGENT_IDS: string[] = ['claude', 'codex', 'gemini']
+export const ACTIVE_AGENT_IDS: string[] = [
+  'claude',
+  'codex',
+  'gemini',
+  'cursor',
+]
 
 export function getAgentDefinition(id: string): AgentDefinition {
   const def = AGENT_DEFINITIONS[id]

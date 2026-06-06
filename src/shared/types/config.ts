@@ -38,6 +38,25 @@ export interface PermissionRules {
   ask: string[]
 }
 
+/** Codex approval + sandbox settings (its equivalent of permissions). */
+export type CodexApprovalPolicy =
+  | 'untrusted'
+  | 'on-failure'
+  | 'on-request'
+  | 'never'
+
+export type CodexSandboxMode =
+  | 'read-only'
+  | 'workspace-write'
+  | 'danger-full-access'
+
+export interface CodexSettings {
+  approvalPolicy: CodexApprovalPolicy
+  sandboxMode: CodexSandboxMode
+  /** Allow network access in workspace-write sandbox. */
+  networkAccess: boolean
+}
+
 /** Model + environment configuration for an agent. */
 export interface ModelEnvConfig {
   model?: string

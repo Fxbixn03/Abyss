@@ -22,6 +22,7 @@ import type { ThemeConfig } from '@/shared/types/theme'
 import type { SyncSurface } from '@/shared/types/sync'
 import type {
   AppSettings,
+  CodexSettings,
   McpServerEntry,
   ModelEnvConfig,
   PermissionRules,
@@ -99,6 +100,11 @@ export const ipc = {
     basePath: string,
     rules: PermissionRules,
   ) => invoke(IpcChannel.SetPermissions, { agentId, basePath, rules }),
+
+  getCodexSettings: (basePath: string) =>
+    invoke(IpcChannel.GetCodexSettings, { basePath }),
+  setCodexSettings: (basePath: string, settings: CodexSettings) =>
+    invoke(IpcChannel.SetCodexSettings, { basePath, settings }),
 
   getModelEnv: (agentId: AgentId, basePath: string) =>
     invoke(IpcChannel.GetModelEnv, { agentId, basePath }),

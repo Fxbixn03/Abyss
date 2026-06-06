@@ -16,6 +16,7 @@ import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
+import { CodexApprovals } from '../components/CodexApprovals'
 
 const EMPTY: PermissionRules = { allow: [], deny: [], ask: [] }
 
@@ -42,6 +43,9 @@ export function PermissionsPage() {
     setRules(next)
     if (basePath) void ipc.setPermissions(agent.id, basePath, next)
   }
+
+  // Codex uses a different model (approval policy + sandbox), not allow/deny/ask.
+  if (agent.id === 'codex') return <CodexApprovals />
 
   if (!supported) {
     return (

@@ -49,12 +49,10 @@ function mcpConfigPath(projectDir?: string): string {
   return projectDir ? path.join(projectDir, '.mcp.json') : userConfigPath()
 }
 
-async function readClaudeMcp(projectDir?: string): Promise<McpServerEntry[]> {
-  const file = await readJsonFile<ClaudeUserConfig>(
-    mcpConfigPath(projectDir),
-    {},
-  )
-  const servers = file.mcpServers ?? {}
+/** Generic reader for a `{ mcpServers: {...} }` JSON file (Claude / Cursor). */
+async function readJsonMcp(file: string): Promise<McpServerEntry[]> {
+  const data = await readJsonFile<ClaudeUserConfig>(file, {})
+  const servers = data.mcpServers ?? {}
   return Object.entries(servers).map(([name, s], index) => ({
     id: `${name}-${index}`,
     name,
@@ -67,26 +65,23 @@ async function readClaudeMcp(projectDir?: string): Promise<McpServerEntry[]> {
   }))
 }
 
-async function writeClaudeMcp(
+async function writeJsonMcp(
+  file: string,
   entries: McpServerEntry[],
-  projectDir?: string,
 ): Promise<{ success: boolean; path: string }> {
-  const p = mcpConfigPath(projectDir)
-  // Re-read immediately before writing to minimize the lost-update window with
-  // a running Claude Code, and to keep all sibling keys intact.
-  const file = await readJsonFile<ClaudeUserConfig>(p, {})
-  const existing = file.mcpServers ?? {}
+  // Re-read immediately before writing to minimize the lost-update window and
+  // keep all sibling keys (and unknown per-server fields) intact.
+  const data = await readJsonFile<ClaudeUserConfig>(file, {})
+  const existing = data.mcpServers ?? {}
   const out: Record<string, RawMcpServer> = {}
 
   for (const entry of entries) {
-    // Start from the existing raw object so unknown fields survive a round-trip.
     const raw: RawMcpServer = { ...(existing[entry.name] ?? {}) }
     raw.type = entry.type
 
     if (entry.type === 'stdio') {
       if (entry.command) raw.command = entry.command
       else delete raw.command
-      // Preserve a defined (even empty) args array; only drop when absent.
       if (entry.args !== undefined) raw.args = entry.args
       else delete raw.args
       delete raw.url
@@ -106,14 +101,20 @@ async function writeClaudeMcp(
     out[entry.name] = raw
   }
 
-  file.mcpServers = out
-  await writeJsonFile(p, file)
-  return { success: true, path: p }
+  data.mcpServers = out
+  await writeJsonFile(file, data)
+  return { success: true, path: file }
+}
+
+/** Cursor stores MCP in `<base>/mcp.json` (same JSON shape as Claude). */
+function cursorMcpPath(basePath: string): string {
+  return path.join(basePath, 'mcp.json')
 }
 
 /**
- * Read MCP servers for an agent. Claude uses JSON (`~/.claude.json` /
- * `<project>/.mcp.json`); Codex uses TOML (`<base>/config.toml`).
+ * Read MCP servers for an agent. Claude/Cursor use JSON, Codex uses TOML.
+ * Claude: `~/.claude.json` / `<project>/.mcp.json`; Cursor: `<base>/mcp.json`;
+ * Codex: `<base>/config.toml`.
  */
 export function readMcpServers(
   agentId: string,
@@ -121,7 +122,8 @@ export function readMcpServers(
   projectDir?: string,
 ): Promise<McpServerEntry[]> {
   if (agentId === 'codex') return readCodexMcp(basePath)
-  return readClaudeMcp(projectDir)
+  if (agentId === 'cursor') return readJsonMcp(cursorMcpPath(basePath))
+  return readJsonMcp(mcpConfigPath(projectDir))
 }
 
 export function writeMcpServers(
@@ -131,5 +133,7 @@ export function writeMcpServers(
   projectDir?: string,
 ): Promise<{ success: boolean; path: string }> {
   if (agentId === 'codex') return writeCodexMcp(basePath, entries)
-  return writeClaudeMcp(entries, projectDir)
+  if (agentId === 'cursor')
+    return writeJsonMcp(cursorMcpPath(basePath), entries)
+  return writeJsonMcp(mcpConfigPath(projectDir), entries)
 }

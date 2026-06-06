@@ -10,5 +10,11 @@ export const codexAdapter: AgentAdapter = createAdapter(codexDefinition, {
   getSidebarSections: (): SidebarSection[] => [
     { id: 'chats', label: 'Chats', icon: 'messages-square', route: '/chats' },
     { id: 'mcp', label: 'MCP Servers', icon: 'plug', route: '/mcp' },
+    {
+      id: 'approvals',
+      label: 'Approvals',
+      icon: 'shield',
+      route: '/permissions',
+    },
   ],
 })
