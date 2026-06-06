@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { ChatBlock, ChatMessage } from '@/shared/types/chat'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
-import { Markdown } from './Markdown'
+import { Markdown } from '@/shared/components/Markdown'
 
 function CollapsibleBlock({
   icon,

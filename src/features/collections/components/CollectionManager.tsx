@@ -25,8 +25,9 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
-import { ConfigEditor } from '@/features/config/components/ConfigEditor'
+import { MarkdownEditor } from '@/features/config/components/MarkdownEditor'
 import { DiffPreviewDialog } from '@/features/config/components/DiffPreviewDialog'
+import { UnsavedGuard } from '@/shared/components/UnsavedGuard'
 import { NewItemDialog } from './NewItemDialog'
 import { buildTemplate } from '../lib/templates'
 
@@ -531,7 +532,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
               </div>
 
               <div className="min-h-0 flex-1">
-                <ConfigEditor
+                <MarkdownEditor
                   value={draft}
                   language="markdown"
                   onChange={setDraft}
@@ -647,6 +648,8 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
           if (pending) void runDuplicate(pending, newId)
         }}
       />
+
+      <UnsavedGuard dirty={dirty} />
     </div>
   )
 }

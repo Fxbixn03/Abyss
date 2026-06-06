@@ -4,9 +4,10 @@ import { Badge } from '@/shared/components/ui/badge'
 import { Icon } from '@/shared/components/Icon'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { UnsavedGuard } from '@/shared/components/UnsavedGuard'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { useConfigStore } from '../store/config.store'
-import { ConfigEditor } from './ConfigEditor'
+import { MarkdownEditor } from './MarkdownEditor'
 import { ValidationList } from './ValidationList'
 import { DiffPreviewDialog } from './DiffPreviewDialog'
 
@@ -111,7 +112,7 @@ export function ConfigEditorPanel() {
             Loading…
           </div>
         ) : (
-          <ConfigEditor
+          <MarkdownEditor
             value={draft}
             language={spec.language}
             onChange={setDraft}
@@ -135,6 +136,8 @@ export function ConfigEditorPanel() {
         saving={saving}
         onConfirm={() => void performSave()}
       />
+
+      <UnsavedGuard dirty={isDirty} />
     </div>
   )
 }

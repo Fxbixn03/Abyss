@@ -6,10 +6,10 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import { cn } from '@/shared/lib/utils'
 
 /**
- * Chat message markdown renderer. Renders to React elements (no raw HTML, no
- * `dangerouslySetInnerHTML`) so it stays CSP-safe, and maps every element to
- * semantic theme tokens instead of hard-coded colors. GFM adds tables, task
- * lists, strikethrough and autolinks. Links open in the system browser.
+ * Shared markdown renderer (chat messages + editor previews). Renders to React
+ * elements (no raw HTML, no `dangerouslySetInnerHTML`) so it stays CSP-safe, and
+ * maps every element to semantic theme tokens instead of hard-coded colors. GFM
+ * adds tables, task lists, strikethrough and autolinks; links open externally.
  */
 
 const components: Components = {
