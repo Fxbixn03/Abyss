@@ -13,11 +13,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/dialog'
+import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
+import { Markdown } from '@/shared/components/Markdown'
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useInstructionsBase } from '@/features/scope/hooks/useScopedBase'
 import { useTemplatesStore } from '../store/templates.store'
+import { BUILTIN_TEMPLATES } from '../presets'
 import type { PromptTemplate } from '../types'
 
 function slugify(s: string): string {
@@ -29,31 +32,46 @@ function slugify(s: string): string {
   )
 }
 
-function NewTemplateDialog({
+/** Create a new template, or edit an existing one when `editing` is set. */
+function TemplateEditorDialog({
   open,
   onOpenChange,
+  editing,
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
+  editing: PromptTemplate | null
 }) {
   const addTemplate = useTemplatesStore((s) => s.addTemplate)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [tags, setTags] = useState('')
-  const [content, setContent] = useState('')
+  const updateTemplate = useTemplatesStore((s) => s.updateTemplate)
+  const [title, setTitle] = useState(editing?.title ?? '')
+  const [description, setDescription] = useState(editing?.description ?? '')
+  const [tags, setTags] = useState(editing?.tags.join(', ') ?? '')
+  const [content, setContent] = useState(editing?.content ?? '')
 
   const save = () => {
     if (!title.trim() || !content.trim()) return
-    addTemplate({
-      id: `${slugify(title)}-${Date.now().toString(36).slice(-4)}`,
-      title: title.trim(),
-      description: description.trim(),
-      tags: tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean),
-      content,
-    })
+    const tagList = tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+    if (editing) {
+      updateTemplate({
+        ...editing,
+        title: title.trim(),
+        description: description.trim(),
+        tags: tagList,
+        content,
+      })
+    } else {
+      addTemplate({
+        id: `${slugify(title)}-${Date.now().toString(36).slice(-4)}`,
+        title: title.trim(),
+        description: description.trim(),
+        tags: tagList,
+        content,
+      })
+    }
     onOpenChange(false)
   }
 
@@ -61,7 +79,7 @@ function NewTemplateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>New template</DialogTitle>
+          <DialogTitle>{editing ? 'Edit template' : 'New template'}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <div className="space-y-1.5">
@@ -107,9 +125,72 @@ function NewTemplateDialog({
             Cancel
           </Button>
           <Button onClick={save} disabled={!title.trim() || !content.trim()}>
-            Save template
+            {editing ? 'Save changes' : 'Save template'}
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+/** Read-only preview of a template's full content. */
+function TemplatePreviewDialog({
+  template,
+  onOpenChange,
+  onAppend,
+  onCopy,
+}: {
+  template: PromptTemplate | null
+  onOpenChange: (v: boolean) => void
+  onAppend: (t: PromptTemplate) => void
+  onCopy: (t: PromptTemplate) => void
+}) {
+  return (
+    <Dialog open={template !== null} onOpenChange={onOpenChange}>
+      <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {template?.title}
+            {template && !template.builtin && (
+              <Badge variant="muted">custom</Badge>
+            )}
+          </DialogTitle>
+        </DialogHeader>
+        {template && (
+          <>
+            {template.description && (
+              <p className="text-sm text-muted-foreground">
+                {template.description}
+              </p>
+            )}
+            {template.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {template.tags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    className="font-code text-[10px]"
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-muted/30 p-4">
+              <Markdown content={template.content} />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => onCopy(template)}>
+                <Icon name="copy" />
+                Copy
+              </Button>
+              <Button onClick={() => onAppend(template)}>
+                <Icon name="file-text" />
+                Append to instructions
+              </Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   )
@@ -118,14 +199,34 @@ function NewTemplateDialog({
 export function TemplatesPage() {
   const agent = useActiveAgent()
   const base = useInstructionsBase(agent.id)
-  const allTemplates = useTemplatesStore((s) => s.allTemplates)
+  const customTemplates = useTemplatesStore((s) => s.customTemplates)
+  const builtinOverrides = useTemplatesStore((s) => s.builtinOverrides)
+  const hiddenBuiltins = useTemplatesStore((s) => s.hiddenBuiltins)
   const removeTemplate = useTemplatesStore((s) => s.removeTemplate)
-  const templates = allTemplates()
+  const restoreDefaults = useTemplatesStore((s) => s.restoreDefaults)
 
-  const [newOpen, setNewOpen] = useState(false)
+  // Custom templates first, then built-ins (minus deleted, with edits applied).
+  const templates = [
+    ...customTemplates,
+    ...BUILTIN_TEMPLATES.filter((t) => !hiddenBuiltins.includes(t.id)).map(
+      (t) => builtinOverrides[t.id] ?? t,
+    ),
+  ]
+  const canRestore =
+    hiddenBuiltins.length > 0 || Object.keys(builtinOverrides).length > 0
+
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editing, setEditing] = useState<PromptTemplate | null>(null)
+  // Track the preview by id so it follows edits and closes if the item is gone.
+  const [previewId, setPreviewId] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<PromptTemplate | null>(null)
+  const [restoreOpen, setRestoreOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
 
   const specId = agent.getConfigFileSpecs()[0]?.id ?? 'instructions'
+  const previewTemplate = previewId
+    ? (templates.find((t) => t.id === previewId) ?? null)
+    : null
 
   const append = async (t: PromptTemplate) => {
     if (!base) {
@@ -144,6 +245,16 @@ export function TemplatesPage() {
     setNotice(`Copied “${t.title}”.`)
   }
 
+  const openNew = () => {
+    setEditing(null)
+    setEditorOpen(true)
+  }
+
+  const openEdit = (t: PromptTemplate) => {
+    setEditing(t)
+    setEditorOpen(true)
+  }
+
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto pr-1">
       <PageHeader
@@ -151,10 +262,22 @@ export function TemplatesPage() {
         description="Reusable system prompts and rule sets. Apply one to add it to the active agent's instructions."
         icon="library"
         actions={
-          <Button size="sm" onClick={() => setNewOpen(true)}>
-            <Icon name="plus" />
-            New template
-          </Button>
+          <div className="flex items-center gap-2">
+            {canRestore && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRestoreOpen(true)}
+              >
+                <Icon name="rotate-ccw" />
+                Restore defaults
+              </Button>
+            )}
+            <Button size="sm" onClick={openNew}>
+              <Icon name="plus" />
+              New template
+            </Button>
+          </div>
         }
       />
 
@@ -176,65 +299,139 @@ export function TemplatesPage() {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {templates.map((t) => (
-          <Card key={t.id} className="flex flex-col gap-2 p-4">
-            <div className="flex items-start justify-between gap-2">
-              <span className="font-medium">{t.title}</span>
-              {!t.builtin && <Badge variant="muted">custom</Badge>}
-            </div>
-            <p className="text-xs text-muted-foreground">{t.description}</p>
-            {t.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {t.tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="secondary"
-                    className="font-code text-[10px]"
-                  >
-                    {tag}
-                  </Badge>
-                ))}
+        {templates.map((t) => {
+          const edited = t.builtin && t.id in builtinOverrides
+          return (
+            <Card key={t.id} className="flex flex-col gap-2 p-4">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-medium">{t.title}</span>
+                {t.builtin ? (
+                  edited && <Badge variant="secondary">edited</Badge>
+                ) : (
+                  <Badge variant="muted">custom</Badge>
+                )}
               </div>
-            )}
-            <pre className="line-clamp-3 whitespace-pre-wrap rounded-md bg-muted/50 p-2 font-code text-[11px] text-muted-foreground">
-              {t.content}
-            </pre>
-            <div className="mt-auto flex items-center gap-2 pt-1">
-              <Button
-                size="sm"
-                className="flex-1"
-                onClick={() => void append(t)}
+              <p className="text-xs text-muted-foreground">{t.description}</p>
+              {t.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {t.tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="font-code text-[10px]"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setPreviewId(t.id)}
+                title="Open preview"
+                className="group block w-full text-left"
               >
-                <Icon name="file-text" />
-                Append to instructions
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => copy(t)}
-                aria-label="Copy"
-              >
-                <Icon name="copy" />
-              </Button>
-              {!t.builtin && (
+                <pre className="line-clamp-3 whitespace-pre-wrap rounded-md bg-muted/50 p-2 font-code text-[11px] text-muted-foreground transition-colors group-hover:bg-muted">
+                  {t.content}
+                </pre>
+              </button>
+              <div className="mt-auto flex items-center gap-1.5 pt-1">
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => void append(t)}
+                >
+                  <Icon name="file-text" />
+                  Append
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  onClick={() => removeTemplate(t.id)}
+                  onClick={() => setPreviewId(t.id)}
+                  aria-label="Preview"
+                  title="Preview"
+                >
+                  <Icon name="eye" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => copy(t)}
+                  aria-label="Copy"
+                  title="Copy"
+                >
+                  <Icon name="copy" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => openEdit(t)}
+                  aria-label="Edit"
+                  title="Edit"
+                >
+                  <Icon name="pencil" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setPendingDelete(t)}
                   aria-label="Delete"
+                  title="Delete"
                 >
                   <Icon name="trash" />
                 </Button>
-              )}
-            </div>
-          </Card>
-        ))}
+              </div>
+            </Card>
+          )
+        })}
       </div>
 
-      <NewTemplateDialog
-        key={newOpen ? 'open' : 'closed'}
-        open={newOpen}
-        onOpenChange={setNewOpen}
+      <TemplateEditorDialog
+        key={editorOpen ? (editing ? `edit-${editing.id}` : 'new') : 'closed'}
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        editing={editing}
+      />
+
+      <TemplatePreviewDialog
+        template={previewTemplate}
+        onOpenChange={(v) => {
+          if (!v) setPreviewId(null)
+        }}
+        onAppend={(t) => void append(t)}
+        onCopy={copy}
+      />
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null)
+        }}
+        title={`Delete “${pendingDelete?.title ?? ''}”?`}
+        description={
+          pendingDelete?.builtin
+            ? 'This hides the built-in template. Restore defaults brings it back.'
+            : 'This permanently removes the custom template.'
+        }
+        confirmLabel="Delete"
+        onConfirm={() => {
+          const t = pendingDelete
+          setPendingDelete(null)
+          if (t) removeTemplate(t.id)
+        }}
+      />
+
+      <ConfirmDialog
+        open={restoreOpen}
+        onOpenChange={setRestoreOpen}
+        title="Restore default templates?"
+        description="This undoes edits and deletions of the built-in templates. Your custom templates are kept."
+        confirmLabel="Restore"
+        destructive={false}
+        onConfirm={() => {
+          restoreDefaults()
+          setRestoreOpen(false)
+        }}
       />
     </div>
   )
