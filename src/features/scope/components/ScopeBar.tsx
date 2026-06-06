@@ -32,6 +32,15 @@ export function ScopeBar() {
   const setProject = useScopeStore((s) => s.setProject)
   const removeRecent = useScopeStore((s) => s.removeRecent)
 
+  // Show the dropdown alphabetically (by the displayed folder name, then full
+  // path as a tiebreaker). The store keeps its own most-recent-first order.
+  const sortedProjects = [...recentProjects].sort(
+    (a, b) =>
+      baseName(a).localeCompare(baseName(b), undefined, {
+        sensitivity: 'base',
+      }) || a.localeCompare(b),
+  )
+
   const pick = async () => {
     const { path } = await ipc.pickDirectory('Choose a project directory')
     if (path) setProject(path)
@@ -89,7 +98,7 @@ export function ScopeBar() {
                   </span>
                 </SelectTrigger>
                 <SelectContent>
-                  {recentProjects.map((dir) => (
+                  {sortedProjects.map((dir) => (
                     <SelectItem key={dir} value={dir} className="font-code">
                       <span className="flex w-full min-w-[180px] items-center gap-2">
                         <span className="min-w-0 flex-1 truncate" title={dir}>
