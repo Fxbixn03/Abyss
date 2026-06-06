@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { CollectionKind } from '@/shared/types/collections'
 import {
@@ -31,9 +31,6 @@ const KIND_ICON: Record<CollectionKind, string> = {
   skills: 'graduation-cap',
 }
 
-/** Cap content used for keyword matching so large files don't slow filtering. */
-const CONTENT_KEYWORD_LIMIT = 4000
-
 interface PaletteItem {
   kind: CollectionKind
   id: string
@@ -46,6 +43,17 @@ interface PaletteItem {
 export function CommandPalette() {
   const open = useCommandPalette((s) => s.open)
   const setOpen = useCommandPalette((s) => s.setOpen)
+
+  return (
+    <CommandDialog open={open} onOpenChange={setOpen}>
+      {/* The body lives inside the dialog content, which unmounts on close, so
+          its search/items state resets cleanly every time the palette opens. */}
+      <PaletteBody onClose={() => setOpen(false)} />
+    </CommandDialog>
+  )
+}
+
+function PaletteBody({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
 
   const agents = useAllAgents()
@@ -55,8 +63,31 @@ export function CommandPalette() {
   const requestOpen = useCollectionSelection((s) => s.requestOpen)
 
   const [items, setItems] = useState<PaletteItem[]>([])
+  const [search, setSearch] = useState('')
+
+  // Lowercase each item's body once per loaded set. Searching it with a plain
+  // substring test (below) stays fast even for multi-KB files — feeding those
+  // bodies to cmdk's fuzzy scorer as keywords is what made typing stutter.
+  const contentIndex = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const i of items) map.set(`${i.kind}-${i.id}`, i.content.toLowerCase())
+    return map
+  }, [items])
+
+  // Keys of items whose body contains the query. We inject the query into those
+  // items' keywords so cmdk keeps them, without it having to scan the body.
+  const contentMatches = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    const hits = new Set<string>()
+    if (q.length < 2) return hits
+    for (const [key, text] of contentIndex) {
+      if (text.includes(q)) hits.add(key)
+    }
+    return hits
+  }, [contentIndex, search])
+
   useEffect(() => {
-    if (!open || !basePath) return
+    if (!basePath) return
     let active = true
     const kinds = COLLECTION_KINDS.filter((k) => activeAgent.capabilities[k])
     void Promise.all(
@@ -90,7 +121,7 @@ export function CommandPalette() {
     return () => {
       active = false
     }
-  }, [open, basePath, activeAgent.id, activeAgent.capabilities])
+  }, [basePath, activeAgent.id, activeAgent.capabilities])
 
   const toggleAppearance = useThemeStore((s) => s.toggleAppearance)
   const setAgentTheme = useThemeStore((s) => s.setAgentTheme)
@@ -105,12 +136,16 @@ export function CommandPalette() {
 
   const run = (fn: () => void) => () => {
     fn()
-    setOpen(false)
+    onClose()
   }
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Search agents, pages, themes…" />
+    <>
+      <CommandInput
+        value={search}
+        onValueChange={setSearch}
+        placeholder="Search agents, pages, themes…"
+      />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
 
@@ -165,7 +200,9 @@ export function CommandPalette() {
                 value={`item ${item.name} ${item.id} ${item.kind}`}
                 keywords={[
                   item.description,
-                  item.content.slice(0, CONTENT_KEYWORD_LIMIT),
+                  // Keep body matches in the results without making cmdk scan
+                  // the whole file: the substring test already decided this.
+                  contentMatches.has(`${item.kind}-${item.id}`) ? search : '',
                 ]}
                 onSelect={run(() => {
                   requestOpen(item.kind, item.id)
@@ -202,6 +239,6 @@ export function CommandPalette() {
           ))}
         </CommandGroup>
       </CommandList>
-    </CommandDialog>
+    </>
   )
 }
