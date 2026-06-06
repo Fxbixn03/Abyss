@@ -44,6 +44,7 @@ const ROUTE_GROUP: Record<string, NavGroupId> = {
   '/chats': 'runtime',
   '/context': 'runtime',
   '/history': 'runtime',
+  '/validation': 'system',
   '/mcp': 'system',
   '/hooks': 'system',
   '/permissions': 'system',
@@ -80,6 +81,13 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: 'list-tree',
     route: '/context',
     description: 'Compiled prompt & conflicts',
+  },
+  {
+    id: 'validation',
+    label: 'Validation',
+    icon: 'clipboard-check',
+    route: '/validation',
+    description: 'Lint your agent config',
   },
   {
     id: 'history',

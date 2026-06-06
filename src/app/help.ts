@@ -38,6 +38,13 @@ export const PAGE_HELP: Record<string, HelpEntry> = {
       'The Conflicts section flags contradictory rules, duplicated instructions and MCP servers that clash across agents.',
     ],
   },
+  '/validation': {
+    title: 'Validation',
+    body: [
+      'A linter for your AI setup: it flags dangerous permissions, oversized context, unused skills, broken MCP/hook wiring and contradictory instructions.',
+      'Errors are likely breakages, warnings are risks, hints are suggestions. Re-run after edits.',
+    ],
+  },
   '/history': {
     title: 'History',
     body: [
@@ -81,7 +88,7 @@ export const PAGE_HELP: Record<string, HelpEntry> = {
   '/commands': {
     title: 'Commands',
     body: [
-      'Custom slash commands (e.g. /review) are reusable prompts you trigger by name in a session.',
+      'Custom slash commands (e.g. /review) are reusable prompts only you can trigger by name in a session. The AI Agent cant call them on its own.',
       'Each command is a markdown file with the prompt body and optional metadata.',
     ],
   },
