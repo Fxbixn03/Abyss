@@ -12,6 +12,8 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
+import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
+import { UnsavedGuard } from '@/shared/components/UnsavedGuard'
 import { ConfigEditor } from '@/features/config/components/ConfigEditor'
 import { ValidationList } from '@/features/config/components/ValidationList'
 import { DiffPreviewDialog } from '@/features/config/components/DiffPreviewDialog'
@@ -64,6 +66,8 @@ export function SettingsFilePage() {
   const [exists, setExists] = useState(false)
   const [saving, setSaving] = useState(false)
   const [diffOpen, setDiffOpen] = useState(false)
+  // File the user clicked while the current one has unsaved edits.
+  const [pendingFile, setPendingFile] = useState<RawSettingsFile | null>(null)
 
   useEffect(() => {
     if (!supported || !basePath) return
@@ -83,6 +87,13 @@ export function SettingsFilePage() {
   const issues = useMemo(() => validateJson(draft), [draft])
   const dirty = draft !== original
   const hasErrors = issues.length > 0
+
+  // Switching files reloads the editor, so confirm when the draft is dirty.
+  const requestFile = (f: RawSettingsFile) => {
+    if (f === file) return
+    if (dirty) setPendingFile(f)
+    else setFile(f)
+  }
 
   const performSave = async () => {
     if (!basePath) return
@@ -155,7 +166,7 @@ export function SettingsFilePage() {
           <button
             key={f}
             type="button"
-            onClick={() => setFile(f)}
+            onClick={() => requestFile(f)}
             className={cn(
               'flex items-center gap-2 rounded-md px-3 py-1.5 font-code text-xs font-medium transition-colors',
               f === file
@@ -208,6 +219,23 @@ export function SettingsFilePage() {
         saving={saving}
         onConfirm={() => void performSave()}
       />
+
+      <ConfirmDialog
+        open={pendingFile !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingFile(null)
+        }}
+        title="Discard unsaved changes?"
+        description={`You have unsaved edits in ${file}. Switching files will discard them.`}
+        confirmLabel="Discard"
+        onConfirm={() => {
+          const next = pendingFile
+          setPendingFile(null)
+          if (next) setFile(next)
+        }}
+      />
+
+      <UnsavedGuard dirty={dirty} />
     </div>
   )
 }

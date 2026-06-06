@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ConfigLanguage } from '@/shared/types/agent'
 import { Markdown } from '@/shared/components/Markdown'
 import { cn } from '@/shared/lib/utils'
@@ -21,6 +21,40 @@ export function MarkdownEditor({
   onChange: (value: string) => void
 }) {
   const [mode, setMode] = useState<Mode>('edit')
+  const editorPaneRef = useRef<HTMLDivElement>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
+
+  // In split mode, keep the editor and preview scrolled to the same relative
+  // position so the rendered output tracks the source you're editing.
+  useEffect(() => {
+    if (mode !== 'split') return
+    const editor =
+      editorPaneRef.current?.querySelector<HTMLElement>('.cm-scroller')
+    const preview = previewRef.current
+    if (!editor || !preview) return
+
+    let syncing = false
+    const link = (from: HTMLElement, to: HTMLElement) => () => {
+      if (syncing) return
+      syncing = true
+      const max = from.scrollHeight - from.clientHeight
+      const ratio = max > 0 ? from.scrollTop / max : 0
+      to.scrollTop = ratio * (to.scrollHeight - to.clientHeight)
+      // Release on the next frame, after the programmatic scroll above has
+      // fired its own scroll event (which we want to ignore).
+      requestAnimationFrame(() => {
+        syncing = false
+      })
+    }
+    const onEditorScroll = link(editor, preview)
+    const onPreviewScroll = link(preview, editor)
+    editor.addEventListener('scroll', onEditorScroll, { passive: true })
+    preview.addEventListener('scroll', onPreviewScroll, { passive: true })
+    return () => {
+      editor.removeEventListener('scroll', onEditorScroll)
+      preview.removeEventListener('scroll', onPreviewScroll)
+    }
+  }, [mode, value])
 
   if (language !== 'markdown') {
     return (
@@ -54,7 +88,7 @@ export function MarkdownEditor({
         )}
       >
         {mode !== 'preview' && (
-          <div className="h-full min-h-0">
+          <div ref={editorPaneRef} className="h-full min-h-0">
             <ConfigEditor
               value={value}
               language={language}
@@ -63,7 +97,10 @@ export function MarkdownEditor({
           </div>
         )}
         {mode !== 'edit' && (
-          <div className="h-full min-h-0 overflow-auto rounded-md border border-border bg-card/40 p-4">
+          <div
+            ref={previewRef}
+            className="h-full min-h-0 overflow-auto rounded-md border border-border bg-card/40 p-4"
+          >
             <Markdown content={value} />
           </div>
         )}

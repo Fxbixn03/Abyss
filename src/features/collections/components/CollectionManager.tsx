@@ -57,6 +57,8 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
   const [items, setItems] = useState<CollectionItem[]>([])
   const [loaded, setLoaded] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  // Item the user clicked while the open one has unsaved edits, pending confirm.
+  const [pendingSelectId, setPendingSelectId] = useState<string | null>(null)
 
   const [original, setOriginal] = useState('')
   const [draft, setDraft] = useState('')
@@ -93,6 +95,13 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
   } | null>(null)
 
   const dirty = draft !== original
+
+  // Switching items discards the open draft, so confirm first when it's dirty.
+  const requestSelect = (id: string) => {
+    if (id === selectedId) return
+    if (dirty) setPendingSelectId(id)
+    else setSelectedId(id)
+  }
 
   // Used by the event handlers (create/save/delete) to reload the list.
   const refresh = useCallback(async () => {
@@ -555,7 +564,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
                       <ContextMenuTrigger asChild>
                         <button
                           type="button"
-                          onClick={() => setSelectedId(item.id)}
+                          onClick={() => requestSelect(item.id)}
                           className={cn(
                             'flex min-w-0 flex-1 flex-col gap-0.5 rounded-md border px-3 py-2 text-left transition-colors',
                             active
@@ -879,6 +888,21 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
         filePath={filePath}
         current={original}
         onRestored={() => void reloadFromDisk()}
+      />
+
+      <ConfirmDialog
+        open={pendingSelectId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingSelectId(null)
+        }}
+        title="Discard unsaved changes?"
+        description={`You have unsaved edits on "${selectedItem?.name ?? 'this item'}". Opening another item will discard them.`}
+        confirmLabel="Discard"
+        onConfirm={() => {
+          const next = pendingSelectId
+          setPendingSelectId(null)
+          if (next) setSelectedId(next)
+        }}
       />
 
       <UnsavedGuard dirty={dirty} />
