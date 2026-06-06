@@ -16,6 +16,7 @@ const CAPABILITY_LABELS: Record<keyof AgentCapabilities, string> = {
   skills: 'Skills',
   hooks: 'Hooks',
   rawSettings: 'Settings',
+  chats: 'Chats',
 }
 
 export function AgentCard({ agent }: { agent: AgentAdapter }) {
@@ -68,7 +69,11 @@ export function AgentCard({ agent }: { agent: AgentAdapter }) {
       {capabilities.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1">
           {capabilities.map((key) => (
-            <Badge key={key} variant="secondary" className="font-code text-[10px]">
+            <Badge
+              key={key}
+              variant="secondary"
+              className="font-code text-[10px]"
+            >
               {CAPABILITY_LABELS[key]}
             </Badge>
           ))}

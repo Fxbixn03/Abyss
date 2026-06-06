@@ -35,7 +35,12 @@ export function registerFilesystemIpc(ctx: IpcContext): void {
 
   handle(IpcChannel.PickFile, async ({ title, defaultPath, filters }) => {
     const window = ctx.getWindow()
-    const options = { title, defaultPath, filters, properties: ['openFile' as const] }
+    const options = {
+      title,
+      defaultPath,
+      filters,
+      properties: ['openFile' as const],
+    }
     const result = await (window
       ? dialog.showOpenDialog(window, options)
       : dialog.showOpenDialog(options))

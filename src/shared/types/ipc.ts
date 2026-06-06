@@ -19,8 +19,18 @@ import type {
   SkillImportResult,
 } from './collections'
 import type { HookEntry } from './hooks'
+import type {
+  ChatAvailability,
+  ChatPermissionDecision,
+  ChatSessionMeta,
+  ChatStartOptions,
+  ChatStreamEnvelope,
+  ChatTranscript,
+} from './chat'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
+
+export type ChatExportFormat = 'markdown' | 'json'
 
 export enum IpcChannel {
   // App / meta
@@ -69,6 +79,37 @@ export enum IpcChannel {
   // Raw settings files
   ReadRawSettings = 'raw-settings:read',
   WriteRawSettings = 'raw-settings:write',
+
+  // Chats — history (read)
+  ChatListSessions = 'chat:list-sessions',
+  ChatReadSession = 'chat:read-session',
+  ChatDeleteSession = 'chat:delete-session',
+  ChatExportSession = 'chat:export-session',
+
+  // Chats — auth (subscription login lifecycle)
+  ChatAvailability = 'chat:availability',
+  ChatLogin = 'chat:login',
+  ChatLogout = 'chat:logout',
+
+  // Chats — live session (read/write)
+  ChatStart = 'chat:start',
+  ChatSend = 'chat:send',
+  ChatRespondPermission = 'chat:respond-permission',
+  ChatInterrupt = 'chat:interrupt',
+  ChatStop = 'chat:stop',
+}
+
+/**
+ * Push channels (main → renderer). Mirrors {@link IpcMap}'s typing for the
+ * event bus the preload bridge exposes via `on(...)`. This is the only
+ * streaming surface; everything else is request/response over `invoke`.
+ */
+export enum IpcEvent {
+  ChatStream = 'chat:stream',
+}
+
+export interface IpcEventMap {
+  [IpcEvent.ChatStream]: ChatStreamEnvelope
 }
 
 /** Maps each channel to its request and response payloads. */
@@ -213,6 +254,65 @@ export interface IpcMap {
     request: { basePath: string; file: RawSettingsFile; content: string }
     response: { success: boolean; path: string }
   }
+
+  [IpcChannel.ChatListSessions]: {
+    request: { agentId: AgentId }
+    response: ChatSessionMeta[]
+  }
+  [IpcChannel.ChatReadSession]: {
+    request: { agentId: AgentId; sessionId: string }
+    response: ChatTranscript
+  }
+  [IpcChannel.ChatDeleteSession]: {
+    request: { agentId: AgentId; sessionId: string }
+    response: { success: boolean }
+  }
+  [IpcChannel.ChatExportSession]: {
+    request: {
+      agentId: AgentId
+      sessionId: string
+      format: ChatExportFormat
+    }
+    response: { path: string | null }
+  }
+
+  [IpcChannel.ChatAvailability]: {
+    request: { agentId: AgentId }
+    response: ChatAvailability
+  }
+  [IpcChannel.ChatLogin]: {
+    request: { agentId: AgentId; persist: boolean; apiKey?: string }
+    response: ChatAvailability
+  }
+  [IpcChannel.ChatLogout]: {
+    request: { agentId: AgentId }
+    response: { success: boolean }
+  }
+
+  [IpcChannel.ChatStart]: {
+    request: ChatStartOptions
+    response: { liveId: string }
+  }
+  [IpcChannel.ChatSend]: {
+    request: { liveId: string; text: string }
+    response: { success: boolean }
+  }
+  [IpcChannel.ChatRespondPermission]: {
+    request: {
+      liveId: string
+      requestId: string
+      decision: ChatPermissionDecision
+    }
+    response: { success: boolean }
+  }
+  [IpcChannel.ChatInterrupt]: {
+    request: { liveId: string }
+    response: { success: boolean }
+  }
+  [IpcChannel.ChatStop]: {
+    request: { liveId: string }
+    response: { success: boolean }
+  }
 }
 
 export type IpcRequest<C extends IpcChannel> = IpcMap[C]['request']
@@ -224,4 +324,9 @@ export interface AbyssBridge {
     channel: C,
     payload: IpcRequest<C>,
   ): Promise<IpcResponse<C>>
+  /** Subscribe to a push channel; returns an unsubscribe function. */
+  on<E extends IpcEvent>(
+    event: E,
+    handler: (payload: IpcEventMap[E]) => void,
+  ): () => void
 }

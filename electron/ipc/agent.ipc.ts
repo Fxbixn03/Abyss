@@ -11,7 +11,9 @@ export function registerAgentIpc(ctx: IpcContext): void {
     readAgentConfigFile(agentId, specId, basePath),
   )
 
-  handle(IpcChannel.WriteAgentConfig, ({ agentId, specId, basePath, content }) =>
-    writeAgentConfigFile(agentId, specId, basePath, content),
+  handle(
+    IpcChannel.WriteAgentConfig,
+    ({ agentId, specId, basePath, content }) =>
+      writeAgentConfigFile(agentId, specId, basePath, content),
   )
 }
