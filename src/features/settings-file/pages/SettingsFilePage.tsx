@@ -18,6 +18,23 @@ import { DiffPreviewDialog } from '@/features/config/components/DiffPreviewDialo
 
 const FILES: RawSettingsFile[] = ['settings.json', 'settings.local.json']
 
+// Color-coded so the two distinct files are easy to tell apart at a glance.
+const FILE_META: Record<
+  RawSettingsFile,
+  { dot: string; active: string; hint: string }
+> = {
+  'settings.json': {
+    dot: 'bg-primary',
+    active: 'bg-primary/10 text-primary ring-1 ring-primary/30',
+    hint: 'Shared settings — typically committed to source control.',
+  },
+  'settings.local.json': {
+    dot: 'bg-warning',
+    active: 'bg-warning/10 text-warning ring-1 ring-warning/30',
+    hint: 'Local overrides — personal and usually git-ignored.',
+  },
+}
+
 function validateJson(content: string): ValidationIssue[] {
   if (content.trim() === '') return []
   try {
@@ -140,12 +157,19 @@ export function SettingsFilePage() {
             type="button"
             onClick={() => setFile(f)}
             className={cn(
-              'rounded-md px-3 py-1.5 font-code text-xs font-medium transition-colors',
+              'flex items-center gap-2 rounded-md px-3 py-1.5 font-code text-xs font-medium transition-colors',
               f === file
-                ? 'bg-background text-foreground shadow-sm'
+                ? FILE_META[f].active
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >
+            <span
+              className={cn(
+                'size-2 shrink-0 rounded-full',
+                FILE_META[f].dot,
+                f === file ? '' : 'opacity-60',
+              )}
+            />
             {f}
           </button>
         ))}
@@ -154,6 +178,11 @@ export function SettingsFilePage() {
           {dirty && <Badge variant="default">unsaved</Badge>}
         </div>
       </div>
+
+      <p className="-mt-1 flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
+        <Icon name="info" className="size-3.5 shrink-0" />
+        {FILE_META[file].hint}
+      </p>
 
       <div className="min-h-0 flex-1">
         <ConfigEditor value={draft} language="json" onChange={setDraft} />
