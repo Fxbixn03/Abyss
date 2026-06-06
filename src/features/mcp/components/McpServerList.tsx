@@ -92,9 +92,10 @@ export function McpServerList({
               size="sm"
               onClick={() => onTest(server)}
               disabled={Boolean(state && 'loading' in state)}
+              title="Re-spawn the server and re-check its status"
             >
-              <Icon name="plug" />
-              Test
+              <Icon name="refresh-cw" />
+              Restart
             </Button>
             <Button
               variant="ghost"

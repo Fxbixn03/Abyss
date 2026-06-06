@@ -3,6 +3,7 @@ import { PageHeader } from '@/shared/components/PageHeader'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { PathsSection } from '../components/PathsSection'
+import { AgentsSection } from '../components/AgentsSection'
 import { AppearanceSection } from '../components/AppearanceSection'
 import { AgentIconsSection } from '../components/AgentIconsSection'
 import { PreferencesSection } from '../components/PreferencesSection'
@@ -17,7 +18,13 @@ interface Section {
 }
 
 const SECTIONS: Section[] = [
-  { id: 'paths', label: 'Config Paths', icon: 'folder', render: <PathsSection /> },
+  { id: 'agents', label: 'Agents', icon: 'bot', render: <AgentsSection /> },
+  {
+    id: 'paths',
+    label: 'Config Paths',
+    icon: 'folder',
+    render: <PathsSection />,
+  },
   {
     id: 'appearance',
     label: 'Appearance',

@@ -10,6 +10,7 @@ import { AgentAvatar } from '@/features/agents/components/AgentAvatar'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { UsagePanel } from '../components/UsagePanel'
+import { StatusPreview } from '../components/StatusPreview'
 
 export function DashboardPage() {
   const agent = useActiveAgent()
@@ -49,6 +50,7 @@ export function DashboardPage() {
       </section>
 
       <UsagePanel />
+      <StatusPreview />
     </div>
   )
 }
