@@ -8,6 +8,7 @@ import type { AgentId, DetectedPath } from './agent'
 import type {
   AppInfo,
   AppSettings,
+  McpHealthResult,
   McpServerEntry,
   ModelEnvConfig,
   PermissionRules,
@@ -59,6 +60,7 @@ export enum IpcChannel {
   // MCP servers
   GetMcpServers = 'mcp:get',
   SetMcpServers = 'mcp:set',
+  McpHealthCheck = 'mcp:health-check',
 
   // Tool permissions
   GetPermissions = 'permissions:get',
@@ -206,6 +208,10 @@ export interface IpcMap {
   [IpcChannel.SetMcpServers]: {
     request: { agentId: AgentId; basePath: string; servers: McpServerEntry[] }
     response: { success: boolean; path: string }
+  }
+  [IpcChannel.McpHealthCheck]: {
+    request: { entry: McpServerEntry }
+    response: McpHealthResult
   }
 
   [IpcChannel.GetPermissions]: {

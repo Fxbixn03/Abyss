@@ -80,6 +80,8 @@ export const ipc = {
     basePath: string,
     servers: McpServerEntry[],
   ) => invoke(IpcChannel.SetMcpServers, { agentId, basePath, servers }),
+  mcpHealthCheck: (entry: McpServerEntry) =>
+    invoke(IpcChannel.McpHealthCheck, { entry }),
 
   getPermissions: (agentId: AgentId, basePath: string) =>
     invoke(IpcChannel.GetPermissions, { agentId, basePath }),

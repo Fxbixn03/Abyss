@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import { IpcChannel } from '@/shared/types/ipc'
 import { readMcpServers, writeMcpServers } from '@core/mcp'
+import { checkMcpHealth } from '@core/mcp-health'
 import {
   readModelEnv,
   readPermissions,
@@ -31,6 +32,7 @@ export function registerConfigIpc(ctx: IpcContext): void {
   handle(IpcChannel.SetMcpServers, ({ basePath, servers }) =>
     writeMcpServers(basePath, servers),
   )
+  handle(IpcChannel.McpHealthCheck, ({ entry }) => checkMcpHealth(entry))
 
   // Tool permissions
   handle(IpcChannel.GetPermissions, ({ basePath }) => readPermissions(basePath))

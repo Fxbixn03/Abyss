@@ -10,6 +10,7 @@ import { useBasePath } from '@/features/settings/hooks/useBasePath'
 import { useMcpStore } from '../store/mcp.store'
 import { McpServerList } from '../components/McpServerList'
 import { McpServerForm } from '../components/McpServerForm'
+import { McpCatalogDialog } from '../components/McpCatalogDialog'
 
 export function McpPage() {
   const agent = useActiveAgent()
@@ -18,12 +19,15 @@ export function McpPage() {
 
   const servers = useMcpStore((s) => s.servers)
   const loading = useMcpStore((s) => s.loading)
+  const health = useMcpStore((s) => s.health)
   const load = useMcpStore((s) => s.load)
   const upsert = useMcpStore((s) => s.upsert)
   const remove = useMcpStore((s) => s.remove)
   const toggle = useMcpStore((s) => s.toggle)
+  const test = useMcpStore((s) => s.test)
 
   const [formOpen, setFormOpen] = useState(false)
+  const [catalogOpen, setCatalogOpen] = useState(false)
   const [editing, setEditing] = useState<McpServerEntry | undefined>()
 
   const supported = agent.capabilities.mcp
@@ -52,16 +56,26 @@ export function McpPage() {
         description="User-scoped servers, auto-detected from ~/.claude.json"
         icon="plug"
         actions={
-          <Button
-            onClick={() => {
-              setEditing(undefined)
-              setFormOpen(true)
-            }}
-            disabled={!basePath}
-          >
-            <Icon name="plus" />
-            Add server
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setCatalogOpen(true)}
+              disabled={!basePath}
+            >
+              <Icon name="package" />
+              Catalog
+            </Button>
+            <Button
+              onClick={() => {
+                setEditing(undefined)
+                setFormOpen(true)
+              }}
+              disabled={!basePath}
+            >
+              <Icon name="plus" />
+              Add server
+            </Button>
+          </div>
         }
       />
 
@@ -105,8 +119,10 @@ export function McpPage() {
         <div className="overflow-y-auto">
           <McpServerList
             servers={servers}
+            health={health}
             onToggle={(id) => void toggle(id)}
             onRemove={(id) => void remove(id)}
+            onTest={(server) => void test(server)}
             onEdit={(server) => {
               setEditing(server)
               setFormOpen(true)
@@ -120,6 +136,16 @@ export function McpPage() {
         onOpenChange={setFormOpen}
         initial={editing}
         onSubmit={(entry) => void upsert(entry)}
+      />
+
+      <McpCatalogDialog
+        open={catalogOpen}
+        onOpenChange={setCatalogOpen}
+        existingNames={servers.map((s) => s.name)}
+        onPick={(entry) => {
+          setEditing(entry)
+          setFormOpen(true)
+        }}
       />
     </div>
   )

@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import type { AgentId } from '@/shared/types/agent'
-import type { McpServerEntry } from '@/shared/types/config'
+import type { McpHealthResult, McpServerEntry } from '@/shared/types/config'
 import { ipc } from '@/shared/ipc/ipc.client'
+
+export type McpHealthState = { loading: true } | McpHealthResult
 
 interface McpState {
   agentId: AgentId | null
@@ -9,11 +11,14 @@ interface McpState {
   servers: McpServerEntry[]
   loading: boolean
   saving: boolean
+  /** Last "test connection" result per server id. */
+  health: Record<string, McpHealthState>
 
   load: (agentId: AgentId, basePath: string) => Promise<void>
   upsert: (entry: McpServerEntry) => Promise<void>
   remove: (id: string) => Promise<void>
   toggle: (id: string) => Promise<void>
+  test: (entry: McpServerEntry) => Promise<void>
 }
 
 export const useMcpStore = create<McpState>()((set, get) => ({
@@ -22,6 +27,7 @@ export const useMcpStore = create<McpState>()((set, get) => ({
   servers: [],
   loading: false,
   saving: false,
+  health: {},
 
   load: async (agentId, basePath) => {
     set({ agentId, basePath, loading: true })
@@ -40,7 +46,11 @@ export const useMcpStore = create<McpState>()((set, get) => ({
   },
 
   remove: async (id) => {
-    await persist(set, get, get().servers.filter((s) => s.id !== id))
+    await persist(
+      set,
+      get,
+      get().servers.filter((s) => s.id !== id),
+    )
   },
 
   toggle: async (id) => {
@@ -51,6 +61,12 @@ export const useMcpStore = create<McpState>()((set, get) => ({
         s.id === id ? { ...s, enabled: !s.enabled } : s,
       ),
     )
+  },
+
+  test: async (entry) => {
+    set({ health: { ...get().health, [entry.id]: { loading: true } } })
+    const result = await ipc.mcpHealthCheck(entry)
+    set({ health: { ...get().health, [entry.id]: result } })
   },
 }))
 

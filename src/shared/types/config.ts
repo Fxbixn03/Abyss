@@ -20,6 +20,17 @@ export interface McpServerEntry {
   enabled: boolean
 }
 
+/** Result of a "test connection" health check against an MCP server. */
+export interface McpHealthResult {
+  ok: boolean
+  /** Tool names reported by the server (stdio transport). */
+  tools: string[]
+  serverName?: string
+  serverVersion?: string
+  error?: string
+  durationMs: number
+}
+
 /** Allow / deny / ask permission rules. */
 export interface PermissionRules {
   allow: string[]
