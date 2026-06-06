@@ -170,6 +170,13 @@ export const ipc = {
     invoke(IpcChannel.ChatInterrupt, { liveId }),
   chatStop: (liveId: string) => invoke(IpcChannel.ChatStop, { liveId }),
 
+  // --- Snapshots ------------------------------------------------------------
+  listSnapshots: (path: string) => invoke(IpcChannel.SnapshotList, { path }),
+  listRecentSnapshots: (limit?: number) =>
+    invoke(IpcChannel.SnapshotListRecent, { limit }),
+  readSnapshot: (id: string) => invoke(IpcChannel.SnapshotRead, { id }),
+  restoreSnapshot: (id: string) => invoke(IpcChannel.SnapshotRestore, { id }),
+
   // --- Push subscription (streaming) ---------------------------------------
   subscribe: <E extends IpcEvent>(
     event: E,

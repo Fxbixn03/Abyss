@@ -4,6 +4,7 @@
 
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
+import { recordSnapshot } from './snapshots'
 
 export async function pathExists(p: string): Promise<boolean> {
   try {
@@ -28,6 +29,13 @@ export async function writeTextFileAtomic(
   content: string,
 ): Promise<void> {
   await ensureDir(path.dirname(p))
+  // Safety net: snapshot the previous content before overwriting (best-effort).
+  if (await pathExists(p)) {
+    const previous = await readTextFile(p).catch(() => null)
+    if (previous !== null && previous !== content) {
+      await recordSnapshot(p, previous)
+    }
+  }
   const tmp = `${p}.abyss-tmp-${process.pid}`
   await fs.writeFile(tmp, content, 'utf8')
   await fs.rename(tmp, p)

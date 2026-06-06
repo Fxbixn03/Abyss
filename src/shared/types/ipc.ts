@@ -27,6 +27,7 @@ import type {
   ChatStreamEnvelope,
   ChatTranscript,
 } from './chat'
+import type { SnapshotContent, SnapshotMeta } from './snapshots'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
 
@@ -98,6 +99,12 @@ export enum IpcChannel {
   ChatRespondPermission = 'chat:respond-permission',
   ChatInterrupt = 'chat:interrupt',
   ChatStop = 'chat:stop',
+
+  // Snapshots (config write safety net)
+  SnapshotList = 'snapshot:list',
+  SnapshotListRecent = 'snapshot:list-recent',
+  SnapshotRead = 'snapshot:read',
+  SnapshotRestore = 'snapshot:restore',
 }
 
 /**
@@ -317,6 +324,23 @@ export interface IpcMap {
   [IpcChannel.ChatStop]: {
     request: { liveId: string }
     response: { success: boolean }
+  }
+
+  [IpcChannel.SnapshotList]: {
+    request: { path: string }
+    response: SnapshotMeta[]
+  }
+  [IpcChannel.SnapshotListRecent]: {
+    request: { limit?: number }
+    response: SnapshotMeta[]
+  }
+  [IpcChannel.SnapshotRead]: {
+    request: { id: string }
+    response: SnapshotContent | null
+  }
+  [IpcChannel.SnapshotRestore]: {
+    request: { id: string }
+    response: { success: boolean; path: string } | null
   }
 }
 
