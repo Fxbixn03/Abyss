@@ -142,7 +142,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
-export const ACTIVE_AGENT_IDS: string[] = ['claude', 'codex']
+export const ACTIVE_AGENT_IDS: string[] = ['claude', 'codex', 'gemini']
 
 export function getAgentDefinition(id: string): AgentDefinition {
   const def = AGENT_DEFINITIONS[id]
