@@ -66,6 +66,24 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   onboarded: false,
 }
 
+/** Auto-update lifecycle, pushed to the renderer as it progresses. */
+export type UpdateState =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'not-available'
+  | 'downloading'
+  | 'downloaded'
+  | 'error'
+
+export interface UpdateStatus {
+  state: UpdateState
+  version?: string
+  /** 0–100 while downloading. */
+  percent?: number
+  message?: string
+}
+
 /** App / build metadata surfaced in the About screen. */
 export interface AppInfo {
   name: string

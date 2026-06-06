@@ -12,6 +12,7 @@ import type {
   McpServerEntry,
   ModelEnvConfig,
   PermissionRules,
+  UpdateStatus,
 } from './config'
 import type {
   CollectionItem,
@@ -128,6 +129,11 @@ export enum IpcChannel {
   // Themes (import / export)
   ThemeExport = 'theme:export',
   ThemeImport = 'theme:import',
+
+  // Auto-update
+  UpdateCheck = 'update:check',
+  UpdateDownload = 'update:download',
+  UpdateInstall = 'update:install',
 }
 
 /**
@@ -137,10 +143,12 @@ export enum IpcChannel {
  */
 export enum IpcEvent {
   ChatStream = 'chat:stream',
+  UpdateStatus = 'update:status',
 }
 
 export interface IpcEventMap {
   [IpcEvent.ChatStream]: ChatStreamEnvelope
+  [IpcEvent.UpdateStatus]: UpdateStatus
 }
 
 /** Maps each channel to its request and response payloads. */
@@ -424,6 +432,19 @@ export interface IpcMap {
   [IpcChannel.ThemeImport]: {
     request: Record<string, never>
     response: { theme: ThemeConfig | null; error?: string }
+  }
+
+  [IpcChannel.UpdateCheck]: {
+    request: Record<string, never>
+    response: { ok: boolean; error?: string }
+  }
+  [IpcChannel.UpdateDownload]: {
+    request: Record<string, never>
+    response: { ok: boolean; error?: string }
+  }
+  [IpcChannel.UpdateInstall]: {
+    request: Record<string, never>
+    response: { ok: boolean }
   }
 }
 

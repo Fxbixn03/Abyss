@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
-import type { AppInfo } from '@/shared/types/config'
+import type { AppInfo, UpdateStatus } from '@/shared/types/config'
+import { IpcEvent } from '@/shared/types/ipc'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card'
+import { Button } from '@/shared/components/ui/button'
+import { Icon } from '@/shared/components/Icon'
 import { AbyssLogo } from '@/shared/components/AbyssLogo'
 import { ipc } from '@/shared/ipc/ipc.client'
 
@@ -16,6 +19,69 @@ function InfoRow({ label, value }: { label: string; value: string }) {
       <span data-selectable className="font-code text-xs">
         {value}
       </span>
+    </div>
+  )
+}
+
+function UpdateBlock() {
+  const [status, setStatus] = useState<UpdateStatus>({ state: 'idle' })
+
+  useEffect(() => ipc.subscribe(IpcEvent.UpdateStatus, setStatus), [])
+
+  const label: Record<UpdateStatus['state'], string> = {
+    idle: 'Up to date',
+    checking: 'Checking for updates…',
+    'not-available': 'You’re on the latest version.',
+    available: `Update available${status.version ? ` (v${status.version})` : ''}`,
+    downloading: `Downloading… ${status.percent ?? 0}%`,
+    downloaded: `Ready to install${status.version ? ` (v${status.version})` : ''}`,
+    error: status.message ?? 'Update error',
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
+      <span className="flex items-center gap-2 text-sm">
+        <Icon
+          name={
+            status.state === 'checking' || status.state === 'downloading'
+              ? 'loader'
+              : status.state === 'error'
+                ? 'circle-alert'
+                : 'refresh-cw'
+          }
+          className={
+            status.state === 'checking' || status.state === 'downloading'
+              ? 'size-4 animate-spin'
+              : 'size-4'
+          }
+        />
+        <span
+          className={status.state === 'error' ? 'text-destructive' : undefined}
+        >
+          {label[status.state]}
+        </span>
+      </span>
+      {status.state === 'downloaded' ? (
+        <Button size="sm" onClick={() => void ipc.updateInstall()}>
+          Restart &amp; install
+        </Button>
+      ) : status.state === 'available' ? (
+        <Button size="sm" onClick={() => void ipc.updateDownload()}>
+          <Icon name="download" />
+          Download
+        </Button>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void ipc.updateCheck()}
+          disabled={
+            status.state === 'checking' || status.state === 'downloading'
+          }
+        >
+          Check for updates
+        </Button>
+      )}
     </div>
   )
 }
@@ -46,6 +112,7 @@ export function AboutSection() {
           instructions, MCP servers, permissions and more, for every agent, in
           one place.
         </p>
+        <UpdateBlock />
         {info && (
           <div className="divide-y divide-border rounded-md border border-border px-3">
             <InfoRow label="Version" value={info.version} />

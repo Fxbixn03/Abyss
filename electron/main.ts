@@ -8,6 +8,7 @@ import { configureSnapshots } from '@core/snapshots'
 import { configureProfiles } from '@core/profiles'
 import { registerIpcHandlers } from './ipc'
 import { createEmitter } from './ipc/emit'
+import { setupAutoUpdater } from './updater'
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 const isDev = Boolean(DEV_SERVER_URL)
@@ -107,8 +108,10 @@ if (!gotLock) {
 
   void app.whenReady().then(() => {
     applySecurityPolicies()
-    registerIpcHandlers(buildIpcContext())
+    const ctx = buildIpcContext()
+    registerIpcHandlers(ctx)
     createWindow()
+    setupAutoUpdater(ctx.emit, isDev)
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()

@@ -213,6 +213,11 @@ export const ipc = {
     invoke(IpcChannel.ThemeExport, { theme, suggestedName }),
   themeImport: () => invoke(IpcChannel.ThemeImport, {}),
 
+  // --- Auto-update ----------------------------------------------------------
+  updateCheck: () => invoke(IpcChannel.UpdateCheck, {}),
+  updateDownload: () => invoke(IpcChannel.UpdateDownload, {}),
+  updateInstall: () => invoke(IpcChannel.UpdateInstall, {}),
+
   // --- Push subscription (streaming) ---------------------------------------
   subscribe: <E extends IpcEvent>(
     event: E,
