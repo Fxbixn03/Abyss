@@ -28,11 +28,13 @@ export function registerConfigIpc(ctx: IpcContext): void {
   handle(IpcChannel.SetConfig, ({ patch }) => ctx.settings.update(patch))
 
   // MCP servers
-  handle(IpcChannel.GetMcpServers, ({ basePath, projectDir }) =>
-    readMcpServers(basePath, projectDir),
+  handle(IpcChannel.GetMcpServers, ({ agentId, basePath, projectDir }) =>
+    readMcpServers(agentId, basePath, projectDir),
   )
-  handle(IpcChannel.SetMcpServers, ({ basePath, servers, projectDir }) =>
-    writeMcpServers(basePath, servers, projectDir),
+  handle(
+    IpcChannel.SetMcpServers,
+    ({ agentId, basePath, servers, projectDir }) =>
+      writeMcpServers(agentId, basePath, servers, projectDir),
   )
   handle(IpcChannel.McpHealthCheck, ({ entry }) => checkMcpHealth(entry))
 

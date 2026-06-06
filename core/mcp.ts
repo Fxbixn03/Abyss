@@ -14,6 +14,7 @@ import os from 'node:os'
 import path from 'node:path'
 import type { McpServerEntry } from '@/shared/types/config'
 import { readJsonFile, writeJsonFile } from './json-file'
+import { readCodexMcp, writeCodexMcp } from './mcp-codex'
 
 interface RawMcpServer {
   type?: 'stdio' | 'http' | 'sse'
@@ -48,10 +49,7 @@ function mcpConfigPath(projectDir?: string): string {
   return projectDir ? path.join(projectDir, '.mcp.json') : userConfigPath()
 }
 
-export async function readMcpServers(
-  _basePath: string,
-  projectDir?: string,
-): Promise<McpServerEntry[]> {
+async function readClaudeMcp(projectDir?: string): Promise<McpServerEntry[]> {
   const file = await readJsonFile<ClaudeUserConfig>(
     mcpConfigPath(projectDir),
     {},
@@ -69,8 +67,7 @@ export async function readMcpServers(
   }))
 }
 
-export async function writeMcpServers(
-  _basePath: string,
+async function writeClaudeMcp(
   entries: McpServerEntry[],
   projectDir?: string,
 ): Promise<{ success: boolean; path: string }> {
@@ -112,4 +109,27 @@ export async function writeMcpServers(
   file.mcpServers = out
   await writeJsonFile(p, file)
   return { success: true, path: p }
+}
+
+/**
+ * Read MCP servers for an agent. Claude uses JSON (`~/.claude.json` /
+ * `<project>/.mcp.json`); Codex uses TOML (`<base>/config.toml`).
+ */
+export function readMcpServers(
+  agentId: string,
+  basePath: string,
+  projectDir?: string,
+): Promise<McpServerEntry[]> {
+  if (agentId === 'codex') return readCodexMcp(basePath)
+  return readClaudeMcp(projectDir)
+}
+
+export function writeMcpServers(
+  agentId: string,
+  basePath: string,
+  entries: McpServerEntry[],
+  projectDir?: string,
+): Promise<{ success: boolean; path: string }> {
+  if (agentId === 'codex') return writeCodexMcp(basePath, entries)
+  return writeClaudeMcp(entries, projectDir)
 }

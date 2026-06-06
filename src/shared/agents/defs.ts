@@ -85,7 +85,7 @@ export const codexDefinition: AgentDefinition = {
   iconName: 'terminal',
   capabilities: {
     instructions: true,
-    mcp: false,
+    mcp: true,
     permissions: false,
     modelEnv: false,
     agents: false,

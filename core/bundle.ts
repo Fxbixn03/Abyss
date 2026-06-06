@@ -45,7 +45,9 @@ export async function exportBundle(
       files[spec.id] = result.content
     }
     const bundle: AgentBundle = { agentId: id, basePath, files }
-    if (def.capabilities.mcp) bundle.mcpServers = await readMcpServers(basePath)
+    if (def.capabilities.mcp) {
+      bundle.mcpServers = await readMcpServers(id, basePath)
+    }
     if (def.capabilities.permissions) {
       bundle.permissions = await readPermissions(basePath)
     }
@@ -90,11 +92,11 @@ export async function applyBundle(
     }
 
     if (def.capabilities.mcp && agent.mcpServers) {
-      const before = await readMcpServers(basePath)
+      const before = await readMcpServers(agent.agentId, basePath)
       const changed =
         JSON.stringify(before) !== JSON.stringify(agent.mcpServers)
       if (changed && !opts.dryRun) {
-        await writeMcpServers(basePath, agent.mcpServers)
+        await writeMcpServers(agent.agentId, basePath, agent.mcpServers)
       }
       changes.push({
         agentId: agent.agentId,
