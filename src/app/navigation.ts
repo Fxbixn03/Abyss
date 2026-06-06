@@ -51,6 +51,13 @@ export const PRIMARY_NAV: NavItem[] = [
     route: '/compare',
     description: 'Diff & sync agents',
   },
+  {
+    id: 'templates',
+    label: 'Templates',
+    icon: 'library',
+    route: '/templates',
+    description: 'Reusable prompt templates',
+  },
 ]
 
 /** Pinned to the bottom of the sidebar. */

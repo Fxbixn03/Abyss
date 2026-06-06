@@ -16,6 +16,7 @@ import { SnapshotsPage } from '@/features/snapshots/pages/SnapshotsPage'
 import { BundlesPage } from '@/features/bundles/pages/BundlesPage'
 import { ProfilesPage } from '@/features/profiles/pages/ProfilesPage'
 import { ComparePage } from '@/features/compare/pages/ComparePage'
+import { TemplatesPage } from '@/features/templates/pages/TemplatesPage'
 
 // Hash history works under Electron's file:// protocol in production.
 export const router = createHashRouter([
@@ -30,6 +31,7 @@ export const router = createHashRouter([
       { path: 'bundles', element: <BundlesPage /> },
       { path: 'profiles', element: <ProfilesPage /> },
       { path: 'compare', element: <ComparePage /> },
+      { path: 'templates', element: <TemplatesPage /> },
       { path: 'agents', element: <AgentsPage /> },
       { path: 'commands', element: <CommandsPage /> },
       { path: 'skills', element: <SkillsPage /> },
