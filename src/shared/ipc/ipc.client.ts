@@ -4,13 +4,19 @@
  * instead of touching `window.abyss` (or any Node API) directly.
  */
 
-import { IpcChannel } from '@/shared/types/ipc'
+import { IpcChannel, IpcEvent } from '@/shared/types/ipc'
 import type {
+  ChatExportFormat,
+  IpcEventMap,
   IpcRequest,
   IpcResponse,
   RawSettingsFile,
 } from '@/shared/types/ipc'
 import type { AgentId } from '@/shared/types/agent'
+import type {
+  ChatPermissionDecision,
+  ChatStartOptions,
+} from '@/shared/types/chat'
 import type {
   AppSettings,
   McpServerEntry,
@@ -127,4 +133,45 @@ export const ipc = {
     file: RawSettingsFile,
     content: string,
   ) => invoke(IpcChannel.WriteRawSettings, { basePath, file, content }),
+
+  // --- Chats: history -------------------------------------------------------
+  chatListSessions: (agentId: AgentId) =>
+    invoke(IpcChannel.ChatListSessions, { agentId }),
+  chatReadSession: (agentId: AgentId, sessionId: string) =>
+    invoke(IpcChannel.ChatReadSession, { agentId, sessionId }),
+  chatDeleteSession: (agentId: AgentId, sessionId: string) =>
+    invoke(IpcChannel.ChatDeleteSession, { agentId, sessionId }),
+  chatExportSession: (
+    agentId: AgentId,
+    sessionId: string,
+    format: ChatExportFormat,
+  ) => invoke(IpcChannel.ChatExportSession, { agentId, sessionId, format }),
+
+  // --- Chats: auth ----------------------------------------------------------
+  chatAvailability: (agentId: AgentId) =>
+    invoke(IpcChannel.ChatAvailability, { agentId }),
+  chatLogin: (agentId: AgentId, persist: boolean, apiKey?: string) =>
+    invoke(IpcChannel.ChatLogin, { agentId, persist, apiKey }),
+  chatLogout: (agentId: AgentId) => invoke(IpcChannel.ChatLogout, { agentId }),
+
+  // --- Chats: live session --------------------------------------------------
+  chatStart: (options: ChatStartOptions) =>
+    invoke(IpcChannel.ChatStart, options),
+  chatSend: (liveId: string, text: string) =>
+    invoke(IpcChannel.ChatSend, { liveId, text }),
+  chatRespondPermission: (
+    liveId: string,
+    requestId: string,
+    decision: ChatPermissionDecision,
+  ) =>
+    invoke(IpcChannel.ChatRespondPermission, { liveId, requestId, decision }),
+  chatInterrupt: (liveId: string) =>
+    invoke(IpcChannel.ChatInterrupt, { liveId }),
+  chatStop: (liveId: string) => invoke(IpcChannel.ChatStop, { liveId }),
+
+  // --- Push subscription (streaming) ---------------------------------------
+  subscribe: <E extends IpcEvent>(
+    event: E,
+    handler: (payload: IpcEventMap[E]) => void,
+  ): (() => void) => window.abyss.on(event, handler),
 }

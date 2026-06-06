@@ -61,6 +61,8 @@ export interface AgentCapabilities {
   hooks: boolean
   /** Raw settings.json / settings.local.json editing. */
   rawSettings: boolean
+  /** Browse past conversations and chat live (Chats feature). */
+  chats: boolean
 }
 
 /**

@@ -66,6 +66,7 @@ export const claudeDefinition: AgentDefinition = {
     skills: true,
     hooks: true,
     rawSettings: true,
+    chats: true,
   },
   configFiles: [claudeInstructions],
   resolvePaths: (env: OsEnv) => [
@@ -92,6 +93,7 @@ export const codexDefinition: AgentDefinition = {
     skills: false,
     hooks: false,
     rawSettings: false,
+    chats: true,
   },
   configFiles: [codexInstructions],
   resolvePaths: (env: OsEnv) => [
@@ -123,6 +125,7 @@ export const geminiDefinition: AgentDefinition = {
     skills: false,
     hooks: false,
     rawSettings: false,
+    chats: false,
   },
   configFiles: [geminiInstructions],
   resolvePaths: (env: OsEnv) => [

@@ -3,7 +3,9 @@ import { existsSync } from 'node:fs'
 import { app, BrowserWindow, session } from 'electron'
 import { resolveOsEnv } from '@core/os-env'
 import { SettingsStore } from '@core/settings-store'
+import { disposeAllChats } from '@core/chat/session-manager'
 import { registerIpcHandlers } from './ipc'
+import { createEmitter } from './ipc/emit'
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 const isDev = Boolean(DEV_SERVER_URL)
@@ -80,7 +82,8 @@ function buildIpcContext() {
   const settings = new SettingsStore(
     path.join(app.getPath('userData'), 'abyss-settings.json'),
   )
-  return { env, settings, getWindow: () => mainWindow }
+  const getWindow = () => mainWindow
+  return { env, settings, getWindow, emit: createEmitter(getWindow) }
 }
 
 // Single-instance: focus the existing window instead of opening a second app.
@@ -103,6 +106,11 @@ if (!gotLock) {
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
+  })
+
+  // Kill any live chat processes and run ephemeral logouts before quitting.
+  app.on('before-quit', () => {
+    void disposeAllChats()
   })
 
   app.on('window-all-closed', () => {
