@@ -407,6 +407,7 @@ export function ChatsPage() {
                 <ChatTranscript
                   messages={shownMessages}
                   loading={transcriptLoading}
+                  agentName={agent.displayName}
                 />
               </div>
 

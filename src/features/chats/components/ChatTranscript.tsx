@@ -6,9 +6,11 @@ import { MessageBubble } from './MessageBubble'
 export function ChatTranscript({
   messages,
   loading,
+  agentName,
 }: {
   messages: ChatMessage[]
   loading: boolean
+  agentName?: string
 }) {
   const endRef = useRef<HTMLDivElement>(null)
   const bottomLocked = useRef(true)
@@ -49,10 +51,13 @@ export function ChatTranscript({
     <div
       ref={scrollRef}
       onScroll={onScroll}
+      // data-selectable opts this surface out of the app-wide user-select:none
+      // so conversation text can be highlighted and copied.
+      data-selectable
       className="flex h-full flex-col gap-5 overflow-y-auto px-1 py-2"
     >
       {messages.map((m) => (
-        <MessageBubble key={m.id} message={m} />
+        <MessageBubble key={m.id} message={m} agentName={agentName} />
       ))}
       <div ref={endRef} />
     </div>

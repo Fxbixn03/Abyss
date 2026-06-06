@@ -99,8 +99,19 @@ const ROLE_META: Record<string, { icon: string; label: string }> = {
   system: { icon: 'sliders', label: 'System' },
 }
 
-export function MessageBubble({ message }: { message: ChatMessage }) {
+export function MessageBubble({
+  message,
+  agentName,
+}: {
+  message: ChatMessage
+  /** Display name of the agent driving the chat (used for assistant turns). */
+  agentName?: string
+}) {
   const meta = ROLE_META[message.role] ?? ROLE_META.assistant
+  // Label assistant turns with the actual agent (Claude, Codex, …) instead of
+  // the generic "Assistant".
+  const label =
+    message.role === 'assistant' && agentName ? agentName : meta.label
   const onlyToolResults =
     message.blocks.length > 0 &&
     message.blocks.every((b) => b.kind === 'tool_result')
@@ -135,7 +146,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <span className="text-xs font-medium text-muted-foreground">
-          {meta.label}
+          {label}
         </span>
         {message.blocks.length === 0 ? (
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
