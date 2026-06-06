@@ -17,6 +17,7 @@
 // `currentColor` rather than drawn as opaque <img> chips.
 import claudeSvg from '@/assets/agents/claude.svg?raw'
 import codexSvg from '@/assets/agents/codex.svg?raw'
+import geminiSvg from '@/assets/agents/gemini.svg?raw'
 
 const IMAGE_PREFIX = 'img:'
 
@@ -24,6 +25,7 @@ const IMAGE_PREFIX = 'img:'
 export const AGENT_BRAND_SVGS: Record<string, string> = {
   claude: claudeSvg,
   codex: codexSvg,
+  gemini: geminiSvg,
 }
 
 /** Which of the three render paths an icon string takes. */

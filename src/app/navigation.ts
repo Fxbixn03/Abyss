@@ -17,6 +17,7 @@ export const PRIMARY_NAV: NavItem[] = [
   { id: 'history', label: 'History', icon: 'history', route: '/history' },
   { id: 'bundles', label: 'Bundles', icon: 'package', route: '/bundles' },
   { id: 'profiles', label: 'Profiles', icon: 'layers', route: '/profiles' },
+  { id: 'compare', label: 'Compare', icon: 'git-compare', route: '/compare' },
 ]
 
 /** Pinned to the bottom of the sidebar. */

@@ -19,6 +19,7 @@ import type {
 } from '@/shared/types/chat'
 import type { ExportBundle } from '@/shared/types/bundle'
 import type { ThemeConfig } from '@/shared/types/theme'
+import type { SyncSurface } from '@/shared/types/sync'
 import type {
   AppSettings,
   McpServerEntry,
@@ -217,6 +218,18 @@ export const ipc = {
   updateCheck: () => invoke(IpcChannel.UpdateCheck, {}),
   updateDownload: () => invoke(IpcChannel.UpdateDownload, {}),
   updateInstall: () => invoke(IpcChannel.UpdateInstall, {}),
+
+  // --- Multi-agent sync & compare -------------------------------------------
+  syncCompare: (surface: SyncSurface, agentA: AgentId, agentB: AgentId) =>
+    invoke(IpcChannel.SyncCompare, { surface, agentA, agentB }),
+  syncCopy: (
+    surface: SyncSurface,
+    fromAgent: AgentId,
+    toAgent: AgentId,
+    dryRun: boolean,
+  ) => invoke(IpcChannel.SyncCopy, { surface, fromAgent, toAgent, dryRun }),
+  syncMcpAll: (fromAgent: AgentId, dryRun: boolean) =>
+    invoke(IpcChannel.SyncMcpAll, { fromAgent, dryRun }),
 
   // --- Push subscription (streaming) ---------------------------------------
   subscribe: <E extends IpcEvent>(

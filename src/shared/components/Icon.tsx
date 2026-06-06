@@ -1,7 +1,9 @@
 import type { LucideIcon, LucideProps } from 'lucide-react'
 import {
   AlertTriangle,
+  ArrowLeft,
   ArrowLeftRight,
+  ArrowRight,
   Bot,
   Box,
   Braces,
@@ -26,6 +28,7 @@ import {
   FolderOpen,
   Gem,
   GitBranch,
+  GitCompare,
   Globe,
   GraduationCap,
   History,
@@ -75,7 +78,9 @@ import {
  */
 const REGISTRY: Record<string, LucideIcon> = {
   'alert-triangle': AlertTriangle,
+  'arrow-left': ArrowLeft,
   'arrow-left-right': ArrowLeftRight,
+  'arrow-right': ArrowRight,
   bot: Bot,
   box: Box,
   braces: Braces,
@@ -100,6 +105,7 @@ const REGISTRY: Record<string, LucideIcon> = {
   'folder-open': FolderOpen,
   gem: Gem,
   'git-branch': GitBranch,
+  'git-compare': GitCompare,
   globe: Globe,
   'graduation-cap': GraduationCap,
   history: History,

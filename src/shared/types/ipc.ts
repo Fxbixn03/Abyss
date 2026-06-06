@@ -33,6 +33,12 @@ import type { SnapshotContent, SnapshotMeta } from './snapshots'
 import type { ApplyChange, ExportBundle } from './bundle'
 import type { Profile, ProfileMeta } from './profiles'
 import type { ThemeConfig } from './theme'
+import type {
+  CopyResult,
+  SurfaceComparison,
+  SyncAllResult,
+  SyncSurface,
+} from './sync'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
 
@@ -134,6 +140,11 @@ export enum IpcChannel {
   UpdateCheck = 'update:check',
   UpdateDownload = 'update:download',
   UpdateInstall = 'update:install',
+
+  // Multi-agent sync & compare
+  SyncCompare = 'sync:compare',
+  SyncCopy = 'sync:copy',
+  SyncMcpAll = 'sync:mcp-all',
 }
 
 /**
@@ -445,6 +456,24 @@ export interface IpcMap {
   [IpcChannel.UpdateInstall]: {
     request: Record<string, never>
     response: { ok: boolean }
+  }
+
+  [IpcChannel.SyncCompare]: {
+    request: { surface: SyncSurface; agentA: AgentId; agentB: AgentId }
+    response: SurfaceComparison
+  }
+  [IpcChannel.SyncCopy]: {
+    request: {
+      surface: SyncSurface
+      fromAgent: AgentId
+      toAgent: AgentId
+      dryRun: boolean
+    }
+    response: CopyResult
+  }
+  [IpcChannel.SyncMcpAll]: {
+    request: { fromAgent: AgentId; dryRun: boolean }
+    response: SyncAllResult[]
   }
 }
 
