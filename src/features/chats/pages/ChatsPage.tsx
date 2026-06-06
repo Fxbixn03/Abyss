@@ -13,12 +13,14 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { cn } from '@/shared/lib/utils'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useChatsStore } from '../store/chats.store'
 import { SessionList } from '../components/SessionList'
 import { ChatTranscript } from '../components/ChatTranscript'
 import { Composer } from '../components/Composer'
 import { LoginGate } from '../components/LoginGate'
+import { useResizableWidth } from '../hooks/useResizableWidth'
 import { formatCost } from '../lib/format'
 
 const CLAUDE_MODELS = [
@@ -60,6 +62,18 @@ export function ChatsPage() {
   const [permissionMode, setPermissionMode] =
     useState<ChatPermissionMode>('default')
   const [loggingIn, setLoggingIn] = useState(false)
+
+  const {
+    width: listWidth,
+    isDragging,
+    startDrag,
+    reset: resetWidth,
+  } = useResizableWidth({
+    storageKey: 'abyss-chats-list-width',
+    initial: 280,
+    min: 220,
+    max: 560,
+  })
 
   useEffect(() => {
     if (supported) void init(agent.id)
@@ -113,12 +127,31 @@ export function ChatsPage() {
         }
       />
 
-      <div className="grid min-h-0 flex-1 grid-cols-[280px_1fr] gap-4">
-        <aside className="flex min-h-0 flex-col">
+      <div className="flex min-h-0 flex-1">
+        <aside
+          style={{ width: listWidth }}
+          className="flex min-h-0 shrink-0 flex-col pr-1"
+        >
           <SessionList onNewChat={() => void handleNewChat()} />
         </aside>
 
-        <section className="flex min-h-0 flex-col rounded-lg border border-border bg-card/40">
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          onPointerDown={startDrag}
+          onDoubleClick={resetWidth}
+          title="Drag to resize · double-click to reset"
+          className="group relative mx-1 flex w-1.5 shrink-0 cursor-col-resize items-stretch"
+        >
+          <span
+            className={cn(
+              'mx-auto w-px rounded-full bg-border transition-colors group-hover:bg-primary',
+              isDragging && 'bg-primary',
+            )}
+          />
+        </div>
+
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col rounded-lg border border-border bg-card/40">
           {!authed ? (
             <LoginGate
               agentName={agent.displayName}

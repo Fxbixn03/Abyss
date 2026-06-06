@@ -46,6 +46,7 @@ export enum IpcChannel {
   PickDirectory = 'fs:pick-directory',
   PickFile = 'fs:pick-file',
   RevealPath = 'fs:reveal-path',
+  OpenExternal = 'fs:open-external',
 
   // Agents
   GetDetectedPaths = 'agent:get-detected-paths',
@@ -150,6 +151,10 @@ export interface IpcMap {
   }
   [IpcChannel.RevealPath]: {
     request: { path: string }
+    response: { success: boolean }
+  }
+  [IpcChannel.OpenExternal]: {
+    request: { url: string }
     response: { success: boolean }
   }
 

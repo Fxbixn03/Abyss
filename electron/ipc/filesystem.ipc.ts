@@ -56,4 +56,11 @@ export function registerFilesystemIpc(ctx: IpcContext): void {
     shell.showItemInFolder(path)
     return { success: true }
   })
+
+  handle(IpcChannel.OpenExternal, async ({ url }) => {
+    // Only hand safe web/mail schemes to the OS — never file:// or custom ones.
+    if (!/^(https?|mailto):/i.test(url)) return { success: false }
+    await shell.openExternal(url)
+    return { success: true }
+  })
 }

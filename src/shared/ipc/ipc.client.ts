@@ -55,6 +55,7 @@ export const ipc = {
     filters?: { name: string; extensions: string[] }[]
   }) => invoke(IpcChannel.PickFile, options ?? {}),
   revealPath: (path: string) => invoke(IpcChannel.RevealPath, { path }),
+  openExternal: (url: string) => invoke(IpcChannel.OpenExternal, { url }),
 
   readAgentConfig: (agentId: AgentId, specId: string, basePath: string) =>
     invoke(IpcChannel.ReadAgentConfig, { agentId, specId, basePath }),

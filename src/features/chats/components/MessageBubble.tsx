@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { ChatBlock, ChatMessage } from '@/shared/types/chat'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
+import { Markdown } from './Markdown'
 
 function CollapsibleBlock({
   icon,
@@ -49,16 +50,12 @@ function CollapsibleBlock({
 function BlockView({ block }: { block: ChatBlock }) {
   switch (block.kind) {
     case 'text':
-      return (
-        <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-          {block.text}
-        </div>
-      )
+      return <Markdown content={block.text} />
     case 'thinking':
       return (
         <CollapsibleBlock icon="brain" label="Thinking">
-          <div className="whitespace-pre-wrap break-words font-code text-muted-foreground">
-            {block.text}
+          <div className="text-muted-foreground">
+            <Markdown content={block.text} />
           </div>
         </CollapsibleBlock>
       )
