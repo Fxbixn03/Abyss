@@ -1,10 +1,16 @@
+import { useNavigate } from 'react-router-dom'
 import { Badge } from '@/shared/components/ui/badge'
+import { Button } from '@/shared/components/ui/button'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Icon } from '@/shared/components/Icon'
 import {
   useActiveAgent,
   useAllAgents,
 } from '@/features/agents/hooks/useActiveAgent'
+import {
+  useAgentAvailability,
+  useAgentInstalled,
+} from '@/features/agents/store/agent-availability.store'
 import { AgentCard } from '@/features/agents/components/AgentCard'
 import { AgentAvatar } from '@/features/agents/components/AgentAvatar'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
@@ -16,6 +22,9 @@ export function DashboardPage() {
   const agent = useActiveAgent()
   const agents = useAllAgents()
   const basePath = useConfigBase(agent.id)
+  const navigate = useNavigate()
+  const installed = useAgentInstalled(agent.id)
+  const availabilityLoaded = useAgentAvailability((s) => s.loaded)
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-y-auto pr-1">
@@ -39,6 +48,27 @@ export function DashboardPage() {
           )
         }
       />
+
+      {availabilityLoaded && !installed && (
+        <div className="flex items-center justify-between gap-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2.5 text-sm">
+          <span className="flex items-center gap-2">
+            <Icon name="alert-triangle" className="size-4 shrink-0" />
+            <span>
+              The <strong>{agent.displayName}</strong> CLI was not found on your
+              system. Install it, or point Abyss at an existing config folder.
+            </span>
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            onClick={() => navigate('/settings')}
+          >
+            <Icon name="folder" />
+            Set config path
+          </Button>
+        </div>
+      )}
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-muted-foreground">Agents</h2>

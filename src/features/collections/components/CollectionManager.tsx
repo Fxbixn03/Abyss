@@ -74,6 +74,9 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
   )
   const [query, setQuery] = useState('')
   const [externalChanged, setExternalChanged] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [bulkMigrateOpen, setBulkMigrateOpen] = useState(false)
 
   // Skill import (from a downloaded `.skill` archive).
   const [importing, setImporting] = useState(false)
@@ -238,6 +241,53 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
         message: err instanceof Error ? err.message : 'Failed to duplicate.',
       })
     }
+  }
+
+  const toggleSelected = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const clearSelected = () => setSelected(new Set())
+
+  const doBulkDelete = async () => {
+    if (!basePath) return
+    const ids = [...selected]
+    setBulkDeleteOpen(false)
+    for (const id of ids) await ipc.deleteCollectionItem(basePath, kind, id)
+    if (selectedId && ids.includes(selectedId)) {
+      setSelectedId(null)
+      setOriginal('')
+      setDraft('')
+      setFilePath('')
+    }
+    clearSelected()
+    void refresh()
+  }
+
+  const doBulkMigrate = async () => {
+    if (!basePath || !migrateKind) return
+    const ids = [...selected]
+    setBulkMigrateOpen(false)
+    setNotice(null)
+    let moved = 0
+    for (const id of ids) {
+      try {
+        await ipc.migrateCollectionItem(basePath, kind, migrateKind, id)
+        moved += 1
+      } catch {
+        // skip items that can't migrate (e.g. name clash)
+      }
+    }
+    if (selectedId && ids.includes(selectedId)) setSelectedId(null)
+    clearSelected()
+    setNotice({
+      type: 'success',
+      message: `Migrated ${moved} of ${ids.length} to ${COLLECTION_LABELS[migrateKind].plural}.`,
+    })
+    void refresh()
   }
 
   const runExport = async (item: CollectionItem) => {
@@ -438,6 +488,39 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
               placeholder={`Filter ${labels.plural.toLowerCase()}…`}
             />
           )}
+          {selected.size > 0 && (
+            <div className="flex items-center gap-1 rounded-md border border-primary/40 bg-accent px-2 py-1 text-xs">
+              <span className="font-medium">{selected.size} selected</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-destructive"
+                onClick={() => setBulkDeleteOpen(true)}
+              >
+                <Icon name="trash" />
+                Delete
+              </Button>
+              {canMigrate && migrateKind && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6"
+                  onClick={() => setBulkMigrateOpen(true)}
+                >
+                  <Icon name="arrow-left-right" />
+                  Migrate
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto h-6"
+                onClick={clearSelected}
+              >
+                Clear
+              </Button>
+            </div>
+          )}
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-1">
             {!loaded ? (
               <p className="px-1 text-sm text-muted-foreground">Loading…</p>
@@ -450,79 +533,99 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
             ) : (
               filtered.map((item) => {
                 const active = item.id === selectedId
+                const checked = selected.has(item.id)
                 return (
-                  <ContextMenu key={item.id}>
-                    <ContextMenuTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedId(item.id)}
-                        className={cn(
-                          'flex flex-col gap-0.5 rounded-md border px-3 py-2 text-left transition-colors',
-                          active
-                            ? 'border-primary/50 bg-accent'
-                            : 'border-transparent hover:bg-accent/60',
-                        )}
-                      >
-                        <span className="flex items-center gap-2 text-sm font-medium">
-                          <Icon
-                            name={icon}
-                            className="size-4 text-muted-foreground"
-                          />
-                          <span className="truncate">{item.name}</span>
-                          {item.model && (
-                            <Badge
-                              variant="muted"
-                              className="ml-auto font-code"
-                            >
-                              {item.model}
-                            </Badge>
-                          )}
-                        </span>
-                        {item.description && (
-                          <span className="line-clamp-2 text-xs text-muted-foreground">
-                            {item.description}
-                          </span>
-                        )}
-                      </button>
-                    </ContextMenuTrigger>
-                    <ContextMenuContent>
-                      <ContextMenuItem onSelect={() => setRenameItem(item)}>
-                        <Icon name="pencil" />
-                        Rename
-                      </ContextMenuItem>
-                      <ContextMenuItem onSelect={() => setDuplicateItem(item)}>
-                        <Icon name="copy" />
-                        Duplicate
-                      </ContextMenuItem>
-                      <ContextMenuItem onSelect={() => void runExport(item)}>
-                        <Icon name="upload" />
-                        Export
-                      </ContextMenuItem>
-                      {canMigrate && migrateKind && (
-                        <ContextMenuItem onSelect={() => setMigrateItem(item)}>
-                          <Icon name="arrow-left-right" />
-                          Migrate to {COLLECTION_LABELS[migrateKind].singular}
-                        </ContextMenuItem>
+                  <div key={item.id} className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => toggleSelected(item.id)}
+                      aria-label={`Select ${item.name}`}
+                      className={cn(
+                        'flex size-4 shrink-0 items-center justify-center rounded border transition-colors',
+                        checked
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border hover:border-primary/50',
                       )}
-                      <ContextMenuItem
-                        onSelect={() => void ipc.revealPath(item.path)}
-                      >
-                        <Icon name="folder-open" />
-                        Reveal in folder
-                      </ContextMenuItem>
-                      <ContextMenuSeparator />
-                      <ContextMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onSelect={() => {
-                          setSelectedId(item.id)
-                          setDeleteOpen(true)
-                        }}
-                      >
-                        <Icon name="trash" />
-                        Delete
-                      </ContextMenuItem>
-                    </ContextMenuContent>
-                  </ContextMenu>
+                    >
+                      {checked && <Icon name="check" className="size-3" />}
+                    </button>
+                    <ContextMenu>
+                      <ContextMenuTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedId(item.id)}
+                          className={cn(
+                            'flex min-w-0 flex-1 flex-col gap-0.5 rounded-md border px-3 py-2 text-left transition-colors',
+                            active
+                              ? 'border-primary/50 bg-accent'
+                              : 'border-transparent hover:bg-accent/60',
+                          )}
+                        >
+                          <span className="flex items-center gap-2 text-sm font-medium">
+                            <Icon
+                              name={icon}
+                              className="size-4 text-muted-foreground"
+                            />
+                            <span className="truncate">{item.name}</span>
+                            {item.model && (
+                              <Badge
+                                variant="muted"
+                                className="ml-auto font-code"
+                              >
+                                {item.model}
+                              </Badge>
+                            )}
+                          </span>
+                          {item.description && (
+                            <span className="line-clamp-2 text-xs text-muted-foreground">
+                              {item.description}
+                            </span>
+                          )}
+                        </button>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        <ContextMenuItem onSelect={() => setRenameItem(item)}>
+                          <Icon name="pencil" />
+                          Rename
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                          onSelect={() => setDuplicateItem(item)}
+                        >
+                          <Icon name="copy" />
+                          Duplicate
+                        </ContextMenuItem>
+                        <ContextMenuItem onSelect={() => void runExport(item)}>
+                          <Icon name="upload" />
+                          Export
+                        </ContextMenuItem>
+                        {canMigrate && migrateKind && (
+                          <ContextMenuItem
+                            onSelect={() => setMigrateItem(item)}
+                          >
+                            <Icon name="arrow-left-right" />
+                            Migrate to {COLLECTION_LABELS[migrateKind].singular}
+                          </ContextMenuItem>
+                        )}
+                        <ContextMenuItem
+                          onSelect={() => void ipc.revealPath(item.path)}
+                        >
+                          <Icon name="folder-open" />
+                          Reveal in folder
+                        </ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={() => {
+                            setSelectedId(item.id)
+                            setDeleteOpen(true)
+                          }}
+                        >
+                          <Icon name="trash" />
+                          Delete
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
+                  </div>
                 )
               })
             )}
@@ -735,6 +838,29 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
           if (pending) void runDuplicate(pending, newId)
         }}
       />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        title={`Delete ${selected.size} ${labels.plural.toLowerCase()}?`}
+        description="This permanently removes the selected items from disk."
+        confirmLabel="Delete"
+        onConfirm={() => void doBulkDelete()}
+      />
+
+      {migrateKind && (
+        <ConfirmDialog
+          open={bulkMigrateOpen}
+          onOpenChange={setBulkMigrateOpen}
+          title={`Migrate ${selected.size} to ${COLLECTION_LABELS[migrateKind].plural}?`}
+          description={`Each selected item is converted to a ${COLLECTION_LABELS[
+            migrateKind
+          ].singular.toLowerCase()} and removed from here. Name clashes are skipped.`}
+          confirmLabel="Migrate"
+          destructive={false}
+          onConfirm={() => void doBulkMigrate()}
+        />
+      )}
 
       <UnsavedGuard dirty={dirty} />
     </div>
