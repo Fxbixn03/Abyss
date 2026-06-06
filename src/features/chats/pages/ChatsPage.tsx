@@ -15,6 +15,7 @@ import {
 import { ipc } from '@/shared/ipc/ipc.client'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
+import { useProjectDir } from '@/features/scope/hooks/useScopedBase'
 import { useChatsStore } from '../store/chats.store'
 import { SessionList } from '../components/SessionList'
 import { ChatTranscript } from '../components/ChatTranscript'
@@ -75,9 +76,12 @@ export function ChatsPage() {
     max: 560,
   })
 
+  // In project scope, list only this project's chats (global shows them all).
+  const projectDir = useProjectDir()
+
   useEffect(() => {
-    if (supported) void init(agent.id)
-  }, [supported, agent.id, init])
+    if (supported) void init(agent.id, projectDir)
+  }, [supported, agent.id, projectDir, init])
 
   if (!supported) {
     return (

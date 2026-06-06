@@ -61,13 +61,16 @@ export function UsagePanel() {
   useEffect(() => {
     if (!hasChats) return
     let active = true
+    // Aggregate stats need every session, so this lists them all (no paging).
     void ipc
       .chatListSessions(agent.id)
-      .catch(() => [])
-      .then((list) => {
+      .then((page) => {
         if (!active) return
-        setSessions(list)
+        setSessions(page.sessions)
         setLoaded(true)
+      })
+      .catch(() => {
+        if (active) setLoaded(true)
       })
     return () => {
       active = false

@@ -10,8 +10,9 @@
 import type { OsEnv } from '@/shared/types/agent'
 import type {
   ChatAvailability,
+  ChatListOptions,
   ChatPermissionDecision,
-  ChatSessionMeta,
+  ChatSessionPage,
   ChatStartOptions,
   ChatStreamEvent,
   ChatTranscript,
@@ -41,7 +42,7 @@ export interface ChatRuntime {
   readonly agentId: string
 
   // --- History (read) -------------------------------------------------------
-  listSessions(env: OsEnv): Promise<ChatSessionMeta[]>
+  listSessions(env: OsEnv, opts?: ChatListOptions): Promise<ChatSessionPage>
   readSession(env: OsEnv, sessionId: string): Promise<ChatTranscript>
   deleteSession(env: OsEnv, sessionId: string): Promise<void>
 

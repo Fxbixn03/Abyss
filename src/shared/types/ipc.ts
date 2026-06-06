@@ -25,7 +25,7 @@ import type { HookEntry } from './hooks'
 import type {
   ChatAvailability,
   ChatPermissionDecision,
-  ChatSessionMeta,
+  ChatSessionPage,
   ChatStartOptions,
   ChatStreamEnvelope,
   ChatTranscript,
@@ -380,8 +380,8 @@ export interface IpcMap {
   }
 
   [IpcChannel.ChatListSessions]: {
-    request: { agentId: AgentId }
-    response: ChatSessionMeta[]
+    request: { agentId: AgentId; offset?: number; limit?: number; cwd?: string }
+    response: ChatSessionPage
   }
   [IpcChannel.ChatReadSession]: {
     request: { agentId: AgentId; sessionId: string }

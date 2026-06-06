@@ -14,6 +14,9 @@ import type {
 import { ipc } from '@/shared/ipc/ipc.client'
 import { genId } from '@/shared/lib/id'
 
+/** Sessions fetched per page for infinite scroll. */
+const SESSIONS_PAGE_SIZE = 20
+
 export interface SendOptions {
   cwd: string
   model?: string
@@ -30,6 +33,12 @@ interface ChatsState {
 
   sessions: ChatSessionMeta[]
   sessionsLoading: boolean
+  /** Total sessions matching the current filter (for "load more"). */
+  sessionsTotal: number
+  /** A follow-up page is being fetched. */
+  sessionsLoadingMore: boolean
+  /** When set, only sessions under this project dir are listed. */
+  cwdFilter: string | undefined
 
   /** Selected history session id, or null for a fresh chat. */
   activeSessionId: string | null
@@ -48,8 +57,9 @@ interface ChatsState {
   /** Optional API key (session-only, never persisted) for live runs. */
   apiKey: string | undefined
 
-  init: (agentId: AgentId) => Promise<void>
+  init: (agentId: AgentId, cwdFilter?: string) => Promise<void>
   refreshSessions: () => Promise<void>
+  loadMoreSessions: () => Promise<void>
   checkAvailability: () => Promise<void>
   login: (persist: boolean, apiKey?: string) => Promise<ChatAvailability>
   logout: () => Promise<void>
@@ -93,6 +103,9 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
   availabilityLoading: false,
   sessions: [],
   sessionsLoading: false,
+  sessionsTotal: 0,
+  sessionsLoadingMore: false,
+  cwdFilter: undefined,
   activeSessionId: null,
   title: '',
   cwd: '',
@@ -106,11 +119,13 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
   error: null,
   apiKey: undefined,
 
-  init: async (agentId) => {
+  init: async (agentId, cwdFilter) => {
     if (get().agentId !== agentId) {
       set({
         agentId,
         sessions: [],
+        sessionsTotal: 0,
+        cwdFilter,
         activeSessionId: null,
         messages: [],
         title: '',
@@ -120,6 +135,8 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
         usage: undefined,
         error: null,
       })
+    } else if (get().cwdFilter !== cwdFilter) {
+      set({ cwdFilter, sessions: [], sessionsTotal: 0 })
     }
     await Promise.all([get().checkAvailability(), get().refreshSessions()])
   },
@@ -136,8 +153,43 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
     const agentId = get().agentId
     if (!agentId) return
     set({ sessionsLoading: true })
-    const sessions = await ipc.chatListSessions(agentId)
-    set({ sessions, sessionsLoading: false })
+    // Reload the first page, but keep the window as large as what's already
+    // visible so a refresh (e.g. after a turn) doesn't collapse the scroll.
+    const limit = Math.max(SESSIONS_PAGE_SIZE, get().sessions.length)
+    const page = await ipc.chatListSessions(agentId, {
+      offset: 0,
+      limit,
+      cwd: get().cwdFilter,
+    })
+    set({
+      sessions: page.sessions,
+      sessionsTotal: page.total,
+      sessionsLoading: false,
+    })
+  },
+
+  loadMoreSessions: async () => {
+    const agentId = get().agentId
+    if (!agentId || get().sessionsLoadingMore) return
+    const loaded = get().sessions.length
+    if (loaded >= get().sessionsTotal) return
+    set({ sessionsLoadingMore: true })
+    const page = await ipc.chatListSessions(agentId, {
+      offset: loaded,
+      limit: SESSIONS_PAGE_SIZE,
+      cwd: get().cwdFilter,
+    })
+    // Dedupe by id (page boundaries can overlap) and keep recency order.
+    const byId = new Map<string, ChatSessionMeta>()
+    for (const s of [...get().sessions, ...page.sessions]) byId.set(s.id, s)
+    const merged = [...byId.values()].sort((a, b) =>
+      (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''),
+    )
+    set({
+      sessions: merged,
+      sessionsTotal: page.total,
+      sessionsLoadingMore: false,
+    })
   },
 
   login: async (persist, apiKey) => {

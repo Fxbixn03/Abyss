@@ -68,6 +68,23 @@ export interface ChatTranscript extends ChatSessionMeta {
   messages: ChatMessage[]
 }
 
+/** Pagination + filtering options for listing sessions (infinite scroll). */
+export interface ChatListOptions {
+  /** Number of (recency-ordered) sessions to skip. */
+  offset?: number
+  /** Max sessions to return; omit for all. */
+  limit?: number
+  /** Only sessions whose working directory is under this project dir. */
+  cwd?: string
+}
+
+/** A page of session metadata plus the total matching the filter. */
+export interface ChatSessionPage {
+  sessions: ChatSessionMeta[]
+  /** Total sessions matching the filter, across all pages. */
+  total: number
+}
+
 /** Whether an agent's CLI is installed and (for live chat) logged in. */
 export interface ChatAvailability {
   /** CLI binary found on PATH / resolvable. */

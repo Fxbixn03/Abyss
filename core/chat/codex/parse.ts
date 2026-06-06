@@ -11,13 +11,16 @@ import { promises as fs } from 'node:fs'
 import type { OsEnv } from '@/shared/types/agent'
 import type {
   ChatBlock,
+  ChatListOptions,
   ChatMessage,
   ChatRole,
   ChatSessionMeta,
+  ChatSessionPage,
   ChatTranscript,
 } from '@/shared/types/chat'
 import { readJsonlLines, asString, asRecord } from '../jsonl'
 import { projectLabelFromCwd } from '../normalize'
+import { isUnderDir, paginateByMtime, paginateMetas } from '../paginate'
 import {
   codexSessionId,
   findCodexSessionFile,
@@ -100,14 +103,27 @@ async function readCodexMeta(
 
 export async function listCodexSessions(
   env: OsEnv,
-): Promise<ChatSessionMeta[]> {
+  opts?: ChatListOptions,
+): Promise<ChatSessionPage> {
   const files = await listCodexSessionFiles(env)
-  const metas = await Promise.all(
-    files.map((f) => readCodexMeta(f).catch(() => null)),
+
+  // Codex doesn't encode the cwd in the file path, so a project filter forces a
+  // full parse; otherwise we stat-sort and only parse the requested window.
+  if (opts?.cwd) {
+    const project = opts.cwd
+    const metas = (
+      await Promise.all(files.map((f) => readCodexMeta(f).catch(() => null)))
+    ).filter(
+      (m): m is ChatSessionMeta => m !== null && isUnderDir(m.cwd, project),
+    )
+    return paginateMetas(metas, opts)
+  }
+
+  return paginateByMtime(
+    files.map((f) => ({ filePath: f, ref: f })),
+    opts,
+    (f) => readCodexMeta(f),
   )
-  return metas
-    .filter((m): m is ChatSessionMeta => m !== null)
-    .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
 }
 
 export async function readCodexSession(

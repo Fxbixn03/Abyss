@@ -8,8 +8,10 @@ import path from 'node:path'
 import { promises as fs } from 'node:fs'
 import type { OsEnv } from '@/shared/types/agent'
 import type {
+  ChatListOptions,
   ChatMessage,
   ChatSessionMeta,
+  ChatSessionPage,
   ChatRole,
   ChatTranscript,
 } from '@/shared/types/chat'
@@ -19,6 +21,7 @@ import {
   firstTextSnippet,
   projectLabelFromCwd,
 } from '../normalize'
+import { isUnderDir, paginateByMtime } from '../paginate'
 import {
   decodeProjectDir,
   findClaudeSessionFile,
@@ -102,16 +105,20 @@ async function readSessionMeta(
 
 export async function listClaudeSessions(
   env: OsEnv,
-): Promise<ChatSessionMeta[]> {
-  const files = await listClaudeSessionFiles(env)
-  const metas = await Promise.all(
-    files.map((f) =>
-      readSessionMeta(f.filePath, f.projectDir).catch(() => null),
-    ),
+  opts?: ChatListOptions,
+): Promise<ChatSessionPage> {
+  let files = await listClaudeSessionFiles(env)
+  // The project folder name encodes the cwd, so we can scope by project without
+  // parsing any file content.
+  if (opts?.cwd) {
+    const project = opts.cwd
+    files = files.filter((f) => isUnderDir(decodeProjectDir(f.projectDir), project))
+  }
+  return paginateByMtime(
+    files.map((f) => ({ filePath: f.filePath, ref: f })),
+    opts,
+    (f) => readSessionMeta(f.filePath, f.projectDir),
   )
-  return metas
-    .filter((m): m is ChatSessionMeta => m !== null)
-    .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
 }
 
 export async function readClaudeSession(

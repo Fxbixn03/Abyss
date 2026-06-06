@@ -198,7 +198,7 @@ class ClaudeLiveSession implements LiveSession {
 export const claudeChatRuntime: ChatRuntime = {
   agentId: 'claude',
 
-  listSessions: (env: OsEnv) => listClaudeSessions(env),
+  listSessions: (env, opts) => listClaudeSessions(env, opts),
   readSession: (env: OsEnv, sessionId: string) =>
     readClaudeSession(env, sessionId),
   deleteSession: (env: OsEnv, sessionId: string) =>

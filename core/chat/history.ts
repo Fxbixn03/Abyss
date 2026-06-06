@@ -4,15 +4,20 @@
  */
 
 import type { OsEnv } from '@/shared/types/agent'
-import type { ChatSessionMeta, ChatTranscript } from '@/shared/types/chat'
+import type {
+  ChatListOptions,
+  ChatSessionPage,
+  ChatTranscript,
+} from '@/shared/types/chat'
 import { getChatRuntime, hasChatRuntime } from './registry'
 
 export function listChatSessions(
   env: OsEnv,
   agentId: string,
-): Promise<ChatSessionMeta[]> {
-  if (!hasChatRuntime(agentId)) return Promise.resolve([])
-  return getChatRuntime(agentId).listSessions(env)
+  opts?: ChatListOptions,
+): Promise<ChatSessionPage> {
+  if (!hasChatRuntime(agentId)) return Promise.resolve({ sessions: [], total: 0 })
+  return getChatRuntime(agentId).listSessions(env, opts)
 }
 
 export function readChatSession(

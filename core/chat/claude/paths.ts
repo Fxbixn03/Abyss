@@ -18,6 +18,11 @@ export function decodeProjectDir(name: string): string {
   return `/${name.slice(1).replace(/-/g, '/')}`
 }
 
+/** Encode a cwd into Claude's project folder name (path separators → dashes). */
+export function encodeProjectDir(cwd: string): string {
+  return cwd.replace(/[/\\]/g, '-')
+}
+
 /** All `*.jsonl` session files across every project folder. */
 export async function listClaudeSessionFiles(
   env: OsEnv,

@@ -21,8 +21,8 @@ import type { IpcContext } from './context'
 
 export function registerChatIpc(ctx: IpcContext): void {
   // --- History --------------------------------------------------------------
-  handle(IpcChannel.ChatListSessions, ({ agentId }) =>
-    listChatSessions(ctx.env, agentId),
+  handle(IpcChannel.ChatListSessions, ({ agentId, offset, limit, cwd }) =>
+    listChatSessions(ctx.env, agentId, { offset, limit, cwd }),
   )
   handle(IpcChannel.ChatReadSession, ({ agentId, sessionId }) =>
     readChatSession(ctx.env, agentId, sessionId),

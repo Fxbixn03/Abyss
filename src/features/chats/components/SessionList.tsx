@@ -1,3 +1,4 @@
+import type { UIEvent } from 'react'
 import { useMemo, useState } from 'react'
 import { Input } from '@/shared/components/ui/input'
 import { Button } from '@/shared/components/ui/button'
@@ -18,13 +19,27 @@ import { relativeTime } from '../lib/format'
 export function SessionList({ onNewChat }: { onNewChat: () => void }) {
   const sessions = useChatsStore((s) => s.sessions)
   const loading = useChatsStore((s) => s.sessionsLoading)
+  const loadingMore = useChatsStore((s) => s.sessionsLoadingMore)
+  const total = useChatsStore((s) => s.sessionsTotal)
   const activeSessionId = useChatsStore((s) => s.activeSessionId)
   const openSession = useChatsStore((s) => s.openSession)
   const deleteSession = useChatsStore((s) => s.deleteSession)
   const exportSession = useChatsStore((s) => s.exportSession)
+  const loadMoreSessions = useChatsStore((s) => s.loadMoreSessions)
 
   const [query, setQuery] = useState('')
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
+
+  // Infinite scroll: pull the next page as the list nears the bottom. Disabled
+  // while a search is active (search filters only what's already loaded).
+  const hasMore = sessions.length < total
+  const onScroll = (e: UIEvent<HTMLDivElement>) => {
+    if (!hasMore || loadingMore || query.trim()) return
+    const el = e.currentTarget
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+      void loadMoreSessions()
+    }
+  }
 
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -65,7 +80,10 @@ export function SessionList({ onNewChat }: { onNewChat: () => void }) {
         />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
+      <div
+        onScroll={onScroll}
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1"
+      >
         {loading ? (
           <p className="px-1 pt-2 text-sm text-muted-foreground">Loading…</p>
         ) : groups.length === 0 ? (
@@ -141,6 +159,27 @@ export function SessionList({ onNewChat }: { onNewChat: () => void }) {
               })}
             </div>
           ))
+        )}
+
+        {!loading && hasMore && !query.trim() && (
+          <div className="px-1 pb-2">
+            {loadingMore ? (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Icon name="loader" className="size-3 animate-spin" />
+                Loading more…
+              </p>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => void loadMoreSessions()}
+              >
+                Load {Math.min(20, total - sessions.length)} more ·{' '}
+                {total - sessions.length} left
+              </Button>
+            )}
+          </div>
         )}
       </div>
 

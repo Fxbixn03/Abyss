@@ -133,7 +133,7 @@ class CodexLiveSession implements LiveSession {
 export const codexChatRuntime: ChatRuntime = {
   agentId: 'codex',
 
-  listSessions: (env: OsEnv) => listCodexSessions(env),
+  listSessions: (env, opts) => listCodexSessions(env, opts),
   readSession: (env: OsEnv, sessionId: string) =>
     readCodexSession(env, sessionId),
   deleteSession: (env: OsEnv, sessionId: string) =>

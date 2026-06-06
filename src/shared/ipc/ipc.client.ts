@@ -176,8 +176,10 @@ export const ipc = {
   ) => invoke(IpcChannel.WriteRawSettings, { basePath, file, content }),
 
   // --- Chats: history -------------------------------------------------------
-  chatListSessions: (agentId: AgentId) =>
-    invoke(IpcChannel.ChatListSessions, { agentId }),
+  chatListSessions: (
+    agentId: AgentId,
+    opts?: { offset?: number; limit?: number; cwd?: string },
+  ) => invoke(IpcChannel.ChatListSessions, { agentId, ...opts }),
   chatReadSession: (agentId: AgentId, sessionId: string) =>
     invoke(IpcChannel.ChatReadSession, { agentId, sessionId }),
   chatDeleteSession: (agentId: AgentId, sessionId: string) =>
