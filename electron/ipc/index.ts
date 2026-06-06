@@ -7,6 +7,7 @@ import { registerChatIpc } from './chat.ipc'
 import { registerSnapshotsIpc } from './snapshots.ipc'
 import { registerBundleIpc } from './bundle.ipc'
 import { registerProfilesIpc } from './profiles.ipc'
+import { registerThemeIpc } from './theme.ipc'
 
 /** Wire up every IPC handler group. Call once, after the app is ready. */
 export function registerIpcHandlers(ctx: IpcContext): void {
@@ -18,4 +19,5 @@ export function registerIpcHandlers(ctx: IpcContext): void {
   registerSnapshotsIpc()
   registerBundleIpc(ctx)
   registerProfilesIpc(ctx)
+  registerThemeIpc(ctx)
 }

@@ -31,6 +31,7 @@ import type {
 import type { SnapshotContent, SnapshotMeta } from './snapshots'
 import type { ApplyChange, ExportBundle } from './bundle'
 import type { Profile, ProfileMeta } from './profiles'
+import type { ThemeConfig } from './theme'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
 
@@ -123,6 +124,10 @@ export enum IpcChannel {
   ProfileApply = 'profile:apply',
   ProfileRename = 'profile:rename',
   ProfileDelete = 'profile:delete',
+
+  // Themes (import / export)
+  ThemeExport = 'theme:export',
+  ThemeImport = 'theme:import',
 }
 
 /**
@@ -405,6 +410,15 @@ export interface IpcMap {
   [IpcChannel.ProfileDelete]: {
     request: { id: string }
     response: { success: boolean }
+  }
+
+  [IpcChannel.ThemeExport]: {
+    request: { theme: ThemeConfig; suggestedName: string }
+    response: { path: string | null }
+  }
+  [IpcChannel.ThemeImport]: {
+    request: Record<string, never>
+    response: { theme: ThemeConfig | null; error?: string }
   }
 }
 

@@ -18,6 +18,7 @@ import type {
   ChatStartOptions,
 } from '@/shared/types/chat'
 import type { ExportBundle } from '@/shared/types/bundle'
+import type { ThemeConfig } from '@/shared/types/theme'
 import type {
   AppSettings,
   McpServerEntry,
@@ -199,6 +200,11 @@ export const ipc = {
   profileRename: (id: string, name: string) =>
     invoke(IpcChannel.ProfileRename, { id, name }),
   profileDelete: (id: string) => invoke(IpcChannel.ProfileDelete, { id }),
+
+  // --- Themes ---------------------------------------------------------------
+  themeExport: (theme: ThemeConfig, suggestedName: string) =>
+    invoke(IpcChannel.ThemeExport, { theme, suggestedName }),
+  themeImport: () => invoke(IpcChannel.ThemeImport, {}),
 
   // --- Push subscription (streaming) ---------------------------------------
   subscribe: <E extends IpcEvent>(
