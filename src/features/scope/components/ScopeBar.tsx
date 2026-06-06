@@ -30,6 +30,7 @@ export function ScopeBar() {
   const recentProjects = useScopeStore((s) => s.recentProjects)
   const setScope = useScopeStore((s) => s.setScope)
   const setProject = useScopeStore((s) => s.setProject)
+  const removeRecent = useScopeStore((s) => s.removeRecent)
 
   const pick = async () => {
     const { path } = await ipc.pickDirectory('Choose a project directory')
@@ -90,11 +91,29 @@ export function ScopeBar() {
                 <SelectContent>
                   {recentProjects.map((dir) => (
                     <SelectItem key={dir} value={dir} className="font-code">
-                      <span
-                        className="block max-w-[240px] truncate"
-                        title={dir}
-                      >
-                        {baseName(dir)}
+                      <span className="flex w-full min-w-[180px] items-center gap-2">
+                        <span className="min-w-0 flex-1 truncate" title={dir}>
+                          {baseName(dir)}
+                        </span>
+                        {/* Drop a project from the recents list. Stop the
+                            pointer/click from selecting the row. */}
+                        <button
+                          type="button"
+                          aria-label={`Remove ${baseName(dir)} from list`}
+                          title="Remove from list"
+                          onPointerDown={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            removeRecent(dir)
+                          }}
+                          className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        >
+                          <Icon name="x" className="size-3.5" />
+                        </button>
                       </span>
                     </SelectItem>
                   ))}
