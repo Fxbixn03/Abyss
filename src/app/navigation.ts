@@ -52,6 +52,7 @@ const ROUTE_GROUP: Record<string, NavGroupId> = {
   '/settings-file': 'system',
   '/bundles': 'tools',
   '/compare': 'tools',
+  '/discover': 'tools',
   '/profiles': 'tools',
 }
 
@@ -116,6 +117,13 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: 'git-compare',
     route: '/compare',
     description: 'Diff & sync agents',
+  },
+  {
+    id: 'discover',
+    label: 'Discover',
+    icon: 'scan-search',
+    route: '/discover',
+    description: 'Find agents & MCP on this machine',
   },
   {
     id: 'templates',

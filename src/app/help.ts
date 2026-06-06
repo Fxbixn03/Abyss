@@ -72,6 +72,13 @@ export const PAGE_HELP: Record<string, HelpEntry> = {
       'Diff the config of two agents side by side and copy individual values across to keep them in sync.',
     ],
   },
+  '/discover': {
+    title: 'Discover',
+    body: [
+      'Scans your machine for agents whose CLI or config is present but not yet enabled in Abyss, and for MCP servers configured in other agents.',
+      'Enable a found agent in one click, copy an install command, or jump to Compare to sync an MCP server across agents.',
+    ],
+  },
   '/templates': {
     title: 'Templates',
     body: [
