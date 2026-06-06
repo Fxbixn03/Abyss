@@ -17,6 +17,7 @@ import type {
   ChatPermissionDecision,
   ChatStartOptions,
 } from '@/shared/types/chat'
+import type { ExportBundle } from '@/shared/types/bundle'
 import type {
   AppSettings,
   McpServerEntry,
@@ -169,6 +170,33 @@ export const ipc = {
   chatInterrupt: (liveId: string) =>
     invoke(IpcChannel.ChatInterrupt, { liveId }),
   chatStop: (liveId: string) => invoke(IpcChannel.ChatStop, { liveId }),
+
+  // --- Snapshots ------------------------------------------------------------
+  listSnapshots: (path: string) => invoke(IpcChannel.SnapshotList, { path }),
+  listRecentSnapshots: (limit?: number) =>
+    invoke(IpcChannel.SnapshotListRecent, { limit }),
+  readSnapshot: (id: string) => invoke(IpcChannel.SnapshotRead, { id }),
+  restoreSnapshot: (id: string) => invoke(IpcChannel.SnapshotRestore, { id }),
+
+  // --- Bundles --------------------------------------------------------------
+  bundlePreview: (agentIds?: string[]) =>
+    invoke(IpcChannel.BundlePreview, { agentIds }),
+  bundleExportFile: (agentIds?: string[]) =>
+    invoke(IpcChannel.BundleExportFile, { agentIds }),
+  bundleLoadFile: () => invoke(IpcChannel.BundleLoadFile, {}),
+  bundleApply: (bundle: ExportBundle, dryRun: boolean, agentIds?: string[]) =>
+    invoke(IpcChannel.BundleApply, { bundle, agentIds, dryRun }),
+
+  // --- Profiles -------------------------------------------------------------
+  profileList: () => invoke(IpcChannel.ProfileList, {}),
+  profileSave: (name: string, agentIds?: string[]) =>
+    invoke(IpcChannel.ProfileSave, { name, agentIds }),
+  profileRead: (id: string) => invoke(IpcChannel.ProfileRead, { id }),
+  profileApply: (id: string, dryRun: boolean, agentIds?: string[]) =>
+    invoke(IpcChannel.ProfileApply, { id, agentIds, dryRun }),
+  profileRename: (id: string, name: string) =>
+    invoke(IpcChannel.ProfileRename, { id, name }),
+  profileDelete: (id: string) => invoke(IpcChannel.ProfileDelete, { id }),
 
   // --- Push subscription (streaming) ---------------------------------------
   subscribe: <E extends IpcEvent>(

@@ -8,7 +8,15 @@ export interface NavItem {
 /** Always-present navigation (agent-independent). */
 export const PRIMARY_NAV: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', route: '/' },
-  { id: 'instructions', label: 'Instructions', icon: 'file-text', route: '/config' },
+  {
+    id: 'instructions',
+    label: 'Instructions',
+    icon: 'file-text',
+    route: '/config',
+  },
+  { id: 'history', label: 'History', icon: 'history', route: '/history' },
+  { id: 'bundles', label: 'Bundles', icon: 'package', route: '/bundles' },
+  { id: 'profiles', label: 'Profiles', icon: 'layers', route: '/profiles' },
 ]
 
 /** Pinned to the bottom of the sidebar. */

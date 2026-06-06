@@ -1,7 +1,7 @@
 import type { AgentAdapter, AgentId } from '@/shared/types/agent'
 import { claudeAdapter } from '../adapters/claude.adapter'
 import { codexAdapter } from '../adapters/codex.adapter'
-// import { geminiAdapter } from '../adapters/gemini.adapter'
+import { geminiAdapter } from '../adapters/gemini.adapter'
 
 /**
  * Central registry of agent adapters. The single place the app discovers which
@@ -35,4 +35,4 @@ export const agentRegistry = new AgentRegistry()
 // --- Built-in agents (v1) ---------------------------------------------------
 agentRegistry.register(claudeAdapter)
 agentRegistry.register(codexAdapter)
-// agentRegistry.register(geminiAdapter) // ← uncomment to enable Gemini CLI
+agentRegistry.register(geminiAdapter)

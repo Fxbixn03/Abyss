@@ -27,6 +27,9 @@ import type {
   ChatStreamEnvelope,
   ChatTranscript,
 } from './chat'
+import type { SnapshotContent, SnapshotMeta } from './snapshots'
+import type { ApplyChange, ExportBundle } from './bundle'
+import type { Profile, ProfileMeta } from './profiles'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
 
@@ -98,6 +101,26 @@ export enum IpcChannel {
   ChatRespondPermission = 'chat:respond-permission',
   ChatInterrupt = 'chat:interrupt',
   ChatStop = 'chat:stop',
+
+  // Snapshots (config write safety net)
+  SnapshotList = 'snapshot:list',
+  SnapshotListRecent = 'snapshot:list-recent',
+  SnapshotRead = 'snapshot:read',
+  SnapshotRestore = 'snapshot:restore',
+
+  // Bundles (portable config export / apply)
+  BundlePreview = 'bundle:preview',
+  BundleExportFile = 'bundle:export-file',
+  BundleLoadFile = 'bundle:load-file',
+  BundleApply = 'bundle:apply',
+
+  // Profiles (named config sets)
+  ProfileList = 'profile:list',
+  ProfileSave = 'profile:save',
+  ProfileRead = 'profile:read',
+  ProfileApply = 'profile:apply',
+  ProfileRename = 'profile:rename',
+  ProfileDelete = 'profile:delete',
 }
 
 /**
@@ -316,6 +339,65 @@ export interface IpcMap {
   }
   [IpcChannel.ChatStop]: {
     request: { liveId: string }
+    response: { success: boolean }
+  }
+
+  [IpcChannel.SnapshotList]: {
+    request: { path: string }
+    response: SnapshotMeta[]
+  }
+  [IpcChannel.SnapshotListRecent]: {
+    request: { limit?: number }
+    response: SnapshotMeta[]
+  }
+  [IpcChannel.SnapshotRead]: {
+    request: { id: string }
+    response: SnapshotContent | null
+  }
+  [IpcChannel.SnapshotRestore]: {
+    request: { id: string }
+    response: { success: boolean; path: string } | null
+  }
+
+  [IpcChannel.BundlePreview]: {
+    request: { agentIds?: string[] }
+    response: ExportBundle
+  }
+  [IpcChannel.BundleExportFile]: {
+    request: { agentIds?: string[] }
+    response: { path: string | null }
+  }
+  [IpcChannel.BundleLoadFile]: {
+    request: Record<string, never>
+    response: { bundle: ExportBundle | null; path: string | null }
+  }
+  [IpcChannel.BundleApply]: {
+    request: { bundle: ExportBundle; agentIds?: string[]; dryRun: boolean }
+    response: ApplyChange[]
+  }
+
+  [IpcChannel.ProfileList]: {
+    request: Record<string, never>
+    response: ProfileMeta[]
+  }
+  [IpcChannel.ProfileSave]: {
+    request: { name: string; agentIds?: string[] }
+    response: ProfileMeta
+  }
+  [IpcChannel.ProfileRead]: {
+    request: { id: string }
+    response: Profile | null
+  }
+  [IpcChannel.ProfileApply]: {
+    request: { id: string; agentIds?: string[]; dryRun: boolean }
+    response: ApplyChange[]
+  }
+  [IpcChannel.ProfileRename]: {
+    request: { id: string; name: string }
+    response: ProfileMeta | null
+  }
+  [IpcChannel.ProfileDelete]: {
+    request: { id: string }
     response: { success: boolean }
   }
 }

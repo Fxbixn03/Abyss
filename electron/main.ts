@@ -4,6 +4,8 @@ import { app, BrowserWindow, session } from 'electron'
 import { resolveOsEnv } from '@core/os-env'
 import { SettingsStore } from '@core/settings-store'
 import { disposeAllChats } from '@core/chat/session-manager'
+import { configureSnapshots } from '@core/snapshots'
+import { configureProfiles } from '@core/profiles'
 import { registerIpcHandlers } from './ipc'
 import { createEmitter } from './ipc/emit'
 
@@ -79,9 +81,14 @@ function buildIpcContext() {
     home: app.getPath('home'),
     appData: app.getPath('appData'),
   })
-  const settings = new SettingsStore(
-    path.join(app.getPath('userData'), 'abyss-settings.json'),
-  )
+  const userData = app.getPath('userData')
+  const settings = new SettingsStore(path.join(userData, 'abyss-settings.json'))
+  // Snapshot config writes; never snapshot Abyss's own data dir (avoids recursion).
+  configureSnapshots({
+    root: path.join(userData, 'snapshots'),
+    exclude: [userData],
+  })
+  configureProfiles(path.join(userData, 'profiles'))
   const getWindow = () => mainWindow
   return { env, settings, getWindow, emit: createEmitter(getWindow) }
 }
