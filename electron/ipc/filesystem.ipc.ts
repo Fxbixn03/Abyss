@@ -1,7 +1,7 @@
 import { dialog, shell } from 'electron'
 import { IpcChannel } from '@/shared/types/ipc'
 import { detectAgentPaths } from '@core/agent-paths'
-import { pathExists } from '@core/json-file'
+import { pathExists, ensureDir } from '@core/json-file'
 import { watchFile, unwatchFile } from '../fs-watcher'
 import { handle } from './handle'
 import type { IpcContext } from './context'
@@ -72,5 +72,10 @@ export function registerFilesystemIpc(ctx: IpcContext): void {
   handle(IpcChannel.FsUnwatch, ({ path }) => {
     unwatchFile(path)
     return { ok: true }
+  })
+
+  handle(IpcChannel.CreateDirectory, async ({ path }) => {
+    await ensureDir(path)
+    return { success: true }
   })
 }

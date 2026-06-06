@@ -4,7 +4,7 @@
  * request/response types below make every call fully type-checked end to end.
  */
 
-import type { AgentId, DetectedPath } from './agent'
+import type { AgentId, AgentInstallStatus, DetectedPath } from './agent'
 import type {
   AppInfo,
   AppSettings,
@@ -62,6 +62,8 @@ export enum IpcChannel {
   OpenExternal = 'fs:open-external',
   FsWatch = 'fs:watch',
   FsUnwatch = 'fs:unwatch',
+  CreateDirectory = 'fs:create-directory',
+  AgentInstallStatus = 'agent:install-status',
 
   // Agents
   GetDetectedPaths = 'agent:get-detected-paths',
@@ -225,6 +227,14 @@ export interface IpcMap {
   [IpcChannel.FsUnwatch]: {
     request: { path: string }
     response: { ok: boolean }
+  }
+  [IpcChannel.CreateDirectory]: {
+    request: { path: string }
+    response: { success: boolean }
+  }
+  [IpcChannel.AgentInstallStatus]: {
+    request: { agentId: AgentId }
+    response: AgentInstallStatus
   }
 
   [IpcChannel.GetDetectedPaths]: {

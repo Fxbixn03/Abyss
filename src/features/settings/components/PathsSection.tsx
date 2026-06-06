@@ -1,4 +1,5 @@
-import type { AgentAdapter } from '@/shared/types/agent'
+import { useEffect, useState } from 'react'
+import type { AgentAdapter, AgentInstallStatus } from '@/shared/types/agent'
 import {
   Card,
   CardContent,
@@ -21,8 +22,24 @@ function AgentPaths({ agent }: { agent: AgentAdapter }) {
   const redetect = useSettingsStore((s) => s.redetect)
   const effective = useBasePath(agent.id)
 
+  const [install, setInstall] = useState<AgentInstallStatus | null>(null)
+  useEffect(() => {
+    let active = true
+    void ipc.agentInstallStatus(agent.id).then((s) => {
+      if (active) setInstall(s)
+    })
+    return () => {
+      active = false
+    }
+  }, [agent.id])
+
   const overrideActive = Boolean(override && override.trim() !== '')
   const overrideInDetected = detected.some((d) => d.path === override)
+
+  const create = async (path: string) => {
+    await ipc.createDirectory(path)
+    await redetect(agent.id)
+  }
 
   const browse = async () => {
     const { path } = await ipc.pickDirectory(
@@ -38,6 +55,14 @@ function AgentPaths({ agent }: { agent: AgentAdapter }) {
         <CardTitle className="flex items-center gap-2">
           <Icon name={agent.icon} className="size-4" />
           {agent.displayName}
+          {install &&
+            (install.installed ? (
+              <Badge variant="success" className="font-code">
+                {install.version ?? 'installed'}
+              </Badge>
+            ) : (
+              <Badge variant="muted">CLI not found</Badge>
+            ))}
         </CardTitle>
         <div className="flex items-center gap-1">
           <Button
@@ -64,6 +89,9 @@ function AgentPaths({ agent }: { agent: AgentAdapter }) {
               exists={candidate.exists}
               active={active}
               onUse={() => void setAgentPath(agent.id, candidate.path)}
+              onCreate={
+                candidate.exists ? undefined : () => void create(candidate.path)
+              }
             />
           )
         })}
@@ -95,6 +123,7 @@ interface PathRowProps {
   custom?: boolean
   onUse?: () => void
   onClear?: () => void
+  onCreate?: () => void
 }
 
 function PathRow({
@@ -104,6 +133,7 @@ function PathRow({
   custom = false,
   onUse,
   onClear,
+  onCreate,
 }: PathRowProps) {
   return (
     <div
@@ -114,7 +144,10 @@ function PathRow({
     >
       <Icon
         name={exists ? 'circle-check' : 'alert-triangle'}
-        className={cn('size-4 shrink-0', exists ? 'text-success' : 'text-warning')}
+        className={cn(
+          'size-4 shrink-0',
+          exists ? 'text-success' : 'text-warning',
+        )}
       />
       <button
         type="button"
@@ -126,6 +159,12 @@ function PathRow({
         {path}
       </button>
       {custom && <Badge variant="muted">custom</Badge>}
+      {onCreate && (
+        <Button variant="ghost" size="sm" onClick={onCreate}>
+          <Icon name="folder-plus" />
+          Create
+        </Button>
+      )}
       {active ? (
         <Badge variant="success">active</Badge>
       ) : (

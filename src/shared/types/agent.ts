@@ -29,6 +29,13 @@ export interface DetectedPath {
   source: 'auto' | 'manual'
 }
 
+/** Whether an agent's CLI is installed, and its reported version. */
+export interface AgentInstallStatus {
+  installed: boolean
+  version?: string
+  path?: string
+}
+
 export type ValidationSeverity = 'error' | 'warning' | 'info'
 
 export interface ValidationIssue {
