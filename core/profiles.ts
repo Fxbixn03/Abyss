@@ -26,6 +26,7 @@ function fileFor(id: string): string | null {
 export async function saveProfile(
   name: string,
   bundle: ExportBundle,
+  extra?: { description?: string; icon?: string },
 ): Promise<ProfileMeta> {
   if (!root) throw new Error('Profiles are not configured')
   const meta: ProfileMeta = {
@@ -33,6 +34,8 @@ export async function saveProfile(
     name: name.trim() || 'Untitled profile',
     createdAt: new Date().toISOString(),
     agentIds: bundle.agents.map((a) => a.agentId),
+    ...(extra?.description ? { description: extra.description } : {}),
+    ...(extra?.icon ? { icon: extra.icon } : {}),
   }
   await fs.mkdir(root, { recursive: true })
   const profile: Profile = { meta, bundle }

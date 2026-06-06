@@ -477,7 +477,12 @@ export interface IpcMap {
     response: ProfileMeta[]
   }
   [IpcChannel.ProfileSave]: {
-    request: { name: string; agentIds?: string[] }
+    request: {
+      name: string
+      agentIds?: string[]
+      description?: string
+      icon?: string
+    }
     response: ProfileMeta
   }
   [IpcChannel.ProfileRead]: {

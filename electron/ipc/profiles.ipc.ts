@@ -13,11 +13,14 @@ import type { IpcContext } from './context'
 export function registerProfilesIpc(ctx: IpcContext): void {
   handle(IpcChannel.ProfileList, () => listProfiles())
 
-  handle(IpcChannel.ProfileSave, async ({ name, agentIds }) => {
-    // Capture the current on-disk config as the profile's bundle.
-    const bundle = await exportBundle(ctx.env, { agentIds })
-    return saveProfile(name, bundle)
-  })
+  handle(
+    IpcChannel.ProfileSave,
+    async ({ name, agentIds, description, icon }) => {
+      // Capture the current on-disk config as the profile's bundle.
+      const bundle = await exportBundle(ctx.env, { agentIds })
+      return saveProfile(name, bundle, { description, icon })
+    },
+  )
 
   handle(IpcChannel.ProfileRead, ({ id }) => readProfile(id))
 

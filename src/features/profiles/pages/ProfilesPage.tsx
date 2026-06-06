@@ -12,12 +12,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { ENVIRONMENT_TEMPLATES, DEFAULT_PROFILE_ICON } from '../templates'
+
+interface ProfileDraft {
+  name: string
+  description: string
+  icon: string
+}
 
 function NameDialog({
   open,
@@ -68,13 +83,66 @@ function NameDialog({
   )
 }
 
+/** Create dialog with a name + optional description (for environment profiles). */
+function ProfileDialog({
+  draft,
+  onOpenChange,
+  onConfirm,
+}: {
+  draft: ProfileDraft | null
+  onOpenChange: (open: boolean) => void
+  onConfirm: (draft: ProfileDraft) => void
+}) {
+  const [name, setName] = useState(draft?.name ?? '')
+  const [description, setDescription] = useState(draft?.description ?? '')
+  const icon = draft?.icon ?? DEFAULT_PROFILE_ICON
+  return (
+    <Dialog open={draft !== null} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Icon name={icon} className="size-4" />
+            Save current config as profile
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-2">
+          <Input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Profile name"
+          />
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Description (optional)"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            disabled={!name.trim()}
+            onClick={() =>
+              onConfirm({ name: name.trim(), description: description.trim(), icon })
+            }
+          >
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export function ProfilesPage() {
   const [profiles, setProfiles] = useState<ProfileMeta[]>([])
   const [loaded, setLoaded] = useState(false)
   const [changes, setChanges] = useState<Record<string, ApplyChange[]>>({})
   const [notice, setNotice] = useState<string | null>(null)
 
-  const [createOpen, setCreateOpen] = useState(false)
+  const [createDraft, setCreateDraft] = useState<ProfileDraft | null>(null)
   const [renameTarget, setRenameTarget] = useState<ProfileMeta | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProfileMeta | null>(null)
   const [applyTarget, setApplyTarget] = useState<ProfileMeta | null>(null)
@@ -96,11 +164,20 @@ export function ProfilesPage() {
     }
   }, [])
 
-  const create = async (name: string) => {
-    setCreateOpen(false)
-    await ipc.profileSave(name)
-    setNotice(`Saved current config as “${name}”`)
+  const create = async (draft: ProfileDraft) => {
+    setCreateDraft(null)
+    await ipc.profileSave(draft.name, {
+      description: draft.description || undefined,
+      icon: draft.icon,
+    })
+    setNotice(`Saved current config as “${draft.name}”`)
     void refresh()
+  }
+
+  const blankDraft: ProfileDraft = {
+    name: '',
+    description: '',
+    icon: DEFAULT_PROFILE_ICON,
   }
 
   const rename = async (name: string) => {
@@ -138,13 +215,53 @@ export function ProfilesPage() {
     <div className="flex h-full flex-col gap-4">
       <PageHeader
         title="Profiles"
-        description="Named config sets — capture your setup and switch between them"
+        description="Named environments — capture your setup and switch between them"
         icon="layers"
         actions={
-          <Button onClick={() => setCreateOpen(true)}>
-            <Icon name="plus" />
-            New profile
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setCreateDraft(blankDraft)}>
+              <Icon name="plus" />
+              New profile
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Icon name="layers" />
+                  From template
+                  <Icon name="chevron-down" className="size-3.5 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-w-[280px]">
+                <DropdownMenuLabel>Environment templates</DropdownMenuLabel>
+                {ENVIRONMENT_TEMPLATES.map((t) => (
+                  <DropdownMenuItem
+                    key={t.id}
+                    onSelect={() =>
+                      setCreateDraft({
+                        name: t.name,
+                        description: t.description,
+                        icon: t.icon,
+                      })
+                    }
+                    className="flex-col items-start gap-0.5"
+                  >
+                    <span className="flex items-center gap-2 font-medium">
+                      <Icon name={t.icon} className="size-3.5" />
+                      {t.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {t.description}
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <p className="px-2 py-1 text-[11px] text-muted-foreground">
+                  Templates capture your current config under a named
+                  environment.
+                </p>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         }
       />
 
@@ -169,9 +286,9 @@ export function ProfilesPage() {
         <EmptyState
           icon="layers"
           title="No profiles yet"
-          description="Capture your current agent config as a named profile, then apply it any time (e.g. on another machine or to switch setups)."
+          description="Capture your current agent config as a named environment, then apply it any time (e.g. on another machine or to switch setups)."
           action={
-            <Button onClick={() => setCreateOpen(true)}>
+            <Button onClick={() => setCreateDraft(blankDraft)}>
               <Icon name="plus" />
               New profile
             </Button>
@@ -184,11 +301,22 @@ export function ProfilesPage() {
             return (
               <Card key={p.id} className="flex flex-col gap-3 p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(p.createdAt).toLocaleString()}
-                    </p>
+                  <div className="flex min-w-0 items-start gap-2.5">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                      <Icon name={p.icon ?? 'layers'} className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{p.name}</p>
+                      {p.description ? (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {p.description}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(p.createdAt).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="flex flex-wrap justify-end gap-1">
                     {p.agentIds.map((id) => (
@@ -264,14 +392,13 @@ export function ProfilesPage() {
         </div>
       )}
 
-      <NameDialog
-        key={`create-${createOpen}`}
-        open={createOpen}
-        title="Save current config as profile"
-        initial=""
-        confirmLabel="Save"
-        onOpenChange={setCreateOpen}
-        onConfirm={(name) => void create(name)}
+      <ProfileDialog
+        key={`create-${createDraft?.icon ?? 'none'}-${createDraft?.name ?? ''}`}
+        draft={createDraft}
+        onOpenChange={(open) => {
+          if (!open) setCreateDraft(null)
+        }}
+        onConfirm={(draft) => void create(draft)}
       />
 
       <NameDialog

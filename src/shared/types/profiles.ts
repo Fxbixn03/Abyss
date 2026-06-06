@@ -12,6 +12,10 @@ export interface ProfileMeta {
   /** ISO 8601. */
   createdAt: string
   agentIds: string[]
+  /** Optional one-line note describing the environment (Work / CI / Offline …). */
+  description?: string
+  /** Optional lucide icon name shown on the profile card. */
+  icon?: string
 }
 
 export interface Profile {

@@ -230,8 +230,10 @@ export const ipc = {
 
   // --- Profiles -------------------------------------------------------------
   profileList: () => invoke(IpcChannel.ProfileList, {}),
-  profileSave: (name: string, agentIds?: string[]) =>
-    invoke(IpcChannel.ProfileSave, { name, agentIds }),
+  profileSave: (
+    name: string,
+    opts?: { agentIds?: string[]; description?: string; icon?: string },
+  ) => invoke(IpcChannel.ProfileSave, { name, ...opts }),
   profileRead: (id: string) => invoke(IpcChannel.ProfileRead, { id }),
   profileApply: (id: string, dryRun: boolean, agentIds?: string[]) =>
     invoke(IpcChannel.ProfileApply, { id, agentIds, dryRun }),
