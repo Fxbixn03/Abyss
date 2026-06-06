@@ -15,7 +15,7 @@ import {
 import { ipc } from '@/shared/ipc/ipc.client'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
-import { useProjectDir } from '@/features/scope/hooks/useScopedBase'
+import { useProjectDir, joinPath } from '@/features/scope/hooks/useScopedBase'
 import { useChatsStore } from '../store/chats.store'
 import { SessionList } from '../components/SessionList'
 import { ChatTranscript } from '../components/ChatTranscript'
@@ -23,6 +23,8 @@ import { Composer } from '../components/Composer'
 import { LoginGate } from '../components/LoginGate'
 import { useResizableWidth } from '../hooks/useResizableWidth'
 import { formatCost } from '../lib/format'
+import type { SuspicionMarker } from '../lib/suspicion'
+import { analyzeTranscript, extractReferencedPaths } from '../lib/suspicion'
 
 const CLAUDE_MODELS = [
   { value: 'default', label: 'Default model' },
@@ -63,6 +65,12 @@ export function ChatsPage() {
   const [permissionMode, setPermissionMode] =
     useState<ChatPermissionMode>('default')
   const [loggingIn, setLoggingIn] = useState(false)
+  // Suspicion scan results, tied to the session they were computed for.
+  const [risks, setRisks] = useState<{
+    key: string
+    markers: SuspicionMarker[]
+  } | null>(null)
+  const [scanning, setScanning] = useState(false)
 
   const {
     width: listWidth,
@@ -114,6 +122,36 @@ export function ChatsPage() {
 
   const busy = status === 'streaming' || status === 'starting'
   const canChat = cwd.trim() !== '' || activeSessionId !== null
+
+  const sessionKey = activeSessionId ?? 'live'
+  const shownRisks = risks && risks.key === sessionKey ? risks.markers : null
+
+  const scanRisks = async () => {
+    setScanning(true)
+    const markers = analyzeTranscript(messages)
+    // Verify referenced file paths exist (resolved against the session dir).
+    for (const ref of extractReferencedPaths(messages)) {
+      const abs =
+        ref.startsWith('/') || /^[a-zA-Z]:[\\/]/.test(ref)
+          ? ref
+          : cwd
+            ? joinPath(cwd, ref)
+            : null
+      if (!abs) continue
+      const { exists } = await ipc.fileExists(abs).catch(() => ({ exists: true }))
+      if (!exists) {
+        markers.push({
+          kind: 'missing-file',
+          severity: 'warning',
+          title: 'Referenced file not found',
+          detail: `“${ref}” doesn't exist under the session directory.`,
+          snippet: ref,
+        })
+      }
+    }
+    setRisks({ key: sessionKey, markers })
+    setScanning(false)
+  }
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -194,12 +232,79 @@ export function ChatsPage() {
                     <span className="truncate">{cwd || 'no directory'}</span>
                   </button>
                 </div>
-                {usage && formatCost(usage.totalCostUsd) && (
-                  <Badge variant="muted" className="font-code">
-                    {formatCost(usage.totalCostUsd)}
-                  </Badge>
-                )}
+                <div className="flex shrink-0 items-center gap-2">
+                  {usage && formatCost(usage.totalCostUsd) && (
+                    <Badge variant="muted" className="font-code">
+                      {formatCost(usage.totalCostUsd)}
+                    </Badge>
+                  )}
+                  {messages.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void scanRisks()}
+                      disabled={scanning}
+                      title="Scan this transcript for risk indicators"
+                    >
+                      <Icon
+                        name={scanning ? 'loader' : 'flag'}
+                        className={scanning ? 'animate-spin' : ''}
+                      />
+                      Scan risks
+                    </Button>
+                  )}
+                </div>
               </div>
+
+              {shownRisks && (
+                <div className="border-b border-border bg-muted/20 px-4 py-2">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-xs font-medium">
+                      <Icon name="flag" className="size-3.5" />
+                      {shownRisks.length === 0
+                        ? 'No risk indicators found'
+                        : `${shownRisks.length} risk indicator(s)`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setRisks(null)}
+                      className="text-muted-foreground hover:text-foreground"
+                      aria-label="Dismiss risk scan"
+                    >
+                      <Icon name="x" className="size-3.5" />
+                    </button>
+                  </div>
+                  <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+                    {shownRisks.map((marker, i) => (
+                      <div
+                        key={i}
+                        className="flex items-start gap-2 rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+                      >
+                        <Icon
+                          name={
+                            marker.severity === 'warning'
+                              ? 'alert-triangle'
+                              : 'info'
+                          }
+                          className={cn(
+                            'mt-0.5 size-3.5 shrink-0',
+                            marker.severity === 'warning'
+                              ? 'text-warning'
+                              : 'text-muted-foreground',
+                          )}
+                        />
+                        <div className="min-w-0">
+                          <p className="font-medium">{marker.title}</p>
+                          <p className="text-muted-foreground">{marker.detail}</p>
+                          <p className="mt-0.5 truncate font-code text-[11px] text-muted-foreground/70">
+                            {marker.snippet}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="min-h-0 flex-1 px-4">
                 <ChatTranscript
