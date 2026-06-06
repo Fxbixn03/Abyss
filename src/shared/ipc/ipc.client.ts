@@ -51,6 +51,8 @@ export const ipc = {
     invoke(IpcChannel.ResolvePaths, { agentId }),
   getDetectedPaths: () => invoke(IpcChannel.GetDetectedPaths, {}),
   fileExists: (path: string) => invoke(IpcChannel.FileExists, { path }),
+  sandboxRun: (command: string, opts?: { cwd?: string; timeoutMs?: number }) =>
+    invoke(IpcChannel.SandboxRun, { command, ...opts }),
   pickDirectory: (title?: string, defaultPath?: string) =>
     invoke(IpcChannel.PickDirectory, { title, defaultPath }),
   pickFile: (options?: {

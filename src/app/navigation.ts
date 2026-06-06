@@ -41,6 +41,7 @@ const ROUTE_GROUP: Record<string, NavGroupId> = {
   '/commands': 'development',
   '/skills': 'development',
   '/templates': 'development',
+  '/sandbox': 'development',
   '/chats': 'runtime',
   '/context': 'runtime',
   '/history': 'runtime',
@@ -131,6 +132,13 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: 'library',
     route: '/templates',
     description: 'Reusable prompt templates',
+  },
+  {
+    id: 'sandbox',
+    label: 'Sandbox',
+    icon: 'flask-conical',
+    route: '/sandbox',
+    description: 'Try commands, hooks & prompts',
   },
 ]
 

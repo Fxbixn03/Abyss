@@ -85,6 +85,13 @@ export const PAGE_HELP: Record<string, HelpEntry> = {
       'Reusable prompt snippets you can keep in one place and drop into instructions, commands or chats.',
     ],
   },
+  '/sandbox': {
+    title: 'Sandbox',
+    body: [
+      'A scratch space to try things without touching your config: run a hook/command snippet and see its output, or draft a prompt and check its token size.',
+      'Commands run on your real machine — use a throwaway directory.',
+    ],
+  },
   '/agents': {
     title: 'Agents (subagents)',
     body: [

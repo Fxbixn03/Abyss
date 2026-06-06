@@ -30,6 +30,7 @@ import type {
   ChatStreamEnvelope,
   ChatTranscript,
 } from './chat'
+import type { SandboxRunResult } from './sandbox'
 import type { SnapshotContent, SnapshotMeta } from './snapshots'
 import type { ApplyChange, ExportBundle } from './bundle'
 import type { Profile, ProfileMeta } from './profiles'
@@ -63,6 +64,7 @@ export enum IpcChannel {
   FsWatch = 'fs:watch',
   FsUnwatch = 'fs:unwatch',
   CreateDirectory = 'fs:create-directory',
+  SandboxRun = 'sandbox:run',
   AgentInstallStatus = 'agent:install-status',
 
   // Agents
@@ -199,6 +201,10 @@ export interface IpcMap {
   [IpcChannel.FileExists]: {
     request: { path: string }
     response: { exists: boolean }
+  }
+  [IpcChannel.SandboxRun]: {
+    request: { command: string; cwd?: string; timeoutMs?: number }
+    response: SandboxRunResult
   }
   [IpcChannel.PickDirectory]: {
     request: { title?: string; defaultPath?: string }
