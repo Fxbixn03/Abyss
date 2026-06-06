@@ -30,6 +30,7 @@ import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { useCollectionSelection } from '../store/collectionSelection.store'
 import { MarkdownEditor } from '@/features/config/components/MarkdownEditor'
 import { DiffPreviewDialog } from '@/features/config/components/DiffPreviewDialog'
+import { FileHistoryDialog } from '@/features/config/components/FileHistoryDialog'
 import { UnsavedGuard } from '@/shared/components/UnsavedGuard'
 import { NewItemDialog } from './NewItemDialog'
 import { buildTemplate } from '../lib/templates'
@@ -77,6 +78,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [bulkMigrateOpen, setBulkMigrateOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
 
   // Skill import (from a downloaded `.skill` archive).
   const [importing, setImporting] = useState(false)
@@ -662,6 +664,15 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => setHistoryOpen(true)}
+                    disabled={!filePath}
+                  >
+                    <Icon name="history" />
+                    History
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => void ipc.revealPath(filePath)}
                     disabled={!filePath}
                   >
@@ -861,6 +872,14 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
           onConfirm={() => void doBulkMigrate()}
         />
       )}
+
+      <FileHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        filePath={filePath}
+        current={original}
+        onRestored={() => void reloadFromDisk()}
+      />
 
       <UnsavedGuard dirty={dirty} />
     </div>

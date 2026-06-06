@@ -11,6 +11,7 @@ import { useConfigStore } from '../store/config.store'
 import { MarkdownEditor } from './MarkdownEditor'
 import { ValidationList } from './ValidationList'
 import { DiffPreviewDialog } from './DiffPreviewDialog'
+import { FileHistoryDialog } from './FileHistoryDialog'
 
 export function ConfigEditorPanel() {
   const spec = useConfigStore((s) => s.spec)
@@ -28,6 +29,7 @@ export function ConfigEditorPanel() {
 
   const confirmDiff = useSettingsStore((s) => s.settings.confirmDiffBeforeSave)
   const [diffOpen, setDiffOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const [externalChanged, setExternalChanged] = useState(false)
 
   const isDirty = draft !== original
@@ -97,6 +99,15 @@ export function ConfigEditorPanel() {
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setHistoryOpen(true)}
+            disabled={!filePath || !fileExists}
+          >
+            <Icon name="history" />
+            History
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -174,6 +185,17 @@ export function ConfigEditorPanel() {
         after={draft}
         saving={saving}
         onConfirm={() => void performSave()}
+      />
+
+      <FileHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        filePath={filePath}
+        current={original}
+        onRestored={() => {
+          void reload()
+          setExternalChanged(false)
+        }}
       />
 
       <UnsavedGuard dirty={isDirty} />
