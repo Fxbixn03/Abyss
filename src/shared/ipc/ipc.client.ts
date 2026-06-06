@@ -60,6 +60,8 @@ export const ipc = {
   }) => invoke(IpcChannel.PickFile, options ?? {}),
   revealPath: (path: string) => invoke(IpcChannel.RevealPath, { path }),
   openExternal: (url: string) => invoke(IpcChannel.OpenExternal, { url }),
+  fsWatch: (path: string) => invoke(IpcChannel.FsWatch, { path }),
+  fsUnwatch: (path: string) => invoke(IpcChannel.FsUnwatch, { path }),
 
   readAgentConfig: (agentId: AgentId, specId: string, basePath: string) =>
     invoke(IpcChannel.ReadAgentConfig, { agentId, specId, basePath }),

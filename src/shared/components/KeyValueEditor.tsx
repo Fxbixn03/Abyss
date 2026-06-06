@@ -8,6 +8,8 @@ export interface KeyValueEditorProps {
   onChange: (value: Record<string, string>) => void
   keyPlaceholder?: string
   valuePlaceholder?: string
+  /** Mask values (e.g. API keys) with a per-row reveal toggle. */
+  secret?: boolean
 }
 
 export function KeyValueEditor({
@@ -15,9 +17,19 @@ export function KeyValueEditor({
   onChange,
   keyPlaceholder = 'KEY',
   valuePlaceholder = 'value',
+  secret = false,
 }: KeyValueEditorProps) {
   const [newKey, setNewKey] = useState('')
   const [newValue, setNewValue] = useState('')
+  const [revealed, setRevealed] = useState<Set<string>>(new Set())
+
+  const toggleReveal = (key: string) =>
+    setRevealed((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
 
   const add = () => {
     const key = newKey.trim()
@@ -45,10 +57,21 @@ export function KeyValueEditor({
             {key}
           </span>
           <Input
+            type={secret && !revealed.has(key) ? 'password' : 'text'}
             value={val}
             onChange={(e) => onChange({ ...value, [key]: e.target.value })}
             className="font-code"
           />
+          {secret && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => toggleReveal(key)}
+              aria-label={revealed.has(key) ? `Hide ${key}` : `Reveal ${key}`}
+            >
+              <Icon name="eye" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon-sm"
@@ -67,6 +90,7 @@ export function KeyValueEditor({
           className="w-44 shrink-0 font-code"
         />
         <Input
+          type={secret ? 'password' : 'text'}
           value={newValue}
           onChange={(e) => setNewValue(e.target.value)}
           placeholder={valuePlaceholder}

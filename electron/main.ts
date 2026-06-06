@@ -9,6 +9,7 @@ import { configureProfiles } from '@core/profiles'
 import { registerIpcHandlers } from './ipc'
 import { createEmitter } from './ipc/emit'
 import { setupAutoUpdater } from './updater'
+import { configureWatcher, unwatchAll } from './fs-watcher'
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 const isDev = Boolean(DEV_SERVER_URL)
@@ -91,7 +92,9 @@ function buildIpcContext() {
   })
   configureProfiles(path.join(userData, 'profiles'))
   const getWindow = () => mainWindow
-  return { env, settings, getWindow, emit: createEmitter(getWindow) }
+  const emit = createEmitter(getWindow)
+  configureWatcher(emit)
+  return { env, settings, getWindow, emit }
 }
 
 // Single-instance: focus the existing window instead of opening a second app.
@@ -121,6 +124,7 @@ if (!gotLock) {
   // Kill any live chat processes and run ephemeral logouts before quitting.
   app.on('before-quit', () => {
     void disposeAllChats()
+    unwatchAll()
   })
 
   app.on('window-all-closed', () => {

@@ -28,6 +28,8 @@ interface ConfigEditorState {
   save: () => Promise<{ path: string }>
   revert: () => void
   isDirty: () => boolean
+  /** Re-read the open file from disk into original + draft. */
+  reload: () => Promise<void>
 }
 
 function validate(
@@ -78,12 +80,7 @@ export const useConfigStore = create<ConfigEditorState>()((set, get) => ({
     const { agentId, spec, basePath, draft } = get()
     if (!agentId || !spec) throw new Error('No config file open')
     set({ saving: true })
-    const result = await ipc.writeAgentConfig(
-      agentId,
-      spec.id,
-      basePath,
-      draft,
-    )
+    const result = await ipc.writeAgentConfig(agentId, spec.id, basePath, draft)
     set({ original: draft, fileExists: true, saving: false })
     return { path: result.path }
   },
@@ -97,4 +94,17 @@ export const useConfigStore = create<ConfigEditorState>()((set, get) => ({
   },
 
   isDirty: () => get().draft !== get().original,
+
+  reload: async () => {
+    const { agentId, spec, basePath } = get()
+    if (!agentId || !spec) return
+    const result = await ipc.readAgentConfig(agentId, spec.id, basePath)
+    set({
+      original: result.content,
+      draft: result.content,
+      filePath: result.path,
+      fileExists: result.exists,
+      issues: validate(agentId, spec, result.content),
+    })
+  },
 }))

@@ -60,6 +60,8 @@ export enum IpcChannel {
   PickFile = 'fs:pick-file',
   RevealPath = 'fs:reveal-path',
   OpenExternal = 'fs:open-external',
+  FsWatch = 'fs:watch',
+  FsUnwatch = 'fs:unwatch',
 
   // Agents
   GetDetectedPaths = 'agent:get-detected-paths',
@@ -163,11 +165,13 @@ export enum IpcChannel {
 export enum IpcEvent {
   ChatStream = 'chat:stream',
   UpdateStatus = 'update:status',
+  FileChanged = 'fs:file-changed',
 }
 
 export interface IpcEventMap {
   [IpcEvent.ChatStream]: ChatStreamEnvelope
   [IpcEvent.UpdateStatus]: UpdateStatus
+  [IpcEvent.FileChanged]: { path: string }
 }
 
 /** Maps each channel to its request and response payloads. */
@@ -213,6 +217,14 @@ export interface IpcMap {
   [IpcChannel.OpenExternal]: {
     request: { url: string }
     response: { success: boolean }
+  }
+  [IpcChannel.FsWatch]: {
+    request: { path: string }
+    response: { ok: boolean }
+  }
+  [IpcChannel.FsUnwatch]: {
+    request: { path: string }
+    response: { ok: boolean }
   }
 
   [IpcChannel.GetDetectedPaths]: {

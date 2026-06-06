@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Icon } from '@/shared/components/Icon'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { UnsavedGuard } from '@/shared/components/UnsavedGuard'
+import { useFileWatch } from '@/shared/hooks/useFileWatch'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { useConfigStore } from '../store/config.store'
 import { MarkdownEditor } from './MarkdownEditor'
@@ -23,11 +24,21 @@ export function ConfigEditorPanel() {
   const setDraft = useConfigStore((s) => s.setDraft)
   const save = useConfigStore((s) => s.save)
   const revert = useConfigStore((s) => s.revert)
+  const reload = useConfigStore((s) => s.reload)
 
   const confirmDiff = useSettingsStore((s) => s.settings.confirmDiffBeforeSave)
   const [diffOpen, setDiffOpen] = useState(false)
+  const [externalChanged, setExternalChanged] = useState(false)
 
   const isDirty = draft !== original
+
+  const onExternal = useCallback(async () => {
+    const s = useConfigStore.getState()
+    if (!s.agentId || !s.spec) return
+    const disk = await ipc.readAgentConfig(s.agentId, s.spec.id, s.basePath)
+    if (disk.content !== s.original) setExternalChanged(true)
+  }, [])
+  useFileWatch(filePath, onExternal)
   const hasErrors = issues.some((i) => i.severity === 'error')
 
   const performSave = async () => {
@@ -105,6 +116,34 @@ export function ConfigEditorPanel() {
           </Button>
         </div>
       </div>
+
+      {externalChanged && (
+        <div className="flex items-center justify-between gap-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+          <span className="flex items-center gap-2">
+            <Icon name="alert-triangle" className="size-4 shrink-0" />
+            This file changed on disk.
+          </span>
+          <span className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                void reload()
+                setExternalChanged(false)
+              }}
+            >
+              Reload
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setExternalChanged(false)}
+            >
+              Keep editing
+            </Button>
+          </span>
+        </div>
+      )}
 
       <div className="min-h-0 flex-1">
         {loading ? (

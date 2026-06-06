@@ -21,6 +21,7 @@ import {
 } from '@/shared/components/ui/context-menu'
 import { Icon } from '@/shared/components/Icon'
 import { NameDialog } from '@/shared/components/NameDialog'
+import { useFileWatch } from '@/shared/hooks/useFileWatch'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
@@ -72,6 +73,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     null,
   )
   const [query, setQuery] = useState('')
+  const [externalChanged, setExternalChanged] = useState(false)
 
   // Skill import (from a downloaded `.skill` archive).
   const [importing, setImporting] = useState(false)
@@ -156,6 +158,22 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     if (confirmDiff) setDiffOpen(true)
     else void performSave()
   }, [dirty, confirmDiff, performSave])
+
+  // Detect external edits to the open item and offer a reload.
+  const onExternal = useCallback(async () => {
+    if (!basePath || !selectedId) return
+    const r = await ipc.readCollectionItem(basePath, kind, selectedId)
+    if (r.content !== original) setExternalChanged(true)
+  }, [basePath, kind, selectedId, original])
+  useFileWatch(filePath, onExternal)
+
+  const reloadFromDisk = async () => {
+    if (!basePath || !selectedId) return
+    const r = await ipc.readCollectionItem(basePath, kind, selectedId)
+    setOriginal(r.content)
+    setDraft(r.content)
+    setExternalChanged(false)
+  }
 
   // Cmd/Ctrl+S saves the open item, matching the instructions editor.
   useEffect(() => {
@@ -574,6 +592,31 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
                   </Button>
                 </div>
               </div>
+
+              {externalChanged && (
+                <div className="flex items-center justify-between gap-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+                  <span className="flex items-center gap-2">
+                    <Icon name="alert-triangle" className="size-4 shrink-0" />
+                    This file changed on disk.
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void reloadFromDisk()}
+                    >
+                      Reload
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setExternalChanged(false)}
+                    >
+                      Keep editing
+                    </Button>
+                  </span>
+                </div>
+              )}
 
               <div className="min-h-0 flex-1">
                 <MarkdownEditor
