@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
@@ -10,58 +11,28 @@ import { ShortcutsSection } from '../components/ShortcutsSection'
 import { PreferencesSection } from '../components/PreferencesSection'
 import { AboutSection } from '../components/AboutSection'
 import { ThemeBuilder } from '@/features/themes/components/ThemeBuilder'
+import { SETTINGS_SECTIONS, DEFAULT_SETTINGS_SECTION } from '../sections'
 
-interface Section {
-  id: string
-  label: string
-  icon: string
-  render: ReactNode
+/** Rendered body per section id (metadata lives in sections.ts). */
+const SECTION_RENDER: Record<string, ReactNode> = {
+  agents: <AgentsSection />,
+  paths: <PathsSection />,
+  appearance: <AppearanceSection />,
+  'agent-icons': <AgentIconsSection />,
+  'theme-builder': <ThemeBuilder />,
+  shortcuts: <ShortcutsSection />,
+  preferences: <PreferencesSection />,
+  about: <AboutSection />,
 }
 
-const SECTIONS: Section[] = [
-  { id: 'agents', label: 'Agents', icon: 'bot', render: <AgentsSection /> },
-  {
-    id: 'paths',
-    label: 'Config Paths',
-    icon: 'folder',
-    render: <PathsSection />,
-  },
-  {
-    id: 'appearance',
-    label: 'Appearance',
-    icon: 'palette',
-    render: <AppearanceSection />,
-  },
-  {
-    id: 'agent-icons',
-    label: 'Agent Icons',
-    icon: 'bot',
-    render: <AgentIconsSection />,
-  },
-  {
-    id: 'theme-builder',
-    label: 'Theme Builder',
-    icon: 'paintbrush',
-    render: <ThemeBuilder />,
-  },
-  {
-    id: 'shortcuts',
-    label: 'Shortcuts',
-    icon: 'keyboard',
-    render: <ShortcutsSection />,
-  },
-  {
-    id: 'preferences',
-    label: 'Preferences',
-    icon: 'sliders',
-    render: <PreferencesSection />,
-  },
-  { id: 'about', label: 'About', icon: 'info', render: <AboutSection /> },
-]
-
 export function SettingsPage() {
-  const [activeId, setActiveId] = useState('paths')
-  const section = SECTIONS.find((s) => s.id === activeId) ?? SECTIONS[0]
+  // The active section lives in the URL so it's deep-linkable from the command
+  // palette (`/settings?s=shortcuts`) and survives back/forward navigation.
+  const [params, setParams] = useSearchParams()
+  const requested = params.get('s')
+  const activeId = SETTINGS_SECTIONS.some((s) => s.id === requested)
+    ? (requested as string)
+    : DEFAULT_SETTINGS_SECTION
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -72,11 +43,11 @@ export function SettingsPage() {
       />
       <div className="grid min-h-0 flex-1 grid-cols-[200px_1fr] gap-4">
         <aside className="flex flex-col gap-1">
-          {SECTIONS.map((s) => (
+          {SETTINGS_SECTIONS.map((s) => (
             <button
               key={s.id}
               type="button"
-              onClick={() => setActiveId(s.id)}
+              onClick={() => setParams({ s: s.id })}
               className={cn(
                 'flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors',
                 s.id === activeId
@@ -90,7 +61,7 @@ export function SettingsPage() {
           ))}
         </aside>
         <section className="min-h-0 overflow-y-auto pr-1">
-          {section.render}
+          {SECTION_RENDER[activeId]}
         </section>
       </div>
     </div>

@@ -22,6 +22,7 @@ import { useAgentStore } from '@/features/agents/store/agent.store'
 import { useThemeStore } from '@/features/themes/store/theme.store'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useCollectionSelection } from '@/features/collections/store/collectionSelection.store'
+import { SETTINGS_SECTIONS } from '@/features/settings/sections'
 
 const COLLECTION_KINDS: CollectionKind[] = ['agents', 'commands', 'skills']
 const KIND_ICON: Record<CollectionKind, string> = {
@@ -30,10 +31,16 @@ const KIND_ICON: Record<CollectionKind, string> = {
   skills: 'graduation-cap',
 }
 
+/** Cap content used for keyword matching so large files don't slow filtering. */
+const CONTENT_KEYWORD_LIMIT = 4000
+
 interface PaletteItem {
   kind: CollectionKind
   id: string
   name: string
+  description: string
+  /** File body, so the palette finds an item by what's written inside it. */
+  content: string
 }
 
 export function CommandPalette() {
@@ -56,7 +63,25 @@ export function CommandPalette() {
       kinds.map((kind) =>
         ipc
           .listCollection(basePath, kind)
-          .then((list) => list.map((i) => ({ kind, id: i.id, name: i.name })))
+          .then((list) =>
+            Promise.all(
+              list.map(async (i) => {
+                // Pull the file body so items are findable by their contents,
+                // not just their name/description.
+                const content = await ipc
+                  .readCollectionItem(basePath, kind, i.id)
+                  .then((r) => r.content)
+                  .catch(() => '')
+                return {
+                  kind,
+                  id: i.id,
+                  name: i.name,
+                  description: i.description,
+                  content,
+                }
+              }),
+            ),
+          )
           .catch(() => [] as PaletteItem[]),
       ),
     ).then((res) => {
@@ -118,12 +143,30 @@ export function CommandPalette() {
           ))}
         </CommandGroup>
 
+        <CommandGroup heading="Settings">
+          {SETTINGS_SECTIONS.map((section) => (
+            <CommandItem
+              key={section.id}
+              value={`settings ${section.label}`}
+              keywords={section.keywords}
+              onSelect={run(() => navigate(`/settings?s=${section.id}`))}
+            >
+              <Icon name={section.icon} />
+              Settings: {section.label}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+
         {items.length > 0 && (
           <CommandGroup heading="Items">
             {items.map((item) => (
               <CommandItem
                 key={`${item.kind}-${item.id}`}
                 value={`item ${item.name} ${item.id} ${item.kind}`}
+                keywords={[
+                  item.description,
+                  item.content.slice(0, CONTENT_KEYWORD_LIMIT),
+                ]}
                 onSelect={run(() => {
                   requestOpen(item.kind, item.id)
                   navigate(`/${item.kind}`)
