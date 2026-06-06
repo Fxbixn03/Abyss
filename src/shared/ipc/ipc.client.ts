@@ -74,13 +74,20 @@ export const ipc = {
       content,
     }),
 
-  getMcpServers: (agentId: AgentId, basePath: string) =>
-    invoke(IpcChannel.GetMcpServers, { agentId, basePath }),
+  getMcpServers: (agentId: AgentId, basePath: string, projectDir?: string) =>
+    invoke(IpcChannel.GetMcpServers, { agentId, basePath, projectDir }),
   setMcpServers: (
     agentId: AgentId,
     basePath: string,
     servers: McpServerEntry[],
-  ) => invoke(IpcChannel.SetMcpServers, { agentId, basePath, servers }),
+    projectDir?: string,
+  ) =>
+    invoke(IpcChannel.SetMcpServers, {
+      agentId,
+      basePath,
+      servers,
+      projectDir,
+    }),
   mcpHealthCheck: (entry: McpServerEntry) =>
     invoke(IpcChannel.McpHealthCheck, { entry }),
 

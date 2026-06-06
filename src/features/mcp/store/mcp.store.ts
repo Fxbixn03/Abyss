@@ -8,13 +8,19 @@ export type McpHealthState = { loading: true } | McpHealthResult
 interface McpState {
   agentId: AgentId | null
   basePath: string
+  /** Project dir when in project scope (→ `.mcp.json`); undefined = global. */
+  projectDir: string | undefined
   servers: McpServerEntry[]
   loading: boolean
   saving: boolean
   /** Last "test connection" result per server id. */
   health: Record<string, McpHealthState>
 
-  load: (agentId: AgentId, basePath: string) => Promise<void>
+  load: (
+    agentId: AgentId,
+    basePath: string,
+    projectDir?: string,
+  ) => Promise<void>
   upsert: (entry: McpServerEntry) => Promise<void>
   remove: (id: string) => Promise<void>
   toggle: (id: string) => Promise<void>
@@ -24,15 +30,22 @@ interface McpState {
 export const useMcpStore = create<McpState>()((set, get) => ({
   agentId: null,
   basePath: '',
+  projectDir: undefined,
   servers: [],
   loading: false,
   saving: false,
   health: {},
 
-  load: async (agentId, basePath) => {
-    set({ agentId, basePath, loading: true })
-    const servers = await ipc.getMcpServers(agentId, basePath)
-    if (get().agentId !== agentId || get().basePath !== basePath) return
+  load: async (agentId, basePath, projectDir) => {
+    set({ agentId, basePath, projectDir, loading: true })
+    const servers = await ipc.getMcpServers(agentId, basePath, projectDir)
+    if (
+      get().agentId !== agentId ||
+      get().basePath !== basePath ||
+      get().projectDir !== projectDir
+    ) {
+      return
+    }
     set({ servers, loading: false })
   },
 
@@ -75,9 +88,9 @@ async function persist(
   get: () => McpState,
   next: McpServerEntry[],
 ): Promise<void> {
-  const { agentId, basePath } = get()
+  const { agentId, basePath, projectDir } = get()
   if (!agentId || !basePath) return
   set({ servers: next, saving: true })
-  await ipc.setMcpServers(agentId, basePath, next)
+  await ipc.setMcpServers(agentId, basePath, next, projectDir)
   set({ saving: false })
 }

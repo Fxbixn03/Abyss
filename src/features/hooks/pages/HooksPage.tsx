@@ -9,13 +9,13 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
 import { Icon } from '@/shared/components/Icon'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
-import { useBasePath } from '@/features/settings/hooks/useBasePath'
+import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useHooksStore } from '../store/hooks.store'
 import { HookForm } from '../components/HookForm'
 
 export function HooksPage() {
   const agent = useActiveAgent()
-  const basePath = useBasePath(agent.id)
+  const basePath = useConfigBase(agent.id)
   const navigate = useNavigate()
   const supported = agent.capabilities.hooks
 

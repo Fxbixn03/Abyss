@@ -7,13 +7,13 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
-import { useBasePath } from '@/features/settings/hooks/useBasePath'
+import { useInstructionsBase } from '@/features/scope/hooks/useScopedBase'
 import { useConfigStore } from '../store/config.store'
 import { ConfigEditorPanel } from '../components/ConfigEditorPanel'
 
 export function ConfigPage() {
   const agent = useActiveAgent()
-  const basePath = useBasePath(agent.id)
+  const basePath = useInstructionsBase(agent.id)
   const open = useConfigStore((s) => s.open)
   const navigate = useNavigate()
 
@@ -75,7 +75,10 @@ export function ConfigPage() {
                 )}
               >
                 <span className="flex items-center gap-2 text-sm font-medium">
-                  <Icon name="file-text" className="size-4 text-muted-foreground" />
+                  <Icon
+                    name="file-text"
+                    className="size-4 text-muted-foreground"
+                  />
                   {spec.filename}
                 </span>
                 <span className="text-xs text-muted-foreground">

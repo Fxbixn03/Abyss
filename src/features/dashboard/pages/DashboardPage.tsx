@@ -9,7 +9,7 @@ import {
 } from '@/features/agents/hooks/useActiveAgent'
 import { AgentCard } from '@/features/agents/components/AgentCard'
 import { AgentAvatar } from '@/features/agents/components/AgentAvatar'
-import { useBasePath } from '@/features/settings/hooks/useBasePath'
+import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { UsagePanel } from '../components/UsagePanel'
 
@@ -23,7 +23,7 @@ interface QuickAction {
 export function DashboardPage() {
   const agent = useActiveAgent()
   const agents = useAllAgents()
-  const basePath = useBasePath(agent.id)
+  const basePath = useConfigBase(agent.id)
   const navigate = useNavigate()
 
   const sections = agent.getSidebarSections?.() ?? []

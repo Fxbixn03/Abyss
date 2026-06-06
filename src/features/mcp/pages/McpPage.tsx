@@ -6,7 +6,10 @@ import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
-import { useBasePath } from '@/features/settings/hooks/useBasePath'
+import {
+  useConfigBase,
+  useProjectDir,
+} from '@/features/scope/hooks/useScopedBase'
 import { useMcpStore } from '../store/mcp.store'
 import { McpServerList } from '../components/McpServerList'
 import { McpServerForm } from '../components/McpServerForm'
@@ -14,7 +17,8 @@ import { McpCatalogDialog } from '../components/McpCatalogDialog'
 
 export function McpPage() {
   const agent = useActiveAgent()
-  const basePath = useBasePath(agent.id)
+  const basePath = useConfigBase(agent.id)
+  const projectDir = useProjectDir()
   const navigate = useNavigate()
 
   const servers = useMcpStore((s) => s.servers)
@@ -33,8 +37,8 @@ export function McpPage() {
   const supported = agent.capabilities.mcp
 
   useEffect(() => {
-    if (supported && basePath) void load(agent.id, basePath)
-  }, [supported, agent.id, basePath, load])
+    if (supported && basePath) void load(agent.id, basePath, projectDir)
+  }, [supported, agent.id, basePath, projectDir, load])
 
   if (!supported) {
     return (

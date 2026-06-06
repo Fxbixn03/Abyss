@@ -207,11 +207,16 @@ export interface IpcMap {
   }
 
   [IpcChannel.GetMcpServers]: {
-    request: { agentId: AgentId; basePath: string }
+    request: { agentId: AgentId; basePath: string; projectDir?: string }
     response: McpServerEntry[]
   }
   [IpcChannel.SetMcpServers]: {
-    request: { agentId: AgentId; basePath: string; servers: McpServerEntry[] }
+    request: {
+      agentId: AgentId
+      basePath: string
+      servers: McpServerEntry[]
+      projectDir?: string
+    }
     response: { success: boolean; path: string }
   }
   [IpcChannel.McpHealthCheck]: {

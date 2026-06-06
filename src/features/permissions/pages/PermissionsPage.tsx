@@ -15,13 +15,13 @@ import { StringListEditor } from '@/shared/components/StringListEditor'
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
-import { useBasePath } from '@/features/settings/hooks/useBasePath'
+import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 
 const EMPTY: PermissionRules = { allow: [], deny: [], ask: [] }
 
 export function PermissionsPage() {
   const agent = useActiveAgent()
-  const basePath = useBasePath(agent.id)
+  const basePath = useConfigBase(agent.id)
   const navigate = useNavigate()
   const supported = agent.capabilities.permissions
 

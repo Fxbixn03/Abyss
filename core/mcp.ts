@@ -32,8 +32,7 @@ interface ClaudeUserConfig {
 
 /**
  * Location of Claude's user config. Honors CLAUDE_CONFIG_DIR (used by Claude
- * Code to relocate its config), otherwise `~/.claude.json`. `basePath` is
- * accepted for API symmetry but user-scope MCP is always home-relative.
+ * Code to relocate its config), otherwise `~/.claude.json`.
  */
 function userConfigPath(): string {
   const dir = process.env.CLAUDE_CONFIG_DIR?.trim()
@@ -41,10 +40,22 @@ function userConfigPath(): string {
   return path.join(os.homedir(), '.claude.json')
 }
 
+/**
+ * Which file holds the `mcpServers` map. Global (user) scope lives in
+ * `~/.claude.json`; project scope lives in `<projectDir>/.mcp.json`.
+ */
+function mcpConfigPath(projectDir?: string): string {
+  return projectDir ? path.join(projectDir, '.mcp.json') : userConfigPath()
+}
+
 export async function readMcpServers(
   _basePath: string,
+  projectDir?: string,
 ): Promise<McpServerEntry[]> {
-  const file = await readJsonFile<ClaudeUserConfig>(userConfigPath(), {})
+  const file = await readJsonFile<ClaudeUserConfig>(
+    mcpConfigPath(projectDir),
+    {},
+  )
   const servers = file.mcpServers ?? {}
   return Object.entries(servers).map(([name, s], index) => ({
     id: `${name}-${index}`,
@@ -61,8 +72,9 @@ export async function readMcpServers(
 export async function writeMcpServers(
   _basePath: string,
   entries: McpServerEntry[],
+  projectDir?: string,
 ): Promise<{ success: boolean; path: string }> {
-  const p = userConfigPath()
+  const p = mcpConfigPath(projectDir)
   // Re-read immediately before writing to minimize the lost-update window with
   // a running Claude Code, and to keep all sibling keys intact.
   const file = await readJsonFile<ClaudeUserConfig>(p, {})

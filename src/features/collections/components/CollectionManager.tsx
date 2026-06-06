@@ -22,7 +22,7 @@ import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
-import { useBasePath } from '@/features/settings/hooks/useBasePath'
+import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { ConfigEditor } from '@/features/config/components/ConfigEditor'
 import { DiffPreviewDialog } from '@/features/config/components/DiffPreviewDialog'
@@ -36,7 +36,7 @@ export interface CollectionManagerProps {
 
 export function CollectionManager({ kind, icon }: CollectionManagerProps) {
   const agent = useActiveAgent()
-  const basePath = useBasePath(agent.id)
+  const basePath = useConfigBase(agent.id)
   const navigate = useNavigate()
   const confirmDiff = useSettingsStore((s) => s.settings.confirmDiffBeforeSave)
   const labels = COLLECTION_LABELS[kind]

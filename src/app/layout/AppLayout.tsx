@@ -6,6 +6,7 @@ import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { StatusBar } from './StatusBar'
 import { CommandPalette } from './CommandPalette'
+import { ScopeBar } from '@/features/scope/components/ScopeBar'
 
 export function AppLayout() {
   const toggle = useCommandPalette((s) => s.toggle)
@@ -27,6 +28,7 @@ export function AppLayout() {
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar />
+          <ScopeBar />
           <main className="min-h-0 flex-1 overflow-hidden p-5">
             <Outlet />
           </main>

@@ -18,6 +18,7 @@ pnpm-debug.log*
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+!.vscode/tasks.json
 .idea/
 Thumbs.db
 
@@ -31,10 +32,6 @@ out/
 
 # Local tool artifacts (mcp-local-rag vector store)
 lancedb/
-
-# Editor
-.vscode/
-scripts/deploy-appimage.sh
 
 # Own files
 /.notes

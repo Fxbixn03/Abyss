@@ -1,0 +1,54 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build my project",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["build"],
+      // pnpm is not on the integrated terminal's PATH here; use the absolute path.
+      "linux": {
+        "command": "${env:HOME}/.local/bin/pnpm"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Deploy",
+      "type": "shell",
+      "command": "echo",
+      "args": ["Deploy is only supported on Linux and Windows."],
+      "linux": {
+        "command": "bash",
+        "args": ["${workspaceFolder}/scripts/deploy-appimage.sh"]
+      },
+      "windows": {
+        "command": "powershell",
+        "args": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "${workspaceFolder}/scripts/deploy-portable.ps1"
+        ]
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build & Deploy",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Build my project", "Deploy"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -34,6 +34,11 @@ const config = {
     perMachine: false,
     allowToChangeInstallationDirectory: true,
     deleteAppDataOnUninstall: false,
+    // Disambiguate from the portable target (both default to the same name).
+    artifactName: '${productName}-${version}-${arch}-setup.${ext}',
+  },
+  portable: {
+    artifactName: '${productName}-${version}-${arch}-portable.${ext}',
   },
   publish: {
     provider: 'github',
