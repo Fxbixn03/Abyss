@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { PermissionRules } from '@/shared/types/config'
 import { Input } from '@/shared/components/ui/input'
 import { Button } from '@/shared/components/ui/button'
@@ -16,7 +16,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/shared/components/ui/tooltip'
 import { cn } from '@/shared/lib/utils'
+import { isValidRule, previewSpecifier } from '../lib/glob'
 
 const KNOWN_TOOLS = [
   'Bash',
@@ -44,25 +50,25 @@ const PRESETS: Record<keyof PermissionRules, string[]> = {
   deny: ['Read(./.env)', 'Read(./.env.*)', 'Read(./secrets/**)'],
 }
 
-/** A rule is `Tool` or `Tool(specifier)`, or an MCP tool `mcp__server__tool`. */
-function isValidRule(rule: string): boolean {
-  return (
-    /^[A-Za-z_][\w]*(\(.*\))?$/.test(rule) ||
-    /^mcp__[\w-]+(__[\w-]+)?$/.test(rule)
-  )
-}
-
 export function PermissionRuleEditor({
   category,
   values,
+  inherited = [],
   onChange,
 }: {
   category: keyof PermissionRules
   values: string[]
+  /** Rules inherited from the global profile (shown read-only when in project scope). */
+  inherited?: string[]
   onChange: (values: string[]) => void
 }) {
   const [tool, setTool] = useState('Bash')
   const [specifier, setSpecifier] = useState('')
+
+  const preview = useMemo(
+    () => previewSpecifier(tool, specifier),
+    [tool, specifier],
+  )
 
   const addRule = (rule: string) => {
     const trimmed = rule.trim()
@@ -78,9 +84,32 @@ export function PermissionRuleEditor({
 
   const remove = (rule: string) => onChange(values.filter((v) => v !== rule))
 
+  // Inherited rules already present locally aren't shown twice.
+  const inheritedOnly = inherited.filter((r) => !values.includes(r))
+
   return (
     <div className="flex flex-col gap-2">
-      {values.length === 0 ? (
+      {inheritedOnly.map((rule) => (
+        <Tooltip key={`inherited-${rule}`}>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-2 rounded-md border border-dashed border-border px-2 py-1 opacity-60">
+              <Icon name="globe" className="size-3.5 shrink-0" />
+              <span className="min-w-0 flex-1 truncate font-code text-xs">
+                {rule}
+              </span>
+              <span className="shrink-0 rounded bg-muted px-1 text-[10px] font-medium uppercase text-muted-foreground">
+                Global
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            Inherited from your global profile — applies everywhere. Edit it in
+            Global scope.
+          </TooltipContent>
+        </Tooltip>
+      ))}
+
+      {values.length === 0 && inheritedOnly.length === 0 ? (
         <p className="text-xs text-muted-foreground">No rules.</p>
       ) : (
         values.map((rule) => {
@@ -151,6 +180,22 @@ export function PermissionRuleEditor({
           <Icon name="plus" />
         </Button>
       </div>
+
+      {/* Live glob / command preview as the user types the specifier. */}
+      {specifier.trim() && (
+        <p
+          className={cn(
+            'flex items-start gap-1.5 px-0.5 text-[11px]',
+            preview.valid ? 'text-muted-foreground' : 'text-warning',
+          )}
+        >
+          <Icon
+            name={preview.valid ? 'circle-check' : 'circle-alert'}
+            className="mt-0.5 size-3 shrink-0"
+          />
+          <span className="font-code">{preview.note}</span>
+        </p>
+      )}
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

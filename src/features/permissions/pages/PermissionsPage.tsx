@@ -14,19 +14,25 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
-import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
+import { useConfigBase, useScope } from '@/features/scope/hooks/useScopedBase'
+import { useBasePath } from '@/features/settings/hooks/useBasePath'
 import { CodexApprovals } from '../components/CodexApprovals'
 import { PermissionRuleEditor } from '../components/PermissionRuleEditor'
+import { PermissionPresets } from '../components/PermissionPresets'
 
 const EMPTY: PermissionRules = { allow: [], deny: [], ask: [] }
 
 export function PermissionsPage() {
   const agent = useActiveAgent()
   const basePath = useConfigBase(agent.id)
+  const globalBase = useBasePath(agent.id)
+  const { scope } = useScope()
   const navigate = useNavigate()
   const supported = agent.capabilities.permissions
 
   const [rules, setRules] = useState<PermissionRules>(EMPTY)
+  // Rules from the global profile, surfaced read-only when editing a project.
+  const [inherited, setInherited] = useState<PermissionRules>(EMPTY)
 
   useEffect(() => {
     if (!supported || !basePath) return
@@ -38,6 +44,20 @@ export function PermissionsPage() {
       active = false
     }
   }, [supported, agent.id, basePath])
+
+  useEffect(() => {
+    if (!supported || scope !== 'project' || !globalBase) return
+    let active = true
+    void ipc.getPermissions(agent.id, globalBase).then((r) => {
+      if (active) setInherited(r)
+    })
+    return () => {
+      active = false
+    }
+  }, [supported, scope, agent.id, globalBase])
+
+  // Inherited rules only apply when overriding the global profile in a project.
+  const shownInherited = scope === 'project' ? inherited : EMPTY
 
   const persist = (next: PermissionRules) => {
     setRules(next)
@@ -124,6 +144,7 @@ export function PermissionsPage() {
         title="Permissions"
         description={`Tool permission rules for ${agent.displayName}`}
         icon="shield"
+        actions={<PermissionPresets rules={rules} onChange={persist} />}
       />
       <div className="grid gap-4 overflow-y-auto md:grid-cols-3">
         {sections.map((section) => (
@@ -142,6 +163,7 @@ export function PermissionsPage() {
               <PermissionRuleEditor
                 category={section.key}
                 values={rules[section.key]}
+                inherited={shownInherited[section.key]}
                 onChange={(values) =>
                   persist({ ...rules, [section.key]: values })
                 }
