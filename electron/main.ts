@@ -5,6 +5,7 @@ import { resolveOsEnv } from '@core/os-env'
 import { SettingsStore } from '@core/settings-store'
 import { disposeAllChats } from '@core/chat/session-manager'
 import { configureSnapshots } from '@core/snapshots'
+import { configureProfiles } from '@core/profiles'
 import { registerIpcHandlers } from './ipc'
 import { createEmitter } from './ipc/emit'
 
@@ -87,6 +88,7 @@ function buildIpcContext() {
     root: path.join(userData, 'snapshots'),
     exclude: [userData],
   })
+  configureProfiles(path.join(userData, 'profiles'))
   const getWindow = () => mainWindow
   return { env, settings, getWindow, emit: createEmitter(getWindow) }
 }

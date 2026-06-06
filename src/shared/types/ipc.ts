@@ -29,6 +29,7 @@ import type {
 } from './chat'
 import type { SnapshotContent, SnapshotMeta } from './snapshots'
 import type { ApplyChange, ExportBundle } from './bundle'
+import type { Profile, ProfileMeta } from './profiles'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
 
@@ -112,6 +113,14 @@ export enum IpcChannel {
   BundleExportFile = 'bundle:export-file',
   BundleLoadFile = 'bundle:load-file',
   BundleApply = 'bundle:apply',
+
+  // Profiles (named config sets)
+  ProfileList = 'profile:list',
+  ProfileSave = 'profile:save',
+  ProfileRead = 'profile:read',
+  ProfileApply = 'profile:apply',
+  ProfileRename = 'profile:rename',
+  ProfileDelete = 'profile:delete',
 }
 
 /**
@@ -365,6 +374,31 @@ export interface IpcMap {
   [IpcChannel.BundleApply]: {
     request: { bundle: ExportBundle; agentIds?: string[]; dryRun: boolean }
     response: ApplyChange[]
+  }
+
+  [IpcChannel.ProfileList]: {
+    request: Record<string, never>
+    response: ProfileMeta[]
+  }
+  [IpcChannel.ProfileSave]: {
+    request: { name: string; agentIds?: string[] }
+    response: ProfileMeta
+  }
+  [IpcChannel.ProfileRead]: {
+    request: { id: string }
+    response: Profile | null
+  }
+  [IpcChannel.ProfileApply]: {
+    request: { id: string; agentIds?: string[]; dryRun: boolean }
+    response: ApplyChange[]
+  }
+  [IpcChannel.ProfileRename]: {
+    request: { id: string; name: string }
+    response: ProfileMeta | null
+  }
+  [IpcChannel.ProfileDelete]: {
+    request: { id: string }
+    response: { success: boolean }
   }
 }
 
