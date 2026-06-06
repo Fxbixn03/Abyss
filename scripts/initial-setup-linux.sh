@@ -67,7 +67,7 @@ ensure_node() {
 
     warn "Node ≥ $REQUIRED_NODE_MAJOR nicht gefunden."
 
-    # nvm vorhanden?
+    # nvm exists?
     if [[ -f "$HOME/.nvm/nvm.sh" ]]; then
         log "nvm gefunden, lade es..."
         # shellcheck source=/dev/null
@@ -76,7 +76,7 @@ ensure_node() {
         return
     fi
 
-    # Paketmanager-Fallback (nur wenn kein nvm)
+    # Packagemanager-Fallback (only if no nvm found)
     if command_exists pacman; then
         log "Installiere nodejs via pacman..."
         sudo pacman -S --noconfirm nodejs npm
@@ -108,7 +108,7 @@ ensure_pnpm() {
         npm install -g pnpm
     else
         curl -fsSL https://get.pnpm.io/install.sh | sh
-        # In PATH aufnehmen für aktuelle Session
+        # Add to PATH for this session
         export PNPM_HOME="$HOME/.local/share/pnpm"
         export PATH="$PNPM_HOME:$PATH"
     fi
@@ -133,7 +133,7 @@ ensure_git() {
 }
 
 check_electron_deps() {
-    # Häufig fehlende Libs auf Arch/minimal Setups
+    # often missing libs
     local missing=()
     for lib in libxtst libnss; do
         if ! ldconfig -p 2>/dev/null | grep -q "$lib" && ! pacman -Qq "${lib}" &>/dev/null 2>&1; then
@@ -193,7 +193,6 @@ run_action() {
     esac
 }
 
-# --- Hauptprogramm -----------------------------------------------------------
 main() {
     echo -e "${BOLD}${CYAN}"
     echo "╔══════════════════════════════════════════╗"
