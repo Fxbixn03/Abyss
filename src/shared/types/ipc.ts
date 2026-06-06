@@ -89,6 +89,9 @@ export enum IpcChannel {
   WriteCollectionItem = 'collection:write',
   DeleteCollectionItem = 'collection:delete',
   MigrateCollectionItem = 'collection:migrate',
+  RenameCollectionItem = 'collection:rename',
+  DuplicateCollectionItem = 'collection:duplicate',
+  ExportCollectionItem = 'collection:export',
   ImportSkill = 'collection:import-skill',
 
   // Lifecycle hooks
@@ -304,6 +307,28 @@ export interface IpcMap {
       id: string
     }
     response: { success: boolean; id: string; path: string }
+  }
+  [IpcChannel.RenameCollectionItem]: {
+    request: {
+      basePath: string
+      kind: CollectionKind
+      fromId: string
+      toId: string
+    }
+    response: { success: boolean; id: string; path: string }
+  }
+  [IpcChannel.DuplicateCollectionItem]: {
+    request: {
+      basePath: string
+      kind: CollectionKind
+      id: string
+      newId: string
+    }
+    response: { success: boolean; id: string; path: string }
+  }
+  [IpcChannel.ExportCollectionItem]: {
+    request: { basePath: string; kind: CollectionKind; id: string }
+    response: { path: string | null }
   }
   [IpcChannel.ImportSkill]: {
     request: {

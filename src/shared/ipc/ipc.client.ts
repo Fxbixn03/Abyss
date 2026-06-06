@@ -135,6 +135,22 @@ export const ipc = {
       toKind,
       id,
     }),
+  renameCollectionItem: (
+    basePath: string,
+    kind: CollectionKind,
+    fromId: string,
+    toId: string,
+  ) =>
+    invoke(IpcChannel.RenameCollectionItem, { basePath, kind, fromId, toId }),
+  duplicateCollectionItem: (
+    basePath: string,
+    kind: CollectionKind,
+    id: string,
+    newId: string,
+  ) =>
+    invoke(IpcChannel.DuplicateCollectionItem, { basePath, kind, id, newId }),
+  exportCollectionItem: (basePath: string, kind: CollectionKind, id: string) =>
+    invoke(IpcChannel.ExportCollectionItem, { basePath, kind, id }),
   importSkill: (
     basePath: string,
     archivePath: string,

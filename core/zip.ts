@@ -71,9 +71,13 @@ export function readZip(buffer: Buffer): ZipEntry[] {
     } else if (method === 0) {
       data = buffer.subarray(dataStart, dataStart + compSize)
     } else if (method === 8) {
-      data = zlib.inflateRawSync(buffer.subarray(dataStart, dataStart + compSize))
+      data = zlib.inflateRawSync(
+        buffer.subarray(dataStart, dataStart + compSize),
+      )
     } else {
-      throw new Error(`Unsupported ZIP compression method ${method} for ${name}`)
+      throw new Error(
+        `Unsupported ZIP compression method ${method} for ${name}`,
+      )
     }
 
     entries.push({ path: name.replace(/\\/g, '/'), data, isDirectory })
@@ -81,4 +85,93 @@ export function readZip(buffer: Buffer): ZipEntry[] {
   }
 
   return entries
+}
+
+// --- Writer (STORED only) ---------------------------------------------------
+
+let crcTable: number[] | null = null
+function crc32(buf: Buffer): number {
+  if (!crcTable) {
+    crcTable = []
+    for (let n = 0; n < 256; n++) {
+      let c = n
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
+      crcTable[n] = c >>> 0
+    }
+  }
+  let c = 0xffffffff
+  for (let i = 0; i < buf.length; i++) {
+    c = crcTable[(c ^ buf[i]) & 0xff] ^ (c >>> 8)
+  }
+  return (c ^ 0xffffffff) >>> 0
+}
+
+export interface ZipWriteEntry {
+  path: string
+  data: Buffer
+}
+
+/**
+ * Build a ZIP buffer using the STORED method (no compression). Enough to produce
+ * the small `.skill` archives we export — the reader above unpacks STORED fine.
+ */
+export function writeZip(entries: ZipWriteEntry[]): Buffer {
+  const local: Buffer[] = []
+  const central: Buffer[] = []
+  let offset = 0
+
+  for (const entry of entries) {
+    const name = Buffer.from(entry.path.replace(/\\/g, '/'), 'utf8')
+    const crc = crc32(entry.data)
+    const size = entry.data.length
+
+    const lfh = Buffer.alloc(30)
+    lfh.writeUInt32LE(SIG_LFH, 0)
+    lfh.writeUInt16LE(20, 4)
+    lfh.writeUInt16LE(0, 6)
+    lfh.writeUInt16LE(0, 8) // method STORED
+    lfh.writeUInt16LE(0, 10)
+    lfh.writeUInt16LE(0x21, 12) // 1980-01-01
+    lfh.writeUInt32LE(crc, 14)
+    lfh.writeUInt32LE(size, 18)
+    lfh.writeUInt32LE(size, 22)
+    lfh.writeUInt16LE(name.length, 26)
+    lfh.writeUInt16LE(0, 28)
+    local.push(lfh, name, entry.data)
+
+    const cdh = Buffer.alloc(46)
+    cdh.writeUInt32LE(SIG_CDH, 0)
+    cdh.writeUInt16LE(20, 4)
+    cdh.writeUInt16LE(20, 6)
+    cdh.writeUInt16LE(0, 8)
+    cdh.writeUInt16LE(0, 10)
+    cdh.writeUInt16LE(0, 12)
+    cdh.writeUInt16LE(0x21, 14)
+    cdh.writeUInt32LE(crc, 16)
+    cdh.writeUInt32LE(size, 20)
+    cdh.writeUInt32LE(size, 24)
+    cdh.writeUInt16LE(name.length, 28)
+    cdh.writeUInt16LE(0, 30)
+    cdh.writeUInt16LE(0, 32)
+    cdh.writeUInt16LE(0, 34)
+    cdh.writeUInt16LE(0, 36)
+    cdh.writeUInt32LE(0, 38)
+    cdh.writeUInt32LE(offset, 42)
+    central.push(cdh, name)
+
+    offset += lfh.length + name.length + size
+  }
+
+  const cd = Buffer.concat(central)
+  const eocd = Buffer.alloc(22)
+  eocd.writeUInt32LE(SIG_EOCD, 0)
+  eocd.writeUInt16LE(0, 4)
+  eocd.writeUInt16LE(0, 6)
+  eocd.writeUInt16LE(entries.length, 8)
+  eocd.writeUInt16LE(entries.length, 10)
+  eocd.writeUInt32LE(cd.length, 12)
+  eocd.writeUInt32LE(offset, 16)
+  eocd.writeUInt16LE(0, 20)
+
+  return Buffer.concat([...local, cd, eocd])
 }

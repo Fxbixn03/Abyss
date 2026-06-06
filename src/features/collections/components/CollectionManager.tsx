@@ -19,6 +19,7 @@ import {
   ContextMenuTrigger,
 } from '@/shared/components/ui/context-menu'
 import { Icon } from '@/shared/components/Icon'
+import { NameDialog } from '@/shared/components/NameDialog'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
@@ -63,6 +64,10 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
 
   // Item targeted by the right-click "Migrate" action, awaiting confirmation.
   const [migrateItem, setMigrateItem] = useState<CollectionItem | null>(null)
+  const [renameItem, setRenameItem] = useState<CollectionItem | null>(null)
+  const [duplicateItem, setDuplicateItem] = useState<CollectionItem | null>(
+    null,
+  )
 
   // Skill import (from a downloaded `.skill` archive).
   const [importing, setImporting] = useState(false)
@@ -115,7 +120,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     }
   }, [selectedId, basePath, kind])
 
-  const performSave = async () => {
+  const performSave = useCallback(async () => {
     if (!basePath || !selectedId) return
     setSaving(true)
     await ipc.writeCollectionItem(basePath, kind, selectedId, draft)
@@ -123,13 +128,25 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     setSaving(false)
     setDiffOpen(false)
     void refresh()
-  }
+  }, [basePath, kind, selectedId, draft, refresh])
 
-  const requestSave = () => {
+  const requestSave = useCallback(() => {
     if (!dirty) return
     if (confirmDiff) setDiffOpen(true)
     else void performSave()
-  }
+  }, [dirty, confirmDiff, performSave])
+
+  // Cmd/Ctrl+S saves the open item, matching the instructions editor.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        requestSave()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [requestSave])
 
   const create = async (id: string, content: string) => {
     if (!basePath) return
@@ -147,6 +164,57 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     setDraft('')
     setFilePath('')
     void refresh()
+  }
+
+  const runRename = async (item: CollectionItem, toId: string) => {
+    if (!basePath) return
+    setNotice(null)
+    try {
+      const r = await ipc.renameCollectionItem(basePath, kind, item.id, toId)
+      await refresh()
+      if (selectedId === item.id) setSelectedId(r.id)
+    } catch (err) {
+      setNotice({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to rename.',
+      })
+    }
+  }
+
+  const runDuplicate = async (item: CollectionItem, newId: string) => {
+    if (!basePath) return
+    setNotice(null)
+    try {
+      const r = await ipc.duplicateCollectionItem(
+        basePath,
+        kind,
+        item.id,
+        newId,
+      )
+      await refresh()
+      setSelectedId(r.id)
+    } catch (err) {
+      setNotice({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to duplicate.',
+      })
+    }
+  }
+
+  const runExport = async (item: CollectionItem) => {
+    if (!basePath) return
+    setNotice(null)
+    try {
+      const { path } = await ipc.exportCollectionItem(basePath, kind, item.id)
+      if (path) {
+        setNotice({ type: 'success', message: `Exported to ${path}` })
+      }
+    } catch (err) {
+      setNotice({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to export.',
+      })
+    }
   }
 
   // Convert a skill into a command (or vice versa): the markdown moves to the
@@ -356,6 +424,18 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
                     </button>
                   </ContextMenuTrigger>
                   <ContextMenuContent>
+                    <ContextMenuItem onSelect={() => setRenameItem(item)}>
+                      <Icon name="pencil" />
+                      Rename
+                    </ContextMenuItem>
+                    <ContextMenuItem onSelect={() => setDuplicateItem(item)}>
+                      <Icon name="copy" />
+                      Duplicate
+                    </ContextMenuItem>
+                    <ContextMenuItem onSelect={() => void runExport(item)}>
+                      <Icon name="upload" />
+                      Export
+                    </ContextMenuItem>
                     {canMigrate && migrateKind && (
                       <ContextMenuItem onSelect={() => setMigrateItem(item)}>
                         <Icon name="arrow-left-right" />
@@ -531,6 +611,40 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
           const pending = migrateItem
           setMigrateItem(null)
           if (pending) void runMigrate(pending)
+        }}
+      />
+
+      <NameDialog
+        key={`rename-${renameItem?.id ?? 'none'}`}
+        open={renameItem !== null}
+        title={`Rename "${renameItem?.name ?? ''}"`}
+        initial={renameItem?.id ?? ''}
+        confirmLabel="Rename"
+        placeholder="new-id"
+        onOpenChange={(open) => {
+          if (!open) setRenameItem(null)
+        }}
+        onConfirm={(toId) => {
+          const pending = renameItem
+          setRenameItem(null)
+          if (pending) void runRename(pending, toId)
+        }}
+      />
+
+      <NameDialog
+        key={`dup-${duplicateItem?.id ?? 'none'}`}
+        open={duplicateItem !== null}
+        title={`Duplicate "${duplicateItem?.name ?? ''}"`}
+        initial={duplicateItem ? `${duplicateItem.id}-copy` : ''}
+        confirmLabel="Duplicate"
+        placeholder="new-id"
+        onOpenChange={(open) => {
+          if (!open) setDuplicateItem(null)
+        }}
+        onConfirm={(newId) => {
+          const pending = duplicateItem
+          setDuplicateItem(null)
+          if (pending) void runDuplicate(pending, newId)
         }}
       />
     </div>

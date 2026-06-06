@@ -16,7 +16,7 @@ export function registerIpcHandlers(ctx: IpcContext): void {
   registerFilesystemIpc(ctx)
   registerAgentIpc(ctx)
   registerConfigIpc(ctx)
-  registerCollectionsIpc()
+  registerCollectionsIpc(ctx)
   registerChatIpc(ctx)
   registerSnapshotsIpc()
   registerBundleIpc(ctx)

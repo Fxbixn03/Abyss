@@ -9,6 +9,7 @@ import { promises as fs } from 'node:fs'
 import type { CollectionItem, CollectionKind } from '@/shared/types/collections'
 import { pathExists, readTextFile, writeTextFileAtomic } from './json-file'
 import { parseFrontmatter } from './frontmatter'
+import { writeZip } from './zip'
 
 function sanitizeId(id: string): string {
   const base = path.basename(id).replace(/\.md$/i, '')
@@ -148,4 +149,102 @@ export async function deleteCollectionItem(
     await fs.rm(path.join(basePath, kind, `${safe}.md`), { force: true })
   }
   return { success: true }
+}
+
+/** Rename an item to a new id within the same collection. */
+export async function renameCollectionItem(
+  basePath: string,
+  kind: CollectionKind,
+  fromId: string,
+  toId: string,
+): Promise<{ success: boolean; id: string; path: string }> {
+  const from = sanitizeId(fromId)
+  const to = sanitizeId(toId)
+  if (from === to) {
+    return { success: true, id: to, path: itemFilePath(basePath, kind, to) }
+  }
+  if (kind === 'skills') {
+    const src = path.join(basePath, 'skills', from)
+    const dest = path.join(basePath, 'skills', to)
+    if (await pathExists(dest)) {
+      throw new Error(`A skill named "${to}" already exists.`)
+    }
+    await fs.rename(src, dest)
+    return { success: true, id: to, path: path.join(dest, 'SKILL.md') }
+  }
+  const src = path.join(basePath, kind, `${from}.md`)
+  const dest = path.join(basePath, kind, `${to}.md`)
+  if (await pathExists(dest)) {
+    throw new Error(`A ${kind} item named "${to}" already exists.`)
+  }
+  await fs.rename(src, dest)
+  return { success: true, id: to, path: dest }
+}
+
+/** Copy an item to a new id within the same collection. */
+export async function duplicateCollectionItem(
+  basePath: string,
+  kind: CollectionKind,
+  id: string,
+  newId: string,
+): Promise<{ success: boolean; id: string; path: string }> {
+  const from = sanitizeId(id)
+  const to = sanitizeId(newId)
+  if (kind === 'skills') {
+    const src = path.join(basePath, 'skills', from)
+    const dest = path.join(basePath, 'skills', to)
+    if (await pathExists(dest)) {
+      throw new Error(`A skill named "${to}" already exists.`)
+    }
+    await fs.cp(src, dest, { recursive: true })
+    return { success: true, id: to, path: path.join(dest, 'SKILL.md') }
+  }
+  const dest = path.join(basePath, kind, `${to}.md`)
+  if (await pathExists(dest)) {
+    throw new Error(`A ${kind} item named "${to}" already exists.`)
+  }
+  const { content } = await readCollectionItem(basePath, kind, from)
+  await writeTextFileAtomic(dest, content)
+  return { success: true, id: to, path: dest }
+}
+
+async function collectFiles(dir: string): Promise<string[]> {
+  const out: string[] = []
+  const entries = await fs.readdir(dir, { withFileTypes: true })
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) out.push(...(await collectFiles(full)))
+    else if (entry.isFile()) out.push(full)
+  }
+  return out
+}
+
+/**
+ * Serialize an item for sharing: a single `.md` for commands/agents, or a
+ * `.skill` ZIP (folder + support files) for skills — the reverse of import.
+ */
+export async function exportCollectionItem(
+  basePath: string,
+  kind: CollectionKind,
+  id: string,
+): Promise<{ fileName: string; data: Buffer }> {
+  const safe = sanitizeId(id)
+  if (kind === 'skills') {
+    const dir = path.join(basePath, 'skills', safe)
+    if (!(await pathExists(dir))) throw new Error(`Skill "${safe}" not found.`)
+    const files = await collectFiles(dir)
+    const entries = await Promise.all(
+      files.map(async (file) => ({
+        path: `${safe}/${path.relative(dir, file).split(path.sep).join('/')}`,
+        data: await fs.readFile(file),
+      })),
+    )
+    return { fileName: `${safe}.skill`, data: writeZip(entries) }
+  }
+  const file = path.join(basePath, kind, `${safe}.md`)
+  if (!(await pathExists(file))) throw new Error(`${kind} "${safe}" not found.`)
+  return {
+    fileName: `${safe}.md`,
+    data: Buffer.from(await readTextFile(file), 'utf8'),
+  }
 }
