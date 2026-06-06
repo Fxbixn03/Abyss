@@ -25,6 +25,8 @@ import { useResizableWidth } from '../hooks/useResizableWidth'
 import { formatCost } from '../lib/format'
 import type { SuspicionMarker } from '../lib/suspicion'
 import { analyzeTranscript, extractReferencedPaths } from '../lib/suspicion'
+import { ReplayBar } from '../components/ReplayBar'
+import { REPLAY_SPEEDS } from '../lib/replay'
 
 const CLAUDE_MODELS = [
   { value: 'default', label: 'Default model' },
@@ -71,6 +73,14 @@ export function ChatsPage() {
     markers: SuspicionMarker[]
   } | null>(null)
   const [scanning, setScanning] = useState(false)
+  // Session replay: when set, the transcript reveals messages up to `index`.
+  // `key` ties the replay to its session so it's ignored after switching chats.
+  const [replay, setReplay] = useState<{
+    key: string
+    index: number
+    playing: boolean
+    speed: number
+  } | null>(null)
 
   const {
     width: listWidth,
@@ -90,6 +100,24 @@ export function ChatsPage() {
   useEffect(() => {
     if (supported) void init(agent.id, projectDir)
   }, [supported, agent.id, projectDir, init])
+
+  // Replay playback: a recursive timer that reveals one more message per tick.
+  useEffect(() => {
+    if (!replay?.playing) return
+    const key = activeSessionId ?? 'live'
+    if (replay.key !== key) return
+    const total = messages.length
+    if (replay.index >= total) return
+    const ms = Math.max(150, 900 / replay.speed)
+    const id = window.setTimeout(() => {
+      setReplay((r) => {
+        if (!r) return r
+        const next = Math.min(total, r.index + 1)
+        return { ...r, index: next, playing: next < total }
+      })
+    }, ms)
+    return () => window.clearTimeout(id)
+  }, [replay, activeSessionId, messages.length])
 
   if (!supported) {
     return (
@@ -125,6 +153,10 @@ export function ChatsPage() {
 
   const sessionKey = activeSessionId ?? 'live'
   const shownRisks = risks && risks.key === sessionKey ? risks.markers : null
+  const activeReplay = replay && replay.key === sessionKey ? replay : null
+  const shownMessages = activeReplay
+    ? messages.slice(0, activeReplay.index)
+    : messages
 
   const scanRisks = async () => {
     setScanning(true)
@@ -238,6 +270,28 @@ export function ChatsPage() {
                       {formatCost(usage.totalCostUsd)}
                     </Badge>
                   )}
+                  {messages.length > 1 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setReplay(
+                          activeReplay
+                            ? null
+                            : {
+                                key: sessionKey,
+                                index: 0,
+                                playing: true,
+                                speed: 1,
+                              },
+                        )
+                      }
+                      title="Replay this conversation step by step"
+                    >
+                      <Icon name={activeReplay ? 'x' : 'play'} />
+                      {activeReplay ? 'Exit replay' : 'Replay'}
+                    </Button>
+                  )}
                   {messages.length > 0 && (
                     <Button
                       variant="outline"
@@ -255,6 +309,49 @@ export function ChatsPage() {
                   )}
                 </div>
               </div>
+
+              {activeReplay && (
+                <ReplayBar
+                  index={activeReplay.index}
+                  total={messages.length}
+                  playing={activeReplay.playing}
+                  speed={activeReplay.speed}
+                  onPlayPause={() =>
+                    setReplay((r) => (r ? { ...r, playing: !r.playing } : r))
+                  }
+                  onStep={(delta) =>
+                    setReplay((r) =>
+                      r
+                        ? {
+                            ...r,
+                            playing: false,
+                            index: Math.max(
+                              0,
+                              Math.min(messages.length, r.index + delta),
+                            ),
+                          }
+                        : r,
+                    )
+                  }
+                  onRestart={() =>
+                    setReplay((r) =>
+                      r ? { ...r, index: 0, playing: true } : r,
+                    )
+                  }
+                  onCycleSpeed={() =>
+                    setReplay((r) => {
+                      if (!r) return r
+                      const i = REPLAY_SPEEDS.indexOf(
+                        r.speed as (typeof REPLAY_SPEEDS)[number],
+                      )
+                      const speed =
+                        REPLAY_SPEEDS[(i + 1) % REPLAY_SPEEDS.length]
+                      return { ...r, speed }
+                    })
+                  }
+                  onClose={() => setReplay(null)}
+                />
+              )}
 
               {shownRisks && (
                 <div className="border-b border-border bg-muted/20 px-4 py-2">
@@ -308,7 +405,7 @@ export function ChatsPage() {
 
               <div className="min-h-0 flex-1 px-4">
                 <ChatTranscript
-                  messages={messages}
+                  messages={shownMessages}
                   loading={transcriptLoading}
                 />
               </div>
