@@ -8,6 +8,7 @@ import type {
 import { COLLECTION_LABELS } from '@/shared/types/collections'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
+import { Input } from '@/shared/components/ui/input'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
@@ -25,6 +26,7 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
+import { useCollectionSelection } from '../store/collectionSelection.store'
 import { MarkdownEditor } from '@/features/config/components/MarkdownEditor'
 import { DiffPreviewDialog } from '@/features/config/components/DiffPreviewDialog'
 import { UnsavedGuard } from '@/shared/components/UnsavedGuard'
@@ -69,6 +71,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
   const [duplicateItem, setDuplicateItem] = useState<CollectionItem | null>(
     null,
   )
+  const [query, setQuery] = useState('')
 
   // Skill import (from a downloaded `.skill` archive).
   const [importing, setImporting] = useState(false)
@@ -101,11 +104,28 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
       if (!active) return
       setItems(list)
       setLoaded(true)
+      // A command-palette "go to item" pending for this kind (cross-page).
+      const pendingId = useCollectionSelection.getState().consume(kind)
+      if (pendingId && list.some((i) => i.id === pendingId)) {
+        setSelectedId(pendingId)
+      }
     })
     return () => {
       active = false
     }
   }, [supported, basePath, kind])
+
+  // React to palette selections while already on this page (same-page).
+  useEffect(
+    () =>
+      useCollectionSelection.subscribe((state) => {
+        if (state.pending && state.pending.kind === kind) {
+          setSelectedId(state.pending.id)
+          useCollectionSelection.getState().consume(kind)
+        }
+      }),
+    [kind],
+  )
 
   useEffect(() => {
     if (!selectedId || !basePath) return
@@ -328,6 +348,16 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
 
   const selectedItem = items.find((i) => i.id === selectedId) ?? null
 
+  const q = query.trim().toLowerCase()
+  const filtered = q
+    ? items.filter(
+        (i) =>
+          i.id.toLowerCase().includes(q) ||
+          i.name.toLowerCase().includes(q) ||
+          (i.description ?? '').toLowerCase().includes(q),
+      )
+    : items
+
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
@@ -382,89 +412,103 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
       )}
 
       <div className="grid min-h-0 flex-1 grid-cols-[260px_1fr] gap-4">
-        <aside className="flex min-h-0 flex-col gap-1 overflow-y-auto pr-1">
-          {!loaded ? (
-            <p className="px-1 text-sm text-muted-foreground">Loading…</p>
-          ) : items.length === 0 ? (
-            <p className="px-1 text-sm text-muted-foreground">
-              No {labels.plural.toLowerCase()} yet.
-            </p>
-          ) : (
-            items.map((item) => {
-              const active = item.id === selectedId
-              return (
-                <ContextMenu key={item.id}>
-                  <ContextMenuTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedId(item.id)}
-                      className={cn(
-                        'flex flex-col gap-0.5 rounded-md border px-3 py-2 text-left transition-colors',
-                        active
-                          ? 'border-primary/50 bg-accent'
-                          : 'border-transparent hover:bg-accent/60',
-                      )}
-                    >
-                      <span className="flex items-center gap-2 text-sm font-medium">
-                        <Icon
-                          name={icon}
-                          className="size-4 text-muted-foreground"
-                        />
-                        <span className="truncate">{item.name}</span>
-                        {item.model && (
-                          <Badge variant="muted" className="ml-auto font-code">
-                            {item.model}
-                          </Badge>
-                        )}
-                      </span>
-                      {item.description && (
-                        <span className="line-clamp-2 text-xs text-muted-foreground">
-                          {item.description}
-                        </span>
-                      )}
-                    </button>
-                  </ContextMenuTrigger>
-                  <ContextMenuContent>
-                    <ContextMenuItem onSelect={() => setRenameItem(item)}>
-                      <Icon name="pencil" />
-                      Rename
-                    </ContextMenuItem>
-                    <ContextMenuItem onSelect={() => setDuplicateItem(item)}>
-                      <Icon name="copy" />
-                      Duplicate
-                    </ContextMenuItem>
-                    <ContextMenuItem onSelect={() => void runExport(item)}>
-                      <Icon name="upload" />
-                      Export
-                    </ContextMenuItem>
-                    {canMigrate && migrateKind && (
-                      <ContextMenuItem onSelect={() => setMigrateItem(item)}>
-                        <Icon name="arrow-left-right" />
-                        Migrate to {COLLECTION_LABELS[migrateKind].singular}
-                      </ContextMenuItem>
-                    )}
-                    <ContextMenuItem
-                      onSelect={() => void ipc.revealPath(item.path)}
-                    >
-                      <Icon name="folder-open" />
-                      Reveal in folder
-                    </ContextMenuItem>
-                    <ContextMenuSeparator />
-                    <ContextMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onSelect={() => {
-                        setSelectedId(item.id)
-                        setDeleteOpen(true)
-                      }}
-                    >
-                      <Icon name="trash" />
-                      Delete
-                    </ContextMenuItem>
-                  </ContextMenuContent>
-                </ContextMenu>
-              )
-            })
+        <aside className="flex min-h-0 flex-col gap-2">
+          {items.length > 0 && (
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={`Filter ${labels.plural.toLowerCase()}…`}
+            />
           )}
+          <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-1">
+            {!loaded ? (
+              <p className="px-1 text-sm text-muted-foreground">Loading…</p>
+            ) : items.length === 0 ? (
+              <p className="px-1 text-sm text-muted-foreground">
+                No {labels.plural.toLowerCase()} yet.
+              </p>
+            ) : filtered.length === 0 ? (
+              <p className="px-1 text-sm text-muted-foreground">No matches.</p>
+            ) : (
+              filtered.map((item) => {
+                const active = item.id === selectedId
+                return (
+                  <ContextMenu key={item.id}>
+                    <ContextMenuTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedId(item.id)}
+                        className={cn(
+                          'flex flex-col gap-0.5 rounded-md border px-3 py-2 text-left transition-colors',
+                          active
+                            ? 'border-primary/50 bg-accent'
+                            : 'border-transparent hover:bg-accent/60',
+                        )}
+                      >
+                        <span className="flex items-center gap-2 text-sm font-medium">
+                          <Icon
+                            name={icon}
+                            className="size-4 text-muted-foreground"
+                          />
+                          <span className="truncate">{item.name}</span>
+                          {item.model && (
+                            <Badge
+                              variant="muted"
+                              className="ml-auto font-code"
+                            >
+                              {item.model}
+                            </Badge>
+                          )}
+                        </span>
+                        {item.description && (
+                          <span className="line-clamp-2 text-xs text-muted-foreground">
+                            {item.description}
+                          </span>
+                        )}
+                      </button>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem onSelect={() => setRenameItem(item)}>
+                        <Icon name="pencil" />
+                        Rename
+                      </ContextMenuItem>
+                      <ContextMenuItem onSelect={() => setDuplicateItem(item)}>
+                        <Icon name="copy" />
+                        Duplicate
+                      </ContextMenuItem>
+                      <ContextMenuItem onSelect={() => void runExport(item)}>
+                        <Icon name="upload" />
+                        Export
+                      </ContextMenuItem>
+                      {canMigrate && migrateKind && (
+                        <ContextMenuItem onSelect={() => setMigrateItem(item)}>
+                          <Icon name="arrow-left-right" />
+                          Migrate to {COLLECTION_LABELS[migrateKind].singular}
+                        </ContextMenuItem>
+                      )}
+                      <ContextMenuItem
+                        onSelect={() => void ipc.revealPath(item.path)}
+                      >
+                        <Icon name="folder-open" />
+                        Reveal in folder
+                      </ContextMenuItem>
+                      <ContextMenuSeparator />
+                      <ContextMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onSelect={() => {
+                          setSelectedId(item.id)
+                          setDeleteOpen(true)
+                        }}
+                      >
+                        <Icon name="trash" />
+                        Delete
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
+                )
+              })
+            )}
+          </div>
         </aside>
 
         <section className="min-h-0 rounded-lg border border-border bg-card/40 p-4">

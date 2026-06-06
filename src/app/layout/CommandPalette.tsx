@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import type { CollectionKind } from '@/shared/types/collections'
 import {
   CommandDialog,
   CommandEmpty,
@@ -8,6 +10,7 @@ import {
   CommandList,
 } from '@/shared/components/ui/command'
 import { Icon } from '@/shared/components/Icon'
+import { ipc } from '@/shared/ipc/ipc.client'
 import { AgentGlyph } from '@/features/agents/components/AgentGlyph'
 import { PRIMARY_NAV, SETTINGS_NAV } from '@/app/navigation'
 import { useCommandPalette } from '@/app/command/commandPalette.store'
@@ -17,6 +20,21 @@ import {
 } from '@/features/agents/hooks/useActiveAgent'
 import { useAgentStore } from '@/features/agents/store/agent.store'
 import { useThemeStore } from '@/features/themes/store/theme.store'
+import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
+import { useCollectionSelection } from '@/features/collections/store/collectionSelection.store'
+
+const COLLECTION_KINDS: CollectionKind[] = ['agents', 'commands', 'skills']
+const KIND_ICON: Record<CollectionKind, string> = {
+  agents: 'bot',
+  commands: 'square-slash',
+  skills: 'graduation-cap',
+}
+
+interface PaletteItem {
+  kind: CollectionKind
+  id: string
+  name: string
+}
 
 export function CommandPalette() {
   const open = useCommandPalette((s) => s.open)
@@ -26,6 +44,28 @@ export function CommandPalette() {
   const agents = useAllAgents()
   const activeAgent = useActiveAgent()
   const setActiveAgent = useAgentStore((s) => s.setActiveAgent)
+  const basePath = useConfigBase(activeAgent.id)
+  const requestOpen = useCollectionSelection((s) => s.requestOpen)
+
+  const [items, setItems] = useState<PaletteItem[]>([])
+  useEffect(() => {
+    if (!open || !basePath) return
+    let active = true
+    const kinds = COLLECTION_KINDS.filter((k) => activeAgent.capabilities[k])
+    void Promise.all(
+      kinds.map((kind) =>
+        ipc
+          .listCollection(basePath, kind)
+          .then((list) => list.map((i) => ({ kind, id: i.id, name: i.name })))
+          .catch(() => [] as PaletteItem[]),
+      ),
+    ).then((res) => {
+      if (active) setItems(res.flat())
+    })
+    return () => {
+      active = false
+    }
+  }, [open, basePath, activeAgent.id, activeAgent.capabilities])
 
   const toggleAppearance = useThemeStore((s) => s.toggleAppearance)
   const setAgentTheme = useThemeStore((s) => s.setAgentTheme)
@@ -77,6 +117,27 @@ export function CommandPalette() {
             </CommandItem>
           ))}
         </CommandGroup>
+
+        {items.length > 0 && (
+          <CommandGroup heading="Items">
+            {items.map((item) => (
+              <CommandItem
+                key={`${item.kind}-${item.id}`}
+                value={`item ${item.name} ${item.id} ${item.kind}`}
+                onSelect={run(() => {
+                  requestOpen(item.kind, item.id)
+                  navigate(`/${item.kind}`)
+                })}
+              >
+                <Icon name={KIND_ICON[item.kind]} />
+                {item.name}
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {item.kind}
+                </span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
 
         <CommandGroup heading="Appearance">
           <CommandItem
