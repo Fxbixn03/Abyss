@@ -8,6 +8,13 @@ import {
 import { Switch } from '@/shared/components/ui/switch'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useSettingsStore } from '../store/settings.store'
@@ -80,6 +87,70 @@ export function PreferencesSection() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Billing &amp; cost</CardTitle>
+        </CardHeader>
+        <CardContent className="divide-y divide-border">
+          <SettingRow
+            title="Billing mode"
+            description="Subscription has no per-token cost; API is pay-as-you-go."
+            control={
+              <Select
+                value={settings.billingMode}
+                onValueChange={(v) =>
+                  void updatePrefs({
+                    billingMode: v as 'subscription' | 'api',
+                  })
+                }
+              >
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="subscription">Subscription</SelectItem>
+                  <SelectItem value="api">API (pay-as-you-go)</SelectItem>
+                </SelectContent>
+              </Select>
+            }
+          />
+          {settings.billingMode === 'api' && (
+            <>
+              <SettingRow
+                title="Show estimated costs"
+                description="Display an approximate token cost on the dashboard."
+                control={
+                  <Switch
+                    checked={settings.showCosts}
+                    onCheckedChange={(v) => void updatePrefs({ showCosts: v })}
+                  />
+                }
+              />
+              <SettingRow
+                title="Currency"
+                description="Currency used for the cost estimate."
+                control={
+                  <Select
+                    value={settings.currency}
+                    onValueChange={(v) =>
+                      void updatePrefs({ currency: v as 'usd' | 'eur' })
+                    }
+                  >
+                    <SelectTrigger className="w-[110px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="usd">USD ($)</SelectItem>
+                      <SelectItem value="eur">EUR (€)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                }
+              />
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Default project directory</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center gap-3">
@@ -97,7 +168,11 @@ export function PreferencesSection() {
               <Badge variant="muted">not set</Badge>
             </span>
           )}
-          <Button variant="secondary" size="sm" onClick={() => void browseProjectDir()}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => void browseProjectDir()}
+          >
             <Icon name="folder-open" />
             Browse…
           </Button>

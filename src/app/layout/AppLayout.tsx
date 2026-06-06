@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { TooltipProvider } from '@/shared/components/ui/tooltip'
 import { useCommandPalette } from '@/app/command/commandPalette.store'
+import { useGlobalShortcuts } from '@/features/shortcuts/hooks/useGlobalShortcuts'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { StatusBar } from './StatusBar'
@@ -10,6 +11,7 @@ import { ScopeBar } from '@/features/scope/components/ScopeBar'
 
 export function AppLayout() {
   const toggle = useCommandPalette((s) => s.toggle)
+  useGlobalShortcuts()
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

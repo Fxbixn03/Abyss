@@ -5,6 +5,8 @@ import { Card } from '@/shared/components/ui/card'
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
+import { useSettingsStore } from '@/features/settings/store/settings.store'
+import { estimateCostUsd, formatMoney } from '../lib/cost'
 
 function compact(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -48,6 +50,10 @@ export function UsagePanel() {
   const navigate = useNavigate()
   const agent = useActiveAgent()
   const hasChats = agent.capabilities.chats
+  const billingMode = useSettingsStore((s) => s.settings.billingMode)
+  const showCosts = useSettingsStore((s) => s.settings.showCosts)
+  const currency = useSettingsStore((s) => s.settings.currency)
+  const costVisible = billingMode === 'api' && showCosts
 
   const [sessions, setSessions] = useState<ChatSessionMeta[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -127,6 +133,16 @@ export function UsagePanel() {
           label="Output tokens"
           value={stats.outputTokens ? compact(stats.outputTokens) : '—'}
         />
+        {costVisible && (
+          <Stat
+            icon="circle-dollar-sign"
+            label="Estimated cost"
+            value={formatMoney(
+              estimateCostUsd(stats.inputTokens, stats.outputTokens),
+              currency,
+            )}
+          />
+        )}
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">

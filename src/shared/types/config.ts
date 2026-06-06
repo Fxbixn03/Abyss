@@ -76,6 +76,12 @@ export interface AppSettings {
   launchOnStartup: boolean
   /** Whether the first-run setup has been completed. */
   onboarded: boolean
+  /** Subscription (no per-token cost) vs API (pay-as-you-go). */
+  billingMode: 'subscription' | 'api'
+  /** Show estimated token costs (only meaningful for API billing). */
+  showCosts: boolean
+  /** Currency for the cost estimate. */
+  currency: 'usd' | 'eur'
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -83,6 +89,9 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   confirmDiffBeforeSave: true,
   launchOnStartup: false,
   onboarded: false,
+  billingMode: 'subscription',
+  showCosts: false,
+  currency: 'usd',
 }
 
 /** Auto-update lifecycle, pushed to the renderer as it progresses. */

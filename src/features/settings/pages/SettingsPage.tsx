@@ -6,6 +6,7 @@ import { PathsSection } from '../components/PathsSection'
 import { AgentsSection } from '../components/AgentsSection'
 import { AppearanceSection } from '../components/AppearanceSection'
 import { AgentIconsSection } from '../components/AgentIconsSection'
+import { ShortcutsSection } from '../components/ShortcutsSection'
 import { PreferencesSection } from '../components/PreferencesSection'
 import { AboutSection } from '../components/AboutSection'
 import { ThemeBuilder } from '@/features/themes/components/ThemeBuilder'
@@ -42,6 +43,12 @@ const SECTIONS: Section[] = [
     label: 'Theme Builder',
     icon: 'paintbrush',
     render: <ThemeBuilder />,
+  },
+  {
+    id: 'shortcuts',
+    label: 'Shortcuts',
+    icon: 'keyboard',
+    render: <ShortcutsSection />,
   },
   {
     id: 'preferences',
