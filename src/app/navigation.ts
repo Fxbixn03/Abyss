@@ -42,6 +42,7 @@ const ROUTE_GROUP: Record<string, NavGroupId> = {
   '/skills': 'development',
   '/templates': 'development',
   '/chats': 'runtime',
+  '/context': 'runtime',
   '/history': 'runtime',
   '/mcp': 'system',
   '/hooks': 'system',
@@ -72,6 +73,13 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: 'file-text',
     route: '/config',
     description: 'Edit instruction files',
+  },
+  {
+    id: 'context',
+    label: 'Context',
+    icon: 'list-tree',
+    route: '/context',
+    description: 'Compiled prompt & conflicts',
   },
   {
     id: 'history',

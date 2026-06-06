@@ -31,6 +31,13 @@ export const PAGE_HELP: Record<string, HelpEntry> = {
       'In project scope only this project’s conversations are shown.',
     ],
   },
+  '/context': {
+    title: 'Context (compiled prompt)',
+    body: [
+      'Shows the layers that make up what the model actually sees — base prompt, instructions, subagents, skills, hooks and MCP schemas — with rough token estimates each.',
+      'The Conflicts section flags contradictory rules, duplicated instructions and MCP servers that clash across agents.',
+    ],
+  },
   '/history': {
     title: 'History',
     body: [
