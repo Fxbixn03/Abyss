@@ -46,6 +46,54 @@ function Stat({
   )
 }
 
+/** Sum of input+output tokens for sessions updated within the last `ms`. */
+function tokensInWindow(sessions: ChatSessionMeta[], ms: number): number {
+  const since = Date.now() - ms
+  let total = 0
+  for (const s of sessions) {
+    const t = s.updatedAt ? new Date(s.updatedAt).getTime() : 0
+    if (t >= since) total += (s.inputTokens ?? 0) + (s.outputTokens ?? 0)
+  }
+  return total
+}
+
+function QuotaBar({
+  label,
+  used,
+  budget,
+}: {
+  label: string
+  used: number
+  budget?: number
+}) {
+  if (!budget || budget <= 0) {
+    return (
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-code text-xs text-muted-foreground">
+          {compact(used)} used · no budget set
+        </span>
+      </div>
+    )
+  }
+  const pct = Math.min(100, Math.round((used / budget) * 100))
+  const tone =
+    pct >= 90 ? 'bg-destructive' : pct >= 70 ? 'bg-warning' : 'bg-success'
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <span>{label}</span>
+        <span className="font-code text-xs text-muted-foreground">
+          {compact(used)} / {compact(budget)} · {pct}%
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-muted">
+        <div className={`h-full ${tone}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  )
+}
+
 export function UsagePanel() {
   const navigate = useNavigate()
   const agent = useActiveAgent()
@@ -53,6 +101,8 @@ export function UsagePanel() {
   const billingMode = useSettingsStore((s) => s.settings.billingMode)
   const showCosts = useSettingsStore((s) => s.settings.showCosts)
   const currency = useSettingsStore((s) => s.settings.currency)
+  const weeklyBudget = useSettingsStore((s) => s.settings.weeklyTokenBudget)
+  const sessionBudget = useSettingsStore((s) => s.settings.sessionTokenBudget)
   const costVisible = billingMode === 'api' && showCosts
 
   const [sessions, setSessions] = useState<ChatSessionMeta[]>([])
@@ -107,6 +157,10 @@ export function UsagePanel() {
   if (!hasChats) return null
   if (loaded && sessions.length === 0) return null
 
+  const sessionUsed = tokensInWindow(sessions, 5 * 60 * 60 * 1000)
+  const weeklyUsed = tokensInWindow(sessions, 7 * 24 * 60 * 60 * 1000)
+  const showQuota = Boolean(weeklyBudget || sessionBudget)
+
   const openSession = () => navigate('/chats')
 
   return (
@@ -114,6 +168,30 @@ export function UsagePanel() {
       <h2 className="text-sm font-medium text-muted-foreground">
         Usage · {agent.displayName}
       </h2>
+
+      <Card className="space-y-3 p-4">
+        <div className="flex items-center justify-between">
+          <p className="flex items-center gap-2 text-sm font-medium">
+            <Icon name="gauge" className="size-4" />
+            Quota left
+          </p>
+          {!showQuota && (
+            <button
+              type="button"
+              onClick={() => navigate('/settings?s=preferences')}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Set budgets →
+            </button>
+          )}
+        </div>
+        <QuotaBar
+          label="5-hour session"
+          used={sessionUsed}
+          budget={sessionBudget}
+        />
+        <QuotaBar label="This week" used={weeklyUsed} budget={weeklyBudget} />
+      </Card>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat

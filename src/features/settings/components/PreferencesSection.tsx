@@ -8,6 +8,7 @@ import {
 import { Switch } from '@/shared/components/ui/switch'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
+import { Input } from '@/shared/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -146,6 +147,56 @@ export function PreferencesSection() {
               />
             </>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Usage limits</CardTitle>
+        </CardHeader>
+        <CardContent className="divide-y divide-border">
+          <SettingRow
+            title="Weekly token budget"
+            description="Your plan's weekly allowance — drives the % quota gauge on the dashboard."
+            control={
+              <Input
+                type="number"
+                min={0}
+                step={100000}
+                value={settings.weeklyTokenBudget ?? ''}
+                placeholder="e.g. 5000000"
+                onChange={(e) =>
+                  void updatePrefs({
+                    weeklyTokenBudget: e.target.value
+                      ? Number(e.target.value)
+                      : undefined,
+                  })
+                }
+                className="w-[160px] text-right font-code"
+              />
+            }
+          />
+          <SettingRow
+            title="Session (5h) token budget"
+            description="Rolling 5-hour allowance, shown as a percentage consumed."
+            control={
+              <Input
+                type="number"
+                min={0}
+                step={50000}
+                value={settings.sessionTokenBudget ?? ''}
+                placeholder="e.g. 1000000"
+                onChange={(e) =>
+                  void updatePrefs({
+                    sessionTokenBudget: e.target.value
+                      ? Number(e.target.value)
+                      : undefined,
+                  })
+                }
+                className="w-[160px] text-right font-code"
+              />
+            }
+          />
         </CardContent>
       </Card>
 
