@@ -11,12 +11,12 @@ import {
 import { Button } from '@/shared/components/ui/button'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
-import { StringListEditor } from '@/shared/components/StringListEditor'
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { CodexApprovals } from '../components/CodexApprovals'
+import { PermissionRuleEditor } from '../components/PermissionRuleEditor'
 
 const EMPTY: PermissionRules = { allow: [], deny: [], ask: [] }
 
@@ -123,12 +123,12 @@ export function PermissionsPage() {
               <CardDescription>{section.description}</CardDescription>
             </CardHeader>
             <CardContent>
-              <StringListEditor
+              <PermissionRuleEditor
+                category={section.key}
                 values={rules[section.key]}
                 onChange={(values) =>
                   persist({ ...rules, [section.key]: values })
                 }
-                placeholder={section.placeholder}
               />
             </CardContent>
           </Card>

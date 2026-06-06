@@ -37,6 +37,7 @@
     "cli": "tsx --tsconfig tsconfig.node.json cli/index.ts",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "lint": "eslint . --max-warnings 0",
+    "test": "tsx --tsconfig tsconfig.node.json --test tests/*.test.ts",
     "format": "prettier --write .",
     "preview": "vite preview"
   },
