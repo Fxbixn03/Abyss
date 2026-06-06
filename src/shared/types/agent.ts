@@ -50,6 +50,8 @@ export interface SidebarSection {
   /** lucide-react icon name, e.g. 'server'. */
   icon: string
   route: string
+  /** Short tooltip shown in the sidebar. */
+  description?: string
 }
 
 /** Which configuration surfaces an agent exposes in the UI. */

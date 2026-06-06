@@ -1,5 +1,3 @@
-import { useNavigate } from 'react-router-dom'
-import { Card } from '@/shared/components/ui/card'
 import { Badge } from '@/shared/components/ui/badge'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Icon } from '@/shared/components/Icon'
@@ -13,34 +11,10 @@ import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { UsagePanel } from '../components/UsagePanel'
 
-interface QuickAction {
-  label: string
-  description: string
-  icon: string
-  route: string
-}
-
 export function DashboardPage() {
   const agent = useActiveAgent()
   const agents = useAllAgents()
   const basePath = useConfigBase(agent.id)
-  const navigate = useNavigate()
-
-  const sections = agent.getSidebarSections?.() ?? []
-  const quickActions: QuickAction[] = [
-    {
-      label: 'Instructions',
-      description: `Edit ${agent.displayName} instruction files`,
-      icon: 'file-text',
-      route: '/config',
-    },
-    ...sections.map((s) => ({
-      label: s.label,
-      description: `Manage ${s.label.toLowerCase()}`,
-      icon: s.icon,
-      route: s.route,
-    })),
-  ]
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-y-auto pr-1">
@@ -75,40 +49,6 @@ export function DashboardPage() {
       </section>
 
       <UsagePanel />
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground">
-          Quick actions
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {quickActions.map((action) => (
-            <Card
-              key={action.route}
-              role="button"
-              tabIndex={0}
-              onClick={() => navigate(action.route)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') navigate(action.route)
-              }}
-              className="flex cursor-pointer items-center gap-3 p-4 transition-colors hover:border-primary/50"
-            >
-              <div className="flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                <Icon name={action.icon} className="size-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium">{action.label}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {action.description}
-                </p>
-              </div>
-              <Icon
-                name="chevron-right"
-                className="ml-auto size-4 text-muted-foreground"
-              />
-            </Card>
-          ))}
-        </div>
-      </section>
     </div>
   )
 }

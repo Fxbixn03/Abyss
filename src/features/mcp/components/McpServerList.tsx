@@ -26,22 +26,25 @@ function HealthBadge({ state }: { state: McpHealthState }) {
     return (
       <Badge variant="muted">
         <Icon name="loader" className="size-3 animate-spin" />
-        testing…
+        checking…
       </Badge>
     )
   }
   if (state.ok) {
+    const title =
+      state.tools.length > 0 ? `${state.tools.length} tools` : 'reachable'
     return (
-      <Badge variant="success" title={state.tools.join(', ')}>
+      <Badge variant="success" title={title}>
         <Icon name="circle-check" />
-        {state.tools.length > 0 ? `${state.tools.length} tools` : 'reachable'}
+        online
+        {state.tools.length > 0 ? ` · ${state.tools.length}` : ''}
       </Badge>
     )
   }
   return (
     <Badge variant="danger" title={state.error}>
       <Icon name="circle-alert" />
-      failed
+      offline
     </Badge>
   )
 }

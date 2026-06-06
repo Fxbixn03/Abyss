@@ -49,7 +49,8 @@ export function ThemeBuilder() {
   const customThemes = useThemeStore((s) => s.customThemes)
   const allThemes = useThemeStore((s) => s.allThemes)
   const addCustomTheme = useThemeStore((s) => s.addCustomTheme)
-  const removeCustomTheme = useThemeStore((s) => s.removeCustomTheme)
+  const deleteTheme = useThemeStore((s) => s.deleteTheme)
+  const restoreDefaults = useThemeStore((s) => s.restoreDefaults)
   const setAgentTheme = useThemeStore((s) => s.setAgentTheme)
   const getActiveTheme = useThemeStore((s) => s.getActiveTheme)
   const appearance = useThemeStore((s) => s.appearance)
@@ -78,8 +79,10 @@ export function ThemeBuilder() {
   }
   const startNew = () =>
     setDraft(createDraftTheme(getActiveTheme(activeAgent.id)))
+  const themeExists = allThemes().some((t) => t.id === draft.id)
+  const canDelete = themeExists && allThemes().length > 1
   const removeDraft = () => {
-    removeCustomTheme(draft.id)
+    deleteTheme(draft.id)
     startNew()
   }
   const baseOn = (id: string) => {
@@ -90,16 +93,20 @@ export function ThemeBuilder() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        Build your own theme — pick colors for light and dark, preview live, then
-        save. No code required.
+        Build your own theme — pick colors for light and dark, preview live,
+        then save. No code required.
       </p>
 
       <Card>
         <CardHeader className="flex-row items-center justify-between gap-2">
-          <CardTitle>Your themes</CardTitle>
+          <CardTitle>Themes</CardTitle>
           <div className="flex items-center gap-2">
+            <Button size="sm" variant="ghost" onClick={restoreDefaults}>
+              <Icon name="rotate-ccw" />
+              Restore defaults
+            </Button>
             <Select onValueChange={baseOn}>
-              <SelectTrigger className="h-8 w-[180px] text-xs">
+              <SelectTrigger className="h-8 w-[160px] text-xs">
                 <SelectValue placeholder="Duplicate from…" />
               </SelectTrigger>
               <SelectContent>
@@ -117,13 +124,10 @@ export function ThemeBuilder() {
           </div>
         </CardHeader>
         <CardContent>
-          {customThemes.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              No custom themes yet. Tweak the colors below and hit Save.
-            </p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {customThemes.map((t) => (
+          <div className="flex flex-wrap gap-2">
+            {allThemes().map((t) => {
+              const isCustom = customThemes.some((c) => c.id === t.id)
+              return (
                 <button
                   key={t.id}
                   type="button"
@@ -140,10 +144,15 @@ export function ThemeBuilder() {
                     style={{ background: t.dark.primary }}
                   />
                   {t.label}
+                  {isCustom && (
+                    <Badge variant="muted" className="text-[9px]">
+                      edited
+                    </Badge>
+                  )}
                 </button>
-              ))}
-            </div>
-          )}
+              )
+            })}
+          </div>
         </CardContent>
       </Card>
 
@@ -213,7 +222,9 @@ export function ThemeBuilder() {
                 <Label>Font</Label>
                 <Select
                   value={draft.fontFamily}
-                  onValueChange={(v) => setMeta({ fontFamily: v as FontFamily })}
+                  onValueChange={(v) =>
+                    setMeta({ fontFamily: v as FontFamily })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -297,7 +308,7 @@ export function ThemeBuilder() {
                 <Button
                   variant="ghost"
                   onClick={removeDraft}
-                  disabled={!saved}
+                  disabled={!canDelete}
                 >
                   <Icon name="trash" />
                   Delete

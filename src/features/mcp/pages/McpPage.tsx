@@ -40,6 +40,14 @@ export function McpPage() {
     if (supported && basePath) void load(agent.id, basePath, projectDir)
   }, [supported, agent.id, basePath, projectDir, load])
 
+  // Auto-check each server's status once (per app session) so the list shows
+  // online/offline without a manual click.
+  useEffect(() => {
+    for (const server of servers) {
+      if (!useMcpStore.getState().health[server.id]) void test(server)
+    }
+  }, [servers, test])
+
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">

@@ -38,14 +38,17 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
   const appearance = useThemeStore((s) => s.appearance)
   const customThemes = useThemeStore((s) => s.customThemes)
   const getThemesForAgent = useThemeStore((s) => s.getThemesForAgent)
+  const allThemes = useThemeStore((s) => s.allThemes)
   const setAgentTheme = useThemeStore((s) => s.setAgentTheme)
   const addCustomTheme = useThemeStore((s) => s.addCustomTheme)
-  const removeCustomTheme = useThemeStore((s) => s.removeCustomTheme)
+  const deleteTheme = useThemeStore((s) => s.deleteTheme)
+  const restoreDefaults = useThemeStore((s) => s.restoreDefaults)
   const activeTheme = useThemeStore((s) => s.getActiveTheme(agentId))
   const activeThemeId = activeTheme.id
 
   const [notice, setNotice] = useState<string | null>(null)
-  const isCustom = customThemes.some((t) => t.id === activeThemeId)
+  void customThemes
+  const canDelete = allThemes().length > 1
   const themes: ThemeConfig[] = getThemesForAgent(agentId)
 
   const exportActive = async () => {
@@ -70,7 +73,7 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
   }
 
   const deleteActive = () => {
-    if (isCustom) removeCustomTheme(activeThemeId)
+    if (canDelete) deleteTheme(activeThemeId)
   }
 
   return (
@@ -84,12 +87,19 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
           <Icon name="upload" />
           Export current
         </Button>
-        {isCustom && (
-          <Button variant="ghost" size="sm" onClick={deleteActive}>
-            <Icon name="trash" />
-            Delete current
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={deleteActive}
+          disabled={!canDelete}
+        >
+          <Icon name="trash" />
+          Delete current
+        </Button>
+        <Button variant="ghost" size="sm" onClick={restoreDefaults}>
+          <Icon name="rotate-ccw" />
+          Restore defaults
+        </Button>
         {notice && (
           <span className="truncate text-xs text-muted-foreground">
             {notice}
