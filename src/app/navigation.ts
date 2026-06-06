@@ -7,6 +7,56 @@ export interface NavItem {
   description?: string
 }
 
+/** Sidebar grouping — every nav route is bucketed into one of these. */
+export type NavGroupId =
+  | 'overview'
+  | 'development'
+  | 'runtime'
+  | 'system'
+  | 'tools'
+
+export interface NavGroup {
+  id: NavGroupId
+  label: string
+}
+
+/** Render order of sidebar groups. Empty groups are skipped. */
+export const NAV_GROUPS: NavGroup[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'development', label: 'Development' },
+  { id: 'runtime', label: 'Runtime' },
+  { id: 'system', label: 'System' },
+  { id: 'tools', label: 'Tools' },
+]
+
+/**
+ * Maps a nav route to its sidebar group. Lives here (not on each adapter
+ * section) so agent adapters stay tiny and grouping is configured in one place.
+ * Unmapped routes fall back to 'tools'.
+ */
+const ROUTE_GROUP: Record<string, NavGroupId> = {
+  '/': 'overview',
+  '/config': 'development',
+  '/agents': 'development',
+  '/commands': 'development',
+  '/skills': 'development',
+  '/templates': 'development',
+  '/chats': 'runtime',
+  '/history': 'runtime',
+  '/mcp': 'system',
+  '/hooks': 'system',
+  '/permissions': 'system',
+  '/model-env': 'system',
+  '/settings-file': 'system',
+  '/bundles': 'tools',
+  '/compare': 'tools',
+  '/profiles': 'tools',
+}
+
+export function groupForRoute(route: string): NavGroupId {
+  return ROUTE_GROUP[route] ?? 'tools'
+}
+
 /** Always-present navigation (agent-independent). */
 export const PRIMARY_NAV: NavItem[] = [
   {

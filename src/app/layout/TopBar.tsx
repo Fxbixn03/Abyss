@@ -5,6 +5,7 @@ import { AgentSwitcher } from '@/features/agents/components/AgentSwitcher'
 import { AppearanceToggle } from '@/features/themes/components/AppearanceToggle'
 import { useCommandPalette } from '@/app/command/commandPalette.store'
 import { useBrowserNav } from '@/app/hooks/useBrowserNav'
+import { HelpButton } from './HelpButton'
 
 export function TopBar() {
   const navigate = useNavigate()
@@ -52,6 +53,7 @@ export function TopBar() {
             ⌘K
           </kbd>
         </Button>
+        <HelpButton />
         <AppearanceToggle />
         <Button
           variant="ghost"
