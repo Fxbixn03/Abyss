@@ -86,6 +86,12 @@ export interface AppSettings {
   weeklyTokenBudget?: number
   /** Optional rolling 5-hour session token budget for the quota gauge. */
   sessionTokenBudget?: number
+  /** Daily auto-backup of all configs on first launch of the day. */
+  autoBackup: boolean
+  /** Backup directory; undefined → default under userData. */
+  backupDir?: string
+  /** How many most-recent backups to keep. */
+  backupKeep: number
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -96,6 +102,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   billingMode: 'subscription',
   showCosts: false,
   currency: 'usd',
+  autoBackup: true,
+  backupKeep: 3,
 }
 
 /** Auto-update lifecycle, pushed to the renderer as it progresses. */

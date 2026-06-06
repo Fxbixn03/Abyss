@@ -53,6 +53,8 @@ export const ipc = {
   fileExists: (path: string) => invoke(IpcChannel.FileExists, { path }),
   sandboxRun: (command: string, opts?: { cwd?: string; timeoutMs?: number }) =>
     invoke(IpcChannel.SandboxRun, { command, ...opts }),
+  backupList: () => invoke(IpcChannel.BackupList, {}),
+  backupRun: () => invoke(IpcChannel.BackupRun, {}),
   pickDirectory: (title?: string, defaultPath?: string) =>
     invoke(IpcChannel.PickDirectory, { title, defaultPath }),
   pickFile: (options?: {

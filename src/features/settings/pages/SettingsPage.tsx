@@ -9,6 +9,7 @@ import { AppearanceSection } from '../components/AppearanceSection'
 import { AgentIconsSection } from '../components/AgentIconsSection'
 import { ShortcutsSection } from '../components/ShortcutsSection'
 import { PreferencesSection } from '../components/PreferencesSection'
+import { BackupsSection } from '../components/BackupsSection'
 import { AboutSection } from '../components/AboutSection'
 import { ThemeBuilder } from '@/features/themes/components/ThemeBuilder'
 import { SETTINGS_SECTIONS, DEFAULT_SETTINGS_SECTION } from '../sections'
@@ -22,6 +23,7 @@ const SECTION_RENDER: Record<string, ReactNode> = {
   'theme-builder': <ThemeBuilder />,
   shortcuts: <ShortcutsSection />,
   preferences: <PreferencesSection />,
+  backups: <BackupsSection />,
   about: <AboutSection />,
 }
 

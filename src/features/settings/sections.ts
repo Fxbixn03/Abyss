@@ -42,7 +42,13 @@ export const SETTINGS_SECTIONS: SettingsSectionMeta[] = [
     id: 'preferences',
     label: 'Preferences',
     icon: 'sliders',
-    keywords: ['billing', 'cost', 'currency', 'backup'],
+    keywords: ['billing', 'cost', 'currency', 'quota', 'budget'],
+  },
+  {
+    id: 'backups',
+    label: 'Backups',
+    icon: 'archive',
+    keywords: ['backup', 'restore', 'auto', 'daily'],
   },
   { id: 'about', label: 'About', icon: 'info', keywords: ['version', 'update'] },
 ]

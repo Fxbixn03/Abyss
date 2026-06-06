@@ -6,6 +6,8 @@ import { SettingsStore } from '@core/settings-store'
 import { disposeAllChats } from '@core/chat/session-manager'
 import { configureSnapshots } from '@core/snapshots'
 import { configureProfiles } from '@core/profiles'
+import { runDailyBackup, defaultBackupDir } from '@core/backup'
+import type { IpcContext } from './ipc/context'
 import { registerIpcHandlers } from './ipc'
 import { createEmitter } from './ipc/emit'
 import { setupAutoUpdater } from './updater'
@@ -94,7 +96,19 @@ function buildIpcContext() {
   const getWindow = () => mainWindow
   const emit = createEmitter(getWindow)
   configureWatcher(emit)
-  return { env, settings, getWindow, emit }
+  return { env, settings, userData, getWindow, emit }
+}
+
+/** Daily auto-backup: runs once per day on first launch, honouring settings. */
+async function maybeRunDailyBackup(ctx: IpcContext): Promise<void> {
+  try {
+    const settings = await ctx.settings.read()
+    if (settings.autoBackup === false) return
+    const dir = settings.backupDir || defaultBackupDir(ctx.userData)
+    await runDailyBackup(ctx.env, dir, settings.backupKeep ?? 3)
+  } catch {
+    // Backups are best-effort; never block startup on a failure.
+  }
 }
 
 // Single-instance: focus the existing window instead of opening a second app.
@@ -115,6 +129,7 @@ if (!gotLock) {
     registerIpcHandlers(ctx)
     createWindow()
     setupAutoUpdater(ctx.emit, isDev)
+    void maybeRunDailyBackup(ctx)
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()

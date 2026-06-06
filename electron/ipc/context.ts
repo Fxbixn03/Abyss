@@ -7,6 +7,8 @@ import type { Emitter } from './emit'
 export interface IpcContext {
   env: OsEnv
   settings: SettingsStore
+  /** Electron userData dir, for resolving default storage locations. */
+  userData: string
   getWindow: () => BrowserWindow | null
   /** Typed main → renderer push (streaming events). */
   emit: Emitter
