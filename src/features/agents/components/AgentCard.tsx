@@ -4,6 +4,10 @@ import { Card } from '@/shared/components/ui/card'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgentId } from '../hooks/useActiveAgent'
 import { useAgentStore } from '../store/agent.store'
+import {
+  useAgentAvailability,
+  useAgentInstalled,
+} from '../store/agent-availability.store'
 import { AgentAvatar } from './AgentAvatar'
 
 const CAPABILITY_LABELS: Record<keyof AgentCapabilities, string> = {
@@ -23,6 +27,8 @@ export function AgentCard({ agent }: { agent: AgentAdapter }) {
   const activeId = useActiveAgentId()
   const setActiveAgent = useAgentStore((s) => s.setActiveAgent)
   const active = agent.id === activeId
+  const installed = useAgentInstalled(agent.id)
+  const availabilityLoaded = useAgentAvailability((s) => s.loaded)
 
   const capabilities = (
     Object.keys(CAPABILITY_LABELS) as (keyof AgentCapabilities)[]
@@ -54,11 +60,15 @@ export function AgentCard({ agent }: { agent: AgentAdapter }) {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium">{agent.displayName}</span>
-            {active && (
+            {installed ? (
               <Badge variant="success" className="font-code">
                 active
               </Badge>
-            )}
+            ) : availabilityLoaded ? (
+              <Badge variant="muted" className="font-code">
+                not installed
+              </Badge>
+            ) : null}
           </div>
           <span className="font-code text-xs text-muted-foreground">
             {agent.id}

@@ -18,6 +18,7 @@
 import claudeSvg from '@/assets/agents/claude.svg?raw'
 import codexSvg from '@/assets/agents/codex.svg?raw'
 import geminiSvg from '@/assets/agents/gemini.svg?raw'
+import cursorSvg from '@/assets/agents/cursor.svg?raw'
 
 const IMAGE_PREFIX = 'img:'
 
@@ -26,6 +27,7 @@ export const AGENT_BRAND_SVGS: Record<string, string> = {
   claude: claudeSvg,
   codex: codexSvg,
   gemini: geminiSvg,
+  cursor: cursorSvg,
 }
 
 /** Which of the three render paths an icon string takes. */
@@ -63,6 +65,8 @@ export interface IconChoice {
 export const BRAND_ICON_CHOICES: IconChoice[] = [
   { value: 'img:claude', label: 'Claude' },
   { value: 'img:codex', label: 'Codex' },
+  { value: 'img:gemini', label: 'Gemini' },
+  { value: 'img:cursor', label: 'Cursor' },
 ]
 
 /** Curated Lucide fallbacks offered in the icon picker. */

@@ -4,8 +4,7 @@ import type { ChatSessionMeta } from '@/shared/types/chat'
 import { Card } from '@/shared/components/ui/card'
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
-import { useAllAgents } from '@/features/agents/hooks/useActiveAgent'
-import { useAgentStore } from '@/features/agents/store/agent.store'
+import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 
 function compact(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -47,27 +46,27 @@ function Stat({
 
 export function UsagePanel() {
   const navigate = useNavigate()
-  const setActiveAgent = useAgentStore((s) => s.setActiveAgent)
-  const chatAgents = useAllAgents().filter((a) => a.capabilities.chats)
+  const agent = useActiveAgent()
+  const hasChats = agent.capabilities.chats
 
   const [sessions, setSessions] = useState<ChatSessionMeta[]>([])
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
+    if (!hasChats) return
     let active = true
-    void Promise.all(
-      chatAgents.map((a) => ipc.chatListSessions(a.id).catch(() => [])),
-    ).then((lists) => {
-      if (!active) return
-      setSessions(lists.flat())
-      setLoaded(true)
-    })
+    void ipc
+      .chatListSessions(agent.id)
+      .catch(() => [])
+      .then((list) => {
+        if (!active) return
+        setSessions(list)
+        setLoaded(true)
+      })
     return () => {
       active = false
     }
-    // chatAgents is derived from the (stable) registry; run once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [agent.id, hasChats])
 
   const stats = useMemo(() => {
     const totalMessages = sessions.reduce((n, s) => n + s.messageCount, 0)
@@ -96,16 +95,16 @@ export function UsagePanel() {
     }
   }, [sessions])
 
+  if (!hasChats) return null
   if (loaded && sessions.length === 0) return null
 
-  const openSession = (s: ChatSessionMeta) => {
-    setActiveAgent(s.agentId)
-    navigate('/chats')
-  }
+  const openSession = () => navigate('/chats')
 
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-medium text-muted-foreground">Usage</h2>
+      <h2 className="text-sm font-medium text-muted-foreground">
+        Usage · {agent.displayName}
+      </h2>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat
@@ -141,7 +140,7 @@ export function UsagePanel() {
                 <button
                   key={`${s.agentId}-${s.id}`}
                   type="button"
-                  onClick={() => openSession(s)}
+                  onClick={openSession}
                   className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent/60"
                 >
                   <span className="flex min-w-0 items-center gap-2">

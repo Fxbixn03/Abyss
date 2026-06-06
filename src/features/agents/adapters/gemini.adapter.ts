@@ -10,6 +10,6 @@ import { createAdapter } from './base.adapter'
  * `shared/agents/defs.ts`. Nothing else changes.
  */
 export const geminiAdapter: AgentAdapter = createAdapter(geminiDefinition, {
-  icon: 'gem',
+  icon: 'img:gemini',
   validate: validateMarkdownInstructions,
 })
