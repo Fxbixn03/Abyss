@@ -84,24 +84,37 @@ export function PermissionsPage() {
     title: string
     description: string
     placeholder: string
+    icon: string
+    /** Top-border accent communicating the risk level of the column. */
+    accent: string
+    iconClass: string
   }[] = [
     {
       key: 'allow',
       title: 'Allow',
       description: 'Tools the agent may run without asking.',
       placeholder: 'Bash(npm run test:*)',
+      icon: 'circle-check',
+      accent: 'border-t-2 border-t-success/60',
+      iconClass: 'text-success',
     },
     {
       key: 'ask',
       title: 'Ask',
       description: 'Tools that require confirmation first.',
       placeholder: 'Bash(git push:*)',
+      icon: 'circle-help',
+      accent: 'border-t-2 border-t-warning/60',
+      iconClass: 'text-warning',
     },
     {
       key: 'deny',
       title: 'Deny',
-      description: 'Tools that are always blocked.',
+      description: 'Tools that are always blocked — your wall against accidents.',
       placeholder: 'Read(./.env)',
+      icon: 'shield-x',
+      accent: 'border-t-2 border-t-destructive/70',
+      iconClass: 'text-destructive',
     },
   ]
 
@@ -114,10 +127,13 @@ export function PermissionsPage() {
       />
       <div className="grid gap-4 overflow-y-auto md:grid-cols-3">
         {sections.map((section) => (
-          <Card key={section.key}>
+          <Card key={section.key} className={section.accent}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Icon name="shield" className="size-4" />
+                <Icon
+                  name={section.icon}
+                  className={`size-4 ${section.iconClass}`}
+                />
                 {section.title}
               </CardTitle>
               <CardDescription>{section.description}</CardDescription>

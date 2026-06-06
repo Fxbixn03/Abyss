@@ -1,4 +1,4 @@
-import type { AgentAdapter, AgentCapabilities } from '@/shared/types/agent'
+import type { AgentAdapter } from '@/shared/types/agent'
 import { Badge } from '@/shared/components/ui/badge'
 import { Card } from '@/shared/components/ui/card'
 import { cn } from '@/shared/lib/utils'
@@ -10,29 +10,12 @@ import {
 } from '../store/agent-availability.store'
 import { AgentAvatar } from './AgentAvatar'
 
-const CAPABILITY_LABELS: Record<keyof AgentCapabilities, string> = {
-  instructions: 'Instructions',
-  mcp: 'MCP',
-  permissions: 'Permissions',
-  modelEnv: 'Model & Env',
-  agents: 'Agents',
-  commands: 'Commands',
-  skills: 'Skills',
-  hooks: 'Hooks',
-  rawSettings: 'Settings',
-  chats: 'Chats',
-}
-
 export function AgentCard({ agent }: { agent: AgentAdapter }) {
   const activeId = useActiveAgentId()
   const setActiveAgent = useAgentStore((s) => s.setActiveAgent)
   const active = agent.id === activeId
   const installed = useAgentInstalled(agent.id)
   const availabilityLoaded = useAgentAvailability((s) => s.loaded)
-
-  const capabilities = (
-    Object.keys(CAPABILITY_LABELS) as (keyof AgentCapabilities)[]
-  ).filter((key) => agent.capabilities[key])
 
   return (
     <Card
@@ -71,24 +54,10 @@ export function AgentCard({ agent }: { agent: AgentAdapter }) {
             ) : null}
           </div>
           <span className="font-code text-xs text-muted-foreground">
-            {agent.id}
+            {agent.name}
           </span>
         </div>
       </div>
-
-      {capabilities.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1">
-          {capabilities.map((key) => (
-            <Badge
-              key={key}
-              variant="secondary"
-              className="font-code text-[10px]"
-            >
-              {CAPABILITY_LABELS[key]}
-            </Badge>
-          ))}
-        </div>
-      )}
     </Card>
   )
 }

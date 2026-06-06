@@ -40,6 +40,8 @@ export function Sidebar() {
         </span>
       </div>
 
+      <div className="mx-3 border-b border-sidebar-border" />
+
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2">
         {PRIMARY_NAV.map((item) => (
           <SidebarLink key={item.id} item={item} />

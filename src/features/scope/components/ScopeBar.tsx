@@ -5,7 +5,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/shared/components/ui/select'
 import {
   Tooltip,
@@ -78,18 +77,25 @@ export function ScopeBar() {
           <>
             {recentProjects.length > 0 && (
               <Select value={projectDir} onValueChange={setProject}>
-                <SelectTrigger className="h-7 w-auto max-w-[360px] gap-1.5 px-2 text-xs">
+                <SelectTrigger className="h-7 w-[160px] gap-1.5 px-2 text-xs">
                   <Icon
                     name="folder-open"
-                    className="size-3.5 text-muted-foreground"
+                    className="size-3.5 shrink-0 text-muted-foreground"
                   />
-                  <SelectValue />
+                  {/* Name only — the full path already shows to the right. */}
+                  <span className="min-w-0 truncate font-code">
+                    {baseName(projectDir)}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {recentProjects.map((dir) => (
                     <SelectItem key={dir} value={dir} className="font-code">
-                      {baseName(dir)}
-                      <span className="ml-2 text-muted-foreground">{dir}</span>
+                      <span
+                        className="block max-w-[240px] truncate"
+                        title={dir}
+                      >
+                        {baseName(dir)}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
