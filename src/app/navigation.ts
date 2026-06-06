@@ -15,6 +15,7 @@ export const PRIMARY_NAV: NavItem[] = [
     route: '/config',
   },
   { id: 'history', label: 'History', icon: 'history', route: '/history' },
+  { id: 'bundles', label: 'Bundles', icon: 'package', route: '/bundles' },
 ]
 
 /** Pinned to the bottom of the sidebar. */

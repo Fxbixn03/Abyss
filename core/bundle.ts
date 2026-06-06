@@ -4,7 +4,11 @@
  */
 
 import type { OsEnv } from '@/shared/types/agent'
-import type { McpServerEntry, PermissionRules } from '@/shared/types/config'
+import type {
+  AgentBundle,
+  ApplyChange,
+  ExportBundle,
+} from '@/shared/types/bundle'
 import {
   getActiveAgentDefinitions,
   getAgentDefinition,
@@ -14,21 +18,11 @@ import { readAgentConfigFile, writeAgentConfigFile } from './config-io'
 import { readMcpServers, writeMcpServers } from './mcp'
 import { readPermissions, writePermissions } from './claude-settings'
 
-export interface AgentBundle {
-  agentId: string
-  basePath: string
-  /** specId -> file content */
-  files: Record<string, string>
-  mcpServers?: McpServerEntry[]
-  permissions?: PermissionRules
-}
-
-export interface ExportBundle {
-  $schema: 'abyss-bundle/v1'
-  version: 1
-  exportedAt: string
-  agents: AgentBundle[]
-}
+export type {
+  AgentBundle,
+  ApplyChange,
+  ExportBundle,
+} from '@/shared/types/bundle'
 
 export interface ExportOptions {
   agentIds?: string[]
@@ -64,15 +58,6 @@ export async function exportBundle(
     exportedAt: new Date().toISOString(),
     agents,
   }
-}
-
-export type ApplyKind = 'file' | 'mcp' | 'permissions'
-
-export interface ApplyChange {
-  agentId: string
-  kind: ApplyKind
-  target: string
-  changed: boolean
 }
 
 export interface ApplyOptions {

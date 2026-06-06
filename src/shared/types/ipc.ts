@@ -28,6 +28,7 @@ import type {
   ChatTranscript,
 } from './chat'
 import type { SnapshotContent, SnapshotMeta } from './snapshots'
+import type { ApplyChange, ExportBundle } from './bundle'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
 
@@ -105,6 +106,12 @@ export enum IpcChannel {
   SnapshotListRecent = 'snapshot:list-recent',
   SnapshotRead = 'snapshot:read',
   SnapshotRestore = 'snapshot:restore',
+
+  // Bundles (portable config export / apply)
+  BundlePreview = 'bundle:preview',
+  BundleExportFile = 'bundle:export-file',
+  BundleLoadFile = 'bundle:load-file',
+  BundleApply = 'bundle:apply',
 }
 
 /**
@@ -341,6 +348,23 @@ export interface IpcMap {
   [IpcChannel.SnapshotRestore]: {
     request: { id: string }
     response: { success: boolean; path: string } | null
+  }
+
+  [IpcChannel.BundlePreview]: {
+    request: { agentIds?: string[] }
+    response: ExportBundle
+  }
+  [IpcChannel.BundleExportFile]: {
+    request: { agentIds?: string[] }
+    response: { path: string | null }
+  }
+  [IpcChannel.BundleLoadFile]: {
+    request: Record<string, never>
+    response: { bundle: ExportBundle | null; path: string | null }
+  }
+  [IpcChannel.BundleApply]: {
+    request: { bundle: ExportBundle; agentIds?: string[]; dryRun: boolean }
+    response: ApplyChange[]
   }
 }
 

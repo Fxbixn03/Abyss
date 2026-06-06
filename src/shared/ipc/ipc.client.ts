@@ -17,6 +17,7 @@ import type {
   ChatPermissionDecision,
   ChatStartOptions,
 } from '@/shared/types/chat'
+import type { ExportBundle } from '@/shared/types/bundle'
 import type {
   AppSettings,
   McpServerEntry,
@@ -176,6 +177,15 @@ export const ipc = {
     invoke(IpcChannel.SnapshotListRecent, { limit }),
   readSnapshot: (id: string) => invoke(IpcChannel.SnapshotRead, { id }),
   restoreSnapshot: (id: string) => invoke(IpcChannel.SnapshotRestore, { id }),
+
+  // --- Bundles --------------------------------------------------------------
+  bundlePreview: (agentIds?: string[]) =>
+    invoke(IpcChannel.BundlePreview, { agentIds }),
+  bundleExportFile: (agentIds?: string[]) =>
+    invoke(IpcChannel.BundleExportFile, { agentIds }),
+  bundleLoadFile: () => invoke(IpcChannel.BundleLoadFile, {}),
+  bundleApply: (bundle: ExportBundle, dryRun: boolean, agentIds?: string[]) =>
+    invoke(IpcChannel.BundleApply, { bundle, agentIds, dryRun }),
 
   // --- Push subscription (streaming) ---------------------------------------
   subscribe: <E extends IpcEvent>(
