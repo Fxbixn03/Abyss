@@ -45,11 +45,11 @@ export function TopBar() {
           variant="outline"
           size="sm"
           onClick={openPalette}
-          className="gap-2 text-muted-foreground"
+          className="w-44 justify-start gap-2 px-2.5 text-muted-foreground sm:w-64 lg:w-80"
         >
-          <Icon name="search" className="size-3.5" />
-          <span className="hidden sm:inline">Search…</span>
-          <kbd className="ml-1 hidden rounded border border-border bg-muted px-1.5 font-code text-[10px] sm:inline">
+          <Icon name="search" className="size-3.5 shrink-0" />
+          <span className="truncate">Search…</span>
+          <kbd className="ml-auto hidden rounded border border-border bg-muted px-1.5 font-code text-[10px] sm:inline">
             ⌘K
           </kbd>
         </Button>

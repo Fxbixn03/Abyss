@@ -88,6 +88,8 @@ export interface AgentAdapter {
   /** Built-in theme applied by default when this agent is active. */
   readonly defaultThemeId: string
   readonly capabilities: AgentCapabilities
+  /** Link to the agent's official documentation, opened from its dashboard card. */
+  readonly docsUrl?: string
 
   getConfigFileSpecs(): ConfigFileSpec[]
   detectConfigPaths(): Promise<DetectedPath[]>
@@ -125,6 +127,8 @@ export interface AgentDefinition {
   defaultThemeId: string
   iconName: string
   capabilities: AgentCapabilities
+  /** Link to the agent's official documentation. */
+  docsUrl?: string
   configFiles: ConfigFileSpec[]
   /**
    * Candidate config base directories, most-preferred first. Pure function:

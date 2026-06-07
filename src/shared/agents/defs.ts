@@ -64,6 +64,7 @@ export const claudeDefinition: AgentDefinition = {
   displayName: 'Claude Code',
   defaultThemeId: 'claude-dusk',
   iconName: 'sparkles',
+  docsUrl: 'https://platform.claude.com/docs/en/managed-agents/overview',
   capabilities: {
     instructions: true,
     mcp: true,
@@ -91,6 +92,7 @@ export const codexDefinition: AgentDefinition = {
   displayName: 'OpenAI Codex',
   defaultThemeId: 'codex-terminal',
   iconName: 'terminal',
+  docsUrl: 'https://developers.openai.com/codex/cli/',
   capabilities: {
     instructions: true,
     mcp: true,
@@ -123,6 +125,7 @@ export const geminiDefinition: AgentDefinition = {
   displayName: 'Gemini CLI',
   defaultThemeId: 'gemini-cosmos',
   iconName: 'gem',
+  docsUrl: 'https://github.com/google-gemini/gemini-cli',
   capabilities: {
     instructions: true,
     mcp: false,
@@ -153,6 +156,7 @@ export const cursorDefinition: AgentDefinition = {
   displayName: 'Cursor',
   defaultThemeId: 'cursor-graphite',
   iconName: 'box',
+  docsUrl: 'https://docs.cursor.com/',
   capabilities: {
     instructions: true,
     mcp: true,

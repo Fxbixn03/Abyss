@@ -1,6 +1,8 @@
 import type { AgentAdapter } from '@/shared/types/agent'
 import { Badge } from '@/shared/components/ui/badge'
 import { Card } from '@/shared/components/ui/card'
+import { Icon } from '@/shared/components/Icon'
+import { ipc } from '@/shared/ipc/ipc.client'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgentId } from '../hooks/useActiveAgent'
 import { useAgentStore } from '../store/agent.store'
@@ -16,6 +18,7 @@ export function AgentCard({ agent }: { agent: AgentAdapter }) {
   const active = agent.id === activeId
   const installed = useAgentInstalled(agent.id)
   const availabilityLoaded = useAgentAvailability((s) => s.loaded)
+  const docsUrl = agent.docsUrl
 
   return (
     <Card
@@ -57,6 +60,23 @@ export function AgentCard({ agent }: { agent: AgentAdapter }) {
             {agent.name}
           </span>
         </div>
+
+        {docsUrl && (
+          <button
+            type="button"
+            aria-label={`Open ${agent.displayName} documentation`}
+            title="Official documentation"
+            onClick={(e) => {
+              e.stopPropagation()
+              void ipc.openExternal(docsUrl)
+            }}
+            className="ml-auto flex shrink-0 items-center gap-1.5 self-start rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+          >
+            <Icon name="book-open" className="size-3.5" />
+            <span className="hidden lg:inline">Docs</span>
+            <Icon name="external-link" className="size-3" />
+          </button>
+        )}
       </div>
     </Card>
   )

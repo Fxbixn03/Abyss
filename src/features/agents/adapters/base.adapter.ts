@@ -30,6 +30,7 @@ export function createAdapter(
     icon: overrides.icon ?? def.iconName,
     defaultThemeId: def.defaultThemeId,
     capabilities: def.capabilities,
+    docsUrl: def.docsUrl,
 
     getConfigFileSpecs: () => def.configFiles,
     detectConfigPaths: () => ipc.resolvePaths(def.id),
