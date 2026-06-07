@@ -16,6 +16,13 @@ export const codexAdapter: AgentAdapter = createAdapter(codexDefinition, {
       description: 'History & live chat',
     },
     {
+      id: 'agents',
+      label: 'Subagents',
+      icon: 'bot',
+      route: '/agents',
+      description: 'Custom subagents (TOML)',
+    },
+    {
       id: 'commands',
       label: 'Prompts',
       icon: 'square-slash',

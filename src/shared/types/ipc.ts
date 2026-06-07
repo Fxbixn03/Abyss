@@ -21,6 +21,7 @@ import type {
   SkillCollisionMode,
   SkillImportResult,
 } from './collections'
+import type { CodexSubagentSummary } from './codex-subagent'
 import type { HookEntry } from './hooks'
 import type {
   ChatAvailability,
@@ -111,6 +112,13 @@ export enum IpcChannel {
   DuplicateCollectionItem = 'collection:duplicate',
   ExportCollectionItem = 'collection:export',
   ImportSkill = 'collection:import-skill',
+
+  // Codex custom subagents (TOML files in <base>/agents/)
+  ListCodexSubagents = 'codex-subagents:list',
+  ReadCodexSubagent = 'codex-subagents:read',
+  WriteCodexSubagent = 'codex-subagents:write',
+  DeleteCodexSubagent = 'codex-subagents:delete',
+  RenameCodexSubagent = 'codex-subagents:rename',
 
   // Lifecycle hooks
   GetHooks = 'hooks:get',
@@ -414,6 +422,27 @@ export interface IpcMap {
       onCollision: SkillCollisionMode
     }
     response: SkillImportResult
+  }
+
+  [IpcChannel.ListCodexSubagents]: {
+    request: { basePath: string }
+    response: CodexSubagentSummary[]
+  }
+  [IpcChannel.ReadCodexSubagent]: {
+    request: { basePath: string; id: string }
+    response: { raw: string; path: string }
+  }
+  [IpcChannel.WriteCodexSubagent]: {
+    request: { basePath: string; id: string; content: string }
+    response: { success: boolean; path: string }
+  }
+  [IpcChannel.DeleteCodexSubagent]: {
+    request: { basePath: string; id: string }
+    response: { success: boolean }
+  }
+  [IpcChannel.RenameCodexSubagent]: {
+    request: { basePath: string; fromId: string; toId: string }
+    response: { success: boolean; id: string; path: string }
   }
 
   [IpcChannel.GetHooks]: {

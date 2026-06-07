@@ -208,6 +208,18 @@ export const ipc = {
     onCollision: SkillCollisionMode,
   ) => invoke(IpcChannel.ImportSkill, { basePath, archivePath, onCollision }),
 
+  // --- Codex custom subagents (TOML in <base>/agents/) ----------------------
+  listCodexSubagents: (basePath: string) =>
+    invoke(IpcChannel.ListCodexSubagents, { basePath }),
+  readCodexSubagent: (basePath: string, id: string) =>
+    invoke(IpcChannel.ReadCodexSubagent, { basePath, id }),
+  writeCodexSubagent: (basePath: string, id: string, content: string) =>
+    invoke(IpcChannel.WriteCodexSubagent, { basePath, id, content }),
+  deleteCodexSubagent: (basePath: string, id: string) =>
+    invoke(IpcChannel.DeleteCodexSubagent, { basePath, id }),
+  renameCodexSubagent: (basePath: string, fromId: string, toId: string) =>
+    invoke(IpcChannel.RenameCodexSubagent, { basePath, fromId, toId }),
+
   getHooks: (basePath: string) => invoke(IpcChannel.GetHooks, { basePath }),
   setHooks: (basePath: string, entries: HookEntry[]) =>
     invoke(IpcChannel.SetHooks, { basePath, entries }),
