@@ -55,6 +55,7 @@ export const ipc = {
     invoke(IpcChannel.SandboxRun, { command, ...opts }),
   backupList: () => invoke(IpcChannel.BackupList, {}),
   backupRun: () => invoke(IpcChannel.BackupRun, {}),
+  backupStatus: () => invoke(IpcChannel.BackupStatus, {}),
   pickDirectory: (title?: string, defaultPath?: string) =>
     invoke(IpcChannel.PickDirectory, { title, defaultPath }),
   pickFile: (options?: {

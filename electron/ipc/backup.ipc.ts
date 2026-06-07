@@ -1,5 +1,10 @@
 import { IpcChannel } from '@/shared/types/ipc'
-import { createBackup, defaultBackupDir, listBackups } from '@core/backup'
+import {
+  backupStatus,
+  createBackup,
+  defaultBackupDir,
+  listBackups,
+} from '@core/backup'
 import { handle } from './handle'
 import type { IpcContext } from './context'
 
@@ -10,6 +15,10 @@ export function registerBackupIpc(ctx: IpcContext): void {
   }
 
   handle(IpcChannel.BackupList, async () => listBackups(await resolveDir()))
+
+  handle(IpcChannel.BackupStatus, async () =>
+    backupStatus(ctx.env, await resolveDir()),
+  )
 
   handle(IpcChannel.BackupRun, async () => {
     const settings = await ctx.settings.read()

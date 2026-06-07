@@ -8,3 +8,13 @@ export interface BackupInfo {
   createdAt: string
   sizeBytes: number
 }
+
+/** Aggregate backup state surfaced on the dashboard. */
+export interface BackupStatus {
+  /** How many backup files currently exist. */
+  count: number
+  /** The most recent backup, when any exist. */
+  last?: BackupInfo
+  /** Best-effort: the live config differs from the most recent backup. */
+  changedSinceLast: boolean
+}

@@ -32,7 +32,7 @@ import type {
   ChatUsageStats,
 } from './chat'
 import type { SandboxRunResult } from './sandbox'
-import type { BackupInfo } from './backup'
+import type { BackupInfo, BackupStatus } from './backup'
 import type { SnapshotContent, SnapshotMeta } from './snapshots'
 import type { ApplyChange, ExportBundle } from './bundle'
 import type { Profile, ProfileMeta } from './profiles'
@@ -69,6 +69,7 @@ export enum IpcChannel {
   SandboxRun = 'sandbox:run',
   BackupList = 'backup:list',
   BackupRun = 'backup:run',
+  BackupStatus = 'backup:status',
   AgentInstallStatus = 'agent:install-status',
 
   // Agents
@@ -218,6 +219,10 @@ export interface IpcMap {
   [IpcChannel.BackupRun]: {
     request: Record<string, never>
     response: BackupInfo
+  }
+  [IpcChannel.BackupStatus]: {
+    request: Record<string, never>
+    response: BackupStatus
   }
   [IpcChannel.PickDirectory]: {
     request: { title?: string; defaultPath?: string }

@@ -7,7 +7,8 @@
 import path from 'node:path'
 import { promises as fs } from 'node:fs'
 import type { OsEnv } from '@/shared/types/agent'
-import type { BackupInfo } from '@/shared/types/backup'
+import type { BackupInfo, BackupStatus } from '@/shared/types/backup'
+import type { ExportBundle } from '@/shared/types/bundle'
 import { exportBundle } from './bundle'
 
 const PREFIX = 'abyss-backup-'
@@ -65,6 +66,34 @@ export async function createBackup(
     createdAt: stat.mtime.toISOString(),
     sizeBytes: stat.size,
   }
+}
+
+/**
+ * Snapshot of the backup state for the dashboard: how many exist, the most
+ * recent one, and a best-effort flag for whether the live config has drifted
+ * from that backup (by comparing the exported agent payloads, ignoring the
+ * backup's own timestamp). Any read/parse failure degrades to `changed: false`.
+ */
+export async function backupStatus(
+  env: OsEnv,
+  dir: string,
+): Promise<BackupStatus> {
+  const backups = await listBackups(dir)
+  const last = backups[0]
+  if (!last) return { count: 0, changedSinceLast: false }
+
+  let changedSinceLast: boolean
+  try {
+    const raw = await fs.readFile(last.path, 'utf8')
+    const saved = JSON.parse(raw) as ExportBundle
+    const current = await exportBundle(env)
+    changedSinceLast =
+      JSON.stringify(saved.agents) !== JSON.stringify(current.agents)
+  } catch {
+    changedSinceLast = false
+  }
+
+  return { count: backups.length, last, changedSinceLast }
 }
 
 /** Create today's backup unless one already exists. Returns it, or null if skipped. */

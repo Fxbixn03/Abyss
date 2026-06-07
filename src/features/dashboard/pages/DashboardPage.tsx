@@ -23,6 +23,7 @@ import { UsagePanel } from '../components/UsagePanel'
 import { StatusPreview } from '../components/StatusPreview'
 import { CrossAgentSummary } from '../components/CrossAgentSummary'
 import { GetStarted } from '../components/GetStarted'
+import { BackupCard } from '../components/BackupCard'
 import { useUsageStore } from '../store/usage.store'
 
 export function DashboardPage() {
@@ -111,6 +112,7 @@ export function DashboardPage() {
       <UsagePanel />
       {showGetStarted && <GetStarted agent={agent} />}
       <StatusPreview />
+      <BackupCard />
     </div>
   )
 }
