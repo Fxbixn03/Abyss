@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Icon } from '@/shared/components/Icon'
+import { cn } from '@/shared/lib/utils'
 import {
   useActiveAgent,
   useAllAgents,
@@ -14,6 +15,7 @@ import {
 } from '@/features/agents/store/agent-availability.store'
 import { AgentCard } from '@/features/agents/components/AgentCard'
 import { AgentAvatar } from '@/features/agents/components/AgentAvatar'
+import { useMcpStore } from '@/features/mcp/store/mcp.store'
 import {
   useConfigBase,
   useProjectDir,
@@ -26,6 +28,9 @@ import { GetStarted } from '../components/GetStarted'
 import { BackupCard } from '../components/BackupCard'
 import { useUsageStore } from '../store/usage.store'
 
+/** Don't re-fetch on window focus more often than this. */
+const FOCUS_REFRESH_THROTTLE_MS = 15_000
+
 export function DashboardPage() {
   const agent = useActiveAgent()
   const agents = useAllAgents()
@@ -34,6 +39,9 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const installed = useAgentInstalled(agent.id)
   const availabilityLoaded = useAgentAvailability((s) => s.loaded)
+  const refreshAvailability = useAgentAvailability((s) => s.refresh)
+  const loadMcp = useMcpStore((s) => s.load)
+  const hasMcp = agent.capabilities.mcp
 
   // Warm the usage cache for every enabled agent (scope-aware) so each agent
   // card can show its "last used" time without an extra round trip.
@@ -43,6 +51,51 @@ export function DashboardPage() {
   useEffect(() => {
     if (agentIds) void loadManyUsage(agentIds.split(','), projectDir)
   }, [agentIds, projectDir, loadManyUsage])
+
+  // Manual + on-focus refresh. The usage aggregate is mtime-cached in core, so a
+  // forced refetch only re-reads transcripts that actually changed.
+  const [refreshing, setRefreshing] = useState(false)
+  // Bumped on every refresh so self-contained cards (e.g. backups) re-fetch.
+  const [refreshNonce, setRefreshNonce] = useState(0)
+  const lastRefresh = useRef(0)
+
+  const doRefresh = useCallback(async () => {
+    lastRefresh.current = Date.now()
+    setRefreshing(true)
+    try {
+      await Promise.all([
+        agentIds
+          ? loadManyUsage(agentIds.split(','), projectDir, true)
+          : Promise.resolve(),
+        hasMcp && basePath
+          ? loadMcp(agent.id, basePath, projectDir)
+          : Promise.resolve(),
+        refreshAvailability(),
+      ])
+    } finally {
+      setRefreshing(false)
+      setRefreshNonce((n) => n + 1)
+    }
+  }, [
+    agentIds,
+    projectDir,
+    loadManyUsage,
+    hasMcp,
+    basePath,
+    loadMcp,
+    agent.id,
+    refreshAvailability,
+  ])
+
+  useEffect(() => {
+    const onFocus = () => {
+      if (Date.now() - lastRefresh.current > FOCUS_REFRESH_THROTTLE_MS) {
+        void doRefresh()
+      }
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [doRefresh])
 
   // Show the get-started panel when the agent can't chat (nothing to summarise)
   // or when its history has loaded and is empty (first run).
@@ -58,19 +111,34 @@ export function DashboardPage() {
         description="One place to manage every AI coding agent on your machine."
         iconNode={<AgentAvatar agent={agent} className="size-9" />}
         actions={
-          basePath ? (
+          <>
             <button
               type="button"
-              onClick={() => void ipc.revealPath(basePath)}
-              className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 font-code text-xs text-muted-foreground hover:text-foreground"
-              title="Reveal config directory"
+              onClick={() => void doRefresh()}
+              disabled={refreshing}
+              aria-label="Refresh dashboard"
+              title="Refresh dashboard"
+              className="flex items-center rounded-md border border-border bg-card px-2 py-1.5 text-muted-foreground hover:text-foreground disabled:opacity-60"
             >
-              <Icon name="folder-open" className="size-3.5" />
-              <span className="max-w-[280px] truncate">{basePath}</span>
+              <Icon
+                name="refresh-cw"
+                className={cn('size-3.5', refreshing && 'animate-spin')}
+              />
             </button>
-          ) : (
-            <Badge variant="warning">no config path</Badge>
-          )
+            {basePath ? (
+              <button
+                type="button"
+                onClick={() => void ipc.revealPath(basePath)}
+                className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 font-code text-xs text-muted-foreground hover:text-foreground"
+                title="Reveal config directory"
+              >
+                <Icon name="folder-open" className="size-3.5" />
+                <span className="max-w-[280px] truncate">{basePath}</span>
+              </button>
+            ) : (
+              <Badge variant="warning">no config path</Badge>
+            )}
+          </>
         }
       />
 
@@ -112,7 +180,7 @@ export function DashboardPage() {
       <UsagePanel />
       {showGetStarted && <GetStarted agent={agent} />}
       <StatusPreview />
-      <BackupCard />
+      <BackupCard refreshKey={refreshNonce} />
     </div>
   )
 }

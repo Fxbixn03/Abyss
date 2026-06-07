@@ -16,7 +16,7 @@ function relativeDate(iso: string): string {
 }
 
 /** Dashboard card summarising config-backup state, linking to History. */
-export function BackupCard() {
+export function BackupCard({ refreshKey = 0 }: { refreshKey?: number }) {
   const navigate = useNavigate()
   const [status, setStatus] = useState<BackupStatus | null>(null)
 
@@ -33,7 +33,7 @@ export function BackupCard() {
     return () => {
       active = false
     }
-  }, [])
+  }, [refreshKey])
 
   if (!status) return null
 
