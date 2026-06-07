@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
-import type { McpServerEntry } from '@/shared/types/config'
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card } from '@/shared/components/ui/card'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
-import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useChatsStore } from '@/features/chats/store/chats.store'
 import { useMcpStore } from '@/features/mcp/store/mcp.store'
@@ -17,14 +16,37 @@ function StatusChip({
   label,
   value,
   on,
+  onClick,
 }: {
   icon: string
   label: string
   value: string
   on: boolean
+  /** When set, the chip becomes an interactive button that navigates. */
+  onClick?: () => void
 }) {
+  const interactive = Boolean(onClick)
   return (
-    <Card className="flex items-center gap-2.5 p-3">
+    <Card
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={
+        interactive
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onClick?.()
+              }
+            }
+          : undefined
+      }
+      className={cn(
+        'flex items-center gap-2.5 p-3',
+        interactive &&
+          'cursor-pointer transition-colors hover:border-primary/50 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50',
+      )}
+    >
       <span
         className={cn(
           'size-2 shrink-0 rounded-full',
@@ -36,34 +58,37 @@ function StatusChip({
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="text-sm font-medium">{value}</p>
       </div>
+      {interactive && (
+        <Icon
+          name="chevron-right"
+          className="ml-1 size-4 shrink-0 text-muted-foreground"
+        />
+      )}
     </Card>
   )
 }
 
 /** A live "what's running" panel: live chat + MCP server status. */
 export function StatusPreview() {
+  const navigate = useNavigate()
   const agent = useActiveAgent()
   const liveId = useChatsStore((s) => s.liveId)
   const status = useChatsStore((s) => s.status)
+  const servers = useMcpStore((s) => s.servers)
   const health = useMcpStore((s) => s.health)
+  const loadMcp = useMcpStore((s) => s.load)
   const basePath = useConfigBase(agent.id)
   const projectDir = useProjectDir()
-  const [mcp, setMcp] = useState<McpServerEntry[]>([])
 
   const hasMcp = agent.capabilities.mcp
 
+  // Pull the server list from the shared MCP store (single source of truth) for
+  // the active agent + scope; the store dedups/guards stale responses.
   useEffect(() => {
-    if (!hasMcp || !basePath) return
-    let active = true
-    void ipc.getMcpServers(agent.id, basePath, projectDir).then((list) => {
-      if (active) setMcp(list)
-    })
-    return () => {
-      active = false
-    }
-  }, [agent.id, basePath, projectDir, hasMcp])
+    if (hasMcp && basePath) void loadMcp(agent.id, basePath, projectDir)
+  }, [hasMcp, agent.id, basePath, projectDir, loadMcp])
 
-  const enabledMcp = mcp.filter((s) => s.enabled)
+  const enabledMcp = servers.filter((s) => s.enabled)
   const onlineMcp = enabledMcp.filter((s) => {
     const h = health[s.id]
     return h && !('loading' in h) && h.ok
@@ -89,6 +114,7 @@ export function StatusPreview() {
                 : 'idle'
             }
             on={liveActive}
+            onClick={() => navigate('/chats')}
           />
         )}
         {hasMcp && enabledMcp.length > 0 && (
@@ -97,6 +123,7 @@ export function StatusPreview() {
             label="MCP servers"
             value={`${onlineMcp}/${enabledMcp.length} online`}
             on={onlineMcp > 0}
+            onClick={() => navigate('/mcp')}
           />
         )}
       </div>
