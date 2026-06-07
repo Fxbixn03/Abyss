@@ -14,11 +14,7 @@ import {
   useProjectDir,
 } from '@/features/scope/hooks/useScopedBase'
 import { estimateTokens } from '@/features/context/lib/tokens'
-import type {
-  LintCollectionItem,
-  LintFinding,
-  LintSeverity,
-} from '../lib/lint'
+import type { LintCollectionItem, LintFinding, LintSeverity } from '../lib/lint'
 import { runLint } from '../lib/lint'
 
 const EMPTY_PERMS: PermissionRules = { allow: [], deny: [], ask: [] }
@@ -52,16 +48,17 @@ const SEVERITY_META: Record<
 const SEVERITY_ORDER: LintSeverity[] = ['error', 'warning', 'info']
 
 async function readContents(
+  agentId: string,
   base: string,
   kind: 'agents' | 'skills' | 'commands',
 ): Promise<LintCollectionItem[]> {
-  const list = await ipc.listCollection(base, kind).catch(() => [])
+  const list = await ipc.listCollection(agentId, base, kind).catch(() => [])
   return Promise.all(
     list.map(async (i) => ({
       id: i.id,
       name: i.name,
       content: await ipc
-        .readCollectionItem(base, kind, i.id)
+        .readCollectionItem(agentId, base, kind, i.id)
         .then((r) => r.content)
         .catch(() => ''),
     })),
@@ -94,17 +91,23 @@ export function ValidationPage() {
           : ''
 
       const agents =
-        caps.agents && configBase ? await readContents(configBase, 'agents') : []
+        caps.agents && configBase
+          ? await readContents(agent.id, configBase, 'agents')
+          : []
       const skills =
-        caps.skills && configBase ? await readContents(configBase, 'skills') : []
+        caps.skills && configBase
+          ? await readContents(agent.id, configBase, 'skills')
+          : []
       const commands =
         caps.commands && configBase
-          ? await readContents(configBase, 'commands')
+          ? await readContents(agent.id, configBase, 'commands')
           : []
 
       const mcp =
         caps.mcp && configBase
-          ? await ipc.getMcpServers(agent.id, configBase, projectDir).catch(() => [])
+          ? await ipc
+              .getMcpServers(agent.id, configBase, projectDir)
+              .catch(() => [])
           : []
       const hooks =
         caps.hooks && configBase
@@ -112,7 +115,9 @@ export function ValidationPage() {
           : []
       const permissions =
         caps.permissions && configBase
-          ? await ipc.getPermissions(agent.id, configBase).catch(() => EMPTY_PERMS)
+          ? await ipc
+              .getPermissions(agent.id, configBase)
+              .catch(() => EMPTY_PERMS)
           : EMPTY_PERMS
 
       const totalTokens =
@@ -178,7 +183,10 @@ export function ValidationPage() {
             onClick={() => setRanAt(Date.now())}
             disabled={loading}
           >
-            <Icon name={loading ? 'loader' : 'refresh-cw'} className={loading ? 'animate-spin' : ''} />
+            <Icon
+              name={loading ? 'loader' : 'refresh-cw'}
+              className={loading ? 'animate-spin' : ''}
+            />
             Re-run
           </Button>
         }
@@ -219,11 +227,17 @@ export function ValidationPage() {
               .map((f) => (
                 <Card
                   key={f.id}
-                  className={cn('flex items-start gap-3 border-l-4 p-3', SEVERITY_META[sev].badge)}
+                  className={cn(
+                    'flex items-start gap-3 border-l-4 p-3',
+                    SEVERITY_META[sev].badge,
+                  )}
                 >
                   <Icon
                     name={SEVERITY_META[sev].icon}
-                    className={cn('mt-0.5 size-4 shrink-0', SEVERITY_META[sev].className)}
+                    className={cn(
+                      'mt-0.5 size-4 shrink-0',
+                      SEVERITY_META[sev].className,
+                    )}
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

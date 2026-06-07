@@ -126,46 +126,82 @@ export const ipc = {
   setModelEnv: (agentId: AgentId, basePath: string, config: ModelEnvConfig) =>
     invoke(IpcChannel.SetModelEnv, { agentId, basePath, config }),
 
-  listCollection: (basePath: string, kind: CollectionKind) =>
-    invoke(IpcChannel.ListCollection, { basePath, kind }),
-  readCollectionItem: (basePath: string, kind: CollectionKind, id: string) =>
-    invoke(IpcChannel.ReadCollectionItem, { basePath, kind, id }),
+  listCollection: (agentId: string, basePath: string, kind: CollectionKind) =>
+    invoke(IpcChannel.ListCollection, { agentId, basePath, kind }),
+  readCollectionItem: (
+    agentId: string,
+    basePath: string,
+    kind: CollectionKind,
+    id: string,
+  ) => invoke(IpcChannel.ReadCollectionItem, { agentId, basePath, kind, id }),
   writeCollectionItem: (
+    agentId: string,
     basePath: string,
     kind: CollectionKind,
     id: string,
     content: string,
-  ) => invoke(IpcChannel.WriteCollectionItem, { basePath, kind, id, content }),
-  deleteCollectionItem: (basePath: string, kind: CollectionKind, id: string) =>
-    invoke(IpcChannel.DeleteCollectionItem, { basePath, kind, id }),
+  ) =>
+    invoke(IpcChannel.WriteCollectionItem, {
+      agentId,
+      basePath,
+      kind,
+      id,
+      content,
+    }),
+  deleteCollectionItem: (
+    agentId: string,
+    basePath: string,
+    kind: CollectionKind,
+    id: string,
+  ) => invoke(IpcChannel.DeleteCollectionItem, { agentId, basePath, kind, id }),
   migrateCollectionItem: (
+    agentId: string,
     basePath: string,
     fromKind: CollectionKind,
     toKind: CollectionKind,
     id: string,
   ) =>
     invoke(IpcChannel.MigrateCollectionItem, {
+      agentId,
       basePath,
       fromKind,
       toKind,
       id,
     }),
   renameCollectionItem: (
+    agentId: string,
     basePath: string,
     kind: CollectionKind,
     fromId: string,
     toId: string,
   ) =>
-    invoke(IpcChannel.RenameCollectionItem, { basePath, kind, fromId, toId }),
+    invoke(IpcChannel.RenameCollectionItem, {
+      agentId,
+      basePath,
+      kind,
+      fromId,
+      toId,
+    }),
   duplicateCollectionItem: (
+    agentId: string,
     basePath: string,
     kind: CollectionKind,
     id: string,
     newId: string,
   ) =>
-    invoke(IpcChannel.DuplicateCollectionItem, { basePath, kind, id, newId }),
-  exportCollectionItem: (basePath: string, kind: CollectionKind, id: string) =>
-    invoke(IpcChannel.ExportCollectionItem, { basePath, kind, id }),
+    invoke(IpcChannel.DuplicateCollectionItem, {
+      agentId,
+      basePath,
+      kind,
+      id,
+      newId,
+    }),
+  exportCollectionItem: (
+    agentId: string,
+    basePath: string,
+    kind: CollectionKind,
+    id: string,
+  ) => invoke(IpcChannel.ExportCollectionItem, { agentId, basePath, kind, id }),
   importSkill: (
     basePath: string,
     archivePath: string,

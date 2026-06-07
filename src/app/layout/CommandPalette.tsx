@@ -93,14 +93,14 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
     void Promise.all(
       kinds.map((kind) =>
         ipc
-          .listCollection(basePath, kind)
+          .listCollection(activeAgent.id, basePath, kind)
           .then((list) =>
             Promise.all(
               list.map(async (i) => {
                 // Pull the file body so items are findable by their contents,
                 // not just their name/description.
                 const content = await ipc
-                  .readCollectionItem(basePath, kind, i.id)
+                  .readCollectionItem(activeAgent.id, basePath, kind, i.id)
                   .then((r) => r.content)
                   .catch(() => '')
                 return {

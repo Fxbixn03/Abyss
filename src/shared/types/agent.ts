@@ -5,6 +5,8 @@
  * the renderer, the Electron main process, and the CLI alike.
  */
 
+import type { CollectionKind } from './collections'
+
 export type AgentId = string
 
 export type ConfigScope = 'global' | 'project'
@@ -120,6 +122,19 @@ export interface OsEnv {
  * ids, names, config files and path resolution. Imported by the renderer (for
  * metadata) and by main/CLI (which actually call {@link resolvePaths}).
  */
+/**
+ * Per-kind overrides for an agent's markdown collections. Agents store the same
+ * three kinds in different places — Codex keeps its slash commands as "prompts"
+ * under `prompts/`, where Claude uses `commands/`. Absent kinds fall back to the
+ * directory named after the kind and the default {@link COLLECTION_LABELS}.
+ */
+export interface CollectionLayout {
+  /** Directory under the config base. Default: the kind name. */
+  dir?: string
+  /** UI label override (singular/plural). Default: COLLECTION_LABELS[kind]. */
+  label?: { singular: string; plural: string }
+}
+
 export interface AgentDefinition {
   id: AgentId
   name: string
@@ -129,6 +144,8 @@ export interface AgentDefinition {
   capabilities: AgentCapabilities
   /** Link to the agent's official documentation. */
   docsUrl?: string
+  /** Per-kind collection layout overrides; absent kinds use the defaults. */
+  collections?: Partial<Record<CollectionKind, CollectionLayout>>
   configFiles: ConfigFileSpec[]
   /**
    * Candidate config base directories, most-preferred first. Pure function:

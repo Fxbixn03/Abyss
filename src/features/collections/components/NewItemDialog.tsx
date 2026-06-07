@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { CollectionKind } from '@/shared/types/collections'
 import { COLLECTION_LABELS } from '@/shared/types/collections'
+import type { CollectionLayout } from '@/shared/types/agent'
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,8 @@ export interface NewItemDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   kind: CollectionKind
+  /** Per-agent label override (e.g. Codex commands → "Prompt"). */
+  label?: NonNullable<CollectionLayout['label']>
   existingIds: string[]
   onCreate: (values: NewItemValues) => void
 }
@@ -27,10 +30,11 @@ export function NewItemDialog({
   open,
   onOpenChange,
   kind,
+  label,
   existingIds,
   onCreate,
 }: NewItemDialogProps) {
-  const labels = COLLECTION_LABELS[kind]
+  const labels = label ?? COLLECTION_LABELS[kind]
   const [id, setId] = useState('')
   const [description, setDescription] = useState('')
   const [model, setModel] = useState('sonnet')

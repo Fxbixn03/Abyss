@@ -16,6 +16,8 @@ import type {
   OsEnv,
   Platform,
 } from '@/shared/types/agent'
+import type { CollectionKind } from '@/shared/types/collections'
+import { COLLECTION_LABELS } from '@/shared/types/collections'
 
 /** Platform-aware path join — pure, so it stays renderer-safe. */
 function joinPath(platform: Platform, ...segments: string[]): string {
@@ -99,11 +101,19 @@ export const codexDefinition: AgentDefinition = {
     permissions: false,
     modelEnv: false,
     agents: false,
-    commands: false,
-    skills: false,
+    commands: true,
+    skills: true,
     hooks: false,
     rawSettings: false,
     chats: true,
+  },
+  // Codex stores slash commands as custom "prompts" in `~/.codex/prompts/`, and
+  // skills in `~/.codex/skills/<name>/SKILL.md` (same shape as Claude).
+  collections: {
+    commands: {
+      dir: 'prompts',
+      label: { singular: 'Prompt', plural: 'Prompts' },
+    },
   },
   configFiles: [codexInstructions],
   resolvePaths: (env: OsEnv) => [
@@ -200,4 +210,28 @@ export function getAgentDefinition(id: string): AgentDefinition {
 
 export function getActiveAgentDefinitions(): AgentDefinition[] {
   return ACTIVE_AGENT_IDS.map(getAgentDefinition)
+}
+
+/**
+ * On-disk directory name for an agent's collection of {@link CollectionKind},
+ * relative to its config base. Defaults to the kind name; agents override it via
+ * {@link AgentDefinition.collections} (e.g. Codex commands → `prompts`). Shared
+ * by `core/collections` (to hit disk) and the renderer (for the same path).
+ */
+export function collectionDirName(
+  agentId: string,
+  kind: CollectionKind,
+): string {
+  return AGENT_DEFINITIONS[agentId]?.collections?.[kind]?.dir ?? kind
+}
+
+/** UI label (singular/plural) for an agent's collection of a given kind. */
+export function collectionLabel(
+  agentId: string,
+  kind: CollectionKind,
+): { singular: string; plural: string } {
+  return (
+    AGENT_DEFINITIONS[agentId]?.collections?.[kind]?.label ??
+    COLLECTION_LABELS[kind]
+  )
 }

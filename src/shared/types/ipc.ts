@@ -337,15 +337,21 @@ export interface IpcMap {
   }
 
   [IpcChannel.ListCollection]: {
-    request: { basePath: string; kind: CollectionKind }
+    request: { agentId: string; basePath: string; kind: CollectionKind }
     response: CollectionItem[]
   }
   [IpcChannel.ReadCollectionItem]: {
-    request: { basePath: string; kind: CollectionKind; id: string }
+    request: {
+      agentId: string
+      basePath: string
+      kind: CollectionKind
+      id: string
+    }
     response: { content: string; path: string }
   }
   [IpcChannel.WriteCollectionItem]: {
     request: {
+      agentId: string
       basePath: string
       kind: CollectionKind
       id: string
@@ -354,11 +360,17 @@ export interface IpcMap {
     response: { success: boolean; path: string }
   }
   [IpcChannel.DeleteCollectionItem]: {
-    request: { basePath: string; kind: CollectionKind; id: string }
+    request: {
+      agentId: string
+      basePath: string
+      kind: CollectionKind
+      id: string
+    }
     response: { success: boolean }
   }
   [IpcChannel.MigrateCollectionItem]: {
     request: {
+      agentId: string
       basePath: string
       fromKind: CollectionKind
       toKind: CollectionKind
@@ -368,6 +380,7 @@ export interface IpcMap {
   }
   [IpcChannel.RenameCollectionItem]: {
     request: {
+      agentId: string
       basePath: string
       kind: CollectionKind
       fromId: string
@@ -377,6 +390,7 @@ export interface IpcMap {
   }
   [IpcChannel.DuplicateCollectionItem]: {
     request: {
+      agentId: string
       basePath: string
       kind: CollectionKind
       id: string
@@ -385,7 +399,12 @@ export interface IpcMap {
     response: { success: boolean; id: string; path: string }
   }
   [IpcChannel.ExportCollectionItem]: {
-    request: { basePath: string; kind: CollectionKind; id: string }
+    request: {
+      agentId: string
+      basePath: string
+      kind: CollectionKind
+      id: string
+    }
     response: { path: string | null }
   }
   [IpcChannel.ImportSkill]: {

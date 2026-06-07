@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type {
   CollectionItem,
   CollectionKind,
   SkillCollisionMode,
 } from '@/shared/types/collections'
-import { COLLECTION_LABELS } from '@/shared/types/collections'
+import { collectionLabel } from '@/shared/agents/defs'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Input } from '@/shared/components/ui/input'
@@ -24,7 +24,10 @@ import { NameDialog } from '@/shared/components/NameDialog'
 import { useFileWatch } from '@/shared/hooks/useFileWatch'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
-import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
+import {
+  useActiveAgent,
+  useActiveAgentId,
+} from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { useCollectionSelection } from '../store/collectionSelection.store'
@@ -45,10 +48,11 @@ export interface CollectionManagerProps {
 
 export function CollectionManager({ kind, icon }: CollectionManagerProps) {
   const agent = useActiveAgent()
-  const basePath = useConfigBase(agent.id)
+  const agentId = useActiveAgentId()
+  const basePath = useConfigBase(agentId)
   const navigate = useNavigate()
   const confirmDiff = useSettingsStore((s) => s.settings.confirmDiffBeforeSave)
-  const labels = COLLECTION_LABELS[kind]
+  const labels = collectionLabel(agentId, kind)
   const supported = agent.capabilities[kind]
 
   // Skills and commands are both markdown files, so one can be converted into
@@ -110,17 +114,17 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
   // Used by the event handlers (create/save/delete) to reload the list.
   const refresh = useCallback(async () => {
     if (!supported || !basePath) return
-    const list = await ipc.listCollection(basePath, kind)
+    const list = await ipc.listCollection(agentId, basePath, kind)
     setItems(list)
     setLoaded(true)
-  }, [supported, basePath, kind])
+  }, [agentId, supported, basePath, kind])
 
   // Initial / dependency-driven load. Inlined (setState inside the promise
   // callback) so it doesn't trip react-hooks set-state-in-effect.
   useEffect(() => {
     if (!supported || !basePath) return
     let active = true
-    void ipc.listCollection(basePath, kind).then((list) => {
+    void ipc.listCollection(agentId, basePath, kind).then((list) => {
       if (!active) return
       setItems(list)
       setLoaded(true)
@@ -133,7 +137,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     return () => {
       active = false
     }
-  }, [supported, basePath, kind])
+  }, [agentId, supported, basePath, kind])
 
   // React to palette selections while already on this page (same-page).
   useEffect(
@@ -150,64 +154,77 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
   useEffect(() => {
     if (!selectedId || !basePath) return
     let active = true
-    void ipc.readCollectionItem(basePath, kind, selectedId).then((r) => {
-      if (!active) return
-      setOriginal(r.content)
-      setDraft(r.content)
-      setFilePath(r.path)
-    })
+    void ipc
+      .readCollectionItem(agentId, basePath, kind, selectedId)
+      .then((r) => {
+        if (!active) return
+        setOriginal(r.content)
+        setDraft(r.content)
+        setFilePath(r.path)
+      })
     return () => {
       active = false
     }
-  }, [selectedId, basePath, kind])
+  }, [agentId, selectedId, basePath, kind])
 
-  const performSave = useCallback(async () => {
+  // Plain functions, not useCallback: `agentId` is needed inside but the
+  // React Compiler lint can't reconcile it as a manual dependency here. The
+  // keydown handler below reads the latest `requestSave` via a ref, so neither
+  // needs a stable identity.
+  const performSave = async () => {
     if (!basePath || !selectedId) return
     setSaving(true)
-    await ipc.writeCollectionItem(basePath, kind, selectedId, draft)
+    await ipc.writeCollectionItem(agentId, basePath, kind, selectedId, draft)
     setOriginal(draft)
     setSaving(false)
     setDiffOpen(false)
     void refresh()
-  }, [basePath, kind, selectedId, draft, refresh])
+  }
 
-  const requestSave = useCallback(() => {
+  const requestSave = () => {
     if (!dirty) return
     if (confirmDiff) setDiffOpen(true)
     else void performSave()
-  }, [dirty, confirmDiff, performSave])
+  }
 
   // Detect external edits to the open item and offer a reload.
   const onExternal = useCallback(async () => {
     if (!basePath || !selectedId) return
-    const r = await ipc.readCollectionItem(basePath, kind, selectedId)
+    const r = await ipc.readCollectionItem(agentId, basePath, kind, selectedId)
     if (r.content !== original) setExternalChanged(true)
-  }, [basePath, kind, selectedId, original])
+  }, [agentId, basePath, kind, selectedId, original])
   useFileWatch(filePath, onExternal)
 
   const reloadFromDisk = async () => {
     if (!basePath || !selectedId) return
-    const r = await ipc.readCollectionItem(basePath, kind, selectedId)
+    const r = await ipc.readCollectionItem(agentId, basePath, kind, selectedId)
     setOriginal(r.content)
     setDraft(r.content)
     setExternalChanged(false)
   }
+
+  // Keep a live ref to the latest save handler so the keydown listener can stay
+  // mounted once (its deps are empty) yet always call the current closure.
+  const requestSaveRef = useRef(requestSave)
+  useEffect(() => {
+    requestSaveRef.current = requestSave
+  })
 
   // Cmd/Ctrl+S saves the open item, matching the instructions editor.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
-        requestSave()
+        requestSaveRef.current()
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [requestSave])
+  }, [])
 
   const create = async (id: string, content: string) => {
     if (!basePath) return
-    await ipc.writeCollectionItem(basePath, kind, id, content)
+    await ipc.writeCollectionItem(agentId, basePath, kind, id, content)
     await refresh()
     setSelectedId(id)
   }
@@ -219,12 +236,15 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
       items.map((i) => i.id),
     )
     await create(id, content)
-    setNotice({ type: 'success', message: `Saved "${spec.name}" as a subagent.` })
+    setNotice({
+      type: 'success',
+      message: `Saved "${spec.name}" as a subagent.`,
+    })
   }
 
   const remove = async () => {
     if (!basePath || !selectedId) return
-    await ipc.deleteCollectionItem(basePath, kind, selectedId)
+    await ipc.deleteCollectionItem(agentId, basePath, kind, selectedId)
     setDeleteOpen(false)
     setSelectedId(null)
     setOriginal('')
@@ -237,7 +257,13 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     if (!basePath) return
     setNotice(null)
     try {
-      const r = await ipc.renameCollectionItem(basePath, kind, item.id, toId)
+      const r = await ipc.renameCollectionItem(
+        agentId,
+        basePath,
+        kind,
+        item.id,
+        toId,
+      )
       await refresh()
       if (selectedId === item.id) setSelectedId(r.id)
     } catch (err) {
@@ -253,6 +279,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     setNotice(null)
     try {
       const r = await ipc.duplicateCollectionItem(
+        agentId,
         basePath,
         kind,
         item.id,
@@ -281,7 +308,8 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     if (!basePath) return
     const ids = [...selected]
     setBulkDeleteOpen(false)
-    for (const id of ids) await ipc.deleteCollectionItem(basePath, kind, id)
+    for (const id of ids)
+      await ipc.deleteCollectionItem(agentId, basePath, kind, id)
     if (selectedId && ids.includes(selectedId)) {
       setSelectedId(null)
       setOriginal('')
@@ -300,7 +328,13 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     let moved = 0
     for (const id of ids) {
       try {
-        await ipc.migrateCollectionItem(basePath, kind, migrateKind, id)
+        await ipc.migrateCollectionItem(
+          agentId,
+          basePath,
+          kind,
+          migrateKind,
+          id,
+        )
         moved += 1
       } catch {
         // skip items that can't migrate (e.g. name clash)
@@ -310,7 +344,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     clearSelected()
     setNotice({
       type: 'success',
-      message: `Migrated ${moved} of ${ids.length} to ${COLLECTION_LABELS[migrateKind].plural}.`,
+      message: `Migrated ${moved} of ${ids.length} to ${collectionLabel(agentId, migrateKind).plural}.`,
     })
     void refresh()
   }
@@ -319,7 +353,12 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     if (!basePath) return
     setNotice(null)
     try {
-      const { path } = await ipc.exportCollectionItem(basePath, kind, item.id)
+      const { path } = await ipc.exportCollectionItem(
+        agentId,
+        basePath,
+        kind,
+        item.id,
+      )
       if (path) {
         setNotice({ type: 'success', message: `Exported to ${path}` })
       }
@@ -337,7 +376,13 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     if (!basePath || !migrateKind) return
     setNotice(null)
     try {
-      await ipc.migrateCollectionItem(basePath, kind, migrateKind, item.id)
+      await ipc.migrateCollectionItem(
+        agentId,
+        basePath,
+        kind,
+        migrateKind,
+        item.id,
+      )
       if (selectedId === item.id) {
         setSelectedId(null)
         setOriginal('')
@@ -346,10 +391,11 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
       }
       setNotice({
         type: 'success',
-        message: `Migrated "${item.name}" to a ${COLLECTION_LABELS[
-          migrateKind
-        ].singular.toLowerCase()} — find it on the ${
-          COLLECTION_LABELS[migrateKind].plural
+        message: `Migrated "${item.name}" to a ${collectionLabel(
+          agentId,
+          migrateKind,
+        ).singular.toLowerCase()} — find it on the ${
+          collectionLabel(agentId, migrateKind).plural
         } page.`,
       })
       await refresh()
@@ -634,7 +680,8 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
                             onSelect={() => setMigrateItem(item)}
                           >
                             <Icon name="arrow-left-right" />
-                            Migrate to {COLLECTION_LABELS[migrateKind].singular}
+                            Migrate to{' '}
+                            {collectionLabel(agentId, migrateKind).singular}
                           </ContextMenuItem>
                         )}
                         <ContextMenuItem
@@ -777,6 +824,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
         open={newOpen}
         onOpenChange={setNewOpen}
         kind={kind}
+        label={labels}
         existingIds={items.map((i) => i.id)}
         onCreate={(values) =>
           void create(values.id, buildTemplate(kind, values))
@@ -837,7 +885,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
         }}
         title={`Migrate "${migrateItem?.name ?? 'item'}" to a ${
           migrateKind
-            ? COLLECTION_LABELS[migrateKind].singular.toLowerCase()
+            ? collectionLabel(agentId, migrateKind).singular.toLowerCase()
             : 'item'
         }?`}
         description={
@@ -900,10 +948,11 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
         <ConfirmDialog
           open={bulkMigrateOpen}
           onOpenChange={setBulkMigrateOpen}
-          title={`Migrate ${selected.size} to ${COLLECTION_LABELS[migrateKind].plural}?`}
-          description={`Each selected item is converted to a ${COLLECTION_LABELS[
-            migrateKind
-          ].singular.toLowerCase()} and removed from here. Name clashes are skipped.`}
+          title={`Migrate ${selected.size} to ${collectionLabel(agentId, migrateKind).plural}?`}
+          description={`Each selected item is converted to a ${collectionLabel(
+            agentId,
+            migrateKind,
+          ).singular.toLowerCase()} and removed from here. Name clashes are skipped.`}
           confirmLabel="Migrate"
           destructive={false}
           onConfirm={() => void doBulkMigrate()}

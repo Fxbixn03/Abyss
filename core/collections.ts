@@ -7,6 +7,7 @@
 import path from 'node:path'
 import { promises as fs } from 'node:fs'
 import type { CollectionItem, CollectionKind } from '@/shared/types/collections'
+import { collectionDirName } from '@/shared/agents/defs'
 import { pathExists, readTextFile, writeTextFileAtomic } from './json-file'
 import { parseFrontmatter } from './frontmatter'
 import { writeZip } from './zip'
@@ -20,33 +21,47 @@ function sanitizeId(id: string): string {
   return base
 }
 
-function collectionDir(basePath: string, kind: CollectionKind): string {
-  return path.join(basePath, kind)
+/** Absolute collection directory, honouring per-agent overrides (Codex → prompts). */
+function collectionDir(
+  agentId: string,
+  basePath: string,
+  kind: CollectionKind,
+): string {
+  return path.join(basePath, collectionDirName(agentId, kind))
 }
 
 function itemFilePath(
+  agentId: string,
   basePath: string,
   kind: CollectionKind,
   id: string,
 ): string {
   const safe = sanitizeId(id)
   if (kind === 'skills') {
-    return path.join(basePath, 'skills', safe, 'SKILL.md')
+    return path.join(
+      collectionDir(agentId, basePath, 'skills'),
+      safe,
+      'SKILL.md',
+    )
   }
-  return path.join(basePath, kind, `${safe}.md`)
+  return path.join(collectionDir(agentId, basePath, kind), `${safe}.md`)
 }
 
 export async function listCollection(
+  agentId: string,
   basePath: string,
   kind: CollectionKind,
 ): Promise<CollectionItem[]> {
-  const dir = collectionDir(basePath, kind)
+  const dir = collectionDir(agentId, basePath, kind)
   if (!(await pathExists(dir))) return []
 
   const entries = await fs.readdir(dir, { withFileTypes: true })
   const items: CollectionItem[] = []
 
   for (const entry of entries) {
+    // Skip dotfiles/dirs — e.g. Codex's managed `skills/.system` bundle.
+    if (entry.name.startsWith('.')) continue
+
     let id: string
     let filePath: string
 
@@ -77,11 +92,12 @@ export async function listCollection(
 }
 
 export async function readCollectionItem(
+  agentId: string,
   basePath: string,
   kind: CollectionKind,
   id: string,
 ): Promise<{ content: string; path: string }> {
-  const filePath = itemFilePath(basePath, kind, id)
+  const filePath = itemFilePath(agentId, basePath, kind, id)
   const content = (await pathExists(filePath))
     ? await readTextFile(filePath)
     : ''
@@ -89,12 +105,13 @@ export async function readCollectionItem(
 }
 
 export async function writeCollectionItem(
+  agentId: string,
   basePath: string,
   kind: CollectionKind,
   id: string,
   content: string,
 ): Promise<{ success: boolean; path: string }> {
-  const filePath = itemFilePath(basePath, kind, id)
+  const filePath = itemFilePath(agentId, basePath, kind, id)
   await writeTextFileAtomic(filePath, content)
   return { success: true, path: filePath }
 }
@@ -109,6 +126,7 @@ export async function writeCollectionItem(
  * (`SKILL.md` siblings) are not carried into a flat command file.
  */
 export async function migrateCollectionItem(
+  agentId: string,
   basePath: string,
   fromKind: CollectionKind,
   toKind: CollectionKind,
@@ -118,41 +136,49 @@ export async function migrateCollectionItem(
     throw new Error('Source and target collection are the same.')
   }
   const safe = sanitizeId(id)
-  const targetPath = itemFilePath(basePath, toKind, safe)
+  const targetPath = itemFilePath(agentId, basePath, toKind, safe)
   if (await pathExists(targetPath)) {
     throw new Error(`A ${toKind} item named "${safe}" already exists.`)
   }
 
-  const { content } = await readCollectionItem(basePath, fromKind, safe)
+  const { content } = await readCollectionItem(
+    agentId,
+    basePath,
+    fromKind,
+    safe,
+  )
   if (!content.trim()) {
     throw new Error(`The ${fromKind} item "${safe}" has no content to migrate.`)
   }
 
-  await writeCollectionItem(basePath, toKind, safe, content)
-  await deleteCollectionItem(basePath, fromKind, safe)
+  await writeCollectionItem(agentId, basePath, toKind, safe, content)
+  await deleteCollectionItem(agentId, basePath, fromKind, safe)
   return { success: true, id: safe, path: targetPath }
 }
 
 export async function deleteCollectionItem(
+  agentId: string,
   basePath: string,
   kind: CollectionKind,
   id: string,
 ): Promise<{ success: boolean }> {
   const safe = sanitizeId(id)
+  const dir = collectionDir(agentId, basePath, kind)
   if (kind === 'skills') {
     // A skill is a folder; remove it (and its references) entirely.
-    await fs.rm(path.join(basePath, 'skills', safe), {
+    await fs.rm(path.join(dir, safe), {
       recursive: true,
       force: true,
     })
   } else {
-    await fs.rm(path.join(basePath, kind, `${safe}.md`), { force: true })
+    await fs.rm(path.join(dir, `${safe}.md`), { force: true })
   }
   return { success: true }
 }
 
 /** Rename an item to a new id within the same collection. */
 export async function renameCollectionItem(
+  agentId: string,
   basePath: string,
   kind: CollectionKind,
   fromId: string,
@@ -160,20 +186,25 @@ export async function renameCollectionItem(
 ): Promise<{ success: boolean; id: string; path: string }> {
   const from = sanitizeId(fromId)
   const to = sanitizeId(toId)
+  const dir = collectionDir(agentId, basePath, kind)
   if (from === to) {
-    return { success: true, id: to, path: itemFilePath(basePath, kind, to) }
+    return {
+      success: true,
+      id: to,
+      path: itemFilePath(agentId, basePath, kind, to),
+    }
   }
   if (kind === 'skills') {
-    const src = path.join(basePath, 'skills', from)
-    const dest = path.join(basePath, 'skills', to)
+    const src = path.join(dir, from)
+    const dest = path.join(dir, to)
     if (await pathExists(dest)) {
       throw new Error(`A skill named "${to}" already exists.`)
     }
     await fs.rename(src, dest)
     return { success: true, id: to, path: path.join(dest, 'SKILL.md') }
   }
-  const src = path.join(basePath, kind, `${from}.md`)
-  const dest = path.join(basePath, kind, `${to}.md`)
+  const src = path.join(dir, `${from}.md`)
+  const dest = path.join(dir, `${to}.md`)
   if (await pathExists(dest)) {
     throw new Error(`A ${kind} item named "${to}" already exists.`)
   }
@@ -183,6 +214,7 @@ export async function renameCollectionItem(
 
 /** Copy an item to a new id within the same collection. */
 export async function duplicateCollectionItem(
+  agentId: string,
   basePath: string,
   kind: CollectionKind,
   id: string,
@@ -190,20 +222,21 @@ export async function duplicateCollectionItem(
 ): Promise<{ success: boolean; id: string; path: string }> {
   const from = sanitizeId(id)
   const to = sanitizeId(newId)
+  const dir = collectionDir(agentId, basePath, kind)
   if (kind === 'skills') {
-    const src = path.join(basePath, 'skills', from)
-    const dest = path.join(basePath, 'skills', to)
+    const src = path.join(dir, from)
+    const dest = path.join(dir, to)
     if (await pathExists(dest)) {
       throw new Error(`A skill named "${to}" already exists.`)
     }
     await fs.cp(src, dest, { recursive: true })
     return { success: true, id: to, path: path.join(dest, 'SKILL.md') }
   }
-  const dest = path.join(basePath, kind, `${to}.md`)
+  const dest = path.join(dir, `${to}.md`)
   if (await pathExists(dest)) {
     throw new Error(`A ${kind} item named "${to}" already exists.`)
   }
-  const { content } = await readCollectionItem(basePath, kind, from)
+  const { content } = await readCollectionItem(agentId, basePath, kind, from)
   await writeTextFileAtomic(dest, content)
   return { success: true, id: to, path: dest }
 }
@@ -224,13 +257,15 @@ async function collectFiles(dir: string): Promise<string[]> {
  * `.skill` ZIP (folder + support files) for skills — the reverse of import.
  */
 export async function exportCollectionItem(
+  agentId: string,
   basePath: string,
   kind: CollectionKind,
   id: string,
 ): Promise<{ fileName: string; data: Buffer }> {
   const safe = sanitizeId(id)
+  const collDir = collectionDir(agentId, basePath, kind)
   if (kind === 'skills') {
-    const dir = path.join(basePath, 'skills', safe)
+    const dir = path.join(collDir, safe)
     if (!(await pathExists(dir))) throw new Error(`Skill "${safe}" not found.`)
     const files = await collectFiles(dir)
     const entries = await Promise.all(
@@ -241,7 +276,7 @@ export async function exportCollectionItem(
     )
     return { fileName: `${safe}.skill`, data: writeZip(entries) }
   }
-  const file = path.join(basePath, kind, `${safe}.md`)
+  const file = path.join(collDir, `${safe}.md`)
   if (!(await pathExists(file))) throw new Error(`${kind} "${safe}" not found.`)
   return {
     fileName: `${safe}.md`,

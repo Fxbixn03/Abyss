@@ -117,19 +117,36 @@ export function ContextPage() {
         icon: string
         accent: string
       }[] = [
-        { kind: 'agents', label: 'Subagent instructions', icon: 'bot', accent: 'success' },
-        { kind: 'skills', label: 'Skills', icon: 'graduation-cap', accent: 'warning' },
-        { kind: 'commands', label: 'Commands', icon: 'square-slash', accent: 'primary' },
+        {
+          kind: 'agents',
+          label: 'Subagent instructions',
+          icon: 'bot',
+          accent: 'success',
+        },
+        {
+          kind: 'skills',
+          label: 'Skills',
+          icon: 'graduation-cap',
+          accent: 'warning',
+        },
+        {
+          kind: 'commands',
+          label: 'Commands',
+          icon: 'square-slash',
+          accent: 'primary',
+        },
       ]
       for (const col of collections) {
         if (!caps[col.kind] || !configBase) continue
-        const list = await ipc.listCollection(configBase, col.kind).catch(() => [])
+        const list = await ipc
+          .listCollection(agent.id, configBase, col.kind)
+          .catch(() => [])
         if (list.length === 0) continue
         const items: LayerItem[] = []
         let total = 0
         for (const item of list) {
           const content = await ipc
-            .readCollectionItem(configBase, col.kind, item.id)
+            .readCollectionItem(agent.id, configBase, col.kind, item.id)
             .then((r) => r.content)
             .catch(() => '')
           const t = estimateTokens(content)
@@ -275,7 +292,10 @@ export function ContextPage() {
         description={`What ${agent.displayName} actually sees — layered, with token estimates`}
         icon="list-tree"
         actions={
-          <Badge variant={totalTokens > 40000 ? 'warning' : 'muted'} className="font-code">
+          <Badge
+            variant={totalTokens > 40000 ? 'warning' : 'muted'}
+            className="font-code"
+          >
             ~{formatTokens(totalTokens)} tokens
           </Badge>
         }
@@ -283,10 +303,13 @@ export function ContextPage() {
 
       {totalTokens > 40000 && (
         <div className="flex items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
-          <Icon name="alert-triangle" className="size-4 shrink-0 text-warning" />
+          <Icon
+            name="alert-triangle"
+            className="size-4 shrink-0 text-warning"
+          />
           <span>
-            Base context is large (~{formatTokens(totalTokens)} tokens before the
-            conversation). Heavy setups risk truncation on smaller models.
+            Base context is large (~{formatTokens(totalTokens)} tokens before
+            the conversation). Heavy setups risk truncation on smaller models.
           </span>
         </div>
       )}
@@ -335,7 +358,10 @@ export function ContextPage() {
                     {/* Proportional bar */}
                     <span className="hidden h-1.5 w-24 overflow-hidden rounded-full bg-muted sm:block">
                       <span
-                        className={cn('block h-full', ACCENT[layer.accent]?.bar)}
+                        className={cn(
+                          'block h-full',
+                          ACCENT[layer.accent]?.bar,
+                        )}
                         style={{
                           width: `${Math.max(4, (layer.tokens / maxLayer) * 100)}%`,
                         }}
@@ -407,7 +433,9 @@ export function ContextPage() {
                     )}
                   >
                     <Icon
-                      name={c.severity === 'warning' ? 'alert-triangle' : 'info'}
+                      name={
+                        c.severity === 'warning' ? 'alert-triangle' : 'info'
+                      }
                       className={cn(
                         'mt-0.5 size-4 shrink-0',
                         c.severity === 'warning'
