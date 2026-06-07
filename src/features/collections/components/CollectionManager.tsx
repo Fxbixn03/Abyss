@@ -33,7 +33,10 @@ import { DiffPreviewDialog } from '@/features/config/components/DiffPreviewDialo
 import { FileHistoryDialog } from '@/features/config/components/FileHistoryDialog'
 import { UnsavedGuard } from '@/shared/components/UnsavedGuard'
 import { NewItemDialog } from './NewItemDialog'
+import { AgentDiscoverDialog } from './AgentDiscoverDialog'
 import { buildTemplate } from '../lib/templates'
+import type { DiscoveredAgentSpec } from '@/shared/agents/discovery'
+import { agentSpecToSubagent } from '@/shared/agents/discovery'
 
 export interface CollectionManagerProps {
   kind: CollectionKind
@@ -67,6 +70,7 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
 
   const [diffOpen, setDiffOpen] = useState(false)
   const [newOpen, setNewOpen] = useState(false)
+  const [discoverOpen, setDiscoverOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   // Item targeted by the right-click "Migrate" action, awaiting confirmation.
@@ -206,6 +210,16 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
     await ipc.writeCollectionItem(basePath, kind, id, content)
     await refresh()
     setSelectedId(id)
+  }
+
+  // Save an agent found via Discover as a local subagent stub, then open it.
+  const saveDiscovered = async (spec: DiscoveredAgentSpec) => {
+    const { id, content } = agentSpecToSubagent(
+      spec,
+      items.map((i) => i.id),
+    )
+    await create(id, content)
+    setNotice({ type: 'success', message: `Saved "${spec.name}" as a subagent.` })
   }
 
   const remove = async () => {
@@ -453,6 +467,12 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
               >
                 <Icon name="download" />
                 {importing ? 'Importing…' : 'Import'}
+              </Button>
+            )}
+            {kind === 'agents' && (
+              <Button variant="outline" onClick={() => setDiscoverOpen(true)}>
+                <Icon name="globe" />
+                Discover
               </Button>
             )}
             <Button onClick={() => setNewOpen(true)}>
@@ -762,6 +782,14 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
           void create(values.id, buildTemplate(kind, values))
         }
       />
+
+      {kind === 'agents' && (
+        <AgentDiscoverDialog
+          open={discoverOpen}
+          onOpenChange={setDiscoverOpen}
+          onPick={(spec) => void saveDiscovered(spec)}
+        />
+      )}
 
       <DiffPreviewDialog
         open={diffOpen}

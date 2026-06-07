@@ -2,6 +2,7 @@ import { app } from 'electron'
 import { IpcChannel } from '@/shared/types/ipc'
 import { readMcpServers, writeMcpServers } from '@core/mcp'
 import { checkMcpHealth } from '@core/mcp-health'
+import { runDiscoverySearch } from '@core/discovery'
 import {
   readModelEnv,
   readPermissions,
@@ -38,6 +39,9 @@ export function registerConfigIpc(ctx: IpcContext): void {
       writeMcpServers(agentId, basePath, servers, projectDir),
   )
   handle(IpcChannel.McpHealthCheck, ({ entry }) => checkMcpHealth(entry))
+
+  // Discovery (searchable registries — currently the official MCP registry)
+  handle(IpcChannel.DiscoverySearch, (req) => runDiscoverySearch(req))
 
   // Tool permissions
   handle(IpcChannel.GetPermissions, ({ basePath }) => readPermissions(basePath))

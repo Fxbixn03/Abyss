@@ -43,6 +43,10 @@ import type {
   SyncAllResult,
   SyncSurface,
 } from './sync'
+import type {
+  DiscoverySearchRequest,
+  DiscoverySearchResponse,
+} from '../discovery/types'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
 
@@ -81,6 +85,9 @@ export enum IpcChannel {
   GetMcpServers = 'mcp:get',
   SetMcpServers = 'mcp:set',
   McpHealthCheck = 'mcp:health-check',
+
+  // Discovery (generic: searchable registries for mcp / skills / agents / …)
+  DiscoverySearch = 'discovery:search',
 
   // Tool permissions
   GetPermissions = 'permissions:get',
@@ -295,6 +302,11 @@ export interface IpcMap {
   [IpcChannel.McpHealthCheck]: {
     request: { entry: McpServerEntry }
     response: McpHealthResult
+  }
+
+  [IpcChannel.DiscoverySearch]: {
+    request: DiscoverySearchRequest
+    response: DiscoverySearchResponse
   }
 
   [IpcChannel.GetPermissions]: {

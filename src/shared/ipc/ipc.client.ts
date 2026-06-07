@@ -32,6 +32,7 @@ import type {
   SkillCollisionMode,
 } from '@/shared/types/collections'
 import type { HookEntry } from '@/shared/types/hooks'
+import type { DiscoverySearchRequest } from '@/shared/discovery/types'
 
 function invoke<C extends IpcChannel>(
   channel: C,
@@ -103,6 +104,9 @@ export const ipc = {
     }),
   mcpHealthCheck: (entry: McpServerEntry) =>
     invoke(IpcChannel.McpHealthCheck, { entry }),
+
+  discoverySearch: (req: DiscoverySearchRequest) =>
+    invoke(IpcChannel.DiscoverySearch, req),
 
   getPermissions: (agentId: AgentId, basePath: string) =>
     invoke(IpcChannel.GetPermissions, { agentId, basePath }),

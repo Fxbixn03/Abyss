@@ -13,7 +13,7 @@ import {
 import { useMcpStore } from '../store/mcp.store'
 import { McpServerList } from '../components/McpServerList'
 import { McpServerForm } from '../components/McpServerForm'
-import { McpCatalogDialog } from '../components/McpCatalogDialog'
+import { McpDiscoverDialog } from '../components/McpDiscoverDialog'
 
 export function McpPage() {
   const agent = useActiveAgent()
@@ -31,7 +31,7 @@ export function McpPage() {
   const test = useMcpStore((s) => s.test)
 
   const [formOpen, setFormOpen] = useState(false)
-  const [catalogOpen, setCatalogOpen] = useState(false)
+  const [discoverOpen, setDiscoverOpen] = useState(false)
   const [editing, setEditing] = useState<McpServerEntry | undefined>()
 
   const supported = agent.capabilities.mcp
@@ -71,11 +71,11 @@ export function McpPage() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => setCatalogOpen(true)}
+              onClick={() => setDiscoverOpen(true)}
               disabled={!basePath}
             >
-              <Icon name="package" />
-              Catalog
+              <Icon name="globe" />
+              Discover
             </Button>
             <Button
               onClick={() => {
@@ -150,9 +150,9 @@ export function McpPage() {
         onSubmit={(entry) => void upsert(entry)}
       />
 
-      <McpCatalogDialog
-        open={catalogOpen}
-        onOpenChange={setCatalogOpen}
+      <McpDiscoverDialog
+        open={discoverOpen}
+        onOpenChange={setDiscoverOpen}
         existingNames={servers.map((s) => s.name)}
         onPick={(entry) => {
           setEditing(entry)
