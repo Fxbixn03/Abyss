@@ -85,6 +85,43 @@ export interface ChatSessionPage {
   total: number
 }
 
+/** One calendar day's token total for the usage trend (last 7 days). */
+export interface UsageDailyPoint {
+  /** Calendar day, YYYY-MM-DD (UTC). */
+  date: string
+  tokens: number
+}
+
+/** A project ranked by message volume in the usage overview. */
+export interface UsageProjectCount {
+  label: string
+  messageCount: number
+}
+
+/**
+ * Pre-aggregated chat usage for the dashboard. Computed in `core/chat/usage.ts`
+ * and cached per agent by transcript mtime, so only this small aggregate crosses
+ * the IPC boundary — never the full session list.
+ */
+export interface ChatUsageStats {
+  totalSessions: number
+  totalMessages: number
+  inputTokens: number
+  outputTokens: number
+  /** Tokens across sessions touched within the rolling last 5 hours. */
+  sessionTokens: number
+  /** Most-recently updated sessions (max 6). */
+  recent: ChatSessionMeta[]
+  /** Busiest projects by message count (max 5). */
+  topProjects: UsageProjectCount[]
+  /** Token totals per calendar day for the last 7 days (oldest first). */
+  daily: UsageDailyPoint[]
+  /** Rough cost estimate from token totals (USD); always an estimate. */
+  estCostUsd?: number
+  /** Real cost in USD when the agent records it; absent for history-only. */
+  realCostUsd?: number
+}
+
 /** Whether an agent's CLI is installed and (for live chat) logged in. */
 export interface ChatAvailability {
   /** CLI binary found on PATH / resolvable. */

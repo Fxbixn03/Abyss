@@ -12,6 +12,7 @@ import type {
   ChatAvailability,
   ChatListOptions,
   ChatPermissionDecision,
+  ChatSessionMeta,
   ChatSessionPage,
   ChatStartOptions,
   ChatStreamEvent,
@@ -30,6 +31,26 @@ export interface LiveSession {
   dispose(): Promise<void>
 }
 
+/**
+ * A transcript file plus any agent-native location hint (e.g. Claude encodes the
+ * cwd in its project folder name). Handed back to {@link ChatUsageSource.readMeta}.
+ */
+export interface ChatSessionFileRef {
+  filePath: string
+  projectDir?: string
+}
+
+/**
+ * Minimal surface the cached usage aggregator (`core/chat/usage.ts`) needs: list
+ * candidate transcript files cheaply, and parse one into list metadata on demand.
+ * Kept separate from {@link ChatRuntime.listSessions} so the aggregator can cache
+ * per file by mtime instead of re-parsing every transcript on each call.
+ */
+export interface ChatUsageSource {
+  listFiles(env: OsEnv): Promise<ChatSessionFileRef[]>
+  readMeta(ref: ChatSessionFileRef): Promise<ChatSessionMeta | null>
+}
+
 /** Everything a runtime needs to spin up a live session. */
 export interface StartContext {
   env: OsEnv
@@ -45,6 +66,8 @@ export interface ChatRuntime {
   listSessions(env: OsEnv, opts?: ChatListOptions): Promise<ChatSessionPage>
   readSession(env: OsEnv, sessionId: string): Promise<ChatTranscript>
   deleteSession(env: OsEnv, sessionId: string): Promise<void>
+  /** Optional cheap, cacheable source for the usage aggregator. */
+  usage?: ChatUsageSource
 
   // --- Auth (subscription login lifecycle) ---------------------------------
   availability(env: OsEnv): Promise<ChatAvailability>

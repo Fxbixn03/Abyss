@@ -18,7 +18,9 @@ import {
   listClaudeSessions,
   readClaudeSession,
   deleteClaudeSession,
+  readSessionMeta,
 } from './parse'
+import { listClaudeSessionFiles } from './paths'
 import {
   claudeAvailability,
   claudeLogin,
@@ -203,6 +205,11 @@ export const claudeChatRuntime: ChatRuntime = {
     readClaudeSession(env, sessionId),
   deleteSession: (env: OsEnv, sessionId: string) =>
     deleteClaudeSession(env, sessionId),
+
+  usage: {
+    listFiles: (env) => listClaudeSessionFiles(env),
+    readMeta: (ref) => readSessionMeta(ref.filePath, ref.projectDir ?? ''),
+  },
 
   availability: (env: OsEnv) => claudeAvailability(env),
   login: (env: OsEnv, apiKey?: string) => claudeLogin(env, apiKey),

@@ -29,6 +29,7 @@ import type {
   ChatStartOptions,
   ChatStreamEnvelope,
   ChatTranscript,
+  ChatUsageStats,
 } from './chat'
 import type { SandboxRunResult } from './sandbox'
 import type { BackupInfo } from './backup'
@@ -116,6 +117,7 @@ export enum IpcChannel {
   ChatReadSession = 'chat:read-session',
   ChatDeleteSession = 'chat:delete-session',
   ChatExportSession = 'chat:export-session',
+  ChatUsageStats = 'chat:usage-stats',
 
   // Chats — auth (subscription login lifecycle)
   ChatAvailability = 'chat:availability',
@@ -415,6 +417,10 @@ export interface IpcMap {
       format: ChatExportFormat
     }
     response: { path: string | null }
+  }
+  [IpcChannel.ChatUsageStats]: {
+    request: { agentId: AgentId; cwd?: string }
+    response: ChatUsageStats
   }
 
   [IpcChannel.ChatAvailability]: {

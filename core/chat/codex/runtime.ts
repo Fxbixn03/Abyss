@@ -20,7 +20,9 @@ import {
   listCodexSessions,
   readCodexSession,
   deleteCodexSession,
+  readCodexMeta,
 } from './parse'
+import { listCodexSessionFiles } from './paths'
 import {
   codexAvailability,
   codexLogin,
@@ -138,6 +140,12 @@ export const codexChatRuntime: ChatRuntime = {
     readCodexSession(env, sessionId),
   deleteSession: (env: OsEnv, sessionId: string) =>
     deleteCodexSession(env, sessionId),
+
+  usage: {
+    listFiles: async (env) =>
+      (await listCodexSessionFiles(env)).map((filePath) => ({ filePath })),
+    readMeta: (ref) => readCodexMeta(ref.filePath),
+  },
 
   availability: (env: OsEnv) => codexAvailability(env),
   login: (env: OsEnv, apiKey?: string) => codexLogin(env, apiKey),

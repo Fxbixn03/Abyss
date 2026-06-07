@@ -6,6 +6,7 @@ import {
   readChatSession,
   deleteChatSession,
 } from '@core/chat/history'
+import { computeUsageStats } from '@core/chat/usage'
 import { getChatRuntime } from '@core/chat/registry'
 import { markEphemeralLogin, clearEphemeralLogin } from '@core/chat/auth'
 import {
@@ -31,6 +32,9 @@ export function registerChatIpc(ctx: IpcContext): void {
     await deleteChatSession(ctx.env, agentId, sessionId)
     return { success: true }
   })
+  handle(IpcChannel.ChatUsageStats, ({ agentId, cwd }) =>
+    computeUsageStats(ctx.env, agentId, { cwd }),
+  )
   handle(
     IpcChannel.ChatExportSession,
     async ({ agentId, sessionId, format }) => {

@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { ChatSessionMeta } from '@/shared/types/chat'
+import type { ChatUsageStats, UsageDailyPoint } from '@/shared/types/chat'
+import { Button } from '@/shared/components/ui/button'
 import { Card } from '@/shared/components/ui/card'
 import { Icon } from '@/shared/components/Icon'
-import { ipc } from '@/shared/ipc/ipc.client'
+import { estimateCostUsd, formatMoney } from '@/shared/lib/cost'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
+import { useScope, useProjectDir } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
-import { estimateCostUsd, formatMoney } from '../lib/cost'
+import { useUsageStore } from '../store/usage.store'
 
 function compact(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -22,6 +24,12 @@ function relativeTime(iso?: string): string {
   const h = Math.round(min / 60)
   if (h < 24) return `${h}h ago`
   return `${Math.round(h / 24)}d ago`
+}
+
+/** Last path segment of an absolute dir, for the scope heading. */
+function basename(p: string): string {
+  const parts = p.replace(/[/\\]+$/, '').split(/[/\\]/).filter(Boolean)
+  return parts[parts.length - 1] || p
 }
 
 function Stat({
@@ -44,17 +52,6 @@ function Stat({
       </div>
     </Card>
   )
-}
-
-/** Sum of input+output tokens for sessions updated within the last `ms`. */
-function tokensInWindow(sessions: ChatSessionMeta[], ms: number): number {
-  const since = Date.now() - ms
-  let total = 0
-  for (const s of sessions) {
-    const t = s.updatedAt ? new Date(s.updatedAt).getTime() : 0
-    if (t >= since) total += (s.inputTokens ?? 0) + (s.outputTokens ?? 0)
-  }
-  return total
 }
 
 function QuotaBar({
@@ -94,10 +91,58 @@ function QuotaBar({
   )
 }
 
+/** Tiny 7-day token trend rendered as a row of proportional bars. */
+function UsageTrend({ daily }: { daily: UsageDailyPoint[] }) {
+  const max = Math.max(1, ...daily.map((d) => d.tokens))
+  return (
+    <Card className="p-4">
+      <p className="mb-3 text-sm font-medium">Tokens · last 7 days</p>
+      <div className="flex h-20 items-end gap-1.5">
+        {daily.map((d) => {
+          const pct = Math.round((d.tokens / max) * 100)
+          const weekday = new Date(`${d.date}T00:00:00Z`).toLocaleDateString(
+            undefined,
+            { weekday: 'short' },
+          )
+          return (
+            <div
+              key={d.date}
+              className="flex flex-1 flex-col items-center gap-1"
+              title={`${d.date} · ${compact(d.tokens)} tokens`}
+            >
+              <div className="flex w-full flex-1 items-end">
+                <div
+                  className="w-full rounded-sm bg-primary/70"
+                  style={{ height: `${Math.max(pct, d.tokens > 0 ? 4 : 0)}%` }}
+                />
+              </div>
+              <span className="text-[10px] text-muted-foreground">
+                {weekday}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </Card>
+  )
+}
+
+function StatSkeleton() {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="h-[60px] animate-pulse rounded-lg bg-muted" />
+      ))}
+    </div>
+  )
+}
+
 export function UsagePanel() {
   const navigate = useNavigate()
   const agent = useActiveAgent()
   const hasChats = agent.capabilities.chats
+  const { scope } = useScope()
+  const projectDir = useProjectDir()
   const billingMode = useSettingsStore((s) => s.settings.billingMode)
   const showCosts = useSettingsStore((s) => s.settings.showCosts)
   const currency = useSettingsStore((s) => s.settings.currency)
@@ -105,69 +150,81 @@ export function UsagePanel() {
   const sessionBudget = useSettingsStore((s) => s.settings.sessionTokenBudget)
   const costVisible = billingMode === 'api' && showCosts
 
-  const [sessions, setSessions] = useState<ChatSessionMeta[]>([])
-  const [loaded, setLoaded] = useState(false)
+  const slice = useUsageStore((s) => s.byAgent[agent.id])
+  const load = useUsageStore((s) => s.load)
 
   useEffect(() => {
     if (!hasChats) return
-    let active = true
-    // Aggregate stats need every session, so this lists them all (no paging).
-    void ipc
-      .chatListSessions(agent.id)
-      .then((page) => {
-        if (!active) return
-        setSessions(page.sessions)
-        setLoaded(true)
-      })
-      .catch(() => {
-        if (active) setLoaded(true)
-      })
-    return () => {
-      active = false
-    }
-  }, [agent.id, hasChats])
-
-  const stats = useMemo(() => {
-    const totalMessages = sessions.reduce((n, s) => n + s.messageCount, 0)
-    const inputTokens = sessions.reduce((n, s) => n + (s.inputTokens ?? 0), 0)
-    const outputTokens = sessions.reduce((n, s) => n + (s.outputTokens ?? 0), 0)
-    const recent = [...sessions]
-      .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
-      .slice(0, 6)
-    const projects = new Map<string, number>()
-    for (const s of sessions) {
-      projects.set(
-        s.projectLabel,
-        (projects.get(s.projectLabel) ?? 0) + s.messageCount,
-      )
-    }
-    const topProjects = [...projects.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-    return {
-      totalSessions: sessions.length,
-      totalMessages,
-      inputTokens,
-      outputTokens,
-      recent,
-      topProjects,
-    }
-  }, [sessions])
+    void load(agent.id, projectDir)
+  }, [agent.id, hasChats, projectDir, load])
 
   if (!hasChats) return null
-  if (loaded && sessions.length === 0) return null
 
-  const sessionUsed = tokensInWindow(sessions, 5 * 60 * 60 * 1000)
-  const weeklyUsed = tokensInWindow(sessions, 7 * 24 * 60 * 60 * 1000)
+  const stats: ChatUsageStats | null = slice?.stats ?? null
+  const loading = !slice || (slice.loading && !slice.stats)
+  const error = slice?.error ?? false
+
+  const scopeLabel =
+    scope === 'project'
+      ? projectDir
+        ? basename(projectDir)
+        : 'project'
+      : 'global'
+
+  const heading = (
+    <h2 className="text-sm font-medium text-muted-foreground">
+      Usage · {agent.displayName} · {scopeLabel}
+    </h2>
+  )
+
+  if (error && !stats) {
+    return (
+      <section className="space-y-3">
+        {heading}
+        <Card className="flex items-center justify-between gap-3 p-4 text-sm">
+          <span className="flex items-center gap-2 text-muted-foreground">
+            <Icon name="alert-triangle" className="size-4 shrink-0" />
+            Couldn’t load usage data.
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void load(agent.id, projectDir, true)}
+          >
+            <Icon name="refresh-cw" />
+            Retry
+          </Button>
+        </Card>
+      </section>
+    )
+  }
+
+  if (loading) {
+    return (
+      <section className="space-y-3">
+        {heading}
+        <div className="h-[92px] animate-pulse rounded-lg bg-muted" />
+        <StatSkeleton />
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="h-40 animate-pulse rounded-lg bg-muted" />
+          <div className="h-40 animate-pulse rounded-lg bg-muted" />
+        </div>
+      </section>
+    )
+  }
+
+  if (!stats || stats.totalSessions === 0) return null
+
+  const sessionUsed = stats.sessionTokens
+  const weeklyUsed = stats.daily.reduce((n, d) => n + d.tokens, 0)
   const showQuota = Boolean(weeklyBudget || sessionBudget)
+  const estCost = stats.estCostUsd ?? estimateCostUsd(stats.inputTokens, stats.outputTokens)
 
   const openSession = () => navigate('/chats')
 
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-medium text-muted-foreground">
-        Usage · {agent.displayName}
-      </h2>
+      {heading}
 
       <Card className="space-y-3 p-4">
         <div className="flex items-center justify-between">
@@ -218,56 +275,51 @@ export function UsagePanel() {
           <Stat
             icon="circle-dollar-sign"
             label="Estimated cost"
-            value={formatMoney(
-              estimateCostUsd(stats.inputTokens, stats.outputTokens),
-              currency,
-            )}
+            value={`~${formatMoney(estCost, currency)}`}
           />
         )}
       </div>
 
+      <UsageTrend daily={stats.daily} />
+
       <div className="grid gap-3 lg:grid-cols-2">
         <Card className="p-4">
           <p className="mb-2 text-sm font-medium">Recent sessions</p>
-          {!loaded ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
-          ) : (
-            <div className="flex flex-col gap-1">
-              {stats.recent.map((s) => (
-                <button
-                  key={`${s.agentId}-${s.id}`}
-                  type="button"
-                  onClick={openSession}
-                  className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent/60"
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <Icon
-                      name="messages-square"
-                      className="size-3.5 shrink-0 text-muted-foreground"
-                    />
-                    <span className="truncate">{s.title}</span>
-                  </span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {relativeTime(s.updatedAt)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex flex-col gap-1">
+            {stats.recent.map((s) => (
+              <button
+                key={`${s.agentId}-${s.id}`}
+                type="button"
+                onClick={openSession}
+                className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent/60"
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <Icon
+                    name="messages-square"
+                    className="size-3.5 shrink-0 text-muted-foreground"
+                  />
+                  <span className="truncate">{s.title}</span>
+                </span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {relativeTime(s.updatedAt)}
+                </span>
+              </button>
+            ))}
+          </div>
         </Card>
 
         <Card className="p-4">
           <p className="mb-2 text-sm font-medium">Top projects</p>
           <div className="flex flex-col gap-1.5">
-            {stats.topProjects.map(([label, count]) => (
-              <div key={label} className="flex items-center gap-2 text-sm">
+            {stats.topProjects.map((p) => (
+              <div key={p.label} className="flex items-center gap-2 text-sm">
                 <Icon
                   name="folder"
                   className="size-3.5 shrink-0 text-muted-foreground"
                 />
-                <span className="truncate">{label}</span>
+                <span className="truncate">{p.label}</span>
                 <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                  {compact(count)} msg
+                  {compact(p.messageCount)} msg
                 </span>
               </div>
             ))}

@@ -35,7 +35,7 @@ function sessionIdFromFile(filePath: string): string {
 }
 
 /** Cheap-ish single pass over one file to build its list metadata. */
-async function readSessionMeta(
+export async function readSessionMeta(
   filePath: string,
   projectDir: string,
 ): Promise<ChatSessionMeta | null> {

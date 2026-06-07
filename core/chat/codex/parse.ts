@@ -60,7 +60,7 @@ function extractMessage(
   return null
 }
 
-async function readCodexMeta(
+export async function readCodexMeta(
   filePath: string,
 ): Promise<ChatSessionMeta | null> {
   const stat = await fs.stat(filePath)

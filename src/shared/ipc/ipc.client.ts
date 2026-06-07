@@ -193,6 +193,8 @@ export const ipc = {
     sessionId: string,
     format: ChatExportFormat,
   ) => invoke(IpcChannel.ChatExportSession, { agentId, sessionId, format }),
+  chatUsageStats: (agentId: AgentId, cwd?: string) =>
+    invoke(IpcChannel.ChatUsageStats, { agentId, cwd }),
 
   // --- Chats: auth ----------------------------------------------------------
   chatAvailability: (agentId: AgentId) =>
