@@ -13,7 +13,10 @@ export function AgentSwitcher() {
   const setActiveAgent = useAgentStore((s) => s.setActiveAgent)
 
   return (
-    <div className="no-drag flex items-center gap-1 rounded-lg border border-border bg-card/70 p-1">
+    <div
+      data-tour="agent-switcher"
+      className="no-drag flex items-center gap-1 rounded-lg border border-border bg-card/70 p-1"
+    >
       {agents.map((agent) => {
         const active = agent.id === activeId
         return (

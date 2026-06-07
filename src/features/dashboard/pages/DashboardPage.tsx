@@ -70,7 +70,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      <section className="space-y-3">
+      <section data-tour="agent-grid" className="space-y-3">
         <h2 className="text-sm font-medium text-muted-foreground">Agents</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {agents.map((a) => (

@@ -52,7 +52,10 @@ export function ScopeBar() {
   }
 
   return (
-    <div className="flex h-9 shrink-0 items-center gap-2 border-b border-border bg-background px-3 text-sm">
+    <div
+      data-tour="scope-bar"
+      className="flex h-9 shrink-0 items-center gap-2 border-b border-border bg-background px-3 text-sm"
+    >
       <div className="inline-flex items-center rounded-md border border-border p-0.5">
         <button
           type="button"

@@ -18,6 +18,7 @@ import {
 } from '@/shared/components/ui/select'
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { useTourStore } from '@/features/tour/store/tour.store'
 import { useSettingsStore } from '../store/settings.store'
 
 function SettingRow({
@@ -43,6 +44,7 @@ function SettingRow({
 export function PreferencesSection() {
   const settings = useSettingsStore((s) => s.settings)
   const updatePrefs = useSettingsStore((s) => s.updatePrefs)
+  const startTour = useTourStore((s) => s.start)
 
   const browseProjectDir = async () => {
     const { path } = await ipc.pickDirectory(
@@ -81,6 +83,16 @@ export function PreferencesSection() {
                   void updatePrefs({ launchOnStartup: v })
                 }
               />
+            }
+          />
+          <SettingRow
+            title="Guided tour"
+            description="Replay the short walkthrough of the main areas of Abyss."
+            control={
+              <Button variant="secondary" size="sm" onClick={startTour}>
+                <Icon name="graduation-cap" />
+                Replay tour
+              </Button>
             }
           />
         </CardContent>

@@ -76,6 +76,8 @@ export interface AppSettings {
   launchOnStartup: boolean
   /** Whether the first-run setup has been completed. */
   onboarded: boolean
+  /** Whether the guided product tour has been shown (or skipped) at least once. */
+  tutorialDone: boolean
   /** Subscription (no per-token cost) vs API (pay-as-you-go). */
   billingMode: 'subscription' | 'api'
   /** Show estimated token costs (only meaningful for API billing). */
@@ -99,6 +101,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   confirmDiffBeforeSave: true,
   launchOnStartup: false,
   onboarded: false,
+  tutorialDone: false,
   billingMode: 'subscription',
   showCosts: false,
   currency: 'usd',

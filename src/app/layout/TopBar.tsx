@@ -45,6 +45,7 @@ export function TopBar() {
           variant="outline"
           size="sm"
           onClick={openPalette}
+          data-tour="global-search"
           className="w-44 justify-start gap-2 px-2.5 text-muted-foreground sm:w-64 lg:w-80"
         >
           <Icon name="search" className="size-3.5 shrink-0" />

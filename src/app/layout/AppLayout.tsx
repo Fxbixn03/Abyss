@@ -8,6 +8,7 @@ import { TopBar } from './TopBar'
 import { StatusBar } from './StatusBar'
 import { CommandPalette } from './CommandPalette'
 import { ScopeBar } from '@/features/scope/components/ScopeBar'
+import { TourOverlay } from '@/features/tour/components/TourOverlay'
 
 export function AppLayout() {
   const toggle = useCommandPalette((s) => s.toggle)
@@ -38,6 +39,7 @@ export function AppLayout() {
         </div>
       </div>
       <CommandPalette />
+      <TourOverlay />
     </TooltipProvider>
   )
 }

@@ -55,7 +55,10 @@ export function Sidebar() {
   })).filter((entry) => entry.items.length > 0)
 
   return (
-    <aside className="flex w-[220px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
+    <aside
+      data-tour="sidebar"
+      className="flex w-[220px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar"
+    >
       <div className="flex items-center gap-2 px-4 py-3.5">
         <AbyssLogo className="size-7" />
         <span className="font-code text-sm font-semibold tracking-tight text-sidebar-foreground">
