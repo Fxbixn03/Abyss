@@ -4,20 +4,39 @@ import { Card } from '@/shared/components/ui/card'
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { cn } from '@/shared/lib/utils'
+import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useActiveAgentId } from '../hooks/useActiveAgent'
 import { useAgentStore } from '../store/agent.store'
-import {
-  useAgentAvailability,
-  useAgentInstalled,
-} from '../store/agent-availability.store'
+import { useAgentAvailability } from '../store/agent-availability.store'
 import { AgentAvatar } from './AgentAvatar'
 
-export function AgentCard({ agent }: { agent: AgentAdapter }) {
+function relativeTime(iso: string): string {
+  const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
+  if (min < 1) return 'just now'
+  if (min < 60) return `${min}m ago`
+  const h = Math.round(min / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.round(h / 24)}d ago`
+}
+
+export function AgentCard({
+  agent,
+  lastUsedAt,
+}: {
+  agent: AgentAdapter
+  /** Most-recent session timestamp from the usage aggregate, when known. */
+  lastUsedAt?: string
+}) {
   const activeId = useActiveAgentId()
   const setActiveAgent = useAgentStore((s) => s.setActiveAgent)
   const active = agent.id === activeId
-  const installed = useAgentInstalled(agent.id)
+  const availability = useAgentAvailability((s) => s.status[agent.id])
   const availabilityLoaded = useAgentAvailability((s) => s.loaded)
+  const installed = availability?.installed ?? false
+  const version = availability?.version
+  const cliPath = availability?.path
+  const configBase = useConfigBase(agent.id)
+  const hasConfigPath = Boolean(configBase)
   const docsUrl = agent.docsUrl
 
   return (
@@ -56,9 +75,19 @@ export function AgentCard({ agent }: { agent: AgentAdapter }) {
               </Badge>
             ) : null}
           </div>
-          <span className="font-code text-xs text-muted-foreground">
-            {agent.name}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="font-code text-xs text-muted-foreground">
+              {agent.name}
+            </span>
+            {installed && version && (
+              <span
+                className="truncate font-code text-xs text-muted-foreground/80"
+                title={cliPath ? `Installed at ${cliPath}` : undefined}
+              >
+                · {version}
+              </span>
+            )}
+          </div>
         </div>
 
         {docsUrl && (
@@ -76,6 +105,27 @@ export function AgentCard({ agent }: { agent: AgentAdapter }) {
             <span className="hidden lg:inline">Docs</span>
             <Icon name="external-link" className="size-3" />
           </button>
+        )}
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <span
+          className="flex items-center gap-1"
+          title={hasConfigPath ? configBase : 'No config path set'}
+        >
+          <Icon
+            name={hasConfigPath ? 'folder-open' : 'folder'}
+            className="size-3.5 shrink-0"
+          />
+          <span className="truncate">
+            {hasConfigPath ? 'config set' : 'no config path'}
+          </span>
+        </span>
+        {lastUsedAt && (
+          <span className="flex items-center gap-1">
+            <Icon name="clock" className="size-3.5 shrink-0" />
+            used {relativeTime(lastUsedAt)}
+          </span>
         )}
       </div>
     </Card>

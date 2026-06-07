@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
@@ -13,18 +14,32 @@ import {
 } from '@/features/agents/store/agent-availability.store'
 import { AgentCard } from '@/features/agents/components/AgentCard'
 import { AgentAvatar } from '@/features/agents/components/AgentAvatar'
-import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
+import {
+  useConfigBase,
+  useProjectDir,
+} from '@/features/scope/hooks/useScopedBase'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { UsagePanel } from '../components/UsagePanel'
 import { StatusPreview } from '../components/StatusPreview'
+import { useUsageStore } from '../store/usage.store'
 
 export function DashboardPage() {
   const agent = useActiveAgent()
   const agents = useAllAgents()
   const basePath = useConfigBase(agent.id)
+  const projectDir = useProjectDir()
   const navigate = useNavigate()
   const installed = useAgentInstalled(agent.id)
   const availabilityLoaded = useAgentAvailability((s) => s.loaded)
+
+  // Warm the usage cache for every enabled agent (scope-aware) so each agent
+  // card can show its "last used" time without an extra round trip.
+  const usageByAgent = useUsageStore((s) => s.byAgent)
+  const loadManyUsage = useUsageStore((s) => s.loadMany)
+  const agentIds = agents.map((a) => a.id).join(',')
+  useEffect(() => {
+    if (agentIds) void loadManyUsage(agentIds.split(','), projectDir)
+  }, [agentIds, projectDir, loadManyUsage])
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-y-auto pr-1">
@@ -74,7 +89,11 @@ export function DashboardPage() {
         <h2 className="text-sm font-medium text-muted-foreground">Agents</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {agents.map((a) => (
-            <AgentCard key={a.id} agent={a} />
+            <AgentCard
+              key={a.id}
+              agent={a}
+              lastUsedAt={usageByAgent[a.id]?.stats?.recent[0]?.updatedAt}
+            />
           ))}
         </div>
       </section>
