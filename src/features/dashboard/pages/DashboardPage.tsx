@@ -21,6 +21,8 @@ import {
 import { ipc } from '@/shared/ipc/ipc.client'
 import { UsagePanel } from '../components/UsagePanel'
 import { StatusPreview } from '../components/StatusPreview'
+import { CrossAgentSummary } from '../components/CrossAgentSummary'
+import { GetStarted } from '../components/GetStarted'
 import { useUsageStore } from '../store/usage.store'
 
 export function DashboardPage() {
@@ -40,6 +42,13 @@ export function DashboardPage() {
   useEffect(() => {
     if (agentIds) void loadManyUsage(agentIds.split(','), projectDir)
   }, [agentIds, projectDir, loadManyUsage])
+
+  // Show the get-started panel when the agent can't chat (nothing to summarise)
+  // or when its history has loaded and is empty (first run).
+  const activeStats = usageByAgent[agent.id]?.stats
+  const showGetStarted = !agent.capabilities.chats
+    ? true
+    : Boolean(activeStats) && activeStats?.totalSessions === 0
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-y-auto pr-1">
@@ -98,7 +107,9 @@ export function DashboardPage() {
         </div>
       </section>
 
+      <CrossAgentSummary />
       <UsagePanel />
+      {showGetStarted && <GetStarted agent={agent} />}
       <StatusPreview />
     </div>
   )
