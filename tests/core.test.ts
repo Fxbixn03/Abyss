@@ -129,6 +129,29 @@ test('copilot MCP json round-trip maps stdio to "local"', async () => {
   await fs.rm(base, { recursive: true, force: true })
 })
 
+test('windsurf MCP json round-trip uses mcp_config.json', async () => {
+  const base = await tmp('abyss-windsurf-')
+  await writeMcpServers('windsurf', base, [
+    {
+      id: '1',
+      name: 'srv',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', 'pkg'],
+      env: {},
+      enabled: true,
+    },
+  ])
+  const raw = JSON.parse(
+    await fs.readFile(path.join(base, 'mcp_config.json'), 'utf8'),
+  )
+  assert.equal(raw.mcpServers.srv.command, 'npx')
+  const back = await readMcpServers('windsurf', base)
+  assert.equal(back.length, 1)
+  assert.equal(back[0].command, 'npx')
+  await fs.rm(base, { recursive: true, force: true })
+})
+
 test('codex MCP toml round-trip preserves other keys', async () => {
   const base = await tmp('abyss-codex-')
   await fs.writeFile(

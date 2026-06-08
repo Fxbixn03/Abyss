@@ -1,8 +1,10 @@
 /**
  * Read / write agent instruction files (CLAUDE.md, AGENTS.md, ...). Node-only.
  *
- * Filenames come from the trusted agent definitions, never from user input, and
- * are reduced to a basename to defend against path traversal.
+ * Filenames come from the trusted agent definitions, never from user input.
+ * They may be nested (e.g. Windsurf's `memories/global_rules.md`), so we resolve
+ * them against the base and verify the result stays inside it — keeping the
+ * path-traversal defense without forcing every file to the base level.
  */
 
 import path from 'node:path'
@@ -25,7 +27,12 @@ function specFilePath(
   if (!spec) {
     throw new Error(`Unknown config spec '${specId}' for agent '${agentId}'`)
   }
-  return path.join(basePath, path.basename(spec.filename))
+  const base = path.resolve(basePath)
+  const resolved = path.resolve(base, spec.filename)
+  if (resolved !== base && !resolved.startsWith(base + path.sep)) {
+    throw new Error(`Config path escapes base directory: ${spec.filename}`)
+  }
+  return resolved
 }
 
 export async function readAgentConfigFile(

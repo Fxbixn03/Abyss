@@ -240,6 +240,149 @@ export const copilotDefinition: AgentDefinition = {
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.copilot')],
 }
 
+const windsurfRules: ConfigFileSpec = {
+  id: 'instructions',
+  filename: 'memories/global_rules.md',
+  scope: 'global',
+  language: 'markdown',
+  description: 'Global rules applied to every Windsurf Cascade session.',
+}
+
+/**
+ * Windsurf (Codeium) — global rules at `memories/global_rules.md` and MCP
+ * servers in `mcp_config.json` (the standard `{ mcpServers }` JSON shape, stdio
+ * servers use plain command/args), all under `~/.codeium/windsurf`.
+ */
+export const windsurfDefinition: AgentDefinition = {
+  id: 'windsurf',
+  name: 'windsurf',
+  displayName: 'Windsurf',
+  defaultThemeId: 'windsurf-wave',
+  iconName: 'wind',
+  docsUrl: 'https://docs.windsurf.com/windsurf/cascade/mcp',
+  capabilities: {
+    instructions: true,
+    mcp: true,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: false,
+    chats: false,
+  },
+  configFiles: [windsurfRules],
+  resolvePaths: (env: OsEnv) => [
+    joinPath(env.platform, env.home, '.codeium', 'windsurf'),
+  ],
+}
+
+const continueConfig: ConfigFileSpec = {
+  id: 'instructions',
+  filename: 'config.yaml',
+  scope: 'global',
+  language: 'yaml',
+  description: 'Continue global config (assistants, rules, models).',
+}
+
+/** Continue — global `config.yaml` (assistants, rules, models) in `~/.continue`. */
+export const continueDefinition: AgentDefinition = {
+  id: 'continue',
+  name: 'continue',
+  displayName: 'Continue',
+  defaultThemeId: 'continue-loop',
+  iconName: 'infinity',
+  docsUrl: 'https://docs.continue.dev/reference',
+  capabilities: {
+    instructions: true,
+    mcp: false,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: false,
+    chats: false,
+  },
+  configFiles: [continueConfig],
+  resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.continue')],
+}
+
+const aiderConfig: ConfigFileSpec = {
+  id: 'instructions',
+  filename: '.aider.conf.yml',
+  scope: 'global',
+  language: 'yaml',
+  description: 'Aider global configuration (~/.aider.conf.yml).',
+}
+
+/** Aider — YAML config at `~/.aider.conf.yml` (the home dir is the base). */
+export const aiderDefinition: AgentDefinition = {
+  id: 'aider',
+  name: 'aider',
+  displayName: 'Aider',
+  defaultThemeId: 'aider-slate',
+  iconName: 'terminal',
+  docsUrl: 'https://aider.chat/docs/config/aider_conf.html',
+  capabilities: {
+    instructions: true,
+    mcp: false,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: false,
+    chats: false,
+  },
+  configFiles: [aiderConfig],
+  resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home)],
+}
+
+const clineRules: ConfigFileSpec = {
+  id: 'instructions',
+  filename: 'instructions.md',
+  scope: 'global',
+  language: 'markdown',
+  description: 'Global Cline rules (read from the Documents/Cline/Rules folder).',
+}
+
+/**
+ * Cline — global rules folder `~/Documents/Cline/Rules` (Cline loads every
+ * `.md`/`.txt` inside it). Abyss edits a single `instructions.md` there.
+ */
+export const clineDefinition: AgentDefinition = {
+  id: 'cline',
+  name: 'cline',
+  displayName: 'Cline',
+  defaultThemeId: 'cline-night',
+  iconName: 'bot',
+  docsUrl: 'https://docs.cline.bot/customization/cline-rules',
+  capabilities: {
+    instructions: true,
+    mcp: false,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: false,
+    chats: false,
+  },
+  configFiles: [clineRules],
+  resolvePaths: (env: OsEnv) => [
+    joinPath(env.platform, env.home, 'Documents', 'Cline', 'Rules'),
+  ],
+}
+
 /** Every known agent definition, keyed by id. */
 export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   claude: claudeDefinition,
@@ -247,6 +390,10 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   gemini: geminiDefinition,
   cursor: cursorDefinition,
   copilot: copilotDefinition,
+  windsurf: windsurfDefinition,
+  continue: continueDefinition,
+  aider: aiderDefinition,
+  cline: clineDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -256,6 +403,10 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'gemini',
   'cursor',
   'copilot',
+  'windsurf',
+  'continue',
+  'aider',
+  'cline',
 ]
 
 export function getAgentDefinition(id: string): AgentDefinition {

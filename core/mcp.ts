@@ -140,6 +140,11 @@ function copilotMcpPath(basePath: string): string {
   return path.join(basePath, 'mcp-config.json')
 }
 
+/** Windsurf keeps its `mcpServers` map in `<base>/mcp_config.json`. */
+function windsurfMcpPath(basePath: string): string {
+  return path.join(basePath, 'mcp_config.json')
+}
+
 /**
  * Read MCP servers for an agent. Claude/Cursor/Gemini/Copilot use JSON, Codex
  * uses TOML. Claude: `~/.claude.json` / `<project>/.mcp.json`; Cursor:
@@ -155,6 +160,7 @@ export function readMcpServers(
   if (agentId === 'cursor') return readJsonMcp(cursorMcpPath(basePath))
   if (agentId === 'gemini') return readJsonMcp(geminiSettingsPath(basePath))
   if (agentId === 'copilot') return readJsonMcp(copilotMcpPath(basePath))
+  if (agentId === 'windsurf') return readJsonMcp(windsurfMcpPath(basePath))
   return readJsonMcp(mcpConfigPath(projectDir))
 }
 
@@ -171,5 +177,7 @@ export function writeMcpServers(
     return writeJsonMcp(geminiSettingsPath(basePath), entries)
   if (agentId === 'copilot')
     return writeJsonMcp(copilotMcpPath(basePath), entries, stdioTypeFor(agentId))
+  if (agentId === 'windsurf')
+    return writeJsonMcp(windsurfMcpPath(basePath), entries)
   return writeJsonMcp(mcpConfigPath(projectDir), entries)
 }

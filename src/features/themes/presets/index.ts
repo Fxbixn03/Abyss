@@ -4,6 +4,7 @@ import { codexThemes } from './codex.theme'
 import { geminiThemes } from './gemini.theme'
 import { cursorThemes } from './cursor.theme'
 import { copilotThemes } from './copilot.theme'
+import { moreAgentThemes } from './more-agents.theme'
 import { abyssThemes } from './abyss.theme'
 
 /**
@@ -16,5 +17,6 @@ export const BUILTIN_THEMES: ThemeConfig[] = [
   ...geminiThemes,
   ...cursorThemes,
   ...copilotThemes,
+  ...moreAgentThemes,
   ...abyssThemes,
 ]

@@ -4,6 +4,10 @@ import { codexAdapter } from '../adapters/codex.adapter'
 import { geminiAdapter } from '../adapters/gemini.adapter'
 import { cursorAdapter } from '../adapters/cursor.adapter'
 import { copilotAdapter } from '../adapters/copilot.adapter'
+import { windsurfAdapter } from '../adapters/windsurf.adapter'
+import { continueAdapter } from '../adapters/continue.adapter'
+import { aiderAdapter } from '../adapters/aider.adapter'
+import { clineAdapter } from '../adapters/cline.adapter'
 
 /**
  * Central registry of agent adapters. The single place the app discovers which
@@ -40,3 +44,7 @@ agentRegistry.register(codexAdapter)
 agentRegistry.register(geminiAdapter)
 agentRegistry.register(cursorAdapter)
 agentRegistry.register(copilotAdapter)
+agentRegistry.register(windsurfAdapter)
+agentRegistry.register(continueAdapter)
+agentRegistry.register(aiderAdapter)
+agentRegistry.register(clineAdapter)
