@@ -64,6 +64,11 @@ import {
   globToRegExp,
   previewSpecifier,
 } from '@/features/permissions/lib/glob'
+import {
+  isWellFormedPath,
+  isInsideRoot,
+  resolveScopedPath,
+} from '@core/path-scope'
 import type { McpServerEntry } from '@/shared/types/config'
 import type { McpInstallSpec } from '@/shared/mcp/discovery'
 import type { OsEnv } from '@/shared/types/agent'
@@ -859,4 +864,54 @@ test('discovery mcp: surfaces HTTP errors and network failures without throwing'
   )
   assert.deepEqual(netErr.results, [])
   assert.ok(netErr.error && netErr.error.length > 0)
+})
+
+test('path-scope: well-formedness rejects empty / NUL-byte paths', () => {
+  assert.equal(isWellFormedPath('/home/u/.claude'), true)
+  assert.equal(isWellFormedPath(''), false)
+  assert.equal(isWellFormedPath('/home/u/\0evil'), false)
+})
+
+test('path-scope: isInsideRoot confines to a root and blocks traversal', () => {
+  const root = path.resolve('/home/user/.config')
+  assert.equal(isInsideRoot(path.join(root, 'agent', 'x.json'), root), true)
+  assert.equal(isInsideRoot(root, root), true)
+  // `../` escape resolves outside the root.
+  assert.equal(isInsideRoot(path.join(root, '..', '..', 'etc'), root), false)
+  // Sibling that shares a prefix is not inside.
+  assert.equal(isInsideRoot('/home/user/.config-evil', root), false)
+})
+
+test('path-scope: resolveScopedPath allows roots, rejects escapes', () => {
+  const env: OsEnv = {
+    home: path.resolve('/home/user'),
+    appData: path.resolve('/home/user/.config'),
+    platform: 'linux',
+  }
+  const userData = path.resolve('/home/user/.config/Abyss')
+
+  // Inside home (an agent config dir) is allowed.
+  assert.equal(
+    resolveScopedPath(
+      path.join(env.home, '.claude', 'settings.json'),
+      env,
+      userData,
+    ),
+    path.join(env.home, '.claude', 'settings.json'),
+  )
+  // userData itself is allowed.
+  assert.equal(resolveScopedPath(userData, env, userData), userData)
+  // A path well outside any root is rejected.
+  assert.equal(resolveScopedPath('/etc/passwd', env, userData), null)
+  // A traversal that climbs out of home is rejected.
+  assert.equal(
+    resolveScopedPath(
+      path.join(env.home, '..', '..', 'etc', 'passwd'),
+      env,
+      userData,
+    ),
+    null,
+  )
+  // Malformed input is rejected.
+  assert.equal(resolveScopedPath('', env, userData), null)
 })

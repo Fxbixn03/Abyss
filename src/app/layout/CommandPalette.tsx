@@ -15,6 +15,7 @@ import {
 } from '@/shared/components/ui/command'
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { reportError } from '@/shared/lib/errors'
 import { AgentGlyph } from '@/features/agents/components/AgentGlyph'
 import { PRIMARY_NAV, SETTINGS_NAV } from '@/app/navigation'
 import { useCommandPalette } from '@/app/command/commandPalette.store'
@@ -95,7 +96,14 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
       .then((res) => {
         if (active) setGlobalIndex(res)
       })
-      .catch(() => {})
+      .catch((err) => {
+        // Cross-agent search is an enhancement: log the failure via the error
+        // framework but keep it silent so a bad config never breaks the palette.
+        reportError(err, {
+          title: "Couldn't build cross-agent search",
+          silent: true,
+        })
+      })
     return () => {
       active = false
     }

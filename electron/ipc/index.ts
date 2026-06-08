@@ -30,6 +30,6 @@ export function registerIpcHandlers(ctx: IpcContext): void {
   registerThemeIpc(ctx)
   registerUpdateIpc()
   registerSyncIpc(ctx)
-  registerSandboxIpc()
+  registerSandboxIpc(ctx)
   registerBackupIpc(ctx)
 }
