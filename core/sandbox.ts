@@ -2,6 +2,22 @@
  * Sandbox command runner. Spawns a one-off shell command with a hard timeout
  * and bounded output, so the UI can let users try a hook/command snippet and see
  * its stdout/stderr/exit code. Node-only.
+ *
+ * Threat model (intentional arbitrary execution):
+ * Running an arbitrary command IS the feature — the user is testing their own
+ * hook/command snippet on their own machine — so we deliberately do NOT apply a
+ * command allowlist or argument sanitization; that would defeat the purpose and
+ * give a false sense of safety. The command runs with the user's own privileges,
+ * exactly as it would if they pasted it into a terminal. Instead of restricting
+ * *what* runs, we bound *how* it runs and require the user to opt in:
+ *   - The renderer gates this behind an explicit acknowledgement before the first
+ *     run (SandboxPage `sandboxAcknowledged`).
+ *   - The IPC layer confines a requested `cwd` to Abyss's allowed roots
+ *     (see `sandbox.ipc.ts` → `resolveScopedPath`) before we ever spawn.
+ *   - A hard timeout ({@link MAX_TIMEOUT_MS}) kills runaway processes.
+ *   - Output is capped ({@link MAX_OUTPUT}) so a chatty command can't exhaust
+ *     memory, and `windowsHide` keeps no stray console window around.
+ * The trust boundary is the human at the keyboard, not the string contents.
  */
 
 import { exec } from 'node:child_process'
