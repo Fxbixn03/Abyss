@@ -13,6 +13,7 @@ import type {
 } from '@/shared/types/chat'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { genId } from '@/shared/lib/id'
+import { reportError } from '@/shared/lib/errors'
 
 /** Sessions fetched per page for infinite scroll. */
 const SESSIONS_PAGE_SIZE = 20
@@ -145,27 +146,35 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
     const agentId = get().agentId
     if (!agentId) return
     set({ availabilityLoading: true })
-    const availability = await ipc.chatAvailability(agentId)
-    set({ availability, availabilityLoading: false })
+    try {
+      const availability = await ipc.chatAvailability(agentId)
+      set({ availability })
+    } catch (err) {
+      reportError(err, { title: "Couldn't check chat availability" })
+    } finally {
+      set({ availabilityLoading: false })
+    }
   },
 
   refreshSessions: async () => {
     const agentId = get().agentId
     if (!agentId) return
     set({ sessionsLoading: true })
-    // Reload the first page, but keep the window as large as what's already
-    // visible so a refresh (e.g. after a turn) doesn't collapse the scroll.
-    const limit = Math.max(SESSIONS_PAGE_SIZE, get().sessions.length)
-    const page = await ipc.chatListSessions(agentId, {
-      offset: 0,
-      limit,
-      cwd: get().cwdFilter,
-    })
-    set({
-      sessions: page.sessions,
-      sessionsTotal: page.total,
-      sessionsLoading: false,
-    })
+    try {
+      // Reload the first page, but keep the window as large as what's already
+      // visible so a refresh (e.g. after a turn) doesn't collapse the scroll.
+      const limit = Math.max(SESSIONS_PAGE_SIZE, get().sessions.length)
+      const page = await ipc.chatListSessions(agentId, {
+        offset: 0,
+        limit,
+        cwd: get().cwdFilter,
+      })
+      set({ sessions: page.sessions, sessionsTotal: page.total })
+    } catch (err) {
+      reportError(err, { title: "Couldn't load chat history" })
+    } finally {
+      set({ sessionsLoading: false })
+    }
   },
 
   loadMoreSessions: async () => {
@@ -174,39 +183,50 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
     const loaded = get().sessions.length
     if (loaded >= get().sessionsTotal) return
     set({ sessionsLoadingMore: true })
-    const page = await ipc.chatListSessions(agentId, {
-      offset: loaded,
-      limit: SESSIONS_PAGE_SIZE,
-      cwd: get().cwdFilter,
-    })
-    // Dedupe by id (page boundaries can overlap) and keep recency order.
-    const byId = new Map<string, ChatSessionMeta>()
-    for (const s of [...get().sessions, ...page.sessions]) byId.set(s.id, s)
-    const merged = [...byId.values()].sort((a, b) =>
-      (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''),
-    )
-    set({
-      sessions: merged,
-      sessionsTotal: page.total,
-      sessionsLoadingMore: false,
-    })
+    try {
+      const page = await ipc.chatListSessions(agentId, {
+        offset: loaded,
+        limit: SESSIONS_PAGE_SIZE,
+        cwd: get().cwdFilter,
+      })
+      // Dedupe by id (page boundaries can overlap) and keep recency order.
+      const byId = new Map<string, ChatSessionMeta>()
+      for (const s of [...get().sessions, ...page.sessions]) byId.set(s.id, s)
+      const merged = [...byId.values()].sort((a, b) =>
+        (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''),
+      )
+      set({ sessions: merged, sessionsTotal: page.total })
+    } catch (err) {
+      reportError(err, { title: "Couldn't load more sessions" })
+    } finally {
+      set({ sessionsLoadingMore: false })
+    }
   },
 
   login: async (persist, apiKey) => {
     const agentId = get().agentId
     if (!agentId) throw new Error('No agent selected')
-    const availability = await ipc.chatLogin(agentId, persist, apiKey)
-    // Keep the key in memory (not persisted) so live runs can use it.
-    set({ availability, apiKey: apiKey || get().apiKey })
-    return availability
+    try {
+      const availability = await ipc.chatLogin(agentId, persist, apiKey)
+      // Keep the key in memory (not persisted) so live runs can use it.
+      set({ availability, apiKey: apiKey || get().apiKey })
+      return availability
+    } catch (err) {
+      reportError(err, { title: 'Login failed' })
+      throw err
+    }
   },
 
   logout: async () => {
     const agentId = get().agentId
     if (!agentId) return
-    await ipc.chatLogout(agentId)
-    set({ apiKey: undefined })
-    await get().checkAvailability()
+    try {
+      await ipc.chatLogout(agentId)
+      set({ apiKey: undefined })
+      await get().checkAvailability()
+    } catch (err) {
+      reportError(err, { title: 'Logout failed' })
+    }
   },
 
   openSession: async (sessionId) => {
@@ -225,15 +245,20 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
       messages: [],
       error: null,
     })
-    const t = await ipc.chatReadSession(agentId, sessionId)
-    // Ignore if the user switched sessions while loading.
-    if (get().activeSessionId !== sessionId) return
-    set({
-      messages: t.messages,
-      title: t.title,
-      cwd: t.cwd,
-      transcriptLoading: false,
-    })
+    try {
+      const t = await ipc.chatReadSession(agentId, sessionId)
+      // Ignore if the user switched sessions while loading.
+      if (get().activeSessionId !== sessionId) return
+      set({
+        messages: t.messages,
+        title: t.title,
+        cwd: t.cwd,
+        transcriptLoading: false,
+      })
+    } catch (err) {
+      if (get().activeSessionId === sessionId) set({ transcriptLoading: false })
+      reportError(err, { title: "Couldn't open session" })
+    }
   },
 
   newChat: (cwd) => {
@@ -291,34 +316,59 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
       set({ status: 'streaming' })
     }
 
-    await ipc.chatSend(liveId, text)
+    try {
+      await ipc.chatSend(liveId, text)
+    } catch (err) {
+      set({
+        status: 'idle',
+        error: err instanceof Error ? err.message : 'Failed to send message',
+      })
+    }
   },
 
   interrupt: async () => {
     const liveId = get().liveId
-    if (liveId) await ipc.chatInterrupt(liveId)
+    if (!liveId) return
+    try {
+      await ipc.chatInterrupt(liveId)
+    } catch (err) {
+      reportError(err, { title: "Couldn't interrupt" })
+    }
   },
 
   stopLive: async () => {
     const liveId = get().liveId
-    if (liveId) await ipc.chatStop(liveId)
-    set({ liveId: null, status: 'idle' })
+    try {
+      if (liveId) await ipc.chatStop(liveId)
+    } catch (err) {
+      reportError(err, { title: "Couldn't stop session" })
+    } finally {
+      set({ liveId: null, status: 'idle' })
+    }
   },
 
   deleteSession: async (sessionId) => {
     const agentId = get().agentId
     if (!agentId) return
-    await ipc.chatDeleteSession(agentId, sessionId)
-    if (get().activeSessionId === sessionId) {
-      set({ activeSessionId: null, messages: [], title: '' })
+    try {
+      await ipc.chatDeleteSession(agentId, sessionId)
+      if (get().activeSessionId === sessionId) {
+        set({ activeSessionId: null, messages: [], title: '' })
+      }
+      await get().refreshSessions()
+    } catch (err) {
+      reportError(err, { title: "Couldn't delete session" })
     }
-    await get().refreshSessions()
   },
 
   exportSession: async (sessionId, format) => {
     const agentId = get().agentId
     if (!agentId) return
-    await ipc.chatExportSession(agentId, sessionId, format)
+    try {
+      await ipc.chatExportSession(agentId, sessionId, format)
+    } catch (err) {
+      reportError(err, { title: "Couldn't export session" })
+    }
   },
 
   handleStreamEvent: ({ liveId, event }) => {

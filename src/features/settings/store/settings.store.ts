@@ -3,6 +3,7 @@ import type { AgentId, DetectedPath } from '@/shared/types/agent'
 import { DEFAULT_APP_SETTINGS } from '@/shared/types/config'
 import type { AppSettings } from '@/shared/types/config'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { reportError } from '@/shared/lib/errors'
 
 interface SettingsState {
   settings: AppSettings
@@ -28,31 +29,49 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   load: async () => {
     if (get().loading) return
     set({ loading: true })
-    const [settings, detected] = await Promise.all([
-      ipc.getSettings(),
-      ipc.getDetectedPaths(),
-    ])
-    set({ settings, detected, loaded: true, loading: false })
+    try {
+      const [settings, detected] = await Promise.all([
+        ipc.getSettings(),
+        ipc.getDetectedPaths(),
+      ])
+      set({ settings, detected, loaded: true })
+    } catch (err) {
+      reportError(err, { title: "Couldn't load settings" })
+    } finally {
+      set({ loading: false })
+    }
   },
 
   redetect: async (agentId) => {
-    if (agentId) {
-      const paths = await ipc.resolvePaths(agentId)
-      set((s) => ({ detected: { ...s.detected, [agentId]: paths } }))
-    } else {
-      const detected = await ipc.getDetectedPaths()
-      set({ detected })
+    try {
+      if (agentId) {
+        const paths = await ipc.resolvePaths(agentId)
+        set((s) => ({ detected: { ...s.detected, [agentId]: paths } }))
+      } else {
+        const detected = await ipc.getDetectedPaths()
+        set({ detected })
+      }
+    } catch (err) {
+      reportError(err, { title: "Couldn't detect agent paths" })
     }
   },
 
   setAgentPath: async (agentId, path) => {
-    const settings = await ipc.setSettings({ agentPaths: { [agentId]: path } })
-    set({ settings })
+    try {
+      const settings = await ipc.setSettings({ agentPaths: { [agentId]: path } })
+      set({ settings })
+    } catch (err) {
+      reportError(err, { title: "Couldn't update agent path" })
+    }
   },
 
   updatePrefs: async (patch) => {
-    const settings = await ipc.setSettings(patch)
-    set({ settings })
+    try {
+      const settings = await ipc.setSettings(patch)
+      set({ settings })
+    } catch (err) {
+      reportError(err, { title: "Couldn't save preferences" })
+    }
   },
 
   getBasePath: (agentId) => {

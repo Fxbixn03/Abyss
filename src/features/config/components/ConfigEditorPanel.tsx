@@ -44,8 +44,12 @@ export function ConfigEditorPanel() {
   const hasErrors = issues.some((i) => i.severity === 'error')
 
   const performSave = async () => {
-    await save()
-    setDiffOpen(false)
+    try {
+      await save()
+      setDiffOpen(false)
+    } catch {
+      // save() already surfaced the failure via a toast; keep the editor open.
+    }
   }
 
   const requestSave = () => {

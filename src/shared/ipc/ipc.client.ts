@@ -5,6 +5,7 @@
  */
 
 import { IpcChannel, IpcEvent } from '@/shared/types/ipc'
+import { decodeIpcError } from '@/shared/ipc/ipc-error'
 import type {
   ChatExportFormat,
   IpcEventMap,
@@ -34,11 +35,16 @@ import type {
 import type { HookEntry } from '@/shared/types/hooks'
 import type { DiscoverySearchRequest } from '@/shared/discovery/types'
 
-function invoke<C extends IpcChannel>(
+async function invoke<C extends IpcChannel>(
   channel: C,
   payload: IpcRequest<C>,
 ): Promise<IpcResponse<C>> {
-  return window.abyss.invoke(channel, payload)
+  try {
+    return await window.abyss.invoke(channel, payload)
+  } catch (err) {
+    // Re-throw a typed IpcError so callers can branch on `code`/`filePath`.
+    throw decodeIpcError(err)
+  }
 }
 
 export const ipc = {

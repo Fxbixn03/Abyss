@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { AgentId } from '@/shared/types/agent'
 import type { McpHealthResult, McpServerEntry } from '@/shared/types/config'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { reportError } from '@/shared/lib/errors'
 
 export type McpHealthState = { loading: true } | McpHealthResult
 
@@ -38,15 +39,23 @@ export const useMcpStore = create<McpState>()((set, get) => ({
 
   load: async (agentId, basePath, projectDir) => {
     set({ agentId, basePath, projectDir, loading: true })
-    const servers = await ipc.getMcpServers(agentId, basePath, projectDir)
-    if (
-      get().agentId !== agentId ||
-      get().basePath !== basePath ||
-      get().projectDir !== projectDir
-    ) {
-      return
+    try {
+      const servers = await ipc.getMcpServers(agentId, basePath, projectDir)
+      if (
+        get().agentId !== agentId ||
+        get().basePath !== basePath ||
+        get().projectDir !== projectDir
+      ) {
+        return
+      }
+      set({ servers, loading: false })
+    } catch (err) {
+      // Only clear the spinner if this load is still the current one.
+      if (get().basePath === basePath && get().agentId === agentId) {
+        set({ loading: false })
+      }
+      reportError(err, { title: "Couldn't load MCP servers" })
     }
-    set({ servers, loading: false })
   },
 
   upsert: async (entry) => {
@@ -78,8 +87,15 @@ export const useMcpStore = create<McpState>()((set, get) => ({
 
   test: async (entry) => {
     set({ health: { ...get().health, [entry.id]: { loading: true } } })
-    const result = await ipc.mcpHealthCheck(entry)
-    set({ health: { ...get().health, [entry.id]: result } })
+    try {
+      const result = await ipc.mcpHealthCheck(entry)
+      set({ health: { ...get().health, [entry.id]: result } })
+    } catch (err) {
+      const health = { ...get().health }
+      delete health[entry.id]
+      set({ health })
+      reportError(err, { title: "Couldn't test MCP server" })
+    }
   },
 }))
 
@@ -88,9 +104,15 @@ async function persist(
   get: () => McpState,
   next: McpServerEntry[],
 ): Promise<void> {
-  const { agentId, basePath, projectDir } = get()
+  const { agentId, basePath, projectDir, servers: previous } = get()
   if (!agentId || !basePath) return
   set({ servers: next, saving: true })
-  await ipc.setMcpServers(agentId, basePath, next, projectDir)
-  set({ saving: false })
+  try {
+    await ipc.setMcpServers(agentId, basePath, next, projectDir)
+  } catch (err) {
+    set({ servers: previous }) // roll back the optimistic update
+    reportError(err, { title: "Couldn't save MCP servers" })
+  } finally {
+    set({ saving: false })
+  }
 }

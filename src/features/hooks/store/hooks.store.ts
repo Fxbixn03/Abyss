@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { AgentId } from '@/shared/types/agent'
 import type { HookEntry } from '@/shared/types/hooks'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { reportError } from '@/shared/lib/errors'
 
 interface HooksState {
   agentId: AgentId
@@ -24,9 +25,16 @@ export const useHooksStore = create<HooksState>()((set, get) => ({
 
   load: async (agentId, basePath) => {
     set({ agentId, basePath, loading: true })
-    const entries = await ipc.getHooks(agentId, basePath)
-    if (get().basePath !== basePath || get().agentId !== agentId) return
-    set({ entries, loading: false })
+    try {
+      const entries = await ipc.getHooks(agentId, basePath)
+      if (get().basePath !== basePath || get().agentId !== agentId) return
+      set({ entries, loading: false })
+    } catch (err) {
+      if (get().basePath === basePath && get().agentId === agentId) {
+        set({ loading: false })
+      }
+      reportError(err, { title: "Couldn't load hooks" })
+    }
   },
 
   upsert: async (entry) => {
@@ -52,11 +60,18 @@ async function persist(
   get: () => HooksState,
   next: HookEntry[],
 ): Promise<void> {
-  const { agentId, basePath } = get()
+  const { agentId, basePath, entries: previous } = get()
   if (!basePath) return
   set({ entries: next, saving: true })
-  await ipc.setHooks(agentId, basePath, next)
-  // Re-read so ids reflect the canonical on-disk grouping.
-  const entries = await ipc.getHooks(agentId, basePath)
-  set({ entries, saving: false })
+  try {
+    await ipc.setHooks(agentId, basePath, next)
+    // Re-read so ids reflect the canonical on-disk grouping.
+    const entries = await ipc.getHooks(agentId, basePath)
+    set({ entries })
+  } catch (err) {
+    set({ entries: previous }) // roll back the optimistic update
+    reportError(err, { title: "Couldn't save hooks" })
+  } finally {
+    set({ saving: false })
+  }
 }

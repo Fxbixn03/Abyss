@@ -6,6 +6,7 @@ import type {
 } from '@/shared/types/agent'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { agentRegistry } from '@/features/agents/registry/agent.registry'
+import { reportError } from '@/shared/lib/errors'
 
 interface ConfigEditorState {
   agentId: AgentId | null
@@ -55,17 +56,24 @@ export const useConfigStore = create<ConfigEditorState>()((set, get) => ({
 
   open: async (agentId, spec, basePath) => {
     set({ agentId, spec, basePath, loading: true })
-    const result = await ipc.readAgentConfig(agentId, spec.id, basePath)
-    // Guard against a stale response if the user switched files meanwhile.
-    if (get().spec?.id !== spec.id || get().agentId !== agentId) return
-    set({
-      original: result.content,
-      draft: result.content,
-      filePath: result.path,
-      fileExists: result.exists,
-      issues: validate(agentId, spec, result.content),
-      loading: false,
-    })
+    try {
+      const result = await ipc.readAgentConfig(agentId, spec.id, basePath)
+      // Guard against a stale response if the user switched files meanwhile.
+      if (get().spec?.id !== spec.id || get().agentId !== agentId) return
+      set({
+        original: result.content,
+        draft: result.content,
+        filePath: result.path,
+        fileExists: result.exists,
+        issues: validate(agentId, spec, result.content),
+        loading: false,
+      })
+    } catch (err) {
+      if (get().spec?.id === spec.id && get().agentId === agentId) {
+        set({ loading: false })
+      }
+      reportError(err, { title: `Couldn't open ${spec.filename}` })
+    }
   },
 
   setDraft: (value) => {
@@ -80,9 +88,21 @@ export const useConfigStore = create<ConfigEditorState>()((set, get) => ({
     const { agentId, spec, basePath, draft } = get()
     if (!agentId || !spec) throw new Error('No config file open')
     set({ saving: true })
-    const result = await ipc.writeAgentConfig(agentId, spec.id, basePath, draft)
-    set({ original: draft, fileExists: true, saving: false })
-    return { path: result.path }
+    try {
+      const result = await ipc.writeAgentConfig(
+        agentId,
+        spec.id,
+        basePath,
+        draft,
+      )
+      set({ original: draft, fileExists: true })
+      return { path: result.path }
+    } catch (err) {
+      reportError(err, { title: `Couldn't save ${spec.filename}` })
+      throw err
+    } finally {
+      set({ saving: false })
+    }
   },
 
   revert: () => {
@@ -98,13 +118,17 @@ export const useConfigStore = create<ConfigEditorState>()((set, get) => ({
   reload: async () => {
     const { agentId, spec, basePath } = get()
     if (!agentId || !spec) return
-    const result = await ipc.readAgentConfig(agentId, spec.id, basePath)
-    set({
-      original: result.content,
-      draft: result.content,
-      filePath: result.path,
-      fileExists: result.exists,
-      issues: validate(agentId, spec, result.content),
-    })
+    try {
+      const result = await ipc.readAgentConfig(agentId, spec.id, basePath)
+      set({
+        original: result.content,
+        draft: result.content,
+        filePath: result.path,
+        fileExists: result.exists,
+        issues: validate(agentId, spec, result.content),
+      })
+    } catch (err) {
+      reportError(err, { title: `Couldn't reload ${spec.filename}` })
+    }
   },
 }))
