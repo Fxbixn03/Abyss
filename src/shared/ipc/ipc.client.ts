@@ -5,7 +5,8 @@
  */
 
 import { IpcChannel, IpcEvent } from '@/shared/types/ipc'
-import { decodeIpcError } from '@/shared/ipc/ipc-error'
+import { decodeIpcError, IpcError, IpcErrorCode } from '@/shared/ipc/ipc-error'
+import { isErrorReported, reportError } from '@/shared/lib/errors'
 import type {
   ChatExportFormat,
   IpcEventMap,
@@ -35,6 +36,36 @@ import type {
 import type { HookEntry } from '@/shared/types/hooks'
 import type { DiscoverySearchRequest } from '@/shared/discovery/types'
 
+/**
+ * Codes the global safety net must never toast: config-parse failures are owned
+ * by the repair flow (see `isConfigParseError`), and aborts are deliberate
+ * cancellations (discovery search, MCP health checks), not user-facing errors.
+ */
+const SILENT_NET_CODES = new Set<string>([
+  IpcErrorCode.ConfigParse,
+  IpcErrorCode.Aborted,
+])
+
+/**
+ * Global IPC error safety net. Many of the ~11 Zustand stores fire `ipc.*`
+ * calls without their own `try/catch`, so an unhandled rejection would vanish
+ * silently. This defers a fallback toast: callers that handle the error
+ * themselves run `reportError` (synchronously or after their own `await`),
+ * which marks the error via `markErrorReported`. By the time this timer fires,
+ * a handled error is already marked and we stay quiet — so stores with proper
+ * handling (e.g. `config.store.ts`) never double-toast.
+ */
+function armGlobalNet(err: IpcError): void {
+  if (SILENT_NET_CODES.has(err.code)) return
+  // A macrotask delay lets owning callers' `catch` blocks (including those that
+  // only reach `reportError` after awaiting) mark the error first.
+  setTimeout(() => {
+    if (isErrorReported(err)) return
+    // No `title` → a single plain toast carrying the error message.
+    reportError(err)
+  }, 0)
+}
+
 async function invoke<C extends IpcChannel>(
   channel: C,
   payload: IpcRequest<C>,
@@ -43,7 +74,9 @@ async function invoke<C extends IpcChannel>(
     return await window.abyss.invoke(channel, payload)
   } catch (err) {
     // Re-throw a typed IpcError so callers can branch on `code`/`filePath`.
-    throw decodeIpcError(err)
+    const decoded = decodeIpcError(err)
+    armGlobalNet(decoded)
+    throw decoded
   }
 }
 
