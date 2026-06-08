@@ -68,6 +68,8 @@ import {
   isWellFormedPath,
   isInsideRoot,
   resolveScopedPath,
+  assertScopedPath,
+  PathScopeError,
 } from '@core/path-scope'
 import type { McpServerEntry } from '@/shared/types/config'
 import type { McpInstallSpec } from '@/shared/mcp/discovery'
@@ -914,4 +916,28 @@ test('path-scope: resolveScopedPath allows roots, rejects escapes', () => {
   )
   // Malformed input is rejected.
   assert.equal(resolveScopedPath('', env, userData), null)
+})
+
+test('path-scope: assertScopedPath returns in-scope paths, throws on escape', () => {
+  const env: OsEnv = {
+    home: path.resolve('/home/user'),
+    appData: path.resolve('/home/user/.config'),
+    platform: 'linux',
+  }
+  const userData = path.resolve('/home/user/.config/Abyss')
+  const inScope = path.join(env.home, '.claude', 'settings.json')
+
+  // In-scope path is returned (resolved) unchanged.
+  assert.equal(assertScopedPath(inScope, env, userData), inScope)
+
+  // Escapes throw a typed PathScopeError carrying the offending path + code.
+  assert.throws(
+    () => assertScopedPath('/etc/passwd', env, userData),
+    (err: unknown) => {
+      if (!(err instanceof PathScopeError)) return false
+      assert.equal(err.code, 'PATH_OUT_OF_SCOPE')
+      assert.equal(err.filePath, '/etc/passwd')
+      return true
+    },
+  )
 })

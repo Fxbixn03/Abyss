@@ -17,6 +17,8 @@ export const IpcErrorCode = {
   ConfigInvalid: 'CONFIG_INVALID',
   /** Operation was cancelled (AbortController). */
   Aborted: 'ABORTED',
+  /** A renderer-supplied path escaped Abyss's allowed directories. */
+  PathScope: 'PATH_OUT_OF_SCOPE',
   Unknown: 'UNKNOWN',
 } as const
 

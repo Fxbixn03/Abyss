@@ -14,10 +14,16 @@ import {
 import { readCodexSettings, writeCodexSettings } from '@core/codex-settings'
 import { readHooks, writeHooks } from '@core/hooks'
 import { readRawSettings, writeRawSettings } from '@core/raw-settings'
+import { assertScopedPath } from '@core/path-scope'
 import { handle } from './handle'
 import type { IpcContext } from './context'
 
 export function registerConfigIpc(ctx: IpcContext): void {
+  // Defense-in-depth: a write must target a path under Abyss's allowed roots
+  // (home / app-data / userData). Legitimate agent base paths always live under
+  // home, so this only ever rejects a renderer pointing a write somewhere absurd.
+  const scope = (p: string): string => assertScopedPath(p, ctx.env, ctx.userData)
+
   handle(IpcChannel.GetAppInfo, () => ({
     name: app.getName(),
     version: app.getVersion(),
@@ -38,7 +44,12 @@ export function registerConfigIpc(ctx: IpcContext): void {
   handle(
     IpcChannel.SetMcpServers,
     ({ agentId, basePath, servers, projectDir }) =>
-      writeMcpServers(agentId, basePath, servers, projectDir),
+      writeMcpServers(
+        agentId,
+        scope(basePath),
+        servers,
+        projectDir ? scope(projectDir) : undefined,
+      ),
   )
   handle(IpcChannel.McpHealthCheck, async ({ entry, requestId }) => {
     const controller = beginRequest(requestId)
@@ -74,7 +85,7 @@ export function registerConfigIpc(ctx: IpcContext): void {
   // Tool permissions
   handle(IpcChannel.GetPermissions, ({ basePath }) => readPermissions(basePath))
   handle(IpcChannel.SetPermissions, ({ basePath, rules }) =>
-    writePermissions(basePath, rules),
+    writePermissions(scope(basePath), rules),
   )
 
   // Codex approval + sandbox settings
@@ -82,13 +93,13 @@ export function registerConfigIpc(ctx: IpcContext): void {
     readCodexSettings(basePath),
   )
   handle(IpcChannel.SetCodexSettings, ({ basePath, settings }) =>
-    writeCodexSettings(basePath, settings),
+    writeCodexSettings(scope(basePath), settings),
   )
 
   // Model + env
   handle(IpcChannel.GetModelEnv, ({ basePath }) => readModelEnv(basePath))
   handle(IpcChannel.SetModelEnv, ({ basePath, config }) =>
-    writeModelEnv(basePath, config),
+    writeModelEnv(scope(basePath), config),
   )
 
   // Lifecycle hooks
@@ -96,7 +107,7 @@ export function registerConfigIpc(ctx: IpcContext): void {
     readHooks(agentId, basePath),
   )
   handle(IpcChannel.SetHooks, ({ agentId, basePath, entries }) =>
-    writeHooks(agentId, basePath, entries),
+    writeHooks(agentId, scope(basePath), entries),
   )
 
   // Raw settings files
@@ -104,6 +115,6 @@ export function registerConfigIpc(ctx: IpcContext): void {
     readRawSettings(basePath, file),
   )
   handle(IpcChannel.WriteRawSettings, ({ basePath, file, content }) =>
-    writeRawSettings(basePath, file, content),
+    writeRawSettings(scope(basePath), file, content),
   )
 }

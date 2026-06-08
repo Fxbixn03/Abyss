@@ -2,7 +2,7 @@ import { dialog, shell } from 'electron'
 import { IpcChannel } from '@/shared/types/ipc'
 import { detectAgentPaths } from '@core/agent-paths'
 import { pathExists, ensureDir } from '@core/json-file'
-import { resolveScopedPath } from '@core/path-scope'
+import { resolveScopedPath, isWellFormedPath } from '@core/path-scope'
 import { logError } from '../log'
 import { watchFile, unwatchFile } from '../fs-watcher'
 import { handle } from './handle'
@@ -65,8 +65,11 @@ export function registerFilesystemIpc(ctx: IpcContext): void {
   })
 
   handle(IpcChannel.RevealPath, async ({ path }) => {
+    // Reveal is read-only (opens the OS file manager) and legitimately targets
+    // paths outside the allowed roots — backups in a user-chosen dir, for one —
+    // so we don't root-scope it; we only reject malformed / non-existent paths.
+    if (!isWellFormedPath(path)) return { success: false }
     if (!(await pathExists(path))) return { success: false }
-    // Reveal the item in the OS file manager (works for files and dirs).
     shell.showItemInFolder(path)
     return { success: true }
   })

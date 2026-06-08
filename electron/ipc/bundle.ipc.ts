@@ -3,6 +3,7 @@ import { dialog } from 'electron'
 import { IpcChannel } from '@/shared/types/ipc'
 import type { ExportBundle } from '@/shared/types/bundle'
 import { exportBundle, applyBundle } from '@core/bundle'
+import { assertScopedPath } from '@core/path-scope'
 import { handle } from './handle'
 import type { IpcContext } from './context'
 
@@ -71,6 +72,12 @@ export function registerBundleIpc(ctx: IpcContext): void {
           agents: bundle.agents.filter((a) => agentIds.includes(a.agentId)),
         }
       : bundle
+    // Defense-in-depth: refuse a bundle whose per-agent basePath escapes the
+    // allowed roots. A hand-edited or foreign bundle could otherwise point
+    // config writes at an arbitrary directory.
+    for (const agent of filtered.agents) {
+      assertScopedPath(agent.basePath, ctx.env, ctx.userData)
+    }
     return applyBundle(filtered, { dryRun })
   })
 }

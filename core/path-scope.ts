@@ -69,3 +69,36 @@ export function resolveScopedPath(
   if (roots.length === 0) return resolved
   return roots.some((root) => isInsideRoot(resolved, root)) ? resolved : null
 }
+
+/** Stable code so the renderer can branch on / surface a scoped-path rejection. */
+export const PATH_SCOPE_ERROR_CODE = 'PATH_OUT_OF_SCOPE'
+
+/**
+ * Thrown by {@link assertScopedPath} when a renderer-supplied path escapes the
+ * allowed roots. Carries `code` + `filePath` so the IPC error encoder ferries
+ * structured info to the renderer (see `ipc-error.ts`).
+ */
+export class PathScopeError extends Error {
+  readonly code = PATH_SCOPE_ERROR_CODE
+  readonly filePath: string
+  constructor(target: string) {
+    super(`Path is outside Abyss's allowed directories: ${target}`)
+    this.name = 'PathScopeError'
+    this.filePath = target
+  }
+}
+
+/**
+ * Like {@link resolveScopedPath}, but throws a {@link PathScopeError} (instead
+ * of returning `null`) for write/mutating handlers that should fail loudly
+ * rather than silently skip. Returns the resolved, in-scope path.
+ */
+export function assertScopedPath(
+  target: string,
+  env: OsEnv,
+  userData: string,
+): string {
+  const safe = resolveScopedPath(target, env, userData)
+  if (!safe) throw new PathScopeError(target)
+  return safe
+}

@@ -1,5 +1,6 @@
 import { IpcChannel } from '@/shared/types/ipc'
 import { exportBundle, applyBundle } from '@core/bundle'
+import { assertScopedPath } from '@core/path-scope'
 import {
   listProfiles,
   saveProfile,
@@ -35,6 +36,11 @@ export function registerProfilesIpc(ctx: IpcContext): void {
           ),
         }
       : profile.bundle
+    // Defense-in-depth: confine each agent's basePath to the allowed roots
+    // before writing (consistent with bundle apply).
+    for (const agent of bundle.agents) {
+      assertScopedPath(agent.basePath, ctx.env, ctx.userData)
+    }
     return applyBundle(bundle, { dryRun })
   })
 
