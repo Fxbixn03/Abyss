@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { AgentInstallStatus } from '@/shared/types/agent'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { reportError } from '@/shared/lib/errors'
 import { agentRegistry } from '../registry/agent.registry'
 
 interface AgentAvailabilityState {
@@ -16,8 +17,29 @@ export const useAgentAvailability = create<AgentAvailabilityState>((set) => ({
   loaded: false,
   refresh: async () => {
     const ids = agentRegistry.getAll().map((a) => a.id)
+    // Isolate each install check: one failing agent must not reject the whole
+    // refresh (Promise.all would), which would leave `loaded` false and hang
+    // the dashboard's AgentCards in a permanent loading state. A failed probe
+    // falls back to "not installed" so the UI can still render.
     const entries = await Promise.all(
-      ids.map(async (id) => [id, await ipc.agentInstallStatus(id)] as const),
+      ids.map(
+        async (id) =>
+          [
+            id,
+            await ipc
+              .agentInstallStatus(id)
+              .catch((err): AgentInstallStatus => {
+                // Log (and mark handled, so the global IPC net stays quiet) but
+                // don't toast: a missing/erroring CLI probe is expected and just
+                // means "not installed", not a failure worth interrupting the user.
+                reportError(err, {
+                  title: `Couldn't check ${id} install`,
+                  silent: true,
+                })
+                return { installed: false }
+              }),
+          ] as const,
+      ),
     )
     set({ status: Object.fromEntries(entries), loaded: true })
   },
