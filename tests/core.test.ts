@@ -31,12 +31,32 @@ import {
   listSnapshots,
   restoreSnapshot,
 } from '@core/snapshots'
-import { blocksFromAnthropicContent } from '@core/chat/normalize'
+import {
+  blocksFromAnthropicContent,
+  firstTextSnippet,
+  projectLabelFromCwd,
+} from '@core/chat/normalize'
 import { parseFrontmatter } from '@core/frontmatter'
 import { readJsonFile } from '@core/json-file'
 import { ConfigParseError } from '@core/config-error'
 import { SettingsStore } from '@core/settings-store'
+import {
+  readPermissions,
+  writePermissions,
+  readModelEnv,
+  writeModelEnv,
+} from '@core/claude-settings'
+import { exportBundle, applyBundle } from '@core/bundle'
+import {
+  configureProfiles,
+  saveProfile,
+  listProfiles,
+  readProfile,
+} from '@core/profiles'
+import { createBackup, listBackups } from '@core/backup'
+import { compareSurface } from '@core/sync'
 import type { McpServerEntry } from '@/shared/types/config'
+import type { OsEnv } from '@/shared/types/agent'
 
 async function tmp(prefix: string): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), prefix))
@@ -347,4 +367,110 @@ test('frontmatter parse', () => {
   assert.equal(data.name, 'demo')
   assert.equal(data.description, 'd')
   assert.ok(body.includes('body text'))
+})
+
+function testEnv(home: string, appData: string): OsEnv {
+  return { home, appData, platform: process.platform as OsEnv['platform'] }
+}
+
+test('claude permissions round-trip preserves model/env siblings', async () => {
+  const base = await tmp('abyss-perms-')
+  await writeModelEnv(base, { model: 'opus', env: { FOO: 'bar' } })
+  await writePermissions(base, {
+    allow: ['Read(*)'],
+    deny: ['Read(./.env)'],
+    ask: [],
+  })
+  const perms = await readPermissions(base)
+  assert.deepEqual(perms.allow, ['Read(*)'])
+  assert.deepEqual(perms.deny, ['Read(./.env)'])
+  // Writing permissions must not clobber the model/env written earlier.
+  const me = await readModelEnv(base)
+  assert.equal(me.model, 'opus')
+  assert.deepEqual(me.env, { FOO: 'bar' })
+  await fs.rm(base, { recursive: true, force: true })
+})
+
+test('bundle export → apply round-trips an instruction file', async () => {
+  const src = await tmp('abyss-bundle-src-')
+  const dest = await tmp('abyss-bundle-dest-')
+  const env = testEnv(await tmp('abyss-bundle-home-'), await tmp('abyss-bundle-app-'))
+  // Cline has only an instructions surface, so export touches no MCP/perms.
+  await fs.writeFile(path.join(src, 'instructions.md'), '# my rules\n', 'utf8')
+
+  const bundle = await exportBundle(env, {
+    agentIds: ['cline'],
+    basePaths: { cline: src },
+  })
+  assert.equal(bundle.agents[0].files.instructions, '# my rules\n')
+
+  const changes = await applyBundle(bundle, { basePaths: { cline: dest } })
+  assert.ok(changes.some((c) => c.changed))
+  assert.equal(
+    await fs.readFile(path.join(dest, 'instructions.md'), 'utf8'),
+    '# my rules\n',
+  )
+  for (const d of [src, dest, env.home, env.appData])
+    await fs.rm(d, { recursive: true, force: true })
+})
+
+test('profiles save → read round-trip', async () => {
+  const src = await tmp('abyss-prof-src-')
+  const dir = await tmp('abyss-prof-')
+  const env = testEnv(await tmp('abyss-prof-home-'), await tmp('abyss-prof-app-'))
+  configureProfiles(dir)
+  await fs.writeFile(path.join(src, 'instructions.md'), '# profile rules\n', 'utf8')
+  const bundle = await exportBundle(env, {
+    agentIds: ['cline'],
+    basePaths: { cline: src },
+  })
+
+  const meta = await saveProfile('My Profile', bundle, { description: 'd' })
+  const list = await listProfiles()
+  assert.ok(list.some((p) => p.id === meta.id && p.name === 'My Profile'))
+  const read = await readProfile(meta.id)
+  assert.equal(read?.bundle.agents[0].files.instructions, '# profile rules\n')
+  for (const d of [src, dir, env.home, env.appData])
+    await fs.rm(d, { recursive: true, force: true })
+})
+
+test('backup creates and lists a config snapshot', async () => {
+  const dir = await tmp('abyss-backup-')
+  const env = testEnv(await tmp('abyss-backup-home-'), await tmp('abyss-backup-app-'))
+  const info = await createBackup(env, dir, 3)
+  assert.ok(info.name.endsWith('.json'))
+  const list = await listBackups(dir)
+  assert.equal(list.length, 1)
+  // The backup is a valid Abyss bundle.
+  const parsed = JSON.parse(await fs.readFile(info.path, 'utf8'))
+  assert.equal(parsed.$schema, 'abyss-bundle/v1')
+  for (const d of [dir, env.home, env.appData])
+    await fs.rm(d, { recursive: true, force: true })
+})
+
+test('sync compareSurface detects equal vs differing instructions', async () => {
+  const home = await tmp('abyss-sync-home-')
+  const appData = await tmp('abyss-sync-app-')
+  const env = testEnv(home, appData)
+  await fs.mkdir(path.join(home, '.claude'), { recursive: true })
+  await fs.mkdir(path.join(home, '.codex'), { recursive: true })
+  await fs.writeFile(path.join(home, '.claude', 'CLAUDE.md'), 'same\n', 'utf8')
+  await fs.writeFile(path.join(home, '.codex', 'AGENTS.md'), 'same\n', 'utf8')
+
+  const equal = await compareSurface(env, 'instructions', 'claude', 'codex')
+  assert.equal(equal.equal, true)
+
+  await fs.writeFile(path.join(home, '.codex', 'AGENTS.md'), 'different\n', 'utf8')
+  const diff = await compareSurface(env, 'instructions', 'claude', 'codex')
+  assert.equal(diff.equal, false)
+  for (const d of [home, appData]) await fs.rm(d, { recursive: true, force: true })
+})
+
+test('chat normalize: snippet + project label helpers', () => {
+  assert.equal(
+    firstTextSnippet([{ type: 'text', text: '  hello   world  ' }]),
+    'hello world',
+  )
+  assert.equal(projectLabelFromCwd('/home/u/my-proj/'), 'my-proj')
+  assert.equal(projectLabelFromCwd('C:\\\\dev\\\\thing'), 'thing')
 })
