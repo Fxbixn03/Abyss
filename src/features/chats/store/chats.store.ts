@@ -14,6 +14,7 @@ import type {
 import { ipc } from '@/shared/ipc/ipc.client'
 import { genId } from '@/shared/lib/id'
 import { reportError } from '@/shared/lib/errors'
+import { appendDelta, appendBlock } from './stream-reducer'
 
 /** Sessions fetched per page for infinite scroll. */
 const SESSIONS_PAGE_SIZE = 20
@@ -72,30 +73,6 @@ interface ChatsState {
   deleteSession: (sessionId: string) => Promise<void>
   exportSession: (sessionId: string, format: ChatExportFormat) => Promise<void>
   handleStreamEvent: (envelope: ChatStreamEnvelope) => void
-}
-
-function appendDelta(
-  messages: ChatMessage[],
-  currentId: string | null,
-  kind: 'text' | 'thinking',
-  text: string,
-): ChatMessage[] {
-  if (!currentId) return messages
-  return messages.map((m) => {
-    if (m.id !== currentId) return m
-    const last = m.blocks[m.blocks.length - 1]
-    const merge = last && last.kind === kind
-    const nextText = merge && 'text' in last ? last.text + text : text
-    // Build a concrete block so the discriminated union stays narrow.
-    const block: ChatBlock =
-      kind === 'text'
-        ? { kind: 'text', text: nextText }
-        : { kind: 'thinking', text: nextText }
-    const blocks = merge
-      ? [...m.blocks.slice(0, -1), block]
-      : [...m.blocks, block]
-    return { ...m, blocks }
-  })
 }
 
 export const useChatsStore = create<ChatsState>()((set, get) => ({
@@ -431,11 +408,7 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
             }
             return { messages: [...s.messages, msg], currentMessageId: msg.id }
           }
-          return {
-            messages: s.messages.map((m) =>
-              m.id === id ? { ...m, blocks: [...m.blocks, block] } : m,
-            ),
-          }
+          return { messages: appendBlock(s.messages, id, block) }
         })
         break
       }
@@ -448,13 +421,7 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
         const block: ChatBlock = { kind: 'error', message: event.message }
         set((s) => ({
           error: event.message,
-          messages: s.currentMessageId
-            ? s.messages.map((m) =>
-                m.id === s.currentMessageId
-                  ? { ...m, blocks: [...m.blocks, block] }
-                  : m,
-              )
-            : s.messages,
+          messages: appendBlock(s.messages, s.currentMessageId, block),
         }))
         break
       }

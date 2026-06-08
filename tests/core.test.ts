@@ -66,6 +66,7 @@ import {
   globToRegExp,
   previewSpecifier,
 } from '@/features/permissions/lib/glob'
+import { appendDelta, appendBlock } from '@/features/chats/store/stream-reducer'
 import {
   isWellFormedPath,
   isInsideRoot,
@@ -77,6 +78,7 @@ import type { McpServerEntry } from '@/shared/types/config'
 import type { McpInstallSpec } from '@/shared/mcp/discovery'
 import type { OsEnv } from '@/shared/types/agent'
 import type { ExportBundle } from '@/shared/types/bundle'
+import type { ChatBlock, ChatMessage } from '@/shared/types/chat'
 
 async function tmp(prefix: string): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), prefix))
@@ -401,6 +403,37 @@ test('chat normalize: anthropic content → blocks', () => {
   assert.equal(blocks[0].kind, 'text')
   assert.equal(blocks[1].kind, 'tool_use')
   assert.equal(blocks[2].kind, 'tool_result')
+})
+
+test('stream-reducer: appendDelta coalesces same-kind deltas, splits on kind change', () => {
+  const base: ChatMessage[] = [{ id: 'm1', role: 'assistant', blocks: [] }]
+
+  // First text delta starts a block; a second text delta merges into it.
+  let msgs = appendDelta(base, 'm1', 'text', 'Hel')
+  msgs = appendDelta(msgs, 'm1', 'text', 'lo')
+  assert.deepEqual(msgs[0].blocks, [{ kind: 'text', text: 'Hello' }])
+
+  // A thinking delta does NOT merge with the trailing text block.
+  msgs = appendDelta(msgs, 'm1', 'thinking', 'hmm')
+  assert.deepEqual(msgs[0].blocks, [
+    { kind: 'text', text: 'Hello' },
+    { kind: 'thinking', text: 'hmm' },
+  ])
+
+  // Unknown / null current id is a no-op, and the input is never mutated.
+  assert.equal(appendDelta(base, null, 'text', 'x'), base)
+  assert.deepEqual(base[0].blocks, [])
+})
+
+test('stream-reducer: appendBlock adds to the current message, no-ops otherwise', () => {
+  const msgs: ChatMessage[] = [{ id: 'm1', role: 'assistant', blocks: [] }]
+  const err: ChatBlock = { kind: 'error', message: 'boom' }
+
+  assert.deepEqual(appendBlock(msgs, 'm1', err)[0].blocks, [err])
+  // No current message → unchanged reference.
+  assert.equal(appendBlock(msgs, null, err), msgs)
+  // Id that no message owns → unchanged contents.
+  assert.deepEqual(appendBlock(msgs, 'nope', err)[0].blocks, [])
 })
 
 test('frontmatter parse', () => {
