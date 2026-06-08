@@ -4,6 +4,7 @@ import { Command } from 'commander'
 import { resolveOsEnv } from '@core/os-env'
 import { detectAllAgentPaths } from '@core/agent-paths'
 import { applyBundle, exportBundle } from '@core/bundle'
+import { redactBundleSecrets } from '@core/bundle-redact'
 import type { ExportBundle } from '@core/bundle'
 import { getActiveAgentDefinitions } from '@/shared/agents/defs'
 
@@ -33,17 +34,35 @@ program
   .description('Export agent config into a portable bundle.')
   .option('-a, --agent <id...>', 'limit to specific agent ids')
   .option('-o, --out <file>', 'write to a file instead of stdout')
-  .action(async (opts: { agent?: string[]; out?: string }) => {
-    const env = resolveOsEnv()
-    const bundle = await exportBundle(env, { agentIds: opts.agent })
-    const json = JSON.stringify(bundle, null, 2)
-    if (opts.out) {
-      await fs.writeFile(opts.out, `${json}\n`, 'utf8')
-      console.log(`Exported ${bundle.agents.length} agent(s) to ${opts.out}`)
-    } else {
-      console.log(json)
-    }
-  })
+  .option(
+    '--include-secrets',
+    'keep real MCP env tokens in the bundle (redacted by default)',
+  )
+  .action(
+    async (opts: {
+      agent?: string[]
+      out?: string
+      includeSecrets?: boolean
+    }) => {
+      const env = resolveOsEnv()
+      const raw = await exportBundle(env, { agentIds: opts.agent })
+      const { bundle, redactedCount } = opts.includeSecrets
+        ? { bundle: raw, redactedCount: 0 }
+        : redactBundleSecrets(raw)
+      const json = JSON.stringify(bundle, null, 2)
+      if (opts.out) {
+        await fs.writeFile(opts.out, `${json}\n`, 'utf8')
+        console.log(`Exported ${bundle.agents.length} agent(s) to ${opts.out}`)
+        if (redactedCount > 0) {
+          console.log(
+            `Redacted ${redactedCount} secret(s) — use --include-secrets to keep them.`,
+          )
+        }
+      } else {
+        console.log(json)
+      }
+    },
+  )
 
 program
   .command('apply')

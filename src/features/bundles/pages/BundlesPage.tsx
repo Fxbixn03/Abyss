@@ -85,6 +85,7 @@ export function BundlesPage() {
   const allIds = allAgents.map((a) => a.id)
 
   const [exportSel, setExportSel] = useState<Set<string>>(new Set(allIds))
+  const [includeSecrets, setIncludeSecrets] = useState(false)
   const [preview, setPreview] = useState<ExportBundle | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<Notice | null>(null)
@@ -108,7 +109,7 @@ export function BundlesPage() {
     setBusy(true)
     setNotice(null)
     try {
-      setPreview(await ipc.bundlePreview([...exportSel]))
+      setPreview(await ipc.bundlePreview([...exportSel], includeSecrets))
     } finally {
       setBusy(false)
     }
@@ -118,7 +119,7 @@ export function BundlesPage() {
     setBusy(true)
     setNotice(null)
     try {
-      const { path } = await ipc.bundleExportFile([...exportSel])
+      const { path } = await ipc.bundleExportFile([...exportSel], includeSecrets)
       if (path) setNotice({ type: 'success', message: `Exported to ${path}` })
     } catch (err) {
       setNotice({
@@ -222,6 +223,44 @@ export function BundlesPage() {
                 selected={exportSel}
                 onToggle={(id) => setExportSel((s) => toggle(s, id))}
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
+                <span
+                  className={cn(
+                    'flex size-4 items-center justify-center rounded border',
+                    includeSecrets
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border',
+                  )}
+                >
+                  {includeSecrets && <Icon name="check" className="size-3" />}
+                </span>
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={includeSecrets}
+                  onChange={(e) => setIncludeSecrets(e.target.checked)}
+                />
+                Include secrets (MCP API tokens)
+              </label>
+              <p
+                className={cn(
+                  'flex items-center gap-1.5 text-xs',
+                  includeSecrets
+                    ? 'text-destructive'
+                    : 'text-muted-foreground',
+                )}
+              >
+                <Icon
+                  name={includeSecrets ? 'alert-triangle' : 'shield-check'}
+                  className="size-3.5 shrink-0"
+                />
+                {includeSecrets
+                  ? 'The bundle will contain real API tokens — share with care.'
+                  : 'Tokens in MCP server env are replaced with a placeholder, so the bundle is safe to share.'}
+              </p>
             </div>
 
             <div className="flex items-center gap-2">

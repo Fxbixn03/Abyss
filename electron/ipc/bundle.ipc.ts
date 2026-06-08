@@ -3,6 +3,7 @@ import { dialog } from 'electron'
 import { IpcChannel } from '@/shared/types/ipc'
 import type { ExportBundle } from '@/shared/types/bundle'
 import { exportBundle, applyBundle } from '@core/bundle'
+import { redactBundleSecrets } from '@core/bundle-redact'
 import { assertScopedPath } from '@core/path-scope'
 import { handle } from './handle'
 import type { IpcContext } from './context'
@@ -17,12 +18,16 @@ function isExportBundle(value: unknown): value is ExportBundle {
 }
 
 export function registerBundleIpc(ctx: IpcContext): void {
-  handle(IpcChannel.BundlePreview, ({ agentIds }) =>
-    exportBundle(ctx.env, { agentIds }),
-  )
-
-  handle(IpcChannel.BundleExportFile, async ({ agentIds }) => {
+  // Secrets (MCP env tokens) are stripped from exported bundles by default so a
+  // shared bundle never carries credentials; `includeSecrets` opts back in.
+  handle(IpcChannel.BundlePreview, async ({ agentIds, includeSecrets }) => {
     const bundle = await exportBundle(ctx.env, { agentIds })
+    return includeSecrets ? bundle : redactBundleSecrets(bundle).bundle
+  })
+
+  handle(IpcChannel.BundleExportFile, async ({ agentIds, includeSecrets }) => {
+    const raw = await exportBundle(ctx.env, { agentIds })
+    const bundle = includeSecrets ? raw : redactBundleSecrets(raw).bundle
     const window = ctx.getWindow()
     const stamp = new Date().toISOString().slice(0, 10)
     const options = {

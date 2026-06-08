@@ -588,11 +588,12 @@ export interface IpcMap {
   }
 
   [IpcChannel.BundlePreview]: {
-    request: { agentIds?: string[] }
+    /** `includeSecrets` (default false) keeps real MCP env tokens in the bundle. */
+    request: { agentIds?: string[]; includeSecrets?: boolean }
     response: ExportBundle
   }
   [IpcChannel.BundleExportFile]: {
-    request: { agentIds?: string[] }
+    request: { agentIds?: string[]; includeSecrets?: boolean }
     response: { path: string | null }
   }
   [IpcChannel.BundleLoadFile]: {

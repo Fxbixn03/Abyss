@@ -337,10 +337,10 @@ export const ipc = {
   restoreSnapshot: (id: string) => invoke(IpcChannel.SnapshotRestore, { id }),
 
   // --- Bundles --------------------------------------------------------------
-  bundlePreview: (agentIds?: string[]) =>
-    invoke(IpcChannel.BundlePreview, { agentIds }),
-  bundleExportFile: (agentIds?: string[]) =>
-    invoke(IpcChannel.BundleExportFile, { agentIds }),
+  bundlePreview: (agentIds?: string[], includeSecrets?: boolean) =>
+    invoke(IpcChannel.BundlePreview, { agentIds, includeSecrets }),
+  bundleExportFile: (agentIds?: string[], includeSecrets?: boolean) =>
+    invoke(IpcChannel.BundleExportFile, { agentIds, includeSecrets }),
   bundleLoadFile: () => invoke(IpcChannel.BundleLoadFile, {}),
   bundleApply: (bundle: ExportBundle, dryRun: boolean, agentIds?: string[]) =>
     invoke(IpcChannel.BundleApply, { bundle, agentIds, dryRun }),

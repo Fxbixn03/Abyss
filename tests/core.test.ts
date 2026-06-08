@@ -48,6 +48,7 @@ import {
   writeModelEnv,
 } from '@core/claude-settings'
 import { exportBundle, applyBundle } from '@core/bundle'
+import { redactBundleSecrets, REDACTED_PLACEHOLDER } from '@core/bundle-redact'
 import {
   configureProfiles,
   saveProfile,
@@ -75,6 +76,7 @@ import {
 import type { McpServerEntry } from '@/shared/types/config'
 import type { McpInstallSpec } from '@/shared/mcp/discovery'
 import type { OsEnv } from '@/shared/types/agent'
+import type { ExportBundle } from '@/shared/types/bundle'
 
 async function tmp(prefix: string): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), prefix))
@@ -456,6 +458,50 @@ test('bundle export → apply round-trips an instruction file', async () => {
   )
   for (const d of [src, dest, env.home, env.appData])
     await fs.rm(d, { recursive: true, force: true })
+})
+
+test('redactBundleSecrets masks secret MCP env values, keeps the rest', () => {
+  const bundle: ExportBundle = {
+    $schema: 'abyss-bundle/v1',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    agents: [
+      {
+        agentId: 'claude',
+        basePath: '/home/u/.claude',
+        files: {},
+        mcpServers: [
+          {
+            id: 'gh-0',
+            name: 'github',
+            type: 'stdio',
+            command: 'npx',
+            enabled: true,
+            env: {
+              GITHUB_TOKEN: 'ghp_realsecret',
+              BRAVE_API_KEY: 'abc123',
+              NODE_ENV: 'production',
+              EMPTY_SECRET_KEY: '',
+            },
+          },
+        ],
+      },
+    ],
+  }
+
+  const { bundle: redacted, redactedCount } = redactBundleSecrets(bundle)
+  const env = redacted.agents[0].mcpServers?.[0].env
+  assert.equal(redactedCount, 2)
+  assert.equal(env?.GITHUB_TOKEN, REDACTED_PLACEHOLDER)
+  assert.equal(env?.BRAVE_API_KEY, REDACTED_PLACEHOLDER)
+  // Non-secret keys and empty values are untouched.
+  assert.equal(env?.NODE_ENV, 'production')
+  assert.equal(env?.EMPTY_SECRET_KEY, '')
+  // The source bundle is not mutated.
+  assert.equal(
+    bundle.agents[0].mcpServers?.[0].env?.GITHUB_TOKEN,
+    'ghp_realsecret',
+  )
 })
 
 test('profiles save → read round-trip', async () => {
