@@ -72,6 +72,32 @@ test('cursor MCP json round-trip', async () => {
   await fs.rm(base, { recursive: true, force: true })
 })
 
+test('copilot MCP json round-trip maps stdio to "local"', async () => {
+  const base = await tmp('abyss-copilot-')
+  await writeMcpServers('copilot', base, [
+    {
+      id: '1',
+      name: 'srv',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', 'pkg'],
+      env: { K: 'v' },
+      enabled: true,
+    },
+  ])
+  // On disk the stdio server must use Copilot's "local" transport token.
+  const raw = JSON.parse(
+    await fs.readFile(path.join(base, 'mcp-config.json'), 'utf8'),
+  )
+  assert.equal(raw.mcpServers.srv.type, 'local')
+  // Reading back normalizes "local" → "stdio".
+  const back = await readMcpServers('copilot', base)
+  assert.equal(back.length, 1)
+  assert.equal(back[0].type, 'stdio')
+  assert.equal(back[0].command, 'npx')
+  await fs.rm(base, { recursive: true, force: true })
+})
+
 test('codex MCP toml round-trip preserves other keys', async () => {
   const base = await tmp('abyss-codex-')
   await fs.writeFile(

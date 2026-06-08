@@ -17,7 +17,8 @@ import { readJsonFile, writeJsonFile } from './json-file'
 import { readCodexMcp, writeCodexMcp } from './mcp-codex'
 
 interface RawMcpServer {
-  type?: 'stdio' | 'http' | 'sse'
+  // Free-form to tolerate agent-specific stdio tokens (Copilot uses "local").
+  type?: string
   command?: string
   args?: string[]
   url?: string
@@ -49,6 +50,23 @@ function mcpConfigPath(projectDir?: string): string {
   return projectDir ? path.join(projectDir, '.mcp.json') : userConfigPath()
 }
 
+/**
+ * The on-disk `type` value an agent uses for stdio (local) servers. Copilot CLI
+ * writes `"local"` where Claude/Cursor/Gemini write `"stdio"`; everything else
+ * about the `{ mcpServers: {...} }` shape matches, so we just translate this one
+ * token on read/write and preserve unknown sibling fields.
+ */
+function stdioTypeFor(agentId: string): string {
+  return agentId === 'copilot' ? 'local' : 'stdio'
+}
+
+/** Coerce a raw on-disk `type` token into the canonical transport union. */
+function normalizeType(s: RawMcpServer): McpServerEntry['type'] {
+  if (s.type === 'http' || s.type === 'sse') return s.type
+  if (s.type === 'stdio' || s.type === 'local') return 'stdio'
+  return s.url ? 'http' : 'stdio'
+}
+
 /** Generic reader for a `{ mcpServers: {...} }` JSON file (Claude / Cursor). */
 async function readJsonMcp(file: string): Promise<McpServerEntry[]> {
   const data = await readJsonFile<ClaudeUserConfig>(file, {})
@@ -56,7 +74,7 @@ async function readJsonMcp(file: string): Promise<McpServerEntry[]> {
   return Object.entries(servers).map(([name, s], index) => ({
     id: `${name}-${index}`,
     name,
-    type: s.type ?? (s.url ? 'http' : 'stdio'),
+    type: normalizeType(s),
     command: s.command,
     args: s.args,
     url: s.url,
@@ -68,6 +86,7 @@ async function readJsonMcp(file: string): Promise<McpServerEntry[]> {
 async function writeJsonMcp(
   file: string,
   entries: McpServerEntry[],
+  stdioType = 'stdio',
 ): Promise<{ success: boolean; path: string }> {
   // Re-read immediately before writing to minimize the lost-update window and
   // keep all sibling keys (and unknown per-server fields) intact.
@@ -77,7 +96,7 @@ async function writeJsonMcp(
 
   for (const entry of entries) {
     const raw: RawMcpServer = { ...(existing[entry.name] ?? {}) }
-    raw.type = entry.type
+    raw.type = entry.type === 'stdio' ? stdioType : entry.type
 
     if (entry.type === 'stdio') {
       if (entry.command) raw.command = entry.command
@@ -116,10 +135,16 @@ function geminiSettingsPath(basePath: string): string {
   return path.join(basePath, 'settings.json')
 }
 
+/** Copilot CLI keeps its `mcpServers` map in `<base>/mcp-config.json`. */
+function copilotMcpPath(basePath: string): string {
+  return path.join(basePath, 'mcp-config.json')
+}
+
 /**
- * Read MCP servers for an agent. Claude/Cursor/Gemini use JSON, Codex uses TOML.
- * Claude: `~/.claude.json` / `<project>/.mcp.json`; Cursor: `<base>/mcp.json`;
- * Gemini: `<base>/settings.json`; Codex: `<base>/config.toml`.
+ * Read MCP servers for an agent. Claude/Cursor/Gemini/Copilot use JSON, Codex
+ * uses TOML. Claude: `~/.claude.json` / `<project>/.mcp.json`; Cursor:
+ * `<base>/mcp.json`; Gemini: `<base>/settings.json`; Copilot:
+ * `<base>/mcp-config.json`; Codex: `<base>/config.toml`.
  */
 export function readMcpServers(
   agentId: string,
@@ -129,6 +154,7 @@ export function readMcpServers(
   if (agentId === 'codex') return readCodexMcp(basePath)
   if (agentId === 'cursor') return readJsonMcp(cursorMcpPath(basePath))
   if (agentId === 'gemini') return readJsonMcp(geminiSettingsPath(basePath))
+  if (agentId === 'copilot') return readJsonMcp(copilotMcpPath(basePath))
   return readJsonMcp(mcpConfigPath(projectDir))
 }
 
@@ -143,5 +169,7 @@ export function writeMcpServers(
     return writeJsonMcp(cursorMcpPath(basePath), entries)
   if (agentId === 'gemini')
     return writeJsonMcp(geminiSettingsPath(basePath), entries)
+  if (agentId === 'copilot')
+    return writeJsonMcp(copilotMcpPath(basePath), entries, stdioTypeFor(agentId))
   return writeJsonMcp(mcpConfigPath(projectDir), entries)
 }

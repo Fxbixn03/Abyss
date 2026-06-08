@@ -3,6 +3,7 @@ import { claudeAdapter } from '../adapters/claude.adapter'
 import { codexAdapter } from '../adapters/codex.adapter'
 import { geminiAdapter } from '../adapters/gemini.adapter'
 import { cursorAdapter } from '../adapters/cursor.adapter'
+import { copilotAdapter } from '../adapters/copilot.adapter'
 
 /**
  * Central registry of agent adapters. The single place the app discovers which
@@ -38,3 +39,4 @@ agentRegistry.register(claudeAdapter)
 agentRegistry.register(codexAdapter)
 agentRegistry.register(geminiAdapter)
 agentRegistry.register(cursorAdapter)
+agentRegistry.register(copilotAdapter)

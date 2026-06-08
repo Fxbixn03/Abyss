@@ -68,6 +68,14 @@ const cursorInstructions: ConfigFileSpec = {
   description: 'Legacy rules for Cursor (.cursorrules).',
 }
 
+const copilotInstructions: ConfigFileSpec = {
+  id: 'instructions',
+  filename: 'copilot-instructions.md',
+  scope: 'global',
+  language: 'markdown',
+  description: 'Personal global instructions for GitHub Copilot CLI.',
+}
+
 export const claudeDefinition: AgentDefinition = {
   id: 'claude',
   name: 'claude',
@@ -201,12 +209,44 @@ export const cursorDefinition: AgentDefinition = {
   ],
 }
 
+/**
+ * GitHub Copilot CLI — stores everything under `~/.copilot`: personal global
+ * instructions (`copilot-instructions.md`), MCP servers (`mcp-config.json`,
+ * whose stdio servers use `type: "local"`) and an editable `settings.json`.
+ * Subagents (`agents/*.agent.md`) and skills use formats the markdown-collection
+ * machinery doesn't model yet, so they stay off for now.
+ */
+export const copilotDefinition: AgentDefinition = {
+  id: 'copilot',
+  name: 'copilot',
+  displayName: 'GitHub Copilot CLI',
+  defaultThemeId: 'copilot-mono',
+  iconName: 'img:copilot',
+  docsUrl: 'https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli',
+  capabilities: {
+    instructions: true,
+    mcp: true,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: true,
+    chats: false,
+  },
+  configFiles: [copilotInstructions],
+  resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.copilot')],
+}
+
 /** Every known agent definition, keyed by id. */
 export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   claude: claudeDefinition,
   codex: codexDefinition,
   gemini: geminiDefinition,
   cursor: cursorDefinition,
+  copilot: copilotDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -215,6 +255,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'codex',
   'gemini',
   'cursor',
+  'copilot',
 ]
 
 export function getAgentDefinition(id: string): AgentDefinition {
