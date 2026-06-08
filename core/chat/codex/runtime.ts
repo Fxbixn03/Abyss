@@ -30,16 +30,44 @@ import {
   findCodexBinary,
 } from './auth'
 
+/** Grace period after SIGTERM before a still-running child is force-killed. */
+const KILL_ESCALATION_MS = 2500
+
 class CodexLiveSession implements LiveSession {
   private child: ChildProcessWithoutNullStreams | null = null
   private sessionId: string | undefined
   private disposed = false
+  private killTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor(
     private readonly binary: string,
     private readonly ctx: StartContext,
   ) {
     this.sessionId = ctx.options.resumeSessionId
+  }
+
+  /**
+   * SIGTERM the child, then escalate to SIGKILL if it hasn't exited within the
+   * grace period. The timer is cleared by the `close` handler in {@link send},
+   * so a clean exit never leaks a timer or fires SIGKILL.
+   */
+  private terminate(child: ChildProcessWithoutNullStreams): void {
+    child.kill('SIGTERM')
+    if (this.killTimer) clearTimeout(this.killTimer)
+    this.killTimer = setTimeout(() => {
+      this.killTimer = null
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill('SIGKILL')
+      }
+    }, KILL_ESCALATION_MS)
+    this.killTimer.unref?.()
+  }
+
+  private clearKillTimer(): void {
+    if (this.killTimer) {
+      clearTimeout(this.killTimer)
+      this.killTimer = null
+    }
   }
 
   async send(text: string): Promise<void> {
@@ -78,6 +106,7 @@ class CodexLiveSession implements LiveSession {
     )
     child.on('close', () => {
       rl.close()
+      this.clearKillTimer()
       this.child = null
       if (!this.disposed) this.ctx.emit({ t: 'turn_end' })
     })
@@ -118,16 +147,19 @@ class CodexLiveSession implements LiveSession {
   }
 
   async interrupt(): Promise<void> {
-    if (this.child && this.child.exitCode === null) {
-      this.child.kill('SIGTERM')
+    const child = this.child
+    if (child && child.exitCode === null) {
+      this.terminate(child)
       this.child = null
       this.ctx.emit({ t: 'turn_end', stopReason: 'interrupted' })
     }
   }
 
   async dispose(): Promise<void> {
+    if (this.disposed) return
     this.disposed = true
-    if (this.child && this.child.exitCode === null) this.child.kill('SIGTERM')
+    const child = this.child
+    if (child && child.exitCode === null) this.terminate(child)
     this.child = null
   }
 }

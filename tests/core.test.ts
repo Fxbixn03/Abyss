@@ -55,7 +55,17 @@ import {
 } from '@core/profiles'
 import { createBackup, listBackups } from '@core/backup'
 import { compareSurface } from '@core/sync'
+import { readClaudeSession, readSessionMeta } from '@core/chat/claude/parse'
+import { readCodexSession, readCodexMeta } from '@core/chat/codex/parse'
+import { mcpOfficialProvider } from '@core/discovery/mcp-official.provider'
+import {
+  parseRule,
+  isValidRule,
+  globToRegExp,
+  previewSpecifier,
+} from '@/features/permissions/lib/glob'
 import type { McpServerEntry } from '@/shared/types/config'
+import type { McpInstallSpec } from '@/shared/mcp/discovery'
 import type { OsEnv } from '@/shared/types/agent'
 
 async function tmp(prefix: string): Promise<string> {
@@ -273,7 +283,12 @@ test('collections skills scan nested category folders', async () => {
   assert.deepEqual(ids, ['dotnet/efcore', 'flat'])
 
   // The nested skill is addressable by its POSIX id.
-  const read = await readCollectionItem('cursor', base, 'skills', 'dotnet/efcore')
+  const read = await readCollectionItem(
+    'cursor',
+    base,
+    'skills',
+    'dotnet/efcore',
+  )
   assert.ok(read.content.includes('nested body'))
   await fs.rm(base, { recursive: true, force: true })
 })
@@ -394,7 +409,10 @@ test('claude permissions round-trip preserves model/env siblings', async () => {
 test('bundle export → apply round-trips an instruction file', async () => {
   const src = await tmp('abyss-bundle-src-')
   const dest = await tmp('abyss-bundle-dest-')
-  const env = testEnv(await tmp('abyss-bundle-home-'), await tmp('abyss-bundle-app-'))
+  const env = testEnv(
+    await tmp('abyss-bundle-home-'),
+    await tmp('abyss-bundle-app-'),
+  )
   // Cline has only an instructions surface, so export touches no MCP/perms.
   await fs.writeFile(path.join(src, 'instructions.md'), '# my rules\n', 'utf8')
 
@@ -417,9 +435,16 @@ test('bundle export → apply round-trips an instruction file', async () => {
 test('profiles save → read round-trip', async () => {
   const src = await tmp('abyss-prof-src-')
   const dir = await tmp('abyss-prof-')
-  const env = testEnv(await tmp('abyss-prof-home-'), await tmp('abyss-prof-app-'))
+  const env = testEnv(
+    await tmp('abyss-prof-home-'),
+    await tmp('abyss-prof-app-'),
+  )
   configureProfiles(dir)
-  await fs.writeFile(path.join(src, 'instructions.md'), '# profile rules\n', 'utf8')
+  await fs.writeFile(
+    path.join(src, 'instructions.md'),
+    '# profile rules\n',
+    'utf8',
+  )
   const bundle = await exportBundle(env, {
     agentIds: ['cline'],
     basePaths: { cline: src },
@@ -436,7 +461,10 @@ test('profiles save → read round-trip', async () => {
 
 test('backup creates and lists a config snapshot', async () => {
   const dir = await tmp('abyss-backup-')
-  const env = testEnv(await tmp('abyss-backup-home-'), await tmp('abyss-backup-app-'))
+  const env = testEnv(
+    await tmp('abyss-backup-home-'),
+    await tmp('abyss-backup-app-'),
+  )
   const info = await createBackup(env, dir, 3)
   assert.ok(info.name.endsWith('.json'))
   const list = await listBackups(dir)
@@ -460,10 +488,15 @@ test('sync compareSurface detects equal vs differing instructions', async () => 
   const equal = await compareSurface(env, 'instructions', 'claude', 'codex')
   assert.equal(equal.equal, true)
 
-  await fs.writeFile(path.join(home, '.codex', 'AGENTS.md'), 'different\n', 'utf8')
+  await fs.writeFile(
+    path.join(home, '.codex', 'AGENTS.md'),
+    'different\n',
+    'utf8',
+  )
   const diff = await compareSurface(env, 'instructions', 'claude', 'codex')
   assert.equal(diff.equal, false)
-  for (const d of [home, appData]) await fs.rm(d, { recursive: true, force: true })
+  for (const d of [home, appData])
+    await fs.rm(d, { recursive: true, force: true })
 })
 
 test('chat normalize: snippet + project label helpers', () => {
@@ -473,4 +506,357 @@ test('chat normalize: snippet + project label helpers', () => {
   )
   assert.equal(projectLabelFromCwd('/home/u/my-proj/'), 'my-proj')
   assert.equal(projectLabelFromCwd('C:\\\\dev\\\\thing'), 'thing')
+})
+
+// --- Chat transcript parsers ------------------------------------------------
+// Drive the real parsers over synthetic JSONL fixtures laid out exactly the way
+// each CLI writes them on disk, so we exercise the fragile parse paths without
+// any process or network access.
+
+/** Write a Claude transcript at ~/.claude/projects/<encodedCwd>/<id>.jsonl. */
+async function seedClaudeSession(
+  home: string,
+  cwd: string,
+  sessionId: string,
+  lines: unknown[],
+): Promise<void> {
+  const encoded = cwd.replace(/[/\\]/g, '-')
+  const dir = path.join(home, '.claude', 'projects', encoded)
+  await fs.mkdir(dir, { recursive: true })
+  const body = lines.map((l) => JSON.stringify(l)).join('\n') + '\n'
+  await fs.writeFile(path.join(dir, `${sessionId}.jsonl`), body, 'utf8')
+}
+
+test('claude parse: readClaudeSession normalizes messages, blocks and skips meta', async () => {
+  const home = await tmp('abyss-claude-parse-')
+  const env = testEnv(home, await tmp('abyss-claude-app-'))
+  const cwd = '/home/u/proj'
+  await seedClaudeSession(home, cwd, 'sess-1', [
+    { type: 'summary', summary: 'Nice title' },
+    {
+      type: 'user',
+      uuid: 'u1',
+      timestamp: '2024-01-01T00:00:00.000Z',
+      cwd,
+      gitBranch: 'main',
+      message: { role: 'user', content: 'first question' },
+    },
+    // isMeta lines must be ignored entirely.
+    {
+      type: 'user',
+      uuid: 'meta',
+      isMeta: true,
+      message: { role: 'user', content: 'sidebar noise' },
+    },
+    {
+      type: 'assistant',
+      uuid: 'a1',
+      timestamp: '2024-01-01T00:00:05.000Z',
+      message: {
+        role: 'assistant',
+        model: 'claude-3',
+        content: [
+          { type: 'text', text: 'answer' },
+          { type: 'tool_use', id: 't1', name: 'Bash', input: { cmd: 'ls' } },
+        ],
+        usage: { input_tokens: 10, output_tokens: 4 },
+      },
+    },
+  ])
+
+  const transcript = await readClaudeSession(env, 'sess-1')
+  assert.equal(transcript.id, 'sess-1')
+  assert.equal(transcript.agentId, 'claude')
+  assert.equal(transcript.title, 'Nice title') // summary wins over first user text
+  assert.equal(transcript.cwd, cwd)
+  assert.equal(transcript.gitBranch, 'main')
+  assert.equal(transcript.messageCount, 2) // meta line dropped
+  assert.equal(transcript.messages[0].role, 'user')
+  assert.equal(transcript.messages[1].role, 'assistant')
+  assert.equal(transcript.messages[1].model, 'claude-3')
+  const blocks = transcript.messages[1].blocks
+  assert.equal(blocks[0].kind, 'text')
+  assert.equal(blocks[1].kind, 'tool_use')
+
+  const meta = await readSessionMeta(transcript.filePath, '')
+  assert.ok(meta)
+  assert.equal(meta?.title, 'Nice title')
+  assert.equal(meta?.messageCount, 2)
+  assert.equal(meta?.inputTokens, 10)
+  assert.equal(meta?.outputTokens, 4)
+
+  for (const d of [home, env.appData])
+    await fs.rm(d, { recursive: true, force: true })
+})
+
+test('claude parse: readSessionMeta returns null for a transcript with no messages', async () => {
+  const home = await tmp('abyss-claude-empty-')
+  const env = testEnv(home, await tmp('abyss-claude-empty-app-'))
+  await seedClaudeSession(home, '/home/u/p', 'sess-empty', [
+    { type: 'summary', summary: 'only a summary' },
+  ])
+  const files = path.join(
+    home,
+    '.claude',
+    'projects',
+    '-home-u-p',
+    'sess-empty.jsonl',
+  )
+  const meta = await readSessionMeta(files, '')
+  assert.equal(meta, null)
+  for (const d of [home, env.appData])
+    await fs.rm(d, { recursive: true, force: true })
+})
+
+/** Write a Codex rollout at ~/.codex/sessions/<y>/<m>/<d>/<id>.jsonl. */
+async function seedCodexSession(
+  home: string,
+  sessionId: string,
+  lines: unknown[],
+): Promise<void> {
+  const dir = path.join(home, '.codex', 'sessions', '2024', '01', '02')
+  await fs.mkdir(dir, { recursive: true })
+  const body = lines.map((l) => JSON.stringify(l)).join('\n') + '\n'
+  await fs.writeFile(path.join(dir, `${sessionId}.jsonl`), body, 'utf8')
+}
+
+test('codex parse: readCodexSession handles payload-wrapped + plain message shapes', async () => {
+  const home = await tmp('abyss-codex-parse-')
+  const env = testEnv(home, await tmp('abyss-codex-app-'))
+  await seedCodexSession(home, 'rollout-abc', [
+    // cwd lives on a payload wrapper here.
+    { type: 'session_meta', payload: { cwd: '/work/repo' } },
+    // payload-wrapped user message with array content.
+    {
+      timestamp: '2024-01-02T10:00:00Z',
+      payload: {
+        type: 'message',
+        role: 'user',
+        content: [{ type: 'text', text: 'hello   codex' }],
+      },
+    },
+    // a non-message item that must be skipped.
+    { payload: { type: 'reasoning', text: 'ignored' } },
+    // plain assistant message with string content.
+    {
+      ts: '2024-01-02T10:00:03Z',
+      type: 'message',
+      role: 'assistant',
+      content: 'sure thing',
+    },
+  ])
+
+  const transcript = await readCodexSession(env, 'rollout-abc')
+  assert.equal(transcript.id, 'rollout-abc')
+  assert.equal(transcript.agentId, 'codex')
+  assert.equal(transcript.cwd, '/work/repo')
+  assert.equal(transcript.messageCount, 2)
+  assert.equal(transcript.messages[0].role, 'user')
+  assert.equal(transcript.messages[0].blocks[0].kind, 'text')
+  assert.equal(transcript.messages[1].role, 'assistant')
+  assert.equal(transcript.title, 'hello codex') // first user text, whitespace-collapsed
+
+  const meta = await readCodexMeta(transcript.filePath)
+  assert.ok(meta)
+  assert.equal(meta?.messageCount, 2)
+  assert.equal(meta?.cwd, '/work/repo')
+  assert.equal(meta?.title, 'hello codex')
+
+  for (const d of [home, env.appData])
+    await fs.rm(d, { recursive: true, force: true })
+})
+
+// --- Permission rule / glob preview (renderer lib, pure string matching) -----
+
+test('permissions glob: parseRule + isValidRule', () => {
+  assert.deepEqual(parseRule('Read(./.env)'), {
+    tool: 'Read',
+    specifier: './.env',
+  })
+  assert.deepEqual(parseRule('Bash'), { tool: 'Bash', specifier: null })
+  assert.equal(isValidRule('Read(*)'), true)
+  assert.equal(isValidRule('mcp__github__search'), true)
+  assert.equal(isValidRule('mcp__github'), true)
+  assert.equal(isValidRule('1bad'), false)
+})
+
+test('permissions glob: globToRegExp respects *, ** and ?', () => {
+  // single star does not cross a path separator
+  assert.equal(globToRegExp('*.ts').test('index.ts'), true)
+  assert.equal(globToRegExp('*.ts').test('src/index.ts'), false)
+  // double star crosses separators
+  assert.equal(globToRegExp('**/*.ts').test('src/app/index.ts'), true)
+  // ? matches exactly one non-separator char
+  assert.equal(globToRegExp('?.env').test('a.env'), true)
+  assert.equal(globToRegExp('?.env').test('ab.env'), false)
+})
+
+test('permissions glob: previewSpecifier classifies path / command / tool', () => {
+  const pathPreview = previewSpecifier('Read', '.env*')
+  assert.equal(pathPreview.kind, 'path')
+  assert.equal(pathPreview.valid, true)
+  assert.ok(pathPreview.matches.includes('.env'))
+  assert.ok(pathPreview.matches.includes('.env.local'))
+  assert.ok(!pathPreview.matches.includes('src/index.ts'))
+
+  const cmd = previewSpecifier('Bash', 'git status:*')
+  assert.equal(cmd.kind, 'command')
+  assert.ok(cmd.note.includes('git status'))
+
+  const bare = previewSpecifier('Edit', '')
+  assert.equal(bare.kind, 'tool')
+  assert.ok(bare.note.includes('Edit'))
+})
+
+// --- Discovery: official MCP registry provider ------------------------------
+// The provider's only public surface is `search`, which calls global `fetch`.
+// The mapping/normalization helpers (toResult/buildStdio/dedupeLatest) are
+// module-private, so we exercise them through `search` with a stubbed `fetch` —
+// fully deterministic and offline (no real network call).
+
+interface FetchStub {
+  status: number
+  json: unknown
+}
+
+async function withStubbedFetch<T>(
+  stub: FetchStub | Error,
+  run: () => Promise<T>,
+): Promise<T> {
+  const original = globalThis.fetch
+  globalThis.fetch = (async () => {
+    if (stub instanceof Error) throw stub
+    return {
+      ok: stub.status >= 200 && stub.status < 300,
+      status: stub.status,
+      json: async () => stub.json,
+    } as Response
+  }) as typeof fetch
+  try {
+    return await run()
+  } finally {
+    globalThis.fetch = original
+  }
+}
+
+test('discovery mcp: maps an npm stdio package to an npx install spec', async () => {
+  const res = await withStubbedFetch(
+    {
+      status: 200,
+      json: {
+        servers: [
+          {
+            server: {
+              name: 'com.acme/Slack',
+              description: '  Slack server  ',
+              version: '1.2.0',
+              repository: { url: 'https://example.com/repo' },
+              packages: [
+                {
+                  registryType: 'npm',
+                  identifier: '@acme/slack-mcp',
+                  transport: { type: 'stdio' },
+                  packageArguments: [{ type: 'positional', value: '--flag' }],
+                  environmentVariables: [
+                    { name: 'SLACK_TOKEN', isRequired: true },
+                    { name: 'OPTIONAL', value: 'def' },
+                  ],
+                },
+              ],
+            },
+            _meta: {
+              'io.modelcontextprotocol.registry/official': { isLatest: true },
+            },
+          },
+        ],
+      },
+    },
+    () =>
+      mcpOfficialProvider.search(
+        { kind: 'mcp', sourceId: 'mcp-official', query: 'slack' },
+        undefined,
+      ),
+  )
+
+  assert.equal(res.error, undefined)
+  assert.equal(res.results.length, 1)
+  const r = res.results[0]
+  assert.equal(r.name, 'slack') // reverse-DNS tail, slugified + lowercased
+  assert.equal(r.description, 'Slack server') // trimmed
+  assert.equal(r.installable, true)
+  const spec = r.payload as McpInstallSpec
+  assert.equal(spec.transport, 'stdio')
+  assert.equal(spec.command, 'npx')
+  // npx gets a leading -y, then identifier, then package args.
+  assert.deepEqual(spec.args, ['-y', '@acme/slack-mcp', '--flag'])
+  assert.deepEqual(
+    spec.env.map((e) => e.name),
+    ['SLACK_TOKEN', 'OPTIONAL'],
+  )
+  // Required env surfaces as a warning badge.
+  assert.ok(
+    r.badges?.some((b) => b.label === 'SLACK_TOKEN' && b.variant === 'warning'),
+  )
+})
+
+test('discovery mcp: dedupes by name preferring isLatest, falls back to remote', async () => {
+  const res = await withStubbedFetch(
+    {
+      status: 200,
+      json: {
+        servers: [
+          {
+            server: { name: 'com.acme/dup', version: '1.0.0', remotes: [] },
+            _meta: {
+              'io.modelcontextprotocol.registry/official': { isLatest: false },
+            },
+          },
+          {
+            server: {
+              name: 'com.acme/dup',
+              version: '2.0.0',
+              remotes: [{ type: 'sse', url: 'https://acme.test/sse' }],
+            },
+            _meta: {
+              'io.modelcontextprotocol.registry/official': { isLatest: true },
+            },
+          },
+        ],
+        metadata: { nextCursor: 'next' },
+      },
+    },
+    () =>
+      mcpOfficialProvider.search(
+        { kind: 'mcp', sourceId: 'mcp-official', query: '' },
+        undefined,
+      ),
+  )
+
+  assert.equal(res.results.length, 1) // de-duplicated by name
+  assert.equal(res.nextCursor, 'next')
+  const r = res.results[0]
+  assert.equal(r.id, 'com.acme/dup@2.0.0') // the isLatest one won
+  const spec = r.payload as McpInstallSpec
+  assert.equal(spec.transport, 'sse')
+  assert.equal(spec.url, 'https://acme.test/sse')
+})
+
+test('discovery mcp: surfaces HTTP errors and network failures without throwing', async () => {
+  const httpErr = await withStubbedFetch({ status: 503, json: {} }, () =>
+    mcpOfficialProvider.search(
+      { kind: 'mcp', sourceId: 'mcp-official', query: 'x' },
+      undefined,
+    ),
+  )
+  assert.deepEqual(httpErr.results, [])
+  assert.ok(httpErr.error?.includes('503'))
+
+  const netErr = await withStubbedFetch(new Error('boom'), () =>
+    mcpOfficialProvider.search(
+      { kind: 'mcp', sourceId: 'mcp-official', query: 'x' },
+      undefined,
+    ),
+  )
+  assert.deepEqual(netErr.results, [])
+  assert.ok(netErr.error && netErr.error.length > 0)
 })
