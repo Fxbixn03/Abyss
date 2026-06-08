@@ -32,6 +32,8 @@ interface McpState {
   remove: (id: string) => Promise<void>
   toggle: (id: string) => Promise<void>
   test: (entry: McpServerEntry) => Promise<void>
+  /** Re-check every server at once (manual "recheck" + periodic monitoring). */
+  testAll: () => Promise<void>
   /** Abort every in-flight health check (e.g. when leaving the MCP page). */
   cancelTests: () => void
 }
@@ -128,6 +130,10 @@ export const useMcpStore = create<McpState>()((set, get) => ({
       set({ health, testRequests })
       reportError(err, { title: "Couldn't test MCP server" })
     }
+  },
+
+  testAll: async () => {
+    await Promise.all(get().servers.map((server) => get().test(server)))
   },
 
   cancelTests: () => {

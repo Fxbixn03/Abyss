@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { McpServerEntry } from '@/shared/types/config'
 import { Button } from '@/shared/components/ui/button'
+import { Badge } from '@/shared/components/ui/badge'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ConfigCorruptBanner } from '@/shared/components/ConfigCorruptBanner'
@@ -15,6 +16,9 @@ import { useMcpStore } from '../store/mcp.store'
 import { McpServerList } from '../components/McpServerList'
 import { McpServerForm } from '../components/McpServerForm'
 import { McpDiscoverDialog } from '../components/McpDiscoverDialog'
+
+/** How often periodic monitoring re-checks every server while enabled. */
+const MONITOR_INTERVAL_MS = 30_000
 
 export function McpPage() {
   const agent = useActiveAgent()
@@ -31,13 +35,30 @@ export function McpPage() {
   const remove = useMcpStore((s) => s.remove)
   const toggle = useMcpStore((s) => s.toggle)
   const test = useMcpStore((s) => s.test)
+  const testAll = useMcpStore((s) => s.testAll)
   const cancelTests = useMcpStore((s) => s.cancelTests)
 
   const [formOpen, setFormOpen] = useState(false)
   const [discoverOpen, setDiscoverOpen] = useState(false)
   const [editing, setEditing] = useState<McpServerEntry | undefined>()
+  const [autoRefresh, setAutoRefresh] = useState(false)
 
   const supported = agent.capabilities.mcp
+
+  /** Running tally of online / offline / in-flight servers for the header. */
+  const summary = useMemo(() => {
+    let online = 0
+    let offline = 0
+    let checking = 0
+    for (const server of servers) {
+      const state = health[server.id]
+      if (!state) continue
+      if ('loading' in state) checking++
+      else if (state.ok) online++
+      else offline++
+    }
+    return { online, offline, checking }
+  }, [servers, health])
 
   useEffect(() => {
     if (supported && basePath) void load(agent.id, basePath, projectDir)
@@ -50,6 +71,15 @@ export function McpPage() {
       if (!useMcpStore.getState().health[server.id]) void test(server)
     }
   }, [servers, test])
+
+  // Periodic monitoring: while enabled, re-check every server on an interval so
+  // status badges stay current without manual clicks. Cleared when toggled off
+  // or on unmount.
+  useEffect(() => {
+    if (!autoRefresh || !supported || !basePath) return
+    const id = window.setInterval(() => void testAll(), MONITOR_INTERVAL_MS)
+    return () => window.clearInterval(id)
+  }, [autoRefresh, supported, basePath, testAll])
 
   // Abort any in-flight health checks when leaving the page so their probes
   // don't keep running in the background.
@@ -78,6 +108,24 @@ export function McpPage() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
+              onClick={() => void testAll()}
+              disabled={!basePath || servers.length === 0}
+              title="Re-check every server now"
+            >
+              <Icon name="refresh-cw" />
+              Recheck
+            </Button>
+            <Button
+              variant={autoRefresh ? 'default' : 'outline'}
+              onClick={() => setAutoRefresh((v) => !v)}
+              disabled={!basePath || servers.length === 0}
+              title={`Automatically re-check every ${MONITOR_INTERVAL_MS / 1000}s`}
+            >
+              <Icon name={autoRefresh ? 'circle-check' : 'clock'} />
+              Auto {autoRefresh ? 'on' : 'off'}
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => setDiscoverOpen(true)}
               disabled={!basePath}
             >
@@ -98,10 +146,31 @@ export function McpPage() {
         }
       />
 
-      <p className="-mt-1 text-xs text-muted-foreground">
-        claude.ai connectors (Google Drive, etc.) are managed in your Claude
-        account and aren't editable here.
-      </p>
+      <div className="-mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <span>
+          claude.ai connectors (Google Drive, etc.) are managed in your Claude
+          account and aren&apos;t editable here.
+        </span>
+        {servers.length > 0 &&
+          (summary.online > 0 ||
+            summary.offline > 0 ||
+            summary.checking > 0) && (
+            <span className="flex items-center gap-2">
+              {summary.online > 0 && (
+                <Badge variant="success">{summary.online} online</Badge>
+              )}
+              {summary.offline > 0 && (
+                <Badge variant="danger">{summary.offline} offline</Badge>
+              )}
+              {summary.checking > 0 && (
+                <Badge variant="muted">
+                  <Icon name="loader" className="size-3 animate-spin" />
+                  {summary.checking} checking
+                </Badge>
+              )}
+            </span>
+          )}
+      </div>
 
       {!basePath ? (
         <EmptyState
