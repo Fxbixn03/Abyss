@@ -2,18 +2,31 @@ import { dialog, shell } from 'electron'
 import { IpcChannel } from '@/shared/types/ipc'
 import { detectAgentPaths } from '@core/agent-paths'
 import { pathExists, ensureDir } from '@core/json-file'
+import { resolveScopedPath } from '@core/path-scope'
+import { logError } from '../log'
 import { watchFile, unwatchFile } from '../fs-watcher'
 import { handle } from './handle'
 import type { IpcContext } from './context'
 
 export function registerFilesystemIpc(ctx: IpcContext): void {
+  // Defense-in-depth: confine renderer-supplied paths to Abyss's allowed roots
+  // (home / app-data / userData) before any disk access. Returns the resolved
+  // path, or null when the path is malformed or escapes those roots.
+  const scope = (p: string): string | null =>
+    resolveScopedPath(p, ctx.env, ctx.userData)
+
   handle(IpcChannel.ResolvePaths, ({ agentId }) =>
     detectAgentPaths(agentId, ctx.env),
   )
 
-  handle(IpcChannel.FileExists, async ({ path }) => ({
-    exists: await pathExists(path),
-  }))
+  handle(IpcChannel.FileExists, async ({ path }) => {
+    const safe = scope(path)
+    if (!safe) {
+      logError('FileExists: rejected out-of-scope path', path)
+      return { exists: false }
+    }
+    return { exists: await pathExists(safe) }
+  })
 
   handle(IpcChannel.PickDirectory, async ({ title, defaultPath }) => {
     const window = ctx.getWindow()
@@ -66,16 +79,31 @@ export function registerFilesystemIpc(ctx: IpcContext): void {
   })
 
   handle(IpcChannel.FsWatch, ({ path }) => {
-    watchFile(path)
+    const safe = scope(path)
+    if (!safe) {
+      logError('FsWatch: rejected out-of-scope path', path)
+      return { ok: false }
+    }
+    watchFile(safe)
     return { ok: true }
   })
   handle(IpcChannel.FsUnwatch, ({ path }) => {
-    unwatchFile(path)
+    const safe = scope(path)
+    if (!safe) {
+      logError('FsUnwatch: rejected out-of-scope path', path)
+      return { ok: false }
+    }
+    unwatchFile(safe)
     return { ok: true }
   })
 
   handle(IpcChannel.CreateDirectory, async ({ path }) => {
-    await ensureDir(path)
+    const safe = scope(path)
+    if (!safe) {
+      logError('CreateDirectory: rejected out-of-scope path', path)
+      return { success: false }
+    }
+    await ensureDir(safe)
     return { success: true }
   })
 }

@@ -3,7 +3,7 @@ import { IpcChannel } from '@/shared/types/ipc'
 import { readMcpServers, writeMcpServers } from '@core/mcp'
 import { checkMcpHealth } from '@core/mcp-health'
 import { runDiscoverySearch } from '@core/discovery'
-import { indexAllConfigs } from '@core/global-search'
+import { indexAllConfigsCached } from '@core/global-search'
 import { beginRequest, endRequest, cancelRequest } from './cancellation'
 import {
   readModelEnv,
@@ -64,10 +64,11 @@ export function registerConfigIpc(ctx: IpcContext): void {
     cancelled: cancelRequest(requestId),
   }))
 
-  // Global config search across every agent (Command palette)
+  // Global config search across every agent (Command palette). Cached in the
+  // main process; the file watcher invalidates it when a config file changes.
   handle(IpcChannel.GlobalConfigSearch, async () => {
     const settings = await ctx.settings.read()
-    return indexAllConfigs(ctx.env, settings.agentPaths)
+    return indexAllConfigsCached(ctx.env, settings.agentPaths)
   })
 
   // Tool permissions

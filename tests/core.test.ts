@@ -55,6 +55,11 @@ import {
 } from '@core/profiles'
 import { createBackup, listBackups } from '@core/backup'
 import { compareSurface } from '@core/sync'
+import {
+  isWellFormedPath,
+  isInsideRoot,
+  resolveScopedPath,
+} from '@core/path-scope'
 import type { McpServerEntry } from '@/shared/types/config'
 import type { OsEnv } from '@/shared/types/agent'
 
@@ -273,7 +278,12 @@ test('collections skills scan nested category folders', async () => {
   assert.deepEqual(ids, ['dotnet/efcore', 'flat'])
 
   // The nested skill is addressable by its POSIX id.
-  const read = await readCollectionItem('cursor', base, 'skills', 'dotnet/efcore')
+  const read = await readCollectionItem(
+    'cursor',
+    base,
+    'skills',
+    'dotnet/efcore',
+  )
   assert.ok(read.content.includes('nested body'))
   await fs.rm(base, { recursive: true, force: true })
 })
@@ -394,7 +404,10 @@ test('claude permissions round-trip preserves model/env siblings', async () => {
 test('bundle export → apply round-trips an instruction file', async () => {
   const src = await tmp('abyss-bundle-src-')
   const dest = await tmp('abyss-bundle-dest-')
-  const env = testEnv(await tmp('abyss-bundle-home-'), await tmp('abyss-bundle-app-'))
+  const env = testEnv(
+    await tmp('abyss-bundle-home-'),
+    await tmp('abyss-bundle-app-'),
+  )
   // Cline has only an instructions surface, so export touches no MCP/perms.
   await fs.writeFile(path.join(src, 'instructions.md'), '# my rules\n', 'utf8')
 
@@ -417,9 +430,16 @@ test('bundle export → apply round-trips an instruction file', async () => {
 test('profiles save → read round-trip', async () => {
   const src = await tmp('abyss-prof-src-')
   const dir = await tmp('abyss-prof-')
-  const env = testEnv(await tmp('abyss-prof-home-'), await tmp('abyss-prof-app-'))
+  const env = testEnv(
+    await tmp('abyss-prof-home-'),
+    await tmp('abyss-prof-app-'),
+  )
   configureProfiles(dir)
-  await fs.writeFile(path.join(src, 'instructions.md'), '# profile rules\n', 'utf8')
+  await fs.writeFile(
+    path.join(src, 'instructions.md'),
+    '# profile rules\n',
+    'utf8',
+  )
   const bundle = await exportBundle(env, {
     agentIds: ['cline'],
     basePaths: { cline: src },
@@ -436,7 +456,10 @@ test('profiles save → read round-trip', async () => {
 
 test('backup creates and lists a config snapshot', async () => {
   const dir = await tmp('abyss-backup-')
-  const env = testEnv(await tmp('abyss-backup-home-'), await tmp('abyss-backup-app-'))
+  const env = testEnv(
+    await tmp('abyss-backup-home-'),
+    await tmp('abyss-backup-app-'),
+  )
   const info = await createBackup(env, dir, 3)
   assert.ok(info.name.endsWith('.json'))
   const list = await listBackups(dir)
@@ -460,10 +483,15 @@ test('sync compareSurface detects equal vs differing instructions', async () => 
   const equal = await compareSurface(env, 'instructions', 'claude', 'codex')
   assert.equal(equal.equal, true)
 
-  await fs.writeFile(path.join(home, '.codex', 'AGENTS.md'), 'different\n', 'utf8')
+  await fs.writeFile(
+    path.join(home, '.codex', 'AGENTS.md'),
+    'different\n',
+    'utf8',
+  )
   const diff = await compareSurface(env, 'instructions', 'claude', 'codex')
   assert.equal(diff.equal, false)
-  for (const d of [home, appData]) await fs.rm(d, { recursive: true, force: true })
+  for (const d of [home, appData])
+    await fs.rm(d, { recursive: true, force: true })
 })
 
 test('chat normalize: snippet + project label helpers', () => {
@@ -473,4 +501,54 @@ test('chat normalize: snippet + project label helpers', () => {
   )
   assert.equal(projectLabelFromCwd('/home/u/my-proj/'), 'my-proj')
   assert.equal(projectLabelFromCwd('C:\\\\dev\\\\thing'), 'thing')
+})
+
+test('path-scope: well-formedness rejects empty / NUL-byte paths', () => {
+  assert.equal(isWellFormedPath('/home/u/.claude'), true)
+  assert.equal(isWellFormedPath(''), false)
+  assert.equal(isWellFormedPath('/home/u/\0evil'), false)
+})
+
+test('path-scope: isInsideRoot confines to a root and blocks traversal', () => {
+  const root = path.resolve('/home/user/.config')
+  assert.equal(isInsideRoot(path.join(root, 'agent', 'x.json'), root), true)
+  assert.equal(isInsideRoot(root, root), true)
+  // `../` escape resolves outside the root.
+  assert.equal(isInsideRoot(path.join(root, '..', '..', 'etc'), root), false)
+  // Sibling that shares a prefix is not inside.
+  assert.equal(isInsideRoot('/home/user/.config-evil', root), false)
+})
+
+test('path-scope: resolveScopedPath allows roots, rejects escapes', () => {
+  const env: OsEnv = {
+    home: path.resolve('/home/user'),
+    appData: path.resolve('/home/user/.config'),
+    platform: 'linux',
+  }
+  const userData = path.resolve('/home/user/.config/Abyss')
+
+  // Inside home (an agent config dir) is allowed.
+  assert.equal(
+    resolveScopedPath(
+      path.join(env.home, '.claude', 'settings.json'),
+      env,
+      userData,
+    ),
+    path.join(env.home, '.claude', 'settings.json'),
+  )
+  // userData itself is allowed.
+  assert.equal(resolveScopedPath(userData, env, userData), userData)
+  // A path well outside any root is rejected.
+  assert.equal(resolveScopedPath('/etc/passwd', env, userData), null)
+  // A traversal that climbs out of home is rejected.
+  assert.equal(
+    resolveScopedPath(
+      path.join(env.home, '..', '..', 'etc', 'passwd'),
+      env,
+      userData,
+    ),
+    null,
+  )
+  // Malformed input is rejected.
+  assert.equal(resolveScopedPath('', env, userData), null)
 })

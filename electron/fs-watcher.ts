@@ -10,6 +10,7 @@ import { watch } from 'node:fs'
 import type { FSWatcher } from 'node:fs'
 import path from 'node:path'
 import { IpcEvent } from '@/shared/types/ipc'
+import { invalidateSearchIndex } from '@core/global-search'
 import type { Emitter } from './ipc/emit'
 
 let emit: Emitter | null = null
@@ -39,7 +40,12 @@ export function watchFile(filePath: string): void {
       if (prev) clearTimeout(prev)
       debounce.set(
         full,
-        setTimeout(() => emit?.(IpcEvent.FileChanged, { path: full }), 150),
+        setTimeout(() => {
+          // A config file changed on disk — drop the memoised global-search
+          // index so the next cross-agent search re-reads from disk.
+          invalidateSearchIndex()
+          emit?.(IpcEvent.FileChanged, { path: full })
+        }, 150),
       )
     })
     watcher.on('error', () => undefined)
