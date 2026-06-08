@@ -12,6 +12,7 @@ import { registerIpcHandlers } from './ipc'
 import { createEmitter } from './ipc/emit'
 import { setupAutoUpdater } from './updater'
 import { configureWatcher, unwatchAll } from './fs-watcher'
+import { installCrashHandlers, logError } from './log'
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 const isDev = Boolean(DEV_SERVER_URL)
@@ -50,11 +51,32 @@ function createWindow(): void {
     mainWindow = null
   })
 
+  hardenNavigation(mainWindow.webContents)
+
   if (DEV_SERVER_URL) {
     void mainWindow.loadURL(DEV_SERVER_URL)
   } else {
     void mainWindow.loadFile(RENDERER_HTML)
   }
+}
+
+/**
+ * Defense-in-depth: the renderer should only ever live at its own origin. Deny
+ * all `window.open` / target=_blank popups, and block any navigation away from
+ * the dev server (dev) or the bundled `file://` renderer (prod). External links
+ * are opened deliberately through the OpenExternal IPC channel, not in-window.
+ */
+function hardenNavigation(contents: Electron.WebContents): void {
+  contents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  contents.on('will-navigate', (event, url) => {
+    const allowed = isDev
+      ? Boolean(DEV_SERVER_URL) && url.startsWith(DEV_SERVER_URL as string)
+      : url.startsWith('file://')
+    if (!allowed) {
+      event.preventDefault()
+      logError(`Blocked navigation to ${url}`)
+    }
+  })
 }
 
 /** Lock down the renderer in production (dev needs Vite's relaxed defaults). */
@@ -124,6 +146,7 @@ if (!gotLock) {
   })
 
   void app.whenReady().then(() => {
+    installCrashHandlers()
     applySecurityPolicies()
     const ctx = buildIpcContext()
     registerIpcHandlers(ctx)

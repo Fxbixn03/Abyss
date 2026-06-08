@@ -1,6 +1,6 @@
 {
   "name": "abyss",
-  "version": "1.30.0",
+  "version": "1.31.0",
   "description": "Unified visual configuration UI for AI coding agents (Claude Code, Codex, Gemini CLI, and more).",
   "private": true,
   "author": "Fxbixn03",

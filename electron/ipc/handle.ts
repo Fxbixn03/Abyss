@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import type { IpcChannel, IpcMap } from '@/shared/types/ipc'
 import { encodeIpcError } from '@/shared/ipc/ipc-error'
+import { logError } from '../log'
 
 /**
  * Type-safe wrapper around `ipcMain.handle`. The handler's payload and return
@@ -21,7 +22,7 @@ export function handle<C extends IpcChannel>(
     try {
       return await handler(payload)
     } catch (err) {
-      console.error(`IPC ${channel} failed`, err)
+      logError(`IPC ${channel} failed`, err)
       throw new Error(encodeIpcError(err), { cause: err })
     }
   })
