@@ -3,6 +3,7 @@ import { IpcChannel } from '@/shared/types/ipc'
 import { readMcpServers, writeMcpServers } from '@core/mcp'
 import { checkMcpHealth } from '@core/mcp-health'
 import { runDiscoverySearch } from '@core/discovery'
+import { indexAllConfigs } from '@core/global-search'
 import {
   readModelEnv,
   readPermissions,
@@ -42,6 +43,12 @@ export function registerConfigIpc(ctx: IpcContext): void {
 
   // Discovery (searchable registries — currently the official MCP registry)
   handle(IpcChannel.DiscoverySearch, (req) => runDiscoverySearch(req))
+
+  // Global config search across every agent (Command palette)
+  handle(IpcChannel.GlobalConfigSearch, async () => {
+    const settings = await ctx.settings.read()
+    return indexAllConfigs(ctx.env, settings.agentPaths)
+  })
 
   // Tool permissions
   handle(IpcChannel.GetPermissions, ({ basePath }) => readPermissions(basePath))

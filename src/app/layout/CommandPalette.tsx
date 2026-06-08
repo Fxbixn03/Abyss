@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { CollectionKind } from '@/shared/types/collections'
+import type {
+  GlobalSearchKind,
+  GlobalSearchResult,
+} from '@/shared/search/types'
 import {
   CommandDialog,
   CommandEmpty,
@@ -37,6 +41,16 @@ const KIND_ICON: Record<CollectionKind, string> = {
   rules: 'book-open',
 }
 
+const GLOBAL_KIND_ICON: Record<GlobalSearchKind, string> = {
+  mcp: 'plug',
+  hook: 'webhook',
+  permission: 'lock',
+  skill: 'graduation-cap',
+  command: 'square-slash',
+  subagent: 'bot',
+  rule: 'book-open',
+}
+
 interface PaletteItem {
   kind: CollectionKind
   id: string
@@ -70,6 +84,44 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
 
   const [items, setItems] = useState<PaletteItem[]>([])
   const [search, setSearch] = useState('')
+  const [globalIndex, setGlobalIndex] = useState<GlobalSearchResult[]>([])
+
+  // Index every agent's hooks / MCP / permissions / collections once per open,
+  // so the search can reach config that doesn't belong to the active agent.
+  useEffect(() => {
+    let active = true
+    ipc
+      .globalConfigSearch()
+      .then((res) => {
+        if (active) setGlobalIndex(res)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const agentNames = useMemo(
+    () => new Map(agents.map((a) => [a.id, a.displayName])),
+    [agents],
+  )
+
+  // Substring-match the global index ourselves (cheap, predictable), capped so
+  // the palette stays readable. We inject the query as a keyword below so cmdk
+  // keeps these items in the rendered list.
+  const globalMatches = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (q.length < 2) return []
+    return globalIndex
+      .filter(
+        (r) =>
+          r.label.toLowerCase().includes(q) ||
+          r.detail.toLowerCase().includes(q) ||
+          r.kind.includes(q) ||
+          (agentNames.get(r.agentId) ?? r.agentId).toLowerCase().includes(q),
+      )
+      .slice(0, 12)
+  }, [globalIndex, search, agentNames])
 
   // Lowercase each item's body once per loaded set. Searching it with a plain
   // substring test (below) stays fast even for multi-KB files — feeding those
@@ -150,7 +202,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
       <CommandInput
         value={search}
         onValueChange={setSearch}
-        placeholder="Search agents, pages, themes…"
+        placeholder="Search agents, pages, configs…"
       />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
@@ -219,6 +271,28 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
                 {item.name}
                 <span className="ml-auto text-xs text-muted-foreground">
                   {item.kind}
+                </span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
+        {globalMatches.length > 0 && (
+          <CommandGroup heading="Across all agents">
+            {globalMatches.map((r, i) => (
+              <CommandItem
+                key={`global-${r.agentId}-${r.kind}-${i}`}
+                value={`global ${r.agentId} ${r.kind} ${r.label} ${i}`}
+                keywords={[search, r.detail]}
+                onSelect={run(() => {
+                  if (r.agentId !== activeAgent.id) setActiveAgent(r.agentId)
+                  navigate(r.route)
+                })}
+              >
+                <Icon name={GLOBAL_KIND_ICON[r.kind]} />
+                <span className="truncate">{r.label}</span>
+                <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                  {agentNames.get(r.agentId) ?? r.agentId} · {r.kind}
                 </span>
               </CommandItem>
             ))}

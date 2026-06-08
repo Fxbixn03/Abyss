@@ -49,6 +49,7 @@ import type {
   DiscoverySearchRequest,
   DiscoverySearchResponse,
 } from '../discovery/types'
+import type { GlobalSearchResult } from '../search/types'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
 
@@ -90,6 +91,9 @@ export enum IpcChannel {
 
   // Discovery (generic: searchable registries for mcp / skills / agents / …)
   DiscoverySearch = 'discovery:search',
+
+  // Global config search across every agent (Command palette)
+  GlobalConfigSearch = 'search:global',
 
   // Tool permissions
   GetPermissions = 'permissions:get',
@@ -323,6 +327,10 @@ export interface IpcMap {
   [IpcChannel.DiscoverySearch]: {
     request: DiscoverySearchRequest
     response: DiscoverySearchResponse
+  }
+  [IpcChannel.GlobalConfigSearch]: {
+    request: Record<string, never>
+    response: GlobalSearchResult[]
   }
 
   [IpcChannel.GetPermissions]: {

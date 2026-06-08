@@ -114,6 +114,8 @@ export const ipc = {
   discoverySearch: (req: DiscoverySearchRequest) =>
     invoke(IpcChannel.DiscoverySearch, req),
 
+  globalConfigSearch: () => invoke(IpcChannel.GlobalConfigSearch, {}),
+
   getPermissions: (agentId: AgentId, basePath: string) =>
     invoke(IpcChannel.GetPermissions, { agentId, basePath }),
   setPermissions: (
