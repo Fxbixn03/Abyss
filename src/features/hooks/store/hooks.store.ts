@@ -1,28 +1,31 @@
 import { create } from 'zustand'
+import type { AgentId } from '@/shared/types/agent'
 import type { HookEntry } from '@/shared/types/hooks'
 import { ipc } from '@/shared/ipc/ipc.client'
 
 interface HooksState {
+  agentId: AgentId
   basePath: string
   entries: HookEntry[]
   loading: boolean
   saving: boolean
 
-  load: (basePath: string) => Promise<void>
+  load: (agentId: AgentId, basePath: string) => Promise<void>
   upsert: (entry: HookEntry) => Promise<void>
   remove: (id: string) => Promise<void>
 }
 
 export const useHooksStore = create<HooksState>()((set, get) => ({
+  agentId: '',
   basePath: '',
   entries: [],
   loading: false,
   saving: false,
 
-  load: async (basePath) => {
-    set({ basePath, loading: true })
-    const entries = await ipc.getHooks(basePath)
-    if (get().basePath !== basePath) return
+  load: async (agentId, basePath) => {
+    set({ agentId, basePath, loading: true })
+    const entries = await ipc.getHooks(agentId, basePath)
+    if (get().basePath !== basePath || get().agentId !== agentId) return
     set({ entries, loading: false })
   },
 
@@ -36,7 +39,11 @@ export const useHooksStore = create<HooksState>()((set, get) => ({
   },
 
   remove: async (id) => {
-    await persist(set, get, get().entries.filter((e) => e.id !== id))
+    await persist(
+      set,
+      get,
+      get().entries.filter((e) => e.id !== id),
+    )
   },
 }))
 
@@ -45,11 +52,11 @@ async function persist(
   get: () => HooksState,
   next: HookEntry[],
 ): Promise<void> {
-  const { basePath } = get()
+  const { agentId, basePath } = get()
   if (!basePath) return
   set({ entries: next, saving: true })
-  await ipc.setHooks(basePath, next)
+  await ipc.setHooks(agentId, basePath, next)
   // Re-read so ids reflect the canonical on-disk grouping.
-  const entries = await ipc.getHooks(basePath)
+  const entries = await ipc.getHooks(agentId, basePath)
   set({ entries, saving: false })
 }

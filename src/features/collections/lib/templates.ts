@@ -11,6 +11,22 @@ export interface NewItemValues {
 /** Build the initial file content (frontmatter + body) for a new item. */
 export function buildTemplate(kind: CollectionKind, v: NewItemValues): string {
   const name = v.name.trim() || v.id
+
+  // Cursor rules use a distinct frontmatter (no `name`): description + globs +
+  // alwaysApply control when the rule is injected into a conversation.
+  if (kind === 'rules') {
+    return [
+      '---',
+      `description: ${v.description}`,
+      'globs: ',
+      'alwaysApply: false',
+      '---',
+      '',
+      `- Describe the behaviour "${name}" should enforce.`,
+      '',
+    ].join('\n')
+  }
+
   const front: string[] = ['---', `name: ${name}`, `description: ${v.description}`]
 
   if (kind === 'agents') {

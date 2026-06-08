@@ -168,7 +168,7 @@ export function ContextPage() {
 
       // Hooks (inject context at lifecycle moments).
       if (caps.hooks && configBase) {
-        const hooks = await ipc.getHooks(configBase).catch(() => [])
+        const hooks = await ipc.getHooks(agent.id, configBase).catch(() => [])
         if (hooks.length > 0) {
           const items = hooks.map((h) => ({
             name: `${h.event}${h.matcher ? ` · ${h.matcher}` : ''}`,

@@ -1,14 +1,18 @@
 /**
- * Read / write lifecycle hooks in `settings.json`. Node-only.
+ * Read / write lifecycle hooks. Node-only.
  *
- * On disk:   event -> [{ matcher, hooks: [{ type, command }] }]
- * In Abyss:  a flat HookEntry per command. We re-group on write and preserve
- *            all other settings keys.
+ * Claude groups them in `settings.json`:
+ *   event -> [{ matcher, hooks: [{ type, command }] }]
+ * Gemini (`<base>/hooks/hooks.json`) and Cursor (`<base>/hooks.json`) use a flat
+ * format (see `core/hooks-flat`). The public {@link readHooks} / {@link writeHooks}
+ * dispatch on the agent id; in every case Abyss works with a flat
+ * {@link HookEntry} per command and preserves all other config keys.
  */
 
 import path from 'node:path'
 import type { HookEntry, HookEvent } from '@/shared/types/hooks'
 import { readJsonFile, writeJsonFile } from './json-file'
+import { readFlatHooks, writeFlatHooks } from './hooks-flat'
 
 interface RawHook {
   type: string
@@ -29,7 +33,42 @@ function settingsPath(basePath: string): string {
   return path.join(basePath, 'settings.json')
 }
 
-export async function readHooks(basePath: string): Promise<HookEntry[]> {
+/** Gemini keeps hooks in a dedicated `hooks/hooks.json`. */
+function geminiHooksPath(basePath: string): string {
+  return path.join(basePath, 'hooks', 'hooks.json')
+}
+
+/** Cursor keeps hooks in a top-level `hooks.json`. */
+function cursorHooksPath(basePath: string): string {
+  return path.join(basePath, 'hooks.json')
+}
+
+/** Read hooks for an agent, dispatching to the right on-disk format. */
+export function readHooks(
+  agentId: string,
+  basePath: string,
+): Promise<HookEntry[]> {
+  if (agentId === 'gemini') return readFlatHooks(geminiHooksPath(basePath))
+  if (agentId === 'cursor') return readFlatHooks(cursorHooksPath(basePath))
+  return readClaudeHooks(basePath)
+}
+
+/** Write hooks for an agent, dispatching to the right on-disk format. */
+export function writeHooks(
+  agentId: string,
+  basePath: string,
+  entries: HookEntry[],
+): Promise<{ success: boolean; path: string }> {
+  if (agentId === 'gemini') {
+    return writeFlatHooks(geminiHooksPath(basePath), entries)
+  }
+  if (agentId === 'cursor') {
+    return writeFlatHooks(cursorHooksPath(basePath), entries)
+  }
+  return writeClaudeHooks(basePath, entries)
+}
+
+async function readClaudeHooks(basePath: string): Promise<HookEntry[]> {
   const settings = await readJsonFile<SettingsWithHooks>(
     settingsPath(basePath),
     {},
@@ -56,7 +95,7 @@ export async function readHooks(basePath: string): Promise<HookEntry[]> {
   return out
 }
 
-export async function writeHooks(
+async function writeClaudeHooks(
   basePath: string,
   entries: HookEntry[],
 ): Promise<{ success: boolean; path: string }> {

@@ -52,12 +52,20 @@ const geminiInstructions: ConfigFileSpec = {
   description: 'Global instructions for Gemini CLI.',
 }
 
+const cursorAgentsMd: ConfigFileSpec = {
+  id: 'agents-md',
+  filename: 'AGENTS.md',
+  scope: 'global',
+  language: 'markdown',
+  description: 'Project instructions for Cursor (AGENTS.md — recommended).',
+}
+
 const cursorInstructions: ConfigFileSpec = {
   id: 'instructions',
   filename: '.cursorrules',
   scope: 'global',
   language: 'markdown',
-  description: 'Rules for Cursor (.cursorrules).',
+  description: 'Legacy rules for Cursor (.cursorrules).',
 }
 
 export const claudeDefinition: AgentDefinition = {
@@ -76,6 +84,7 @@ export const claudeDefinition: AgentDefinition = {
     commands: true,
     skills: true,
     hooks: true,
+    rules: false,
     rawSettings: true,
     chats: true,
   },
@@ -104,6 +113,7 @@ export const codexDefinition: AgentDefinition = {
     commands: true,
     skills: true,
     hooks: false,
+    rules: false,
     rawSettings: false,
     chats: true,
   },
@@ -125,9 +135,11 @@ export const codexDefinition: AgentDefinition = {
 }
 
 /**
- * Gemini is the worked example for "how to add an agent". Its definition is
- * complete, but it is NOT registered in the renderer registry by default — see
- * `features/agents/registry/agent.registry.ts`.
+ * Gemini CLI — full feature parity with Claude where the on-disk format matches:
+ * subagents (`agents/*.md`) and skills (`skills/<name>/SKILL.md`) reuse the
+ * markdown-collection machinery; MCP and hooks live in `settings.json` /
+ * `hooks/hooks.json`; slash commands are grouped TOML files (`commands/<g>/<n>.toml`)
+ * handled by the dedicated `gemini-commands` feature.
  */
 export const geminiDefinition: AgentDefinition = {
   id: 'gemini',
@@ -138,14 +150,15 @@ export const geminiDefinition: AgentDefinition = {
   docsUrl: 'https://github.com/google-gemini/gemini-cli',
   capabilities: {
     instructions: true,
-    mcp: false,
+    mcp: true,
     permissions: false,
     modelEnv: false,
-    agents: false,
-    commands: false,
-    skills: false,
-    hooks: false,
-    rawSettings: false,
+    agents: true,
+    commands: true,
+    skills: true,
+    hooks: true,
+    rules: false,
+    rawSettings: true,
     chats: false,
   },
   configFiles: [geminiInstructions],
@@ -156,9 +169,10 @@ export const geminiDefinition: AgentDefinition = {
 }
 
 /**
- * Cursor — instructions via `.cursorrules` and MCP via `<base>/mcp.json`
- * (same JSON shape as Claude). Cursor's global config is app-internal, so the
- * `.cursor` dir is used as the editable home.
+ * Cursor — instructions via `AGENTS.md` (recommended) + `.cursorrules` (legacy),
+ * MCP via `<base>/mcp.json`, subagents/commands/skills as markdown, always-on
+ * behaviour `rules/*.mdc`, and flat `hooks.json`. Cursor's global config is
+ * app-internal, so the `.cursor` dir is used as the editable home.
  */
 export const cursorDefinition: AgentDefinition = {
   id: 'cursor',
@@ -172,14 +186,15 @@ export const cursorDefinition: AgentDefinition = {
     mcp: true,
     permissions: false,
     modelEnv: false,
-    agents: false,
-    commands: false,
-    skills: false,
-    hooks: false,
+    agents: true,
+    commands: true,
+    skills: true,
+    hooks: true,
+    rules: true,
     rawSettings: false,
     chats: false,
   },
-  configFiles: [cursorInstructions],
+  configFiles: [cursorAgentsMd, cursorInstructions],
   resolvePaths: (env: OsEnv) => [
     joinPath(env.platform, env.home, '.cursor'),
     joinPath(env.platform, env.appData, 'Cursor'),

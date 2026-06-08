@@ -111,7 +111,7 @@ export function ValidationPage() {
           : []
       const hooks =
         caps.hooks && configBase
-          ? await ipc.getHooks(configBase).catch(() => [])
+          ? await ipc.getHooks(agent.id, configBase).catch(() => [])
           : []
       const permissions =
         caps.permissions && configBase

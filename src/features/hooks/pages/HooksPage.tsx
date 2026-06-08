@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { HookEntry, HookEvent } from '@/shared/types/hooks'
-import { HOOK_EVENTS } from '@/shared/types/hooks'
+import { hookEventsFor } from '@/shared/types/hooks'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { PageHeader } from '@/shared/components/PageHeader'
@@ -29,9 +29,17 @@ export function HooksPage() {
   const [editing, setEditing] = useState<HookEntry | undefined>()
   const [deleting, setDeleting] = useState<HookEntry | undefined>()
 
+  const events = useMemo(() => hookEventsFor(agent.id), [agent.id])
+  const hooksFile =
+    agent.id === 'gemini'
+      ? 'hooks/hooks.json'
+      : agent.id === 'cursor'
+        ? 'hooks.json'
+        : 'settings.json'
+
   useEffect(() => {
-    if (supported && basePath) void load(basePath)
-  }, [supported, basePath, load])
+    if (supported && basePath) void load(agent.id, basePath)
+  }, [supported, agent.id, basePath, load])
 
   const grouped = useMemo(() => {
     const map = new Map<HookEvent, HookEntry[]>()
@@ -40,10 +48,10 @@ export function HooksPage() {
       list.push(entry)
       map.set(entry.event, list)
     }
-    return HOOK_EVENTS.filter((e) => map.has(e)).map(
-      (event) => [event, map.get(event)!] as const,
-    )
-  }, [entries])
+    return events
+      .filter((e) => map.has(e))
+      .map((event) => [event, map.get(event)!] as const)
+  }, [entries, events])
 
   if (!supported) {
     return (
@@ -81,7 +89,7 @@ export function HooksPage() {
     <div className="flex h-full flex-col gap-4">
       <PageHeader
         title="Hooks"
-        description={`Lifecycle hooks for ${agent.displayName} (settings.json)`}
+        description={`Lifecycle hooks for ${agent.displayName} (${hooksFile})`}
         icon="webhook"
         actions={
           <Button
@@ -171,6 +179,7 @@ export function HooksPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         initial={editing}
+        events={events}
         onSubmit={(entry) => void upsert(entry)}
       />
 
@@ -180,7 +189,7 @@ export function HooksPage() {
           if (!o) setDeleting(undefined)
         }}
         title="Delete hook?"
-        description="This removes the hook from settings.json."
+        description={`This removes the hook from ${hooksFile}.`}
         onConfirm={() => {
           if (deleting) void remove(deleting.id)
           setDeleting(undefined)

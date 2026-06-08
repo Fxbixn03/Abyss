@@ -40,6 +40,7 @@ const ROUTE_GROUP: Record<string, NavGroupId> = {
   '/agents': 'development',
   '/commands': 'development',
   '/skills': 'development',
+  '/rules': 'development',
   '/templates': 'development',
   '/sandbox': 'development',
   '/chats': 'runtime',

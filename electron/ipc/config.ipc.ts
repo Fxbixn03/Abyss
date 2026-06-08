@@ -64,9 +64,11 @@ export function registerConfigIpc(ctx: IpcContext): void {
   )
 
   // Lifecycle hooks
-  handle(IpcChannel.GetHooks, ({ basePath }) => readHooks(basePath))
-  handle(IpcChannel.SetHooks, ({ basePath, entries }) =>
-    writeHooks(basePath, entries),
+  handle(IpcChannel.GetHooks, ({ agentId, basePath }) =>
+    readHooks(agentId, basePath),
+  )
+  handle(IpcChannel.SetHooks, ({ agentId, basePath, entries }) =>
+    writeHooks(agentId, basePath, entries),
   )
 
   // Raw settings files

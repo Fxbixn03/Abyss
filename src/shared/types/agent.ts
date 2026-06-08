@@ -70,6 +70,8 @@ export interface AgentCapabilities {
   skills: boolean
   /** Lifecycle hooks (settings.json `hooks`). */
   hooks: boolean
+  /** Always-on behaviour rules (`rules/*.mdc`) — currently Cursor only. */
+  rules: boolean
   /** Raw settings.json / settings.local.json editing. */
   rawSettings: boolean
   /** Browse past conversations and chat live (Chats feature). */

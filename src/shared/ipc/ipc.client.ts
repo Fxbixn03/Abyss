@@ -220,9 +220,22 @@ export const ipc = {
   renameCodexSubagent: (basePath: string, fromId: string, toId: string) =>
     invoke(IpcChannel.RenameCodexSubagent, { basePath, fromId, toId }),
 
-  getHooks: (basePath: string) => invoke(IpcChannel.GetHooks, { basePath }),
-  setHooks: (basePath: string, entries: HookEntry[]) =>
-    invoke(IpcChannel.SetHooks, { basePath, entries }),
+  // --- Gemini custom slash commands (TOML in <base>/commands/) --------------
+  listGeminiCommands: (basePath: string) =>
+    invoke(IpcChannel.ListGeminiCommands, { basePath }),
+  readGeminiCommand: (basePath: string, id: string) =>
+    invoke(IpcChannel.ReadGeminiCommand, { basePath, id }),
+  writeGeminiCommand: (basePath: string, id: string, content: string) =>
+    invoke(IpcChannel.WriteGeminiCommand, { basePath, id, content }),
+  deleteGeminiCommand: (basePath: string, id: string) =>
+    invoke(IpcChannel.DeleteGeminiCommand, { basePath, id }),
+  renameGeminiCommand: (basePath: string, fromId: string, toId: string) =>
+    invoke(IpcChannel.RenameGeminiCommand, { basePath, fromId, toId }),
+
+  getHooks: (agentId: AgentId, basePath: string) =>
+    invoke(IpcChannel.GetHooks, { agentId, basePath }),
+  setHooks: (agentId: AgentId, basePath: string, entries: HookEntry[]) =>
+    invoke(IpcChannel.SetHooks, { agentId, basePath, entries }),
 
   readRawSettings: (basePath: string, file: RawSettingsFile) =>
     invoke(IpcChannel.ReadRawSettings, { basePath, file }),

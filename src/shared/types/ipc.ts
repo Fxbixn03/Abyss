@@ -22,6 +22,7 @@ import type {
   SkillImportResult,
 } from './collections'
 import type { CodexSubagentSummary } from './codex-subagent'
+import type { GeminiCommandSummary } from './gemini-command'
 import type { HookEntry } from './hooks'
 import type {
   ChatAvailability,
@@ -119,6 +120,13 @@ export enum IpcChannel {
   WriteCodexSubagent = 'codex-subagents:write',
   DeleteCodexSubagent = 'codex-subagents:delete',
   RenameCodexSubagent = 'codex-subagents:rename',
+
+  // Gemini custom slash commands (TOML files in <base>/commands/)
+  ListGeminiCommands = 'gemini-commands:list',
+  ReadGeminiCommand = 'gemini-commands:read',
+  WriteGeminiCommand = 'gemini-commands:write',
+  DeleteGeminiCommand = 'gemini-commands:delete',
+  RenameGeminiCommand = 'gemini-commands:rename',
 
   // Lifecycle hooks
   GetHooks = 'hooks:get',
@@ -445,12 +453,33 @@ export interface IpcMap {
     response: { success: boolean; id: string; path: string }
   }
 
-  [IpcChannel.GetHooks]: {
+  [IpcChannel.ListGeminiCommands]: {
     request: { basePath: string }
+    response: GeminiCommandSummary[]
+  }
+  [IpcChannel.ReadGeminiCommand]: {
+    request: { basePath: string; id: string }
+    response: { raw: string; path: string }
+  }
+  [IpcChannel.WriteGeminiCommand]: {
+    request: { basePath: string; id: string; content: string }
+    response: { success: boolean; path: string }
+  }
+  [IpcChannel.DeleteGeminiCommand]: {
+    request: { basePath: string; id: string }
+    response: { success: boolean }
+  }
+  [IpcChannel.RenameGeminiCommand]: {
+    request: { basePath: string; fromId: string; toId: string }
+    response: { success: boolean; id: string; path: string }
+  }
+
+  [IpcChannel.GetHooks]: {
+    request: { agentId: AgentId; basePath: string }
     response: HookEntry[]
   }
   [IpcChannel.SetHooks]: {
-    request: { basePath: string; entries: HookEntry[] }
+    request: { agentId: AgentId; basePath: string; entries: HookEntry[] }
     response: { success: boolean; path: string }
   }
 

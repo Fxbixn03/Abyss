@@ -111,10 +111,15 @@ function cursorMcpPath(basePath: string): string {
   return path.join(basePath, 'mcp.json')
 }
 
+/** Gemini keeps its `mcpServers` map inside `<base>/settings.json`. */
+function geminiSettingsPath(basePath: string): string {
+  return path.join(basePath, 'settings.json')
+}
+
 /**
- * Read MCP servers for an agent. Claude/Cursor use JSON, Codex uses TOML.
+ * Read MCP servers for an agent. Claude/Cursor/Gemini use JSON, Codex uses TOML.
  * Claude: `~/.claude.json` / `<project>/.mcp.json`; Cursor: `<base>/mcp.json`;
- * Codex: `<base>/config.toml`.
+ * Gemini: `<base>/settings.json`; Codex: `<base>/config.toml`.
  */
 export function readMcpServers(
   agentId: string,
@@ -123,6 +128,7 @@ export function readMcpServers(
 ): Promise<McpServerEntry[]> {
   if (agentId === 'codex') return readCodexMcp(basePath)
   if (agentId === 'cursor') return readJsonMcp(cursorMcpPath(basePath))
+  if (agentId === 'gemini') return readJsonMcp(geminiSettingsPath(basePath))
   return readJsonMcp(mcpConfigPath(projectDir))
 }
 
@@ -135,5 +141,7 @@ export function writeMcpServers(
   if (agentId === 'codex') return writeCodexMcp(basePath, entries)
   if (agentId === 'cursor')
     return writeJsonMcp(cursorMcpPath(basePath), entries)
+  if (agentId === 'gemini')
+    return writeJsonMcp(geminiSettingsPath(basePath), entries)
   return writeJsonMcp(mcpConfigPath(projectDir), entries)
 }

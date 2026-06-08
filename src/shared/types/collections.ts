@@ -1,13 +1,17 @@
 /**
- * Markdown "collections" shared by Claude Code: subagents, slash commands and
- * skills. They all live as markdown files (skills under a per-skill folder) with
- * YAML frontmatter, so one mechanism powers all three.
+ * Markdown "collections" shared by AI agents: subagents, slash commands, skills
+ * and Cursor's always-on `rules`. They all live as files with YAML frontmatter
+ * (skills under a per-skill folder; rules use the `.mdc` extension), so one
+ * mechanism powers them all.
  */
 
-export type CollectionKind = 'agents' | 'commands' | 'skills'
+export type CollectionKind = 'agents' | 'commands' | 'skills' | 'rules'
 
 export interface CollectionItem {
-  /** Filename without extension (agents/commands) or folder name (skills). */
+  /**
+   * Filename without extension (agents/commands/rules) or folder POSIX path for
+   * skills (e.g. `dotnet/efcore-patterns` when nested under a category).
+   */
   id: string
   /** Frontmatter `name`, falling back to the id. */
   name: string
@@ -17,6 +21,10 @@ export interface CollectionItem {
   model?: string
   /** Frontmatter `tools`, if present (agents). */
   tools?: string
+  /** Frontmatter `globs`, if present (rules). */
+  globs?: string
+  /** Frontmatter `alwaysApply`, if present (rules). */
+  alwaysApply?: boolean
   /** Absolute path of the underlying file. */
   path: string
 }
@@ -40,4 +48,5 @@ export const COLLECTION_LABELS: Record<
   agents: { singular: 'Agent', plural: 'Agents' },
   commands: { singular: 'Command', plural: 'Commands' },
   skills: { singular: 'Skill', plural: 'Skills' },
+  rules: { singular: 'Rule', plural: 'Rules' },
 }

@@ -24,11 +24,17 @@ import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useCollectionSelection } from '@/features/collections/store/collectionSelection.store'
 import { SETTINGS_SECTIONS } from '@/features/settings/sections'
 
-const COLLECTION_KINDS: CollectionKind[] = ['agents', 'commands', 'skills']
+const COLLECTION_KINDS: CollectionKind[] = [
+  'agents',
+  'commands',
+  'skills',
+  'rules',
+]
 const KIND_ICON: Record<CollectionKind, string> = {
   agents: 'bot',
   commands: 'square-slash',
   skills: 'graduation-cap',
+  rules: 'book-open',
 }
 
 interface PaletteItem {

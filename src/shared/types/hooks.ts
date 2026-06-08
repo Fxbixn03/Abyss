@@ -18,7 +18,21 @@ export const HOOK_EVENTS = [
   'SessionEnd',
 ] as const
 
-export type HookEvent = (typeof HOOK_EVENTS)[number]
+/** All hook events across agents. Cursor adds `beforeSubmitPrompt`. */
+export type HookEvent = (typeof HOOK_EVENTS)[number] | 'beforeSubmitPrompt'
+
+/**
+ * Which lifecycle events an agent exposes. Claude has the full grouped set;
+ * Gemini's flat `hooks.json` supports the three core tool/stop events; Cursor
+ * additionally fires `beforeSubmitPrompt`.
+ */
+export function hookEventsFor(agentId: string): readonly HookEvent[] {
+  if (agentId === 'gemini') return ['PreToolUse', 'PostToolUse', 'Stop']
+  if (agentId === 'cursor') {
+    return ['PreToolUse', 'PostToolUse', 'Stop', 'beforeSubmitPrompt']
+  }
+  return HOOK_EVENTS
+}
 
 export interface HookEntry {
   /** Stable local id for list rendering. */

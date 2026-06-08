@@ -9,6 +9,7 @@ import { SettingsPage } from '@/features/settings/pages/SettingsPage'
 import { AgentsPage } from '@/features/collections/pages/AgentsPage'
 import { CommandsPage } from '@/features/collections/pages/CommandsPage'
 import { SkillsPage } from '@/features/collections/pages/SkillsPage'
+import { RulesPage } from '@/features/collections/pages/RulesPage'
 import { HooksPage } from '@/features/hooks/pages/HooksPage'
 import { SettingsFilePage } from '@/features/settings-file/pages/SettingsFilePage'
 import { ChatsPage } from '@/features/chats/pages/ChatsPage'
@@ -43,6 +44,7 @@ export const router = createHashRouter([
       { path: 'agents', element: <AgentsPage /> },
       { path: 'commands', element: <CommandsPage /> },
       { path: 'skills', element: <SkillsPage /> },
+      { path: 'rules', element: <RulesPage /> },
       { path: 'mcp', element: <McpPage /> },
       { path: 'hooks', element: <HooksPage /> },
       { path: 'permissions', element: <PermissionsPage /> },

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { HookEntry, HookEvent } from '@/shared/types/hooks'
-import { HOOK_EVENTS, MATCHER_EVENTS } from '@/shared/types/hooks'
+import { MATCHER_EVENTS } from '@/shared/types/hooks'
 import {
   Dialog,
   DialogContent,
@@ -20,23 +20,31 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select'
 
-function blank(): HookEntry {
-  return { id: crypto.randomUUID(), event: 'PreToolUse', matcher: '', command: '' }
+function blank(event: HookEvent): HookEntry {
+  return { id: crypto.randomUUID(), event, matcher: '', command: '' }
 }
 
 export interface HookFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   initial?: HookEntry
+  /** Lifecycle events the active agent supports. */
+  events: readonly HookEvent[]
   onSubmit: (entry: HookEntry) => void
 }
 
-export function HookForm({ open, onOpenChange, initial, onSubmit }: HookFormProps) {
-  const [draft, setDraft] = useState<HookEntry>(initial ?? blank())
+export function HookForm({
+  open,
+  onOpenChange,
+  initial,
+  events,
+  onSubmit,
+}: HookFormProps) {
+  const [draft, setDraft] = useState<HookEntry>(initial ?? blank(events[0]))
   const [seedKey, setSeedKey] = useState<string | null>(null)
   const key = `${open}:${initial?.id ?? 'new'}`
   if (open && seedKey !== key) {
-    setDraft(initial ?? blank())
+    setDraft(initial ?? blank(events[0]))
     setSeedKey(key)
   }
 
@@ -70,7 +78,7 @@ export function HookForm({ open, onOpenChange, initial, onSubmit }: HookFormProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {HOOK_EVENTS.map((event) => (
+                  {events.map((event) => (
                     <SelectItem key={event} value={event}>
                       {event}
                     </SelectItem>
