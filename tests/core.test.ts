@@ -10,6 +10,7 @@ import path from 'node:path'
 import { promises as fs } from 'node:fs'
 
 import { writeZip, readZip } from '@core/zip'
+import { uniqueTempPath } from '@core/tmp-path'
 import { readMcpServers, writeMcpServers } from '@core/mcp'
 import {
   writeCollectionItem,
@@ -118,6 +119,24 @@ test('zip writer/reader round-trip (STORED)', () => {
     entries.find((e) => e.path === 'a/SKILL.md')?.data.toString(),
     '# hello\n',
   )
+})
+
+test('zip reader rejects an entry whose data runs past the buffer', () => {
+  const buf = writeZip([{ path: 'a.txt', data: Buffer.from('hi') }])
+  // One STORED entry: local block is 30 + nameLen(5) + dataLen(2) = 37 bytes,
+  // so the central-directory header starts at 37 and its compressed-size field
+  // sits at +20. Point it past the buffer and the reader must refuse it.
+  buf.writeUInt32LE(0xffffffff, 37 + 20)
+  assert.throws(() => readZip(buf), /out of bounds/)
+})
+
+test('uniqueTempPath yields distinct names for the same target', () => {
+  const target = '/tmp/abyss-x.json'
+  const a = uniqueTempPath(target)
+  const b = uniqueTempPath(target)
+  assert.notEqual(a, b)
+  assert.ok(a.startsWith(`${target}.abyss-tmp-`))
+  assert.ok(b.startsWith(`${target}.abyss-tmp-`))
 })
 
 test('cursor MCP json round-trip', async () => {

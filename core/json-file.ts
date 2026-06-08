@@ -6,6 +6,7 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import type { ZodType } from 'zod'
 import { recordSnapshot } from './snapshots'
+import { uniqueTempPath } from './tmp-path'
 import { ConfigParseError, ConfigValidationError } from './config-error'
 
 export async function pathExists(p: string): Promise<boolean> {
@@ -38,7 +39,7 @@ export async function writeTextFileAtomic(
       await recordSnapshot(p, previous)
     }
   }
-  const tmp = `${p}.abyss-tmp-${process.pid}`
+  const tmp = uniqueTempPath(p)
   await fs.writeFile(tmp, content, 'utf8')
   await fs.rename(tmp, p)
 }

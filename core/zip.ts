@@ -15,6 +15,12 @@ const SIG_EOCD = 0x06054b50 // End of central directory record
 const SIG_CDH = 0x02014b50 // Central directory file header
 const SIG_LFH = 0x04034b50 // Local file header
 
+// Anti-zip-bomb caps. `.skill` archives are tiny (a few KB); these generous
+// limits keep a maliciously crafted archive from inflating to gigabytes and
+// OOM-killing the process.
+const MAX_ENTRY_BYTES = 64 * 1024 * 1024 // per-entry decompressed/raw size
+const MAX_TOTAL_BYTES = 256 * 1024 * 1024 // across all entries
+
 export interface ZipEntry {
   /** Entry path inside the archive, always forward-slash separated. */
   path: string
@@ -42,6 +48,7 @@ export function readZip(buffer: Buffer): ZipEntry[] {
 
   const entries: ZipEntry[] = []
   let p = cdOffset
+  let totalBytes = 0
 
   for (let i = 0; i < entryCount; i++) {
     if (buffer.readUInt32LE(p) !== SIG_CDH) {
@@ -68,16 +75,30 @@ export function readZip(buffer: Buffer): ZipEntry[] {
     let data: Buffer
     if (isDirectory) {
       data = Buffer.alloc(0)
-    } else if (method === 0) {
-      data = buffer.subarray(dataStart, dataStart + compSize)
-    } else if (method === 8) {
-      data = zlib.inflateRawSync(
-        buffer.subarray(dataStart, dataStart + compSize),
-      )
     } else {
-      throw new Error(
-        `Unsupported ZIP compression method ${method} for ${name}`,
-      )
+      // Guard against a header pointing the compressed data outside the buffer,
+      // and against an oversized entry, before we ever slice or inflate.
+      if (dataStart < 0 || dataStart + compSize > buffer.length) {
+        throw new Error(`Corrupt ZIP: entry data out of bounds for ${name}`)
+      }
+      if (compSize > MAX_ENTRY_BYTES) {
+        throw new Error(`ZIP entry too large for ${name}`)
+      }
+      const slice = buffer.subarray(dataStart, dataStart + compSize)
+      if (method === 0) {
+        data = slice
+      } else if (method === 8) {
+        data = zlib.inflateRawSync(slice, { maxOutputLength: MAX_ENTRY_BYTES })
+      } else {
+        throw new Error(
+          `Unsupported ZIP compression method ${method} for ${name}`,
+        )
+      }
+    }
+
+    totalBytes += data.length
+    if (totalBytes > MAX_TOTAL_BYTES) {
+      throw new Error('ZIP archive expands beyond the allowed total size')
     }
 
     entries.push({ path: name.replace(/\\/g, '/'), data, isDirectory })

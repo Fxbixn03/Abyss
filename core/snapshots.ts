@@ -10,6 +10,7 @@
 import path from 'node:path'
 import { promises as fs } from 'node:fs'
 import { createHash } from 'node:crypto'
+import { uniqueTempPath } from './tmp-path'
 import type { SnapshotContent, SnapshotMeta } from '@/shared/types/snapshots'
 
 interface SnapshotConfig {
@@ -206,7 +207,7 @@ export async function restoreSnapshot(
   }
 
   await fs.mkdir(path.dirname(target), { recursive: true })
-  const tmp = `${target}.abyss-tmp-${process.pid}`
+  const tmp = uniqueTempPath(target)
   await fs.writeFile(tmp, snap.content, 'utf8')
   await fs.rename(tmp, target)
   return { success: true, path: target }
