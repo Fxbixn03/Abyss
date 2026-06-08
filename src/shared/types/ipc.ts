@@ -95,6 +95,9 @@ export enum IpcChannel {
   // Global config search across every agent (Command palette)
   GlobalConfigSearch = 'search:global',
 
+  // Cancel a long-running, request-tagged op (discovery / MCP health)
+  CancelRequest = 'request:cancel',
+
   // Tool permissions
   GetPermissions = 'permissions:get',
   SetPermissions = 'permissions:set',
@@ -320,7 +323,7 @@ export interface IpcMap {
     response: { success: boolean; path: string }
   }
   [IpcChannel.McpHealthCheck]: {
-    request: { entry: McpServerEntry }
+    request: { entry: McpServerEntry; requestId?: string }
     response: McpHealthResult
   }
 
@@ -331,6 +334,10 @@ export interface IpcMap {
   [IpcChannel.GlobalConfigSearch]: {
     request: Record<string, never>
     response: GlobalSearchResult[]
+  }
+  [IpcChannel.CancelRequest]: {
+    request: { requestId: string }
+    response: { cancelled: boolean }
   }
 
   [IpcChannel.GetPermissions]: {

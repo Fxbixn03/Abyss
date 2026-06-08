@@ -79,18 +79,25 @@ function toResult(a: RawAgent): DiscoveryResult<DiscoveredAgentSpec> {
   }
 }
 
-const getAll = createListCache<DiscoveryResult<DiscoveredAgentSpec>>(async () => {
-  const data = await fetchJson<RawResponse>(API, { timeoutMs: 12_000 })
-  return (data.agents ?? [])
-    .filter((a) => a?.name && a.hidden !== true)
-    .map(toResult)
-}, TTL_MS)
+const getAll = createListCache<DiscoveryResult<DiscoveredAgentSpec>>(
+  async (signal) => {
+    const data = await fetchJson<RawResponse>(API, {
+      timeoutMs: 12_000,
+      signal,
+    })
+    return (data.agents ?? [])
+      .filter((a) => a?.name && a.hidden !== true)
+      .map(toResult)
+  },
+  TTL_MS,
+)
 
 async function search(
   req: DiscoverySearchRequest,
+  signal?: AbortSignal,
 ): Promise<DiscoverySearchResponse> {
   try {
-    const all = await getAll()
+    const all = await getAll(signal)
     const q = req.query.trim().toLowerCase()
     const filtered = q
       ? all.filter((r) =>

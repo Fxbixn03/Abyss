@@ -18,6 +18,7 @@ import type {
 } from '@/shared/discovery/types'
 import { sourcesForKind } from '@/shared/discovery/sources'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { genId } from '@/shared/lib/id'
 import {
   Dialog,
   DialogContent,
@@ -60,6 +61,9 @@ export function DiscoverDialog({
   const [error, setError] = useState<string | undefined>()
   const [wasOpen, setWasOpen] = useState(false)
   const reqId = useRef(0)
+  // The in-flight server-side requestId, so a superseded or closed search can
+  // be cancelled (aborting the remote fetch) instead of merely ignored.
+  const inflightId = useRef<string | null>(null)
 
   const activeSource = sources.find((s) => s.id === sourceId) ?? sources[0]
 
@@ -81,19 +85,34 @@ export function DiscoverDialog({
     if (!open || !activeSource || activeSource.mode !== 'search') return
     const timer = setTimeout(() => {
       const myId = ++reqId.current
+      const requestId = genId()
+      if (inflightId.current) void ipc.cancelRequest(inflightId.current)
+      inflightId.current = requestId
       setLoading(true)
       setError(undefined)
       void ipc
-        .discoverySearch({ kind, sourceId: activeSource.id, query })
+        .discoverySearch({ kind, sourceId: activeSource.id, query, requestId })
         .then((res) => {
           if (reqId.current !== myId) return
+          inflightId.current = null
           setResults(res.results)
           setNextCursor(res.nextCursor)
           setError(res.error)
           setLoading(false)
         })
+        .catch(() => {
+          if (reqId.current === myId) inflightId.current = null
+        })
     }, DEBOUNCE_MS)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      // Leaving this query (typed more, switched source, closed): abort the
+      // in-flight fetch so it doesn't run to completion in the background.
+      if (inflightId.current) {
+        void ipc.cancelRequest(inflightId.current)
+        inflightId.current = null
+      }
+    }
   }, [open, kind, activeSource, query])
 
   const loadMore = () => {

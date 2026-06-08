@@ -17,7 +17,10 @@ export interface DiscoveryProvider {
   /** Matches `DiscoverySource.providerId`. */
   id: string
   kinds: DiscoveryKind[]
-  search: (req: DiscoverySearchRequest) => Promise<DiscoverySearchResponse>
+  search: (
+    req: DiscoverySearchRequest,
+    signal?: AbortSignal,
+  ) => Promise<DiscoverySearchResponse>
 }
 
 const providers = new Map<string, DiscoveryProvider>()
@@ -32,13 +35,14 @@ export function registerProvider(provider: DiscoveryProvider): void {
  */
 export async function runDiscoverySearch(
   req: DiscoverySearchRequest,
+  signal?: AbortSignal,
 ): Promise<DiscoverySearchResponse> {
   const provider = providers.get(req.sourceId)
   if (!provider || !provider.kinds.includes(req.kind)) {
     return { results: [], error: `Unknown discovery source: ${req.sourceId}` }
   }
   try {
-    return await provider.search(req)
+    return await provider.search(req, signal)
   } catch (err) {
     return {
       results: [],

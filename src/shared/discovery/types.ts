@@ -62,6 +62,8 @@ export interface DiscoverySearchRequest {
   query: string
   cursor?: string
   limit?: number
+  /** Opaque token so the renderer can cancel this in-flight search. */
+  requestId?: string
 }
 
 export interface DiscoverySearchResponse {

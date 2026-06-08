@@ -4,6 +4,7 @@ import { readMcpServers, writeMcpServers } from '@core/mcp'
 import { checkMcpHealth } from '@core/mcp-health'
 import { runDiscoverySearch } from '@core/discovery'
 import { indexAllConfigs } from '@core/global-search'
+import { beginRequest, endRequest, cancelRequest } from './cancellation'
 import {
   readModelEnv,
   readPermissions,
@@ -39,10 +40,29 @@ export function registerConfigIpc(ctx: IpcContext): void {
     ({ agentId, basePath, servers, projectDir }) =>
       writeMcpServers(agentId, basePath, servers, projectDir),
   )
-  handle(IpcChannel.McpHealthCheck, ({ entry }) => checkMcpHealth(entry))
+  handle(IpcChannel.McpHealthCheck, async ({ entry, requestId }) => {
+    const controller = beginRequest(requestId)
+    try {
+      return await checkMcpHealth(entry, controller?.signal)
+    } finally {
+      endRequest(requestId)
+    }
+  })
 
   // Discovery (searchable registries — currently the official MCP registry)
-  handle(IpcChannel.DiscoverySearch, (req) => runDiscoverySearch(req))
+  handle(IpcChannel.DiscoverySearch, async (req) => {
+    const controller = beginRequest(req.requestId)
+    try {
+      return await runDiscoverySearch(req, controller?.signal)
+    } finally {
+      endRequest(req.requestId)
+    }
+  })
+
+  // Cancel a request-tagged long-running op (discovery / MCP health)
+  handle(IpcChannel.CancelRequest, ({ requestId }) => ({
+    cancelled: cancelRequest(requestId),
+  }))
 
   // Global config search across every agent (Command palette)
   handle(IpcChannel.GlobalConfigSearch, async () => {

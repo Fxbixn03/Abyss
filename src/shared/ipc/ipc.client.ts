@@ -108,11 +108,15 @@ export const ipc = {
       servers,
       projectDir,
     }),
-  mcpHealthCheck: (entry: McpServerEntry) =>
-    invoke(IpcChannel.McpHealthCheck, { entry }),
+  mcpHealthCheck: (entry: McpServerEntry, requestId?: string) =>
+    invoke(IpcChannel.McpHealthCheck, { entry, requestId }),
 
   discoverySearch: (req: DiscoverySearchRequest) =>
     invoke(IpcChannel.DiscoverySearch, req),
+
+  /** Abort an in-flight discovery / MCP-health call by its requestId. */
+  cancelRequest: (requestId: string) =>
+    invoke(IpcChannel.CancelRequest, { requestId }),
 
   globalConfigSearch: () => invoke(IpcChannel.GlobalConfigSearch, {}),
 

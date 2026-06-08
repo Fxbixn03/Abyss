@@ -10,10 +10,14 @@
 
 export async function fetchJson<T>(
   url: string,
-  opts: { timeoutMs?: number } = {},
+  opts: { timeoutMs?: number; signal?: AbortSignal } = {},
 ): Promise<T> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 10_000)
+  // Fold external cancellation into the same controller the timeout uses.
+  opts.signal?.addEventListener('abort', () => controller.abort(), {
+    once: true,
+  })
   try {
     const res = await fetch(url, {
       headers: { accept: 'application/json' },
@@ -42,15 +46,16 @@ export function includesQuery(
   return haystacks.some((h) => h?.toLowerCase().includes(lowerQuery))
 }
 
-/** Memoize a list fetch with a TTL; only successful fetches are cached. */
+/** Memoize a list fetch with a TTL; only successful fetches are cached. The
+ * cached function forwards an optional AbortSignal to the fetcher on a miss. */
 export function createListCache<T>(
-  fetcher: () => Promise<T[]>,
+  fetcher: (signal?: AbortSignal) => Promise<T[]>,
   ttlMs: number,
-): () => Promise<T[]> {
+): (signal?: AbortSignal) => Promise<T[]> {
   let cache: { at: number; items: T[] } | null = null
-  return async () => {
+  return async (signal?: AbortSignal) => {
     if (cache && Date.now() - cache.at < ttlMs) return cache.items
-    const items = await fetcher()
+    const items = await fetcher(signal)
     cache = { at: Date.now(), items }
     return items
   }

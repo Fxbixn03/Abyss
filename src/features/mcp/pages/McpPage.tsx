@@ -31,6 +31,7 @@ export function McpPage() {
   const remove = useMcpStore((s) => s.remove)
   const toggle = useMcpStore((s) => s.toggle)
   const test = useMcpStore((s) => s.test)
+  const cancelTests = useMcpStore((s) => s.cancelTests)
 
   const [formOpen, setFormOpen] = useState(false)
   const [discoverOpen, setDiscoverOpen] = useState(false)
@@ -49,6 +50,10 @@ export function McpPage() {
       if (!useMcpStore.getState().health[server.id]) void test(server)
     }
   }, [servers, test])
+
+  // Abort any in-flight health checks when leaving the page so their probes
+  // don't keep running in the background.
+  useEffect(() => () => cancelTests(), [cancelTests])
 
   if (!supported) {
     return (

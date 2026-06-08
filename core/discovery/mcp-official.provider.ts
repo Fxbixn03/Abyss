@@ -230,6 +230,7 @@ function dedupeLatest(items: RawItem[]): RawServer[] {
 
 async function search(
   req: DiscoverySearchRequest,
+  signal?: AbortSignal,
 ): Promise<DiscoverySearchResponse> {
   const limit = Math.min(Math.max(req.limit ?? DEFAULT_LIMIT, 1), 100)
   const params = new URLSearchParams()
@@ -240,6 +241,7 @@ async function search(
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  signal?.addEventListener('abort', () => controller.abort(), { once: true })
   try {
     const res = await fetch(`${REGISTRY_BASE}/v0/servers?${params.toString()}`, {
       headers: { accept: 'application/json' },

@@ -4,6 +4,7 @@ import type { McpHealthResult, McpServerEntry } from '@/shared/types/config'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { reportError, isConfigParseError } from '@/shared/lib/errors'
 import type { ConfigParseInfo } from '@/shared/lib/errors'
+import { genId } from '@/shared/lib/id'
 
 export type McpHealthState = { loading: true } | McpHealthResult
 
@@ -19,6 +20,8 @@ interface McpState {
   parseError: ConfigParseInfo | null
   /** Last "test connection" result per server id. */
   health: Record<string, McpHealthState>
+  /** In-flight health-check requestIds per server id (for cancellation). */
+  testRequests: Record<string, string>
 
   load: (
     agentId: AgentId,
@@ -29,6 +32,8 @@ interface McpState {
   remove: (id: string) => Promise<void>
   toggle: (id: string) => Promise<void>
   test: (entry: McpServerEntry) => Promise<void>
+  /** Abort every in-flight health check (e.g. when leaving the MCP page). */
+  cancelTests: () => void
 }
 
 export const useMcpStore = create<McpState>()((set, get) => ({
@@ -40,6 +45,7 @@ export const useMcpStore = create<McpState>()((set, get) => ({
   saving: false,
   parseError: null,
   health: {},
+  testRequests: {},
 
   load: async (agentId, basePath, projectDir) => {
     set({ agentId, basePath, projectDir, loading: true, parseError: null })
@@ -97,16 +103,44 @@ export const useMcpStore = create<McpState>()((set, get) => ({
   },
 
   test: async (entry) => {
-    set({ health: { ...get().health, [entry.id]: { loading: true } } })
+    // Supersede any in-flight check for this server so we don't leave an
+    // orphaned probe running on the main side.
+    const prev = get().testRequests[entry.id]
+    if (prev) void ipc.cancelRequest(prev)
+    const requestId = genId()
+    set({
+      health: { ...get().health, [entry.id]: { loading: true } },
+      testRequests: { ...get().testRequests, [entry.id]: requestId },
+    })
     try {
-      const result = await ipc.mcpHealthCheck(entry)
-      set({ health: { ...get().health, [entry.id]: result } })
+      const result = await ipc.mcpHealthCheck(entry, requestId)
+      // Drop a stale result if a newer test (or a cancel) superseded this one.
+      if (get().testRequests[entry.id] !== requestId) return
+      const testRequests = { ...get().testRequests }
+      delete testRequests[entry.id]
+      set({ health: { ...get().health, [entry.id]: result }, testRequests })
     } catch (err) {
+      if (get().testRequests[entry.id] !== requestId) return
       const health = { ...get().health }
       delete health[entry.id]
-      set({ health })
+      const testRequests = { ...get().testRequests }
+      delete testRequests[entry.id]
+      set({ health, testRequests })
       reportError(err, { title: "Couldn't test MCP server" })
     }
+  },
+
+  cancelTests: () => {
+    const { testRequests, health } = get()
+    for (const requestId of Object.values(testRequests)) {
+      void ipc.cancelRequest(requestId)
+    }
+    // Clear the in-progress spinners; settled results stay as-is.
+    const nextHealth: Record<string, McpHealthState> = {}
+    for (const [id, state] of Object.entries(health)) {
+      if (!('loading' in state)) nextHealth[id] = state
+    }
+    set({ testRequests: {}, health: nextHealth })
   },
 }))
 

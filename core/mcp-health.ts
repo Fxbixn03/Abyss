@@ -23,6 +23,7 @@ interface JsonRpcMessage {
 function checkStdio(
   entry: McpServerEntry,
   start: number,
+  signal?: AbortSignal,
 ): Promise<McpHealthResult> {
   return new Promise((resolve) => {
     if (!entry.command) {
@@ -45,12 +46,25 @@ function checkStdio(
       if (settled) return
       settled = true
       clearTimeout(timer)
+      signal?.removeEventListener('abort', onAbort)
       try {
         child.kill('SIGTERM')
       } catch {
         // ignore
       }
       resolve({ ...r, durationMs: Date.now() - start })
+    }
+
+    // External cancellation (renderer navigated away / re-tested): kill the
+    // child instead of leaving an orphaned process running.
+    const onAbort = () =>
+      finish({ ok: false, tools: [], error: 'Cancelled.', durationMs: 0 })
+    if (signal) {
+      if (signal.aborted) {
+        onAbort()
+        return
+      }
+      signal.addEventListener('abort', onAbort, { once: true })
     }
 
     const timer = setTimeout(
@@ -157,12 +171,15 @@ function checkStdio(
 async function checkHttp(
   entry: McpServerEntry,
   start: number,
+  signal?: AbortSignal,
 ): Promise<McpHealthResult> {
   if (!entry.url) {
     return { ok: false, tools: [], error: 'No URL set.', durationMs: 0 }
   }
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), HTTP_TIMEOUT_MS)
+  // Fold external cancellation into the same signal we hand to fetch.
+  signal?.addEventListener('abort', () => controller.abort(), { once: true })
   try {
     const res = await fetch(entry.url, {
       method: 'POST',
@@ -203,9 +220,10 @@ async function checkHttp(
 
 export async function checkMcpHealth(
   entry: McpServerEntry,
+  signal?: AbortSignal,
 ): Promise<McpHealthResult> {
   const start = Date.now()
   return entry.type === 'stdio'
-    ? checkStdio(entry, start)
-    : checkHttp(entry, start)
+    ? checkStdio(entry, start, signal)
+    : checkHttp(entry, start, signal)
 }
