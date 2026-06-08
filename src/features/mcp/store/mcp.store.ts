@@ -2,7 +2,8 @@ import { create } from 'zustand'
 import type { AgentId } from '@/shared/types/agent'
 import type { McpHealthResult, McpServerEntry } from '@/shared/types/config'
 import { ipc } from '@/shared/ipc/ipc.client'
-import { reportError } from '@/shared/lib/errors'
+import { reportError, isConfigParseError } from '@/shared/lib/errors'
+import type { ConfigParseInfo } from '@/shared/lib/errors'
 
 export type McpHealthState = { loading: true } | McpHealthResult
 
@@ -14,6 +15,8 @@ interface McpState {
   servers: McpServerEntry[]
   loading: boolean
   saving: boolean
+  /** Set when the config file on disk is corrupt → renderer offers a repair. */
+  parseError: ConfigParseInfo | null
   /** Last "test connection" result per server id. */
   health: Record<string, McpHealthState>
 
@@ -35,10 +38,11 @@ export const useMcpStore = create<McpState>()((set, get) => ({
   servers: [],
   loading: false,
   saving: false,
+  parseError: null,
   health: {},
 
   load: async (agentId, basePath, projectDir) => {
-    set({ agentId, basePath, projectDir, loading: true })
+    set({ agentId, basePath, projectDir, loading: true, parseError: null })
     try {
       const servers = await ipc.getMcpServers(agentId, basePath, projectDir)
       if (
@@ -50,11 +54,18 @@ export const useMcpStore = create<McpState>()((set, get) => ({
       }
       set({ servers, loading: false })
     } catch (err) {
-      // Only clear the spinner if this load is still the current one.
-      if (get().basePath === basePath && get().agentId === agentId) {
-        set({ loading: false })
+      // Only act if this load is still the current one.
+      const current = get().basePath === basePath && get().agentId === agentId
+      if (isConfigParseError(err)) {
+        // A corrupt file isn't a transient failure — show the repair banner
+        // instead of a toast that vanishes.
+        if (current) {
+          set({ loading: false, servers: [], parseError: { message: err.message, filePath: err.filePath } })
+        }
+      } else {
+        if (current) set({ loading: false })
+        reportError(err, { title: "Couldn't load MCP servers" })
       }
-      reportError(err, { title: "Couldn't load MCP servers" })
     }
   },
 

@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select'
 import { KeyValueEditor } from '@/shared/components/KeyValueEditor'
+import { mcpServerSchema, fieldErrors } from '@/shared/schemas/config.schemas'
 
 type McpType = McpServerEntry['type']
 
@@ -58,12 +59,12 @@ export function McpServerForm({
   }
 
   const isStdio = draft.type === 'stdio'
-  const canSubmit =
-    draft.name.trim() !== '' &&
-    (isStdio ? Boolean(draft.command?.trim()) : Boolean(draft.url?.trim()))
+  const parsed = mcpServerSchema.safeParse({ ...draft, name: draft.name.trim() })
+  const errors = parsed.success ? {} : fieldErrors(parsed.error)
+  const canSubmit = parsed.success
 
   const submit = () => {
-    if (!canSubmit) return
+    if (!parsed.success) return
     onSubmit({ ...draft, name: draft.name.trim() })
     onOpenChange(false)
   }
@@ -149,6 +150,9 @@ export function McpServerForm({
                 placeholder="https://example.com/mcp"
                 className="font-code"
               />
+              {errors.url && (draft.url ?? '').trim() !== '' && (
+                <p className="text-xs text-destructive">{errors.url}</p>
+              )}
             </div>
           )}
 

@@ -4,6 +4,7 @@ import type { McpServerEntry } from '@/shared/types/config'
 import { Button } from '@/shared/components/ui/button'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
+import { ConfigCorruptBanner } from '@/shared/components/ConfigCorruptBanner'
 import { Icon } from '@/shared/components/Icon'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import {
@@ -23,6 +24,7 @@ export function McpPage() {
 
   const servers = useMcpStore((s) => s.servers)
   const loading = useMcpStore((s) => s.loading)
+  const parseError = useMcpStore((s) => s.parseError)
   const health = useMcpStore((s) => s.health)
   const load = useMcpStore((s) => s.load)
   const upsert = useMcpStore((s) => s.upsert)
@@ -107,6 +109,11 @@ export function McpPage() {
               Open Settings
             </Button>
           }
+        />
+      ) : parseError ? (
+        <ConfigCorruptBanner
+          info={parseError}
+          onRetry={() => void load(agent.id, basePath, projectDir)}
         />
       ) : loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>

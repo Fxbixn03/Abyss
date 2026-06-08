@@ -19,6 +19,12 @@ export function isConfigParseError(err: unknown): err is IpcError {
   return err instanceof IpcError && err.code === IpcErrorCode.ConfigParse
 }
 
+/** Minimal info a store keeps about a corrupt config file, for the repair UI. */
+export interface ConfigParseInfo {
+  message: string
+  filePath?: string
+}
+
 export interface ReportErrorOptions {
   /** Short context shown as the toast title, e.g. "Couldn't save MCP servers". */
   title?: string

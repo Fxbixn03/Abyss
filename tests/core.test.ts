@@ -33,11 +33,42 @@ import {
 } from '@core/snapshots'
 import { blocksFromAnthropicContent } from '@core/chat/normalize'
 import { parseFrontmatter } from '@core/frontmatter'
+import { readJsonFile } from '@core/json-file'
+import { ConfigParseError } from '@core/config-error'
+import { SettingsStore } from '@core/settings-store'
 import type { McpServerEntry } from '@/shared/types/config'
 
 async function tmp(prefix: string): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), prefix))
 }
+
+test('readJsonFile throws a typed ConfigParseError on corrupt JSON', async () => {
+  const base = await tmp('abyss-corrupt-')
+  const file = path.join(base, 'broken.json')
+  await fs.writeFile(file, '{ "a": 1, oops', 'utf8')
+  await assert.rejects(readJsonFile(file, {}), (err: unknown) => {
+    assert.ok(err instanceof ConfigParseError)
+    assert.equal((err as ConfigParseError).code, 'CONFIG_PARSE_ERROR')
+    assert.equal((err as ConfigParseError).filePath, file)
+    return true
+  })
+  await fs.rm(base, { recursive: true, force: true })
+})
+
+test('SettingsStore degrades a partly-corrupt settings file to defaults', async () => {
+  const base = await tmp('abyss-settings-')
+  const file = path.join(base, 'settings.json')
+  // confirmDiffBeforeSave has the wrong type; backupKeep is valid.
+  await fs.writeFile(
+    file,
+    JSON.stringify({ confirmDiffBeforeSave: 'nope', backupKeep: 7 }),
+    'utf8',
+  )
+  const settings = await new SettingsStore(file).read()
+  assert.equal(settings.confirmDiffBeforeSave, true) // fell back to default
+  assert.equal(settings.backupKeep, 7) // valid value preserved
+  await fs.rm(base, { recursive: true, force: true })
+})
 
 test('zip writer/reader round-trip (STORED)', () => {
   const buf = writeZip([

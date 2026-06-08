@@ -4,7 +4,9 @@
 
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
+import type { ZodType } from 'zod'
 import { recordSnapshot } from './snapshots'
+import { ConfigParseError, ConfigValidationError } from './config-error'
 
 export async function pathExists(p: string): Promise<boolean> {
   try {
@@ -41,11 +43,39 @@ export async function writeTextFileAtomic(
   await fs.rename(tmp, p)
 }
 
-export async function readJsonFile<T>(p: string, fallback: T): Promise<T> {
+/**
+ * Read and parse a JSON config file. A missing or empty file yields `fallback`.
+ *
+ * Malformed JSON throws a typed {@link ConfigParseError} (carrying the path) so
+ * the renderer can offer the raw-text repair flow instead of surfacing an
+ * opaque `SyntaxError`. When a zod `schema` is given the parsed value is
+ * validated, replacing the previous unchecked `as T` cast; a schema mismatch
+ * throws {@link ConfigValidationError}.
+ */
+export async function readJsonFile<T>(
+  p: string,
+  fallback: T,
+  schema?: ZodType<T>,
+): Promise<T> {
   if (!(await pathExists(p))) return fallback
   const raw = await readTextFile(p)
   if (raw.trim() === '') return fallback
-  return JSON.parse(raw) as T
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch (err) {
+    throw new ConfigParseError(p, err)
+  }
+
+  if (schema) {
+    const result = schema.safeParse(parsed)
+    if (!result.success) {
+      throw new ConfigValidationError(p, result.error.message, result.error)
+    }
+    return result.data
+  }
+  return parsed as T
 }
 
 export async function writeJsonFile(p: string, value: unknown): Promise<void> {
