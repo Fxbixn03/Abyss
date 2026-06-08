@@ -1,4 +1,4 @@
-/** Minimal LCS-based line diff for the side-by-side instructions comparison. */
+/** Minimal LCS-based line diff, shared by the Compare and History views. */
 
 export interface DiffRow {
   left?: string

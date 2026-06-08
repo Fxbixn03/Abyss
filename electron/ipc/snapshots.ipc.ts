@@ -3,6 +3,7 @@ import {
   listSnapshots,
   listRecentSnapshots,
   readSnapshot,
+  readSnapshotTarget,
   restoreSnapshot,
 } from '@core/snapshots'
 import { handle } from './handle'
@@ -13,5 +14,8 @@ export function registerSnapshotsIpc(): void {
     listRecentSnapshots(limit),
   )
   handle(IpcChannel.SnapshotRead, ({ id }) => readSnapshot(id))
+  handle(IpcChannel.SnapshotCurrent, async ({ id }) => ({
+    content: await readSnapshotTarget(id),
+  }))
   handle(IpcChannel.SnapshotRestore, ({ id }) => restoreSnapshot(id))
 }

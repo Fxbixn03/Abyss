@@ -334,6 +334,7 @@ export const ipc = {
   listRecentSnapshots: (limit?: number) =>
     invoke(IpcChannel.SnapshotListRecent, { limit }),
   readSnapshot: (id: string) => invoke(IpcChannel.SnapshotRead, { id }),
+  snapshotCurrent: (id: string) => invoke(IpcChannel.SnapshotCurrent, { id }),
   restoreSnapshot: (id: string) => invoke(IpcChannel.SnapshotRestore, { id }),
 
   // --- Bundles --------------------------------------------------------------

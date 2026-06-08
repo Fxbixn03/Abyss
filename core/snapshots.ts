@@ -190,6 +190,21 @@ export async function readSnapshot(
 }
 
 /**
+ * Read the *current* on-disk content of a snapshot's original file, so the UI
+ * can diff "what's live now" against the snapshot before restoring. Returns null
+ * when the original path is unknown or the file no longer exists.
+ */
+export async function readSnapshotTarget(id: string): Promise<string | null> {
+  const resolved = resolveSnapshot(id)
+  if (!resolved || !config) return null
+  const originalPath = await readOriginalPath(
+    path.join(config.root, resolved.hash),
+  )
+  if (!originalPath) return null
+  return fs.readFile(originalPath, 'utf8').catch(() => null)
+}
+
+/**
  * Restore a snapshot back onto its original file. The current content is itself
  * snapshotted first, so a restore can be undone. Returns the restored path.
  */

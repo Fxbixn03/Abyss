@@ -166,6 +166,7 @@ export enum IpcChannel {
   SnapshotList = 'snapshot:list',
   SnapshotListRecent = 'snapshot:list-recent',
   SnapshotRead = 'snapshot:read',
+  SnapshotCurrent = 'snapshot:current',
   SnapshotRestore = 'snapshot:restore',
 
   // Bundles (portable config export / apply)
@@ -581,6 +582,10 @@ export interface IpcMap {
   [IpcChannel.SnapshotRead]: {
     request: { id: string }
     response: SnapshotContent | null
+  }
+  [IpcChannel.SnapshotCurrent]: {
+    request: { id: string }
+    response: { content: string | null }
   }
   [IpcChannel.SnapshotRestore]: {
     request: { id: string }

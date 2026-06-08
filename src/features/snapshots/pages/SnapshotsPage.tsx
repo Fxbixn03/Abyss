@@ -6,8 +6,12 @@ import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
 import { Icon } from '@/shared/components/Icon'
+import { LineDiffView } from '@/shared/components/LineDiffView'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
+
+type ViewMode = 'file' | 'timeline'
+type DetailView = 'content' | 'diff'
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime()
@@ -26,11 +30,46 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+/** Small two-option segmented control. */
+function Segmented<T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T
+  options: { value: T; label: string; icon: string }[]
+  onChange: (v: T) => void
+}) {
+  return (
+    <div className="flex items-center rounded-md border border-border p-0.5">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            'flex items-center gap-1.5 rounded px-2.5 py-1 text-xs transition-colors',
+            value === opt.value
+              ? 'bg-accent text-foreground'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          <Icon name={opt.icon} className="size-3.5" />
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function SnapshotsPage() {
   const [snapshots, setSnapshots] = useState<SnapshotMeta[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>('file')
   const [selected, setSelected] = useState<SnapshotContent | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [current, setCurrent] = useState<string | null>(null)
+  const [detailView, setDetailView] = useState<DetailView>('content')
   const [confirmRestore, setConfirmRestore] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -65,8 +104,13 @@ export function SnapshotsPage() {
   const open = async (id: string) => {
     setSelectedId(id)
     setSelected(null)
-    const content = await ipc.readSnapshot(id)
+    setCurrent(null)
+    const [content, live] = await Promise.all([
+      ipc.readSnapshot(id),
+      ipc.snapshotCurrent(id),
+    ])
     setSelected(content)
+    setCurrent(live.content)
   }
 
   const restore = async () => {
@@ -79,6 +123,9 @@ export function SnapshotsPage() {
     }
   }
 
+  /** A snapshot is identical to what's on disk now → nothing to restore. */
+  const unchanged = selected != null && current === selected.content
+
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
@@ -86,10 +133,20 @@ export function SnapshotsPage() {
         description="Automatic snapshots taken before every config save"
         icon="history"
         actions={
-          <Button variant="outline" onClick={() => void refresh()}>
-            <Icon name="refresh-cw" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Segmented
+              value={viewMode}
+              onChange={setViewMode}
+              options={[
+                { value: 'file', label: 'By file', icon: 'file-text' },
+                { value: 'timeline', label: 'Timeline', icon: 'clock' },
+              ]}
+            />
+            <Button variant="outline" onClick={() => void refresh()}>
+              <Icon name="refresh-cw" />
+              Refresh
+            </Button>
+          </div>
         }
       />
 
@@ -121,7 +178,7 @@ export function SnapshotsPage() {
           <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
             {!loaded ? (
               <p className="px-1 text-sm text-muted-foreground">Loading…</p>
-            ) : (
+            ) : viewMode === 'file' ? (
               groups.map(([path, items]) => (
                 <div key={path} className="flex flex-col gap-1">
                   <p className="flex items-center gap-1.5 px-1 text-xs font-medium">
@@ -137,35 +194,28 @@ export function SnapshotsPage() {
                   <p className="truncate px-1 font-code text-[10px] text-muted-foreground/60">
                     {path}
                   </p>
-                  {items.map((s) => {
-                    const active = s.id === selectedId
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => void open(s.id)}
-                        className={cn(
-                          'flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors',
-                          active
-                            ? 'border-primary/50 bg-accent'
-                            : 'border-transparent hover:bg-accent/60',
-                        )}
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <Icon
-                            name="clock"
-                            className="size-3 text-muted-foreground"
-                          />
-                          {relativeTime(s.timestamp)}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {formatBytes(s.sizeBytes)}
-                        </span>
-                      </button>
-                    )
-                  })}
+                  {items.map((s) => (
+                    <SnapshotButton
+                      key={s.id}
+                      snap={s}
+                      active={s.id === selectedId}
+                      onClick={() => void open(s.id)}
+                    />
+                  ))}
                 </div>
               ))
+            ) : (
+              <div className="flex flex-col gap-1">
+                {snapshots.map((s) => (
+                  <SnapshotButton
+                    key={s.id}
+                    snap={s}
+                    active={s.id === selectedId}
+                    showFile
+                    onClick={() => void open(s.id)}
+                  />
+                ))}
+              </div>
             )}
           </aside>
 
@@ -174,7 +224,7 @@ export function SnapshotsPage() {
               <EmptyState
                 icon="history"
                 title="No snapshot selected"
-                description="Pick a snapshot to preview its contents and restore it."
+                description="Pick a snapshot to preview its contents, diff it against the live file, and restore it."
               />
             ) : (
               <div className="flex min-h-0 flex-1 flex-col">
@@ -185,10 +235,23 @@ export function SnapshotsPage() {
                     </p>
                     <p className="truncate font-code text-xs text-muted-foreground">
                       {relativeTime(selected.meta.timestamp)} ·{' '}
-                      {formatBytes(selected.meta.sizeBytes)}
+                      {formatBytes(selected.meta.sizeBytes)} ·{' '}
+                      {unchanged ? 'matches the live file' : 'differs from live'}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
+                    <Segmented
+                      value={detailView}
+                      onChange={setDetailView}
+                      options={[
+                        {
+                          value: 'content',
+                          label: 'Content',
+                          icon: 'file-text',
+                        },
+                        { value: 'diff', label: 'Diff', icon: 'git-compare' },
+                      ]}
+                    />
                     <Button
                       variant="ghost"
                       size="sm"
@@ -199,15 +262,30 @@ export function SnapshotsPage() {
                       <Icon name="folder-open" />
                       Reveal
                     </Button>
-                    <Button size="sm" onClick={() => setConfirmRestore(true)}>
+                    <Button
+                      size="sm"
+                      disabled={unchanged}
+                      onClick={() => setConfirmRestore(true)}
+                    >
                       <Icon name="rotate-ccw" />
                       Restore
                     </Button>
                   </div>
                 </div>
-                <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words p-4 font-code text-xs leading-relaxed">
-                  {selected.content || '(empty file)'}
-                </pre>
+                {detailView === 'diff' ? (
+                  <div className="min-h-0 flex-1 overflow-auto p-3">
+                    <LineDiffView
+                      a={current ?? ''}
+                      b={selected.content}
+                      leftLabel="Current (on disk)"
+                      rightLabel="This snapshot"
+                    />
+                  </div>
+                ) : (
+                  <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words p-4 font-code text-xs leading-relaxed">
+                    {selected.content || '(empty file)'}
+                  </pre>
+                )}
               </div>
             )}
           </section>
@@ -224,5 +302,46 @@ export function SnapshotsPage() {
         onConfirm={() => void restore()}
       />
     </div>
+  )
+}
+
+function SnapshotButton({
+  snap,
+  active,
+  showFile,
+  onClick,
+}: {
+  snap: SnapshotMeta
+  active: boolean
+  showFile?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors',
+        active
+          ? 'border-primary/50 bg-accent'
+          : 'border-transparent hover:bg-accent/60',
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-1.5">
+        <Icon
+          name={showFile ? 'file-text' : 'clock'}
+          className="size-3 shrink-0 text-muted-foreground"
+        />
+        <span className="flex min-w-0 flex-col">
+          {showFile && <span className="truncate">{snap.fileName}</span>}
+          <span className={cn(showFile && 'text-muted-foreground')}>
+            {relativeTime(snap.timestamp)}
+          </span>
+        </span>
+      </span>
+      <span className="shrink-0 text-muted-foreground">
+        {formatBytes(snap.sizeBytes)}
+      </span>
+    </button>
   )
 }

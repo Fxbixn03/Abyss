@@ -24,7 +24,7 @@ import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useAllAgents } from '@/features/agents/hooks/useActiveAgent'
 import { AgentGlyph } from '@/features/agents/components/AgentGlyph'
-import { lineDiff } from '../lib/lineDiff'
+import { LineDiffView } from '@/shared/components/LineDiffView'
 
 const SURFACES: SyncSurface[] = ['instructions', 'mcp', 'permissions']
 
@@ -74,31 +74,7 @@ function mcpSummary(s?: McpServerEntry): string {
 }
 
 function InstructionsDiff({ a, b }: { a: string; b: string }) {
-  const rows = lineDiff(a, b)
-  return (
-    <div className="overflow-auto rounded-md border border-border font-code text-xs">
-      {rows.map((r, i) => (
-        <div key={i} className="grid grid-cols-2">
-          <div
-            className={cn(
-              'whitespace-pre-wrap break-words border-r border-border px-2 py-0.5',
-              r.type === 'remove' && 'bg-destructive/10',
-            )}
-          >
-            {r.left ?? ''}
-          </div>
-          <div
-            className={cn(
-              'whitespace-pre-wrap break-words px-2 py-0.5',
-              r.type === 'add' && 'bg-success/10',
-            )}
-          >
-            {r.right ?? ''}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
+  return <LineDiffView a={a} b={b} />
 }
 
 function McpDiff({ a, b }: { a: McpServerEntry[]; b: McpServerEntry[] }) {
