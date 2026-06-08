@@ -7,7 +7,9 @@ import { Card } from '@/shared/components/ui/card'
 import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { Icon } from '@/shared/components/Icon'
+import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { estimateTokens, formatTokens } from '@/features/context/lib/tokens'
 
 function CommandSandbox() {
@@ -15,6 +17,10 @@ function CommandSandbox() {
   const [cwd, setCwd] = useState('')
   const [running, setRunning] = useState(false)
   const [result, setResult] = useState<SandboxRunResult | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
+  const acknowledged = useSettingsStore((s) => s.settings.sandboxAcknowledged)
+  const updatePrefs = useSettingsStore((s) => s.updatePrefs)
 
   const run = async () => {
     if (!command.trim()) return
@@ -25,6 +31,14 @@ function CommandSandbox() {
       .catch(() => null)
     setResult(r)
     setRunning(false)
+  }
+
+  // Gate the first-ever run behind an explicit confirmation that these commands
+  // execute on the real machine; the acknowledgment is persisted so we ask once.
+  const requestRun = () => {
+    if (!command.trim()) return
+    if (acknowledged) void run()
+    else setConfirmOpen(true)
   }
 
   return (
@@ -71,11 +85,24 @@ function CommandSandbox() {
           <Icon name="folder-open" />
           Pick
         </Button>
-        <Button onClick={() => void run()} disabled={running || !command.trim()}>
+        <Button onClick={requestRun} disabled={running || !command.trim()}>
           <Icon name={running ? 'loader' : 'play'} className={running ? 'animate-spin' : ''} />
           Run
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Run shell commands on this machine?"
+        description="The sandbox executes the command you enter directly on your computer with your account's permissions. Only run commands you trust, and prefer a throwaway working directory. You won't be asked again."
+        confirmLabel="I understand, run it"
+        onConfirm={() => {
+          setConfirmOpen(false)
+          void updatePrefs({ sandboxAcknowledged: true })
+          void run()
+        }}
+      />
 
       {result && (
         <div className="space-y-2">

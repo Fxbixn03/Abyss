@@ -87,6 +87,7 @@ export const appSettingsSchema = z
     autoBackup: z.boolean().optional().catch(undefined),
     backupDir: z.string().optional().catch(undefined),
     backupKeep: z.number().optional().catch(undefined),
+    sandboxAcknowledged: z.boolean().optional().catch(undefined),
   })
   .catch({})
 

@@ -94,6 +94,8 @@ export interface AppSettings {
   backupDir?: string
   /** How many most-recent backups to keep. */
   backupKeep: number
+  /** User confirmed (once) that the sandbox runs real shell commands. */
+  sandboxAcknowledged: boolean
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -107,6 +109,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   currency: 'usd',
   autoBackup: true,
   backupKeep: 3,
+  sandboxAcknowledged: false,
 }
 
 /** Auto-update lifecycle, pushed to the renderer as it progresses. */
