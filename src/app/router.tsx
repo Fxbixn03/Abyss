@@ -22,6 +22,7 @@ import { ContextPage } from '@/features/context/pages/ContextPage'
 import { ValidationPage } from '@/features/validation/pages/ValidationPage'
 import { DiscoverPage } from '@/features/discovery/pages/DiscoverPage'
 import { SandboxPage } from '@/features/sandbox/pages/SandboxPage'
+import { RelationsPage } from '@/features/relations/pages/RelationsPage'
 
 // Hash history works under Electron's file:// protocol in production.
 export const router = createHashRouter([
@@ -30,6 +31,7 @@ export const router = createHashRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <DashboardPage /> },
+      { path: 'relations', element: <RelationsPage /> },
       { path: 'config', element: <ConfigPage /> },
       { path: 'chats', element: <ChatsPage /> },
       { path: 'context', element: <ContextPage /> },

@@ -36,6 +36,7 @@ export const NAV_GROUPS: NavGroup[] = [
  */
 const ROUTE_GROUP: Record<string, NavGroupId> = {
   '/': 'overview',
+  '/relations': 'overview',
   '/config': 'development',
   '/agents': 'development',
   '/commands': 'development',
@@ -70,6 +71,13 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: 'layout-dashboard',
     route: '/',
     description: 'Overview, agents and usage',
+  },
+  {
+    id: 'relations',
+    label: 'Relations',
+    icon: 'waypoints',
+    route: '/relations',
+    description: 'Visualize how components connect',
   },
   {
     id: 'instructions',

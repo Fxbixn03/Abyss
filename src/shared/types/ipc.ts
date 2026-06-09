@@ -50,6 +50,7 @@ import type {
   DiscoverySearchResponse,
 } from '../discovery/types'
 import type { GlobalSearchResult } from '../search/types'
+import type { RelationGraph } from './relations'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
 
@@ -120,6 +121,9 @@ export enum IpcChannel {
   DuplicateCollectionItem = 'collection:duplicate',
   ExportCollectionItem = 'collection:export',
   ImportSkill = 'collection:import-skill',
+
+  // Relations map (component graph for one agent)
+  BuildRelationGraph = 'relations:build',
 
   // Codex custom subagents (TOML files in <base>/agents/)
   ListCodexSubagents = 'codex-subagents:list',
@@ -446,6 +450,11 @@ export interface IpcMap {
       onCollision: SkillCollisionMode
     }
     response: SkillImportResult
+  }
+
+  [IpcChannel.BuildRelationGraph]: {
+    request: { agentId: string; basePath: string; projectDir?: string }
+    response: RelationGraph
   }
 
   [IpcChannel.ListCodexSubagents]: {

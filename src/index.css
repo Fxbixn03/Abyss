@@ -130,6 +130,49 @@
   }
 }
 
+/*
+ * React Flow (Relations map). The library ships its own stylesheet; we rebind
+ * its surfaces to the runtime theme tokens so the graph reacts to theme switches
+ * with no reload and never hard-codes a color. Custom nodes are styled in their
+ * own component with Tailwind tokens.
+ */
+.react-flow {
+  --xy-edge-stroke-default: var(--border);
+  --xy-edge-stroke-selected-default: var(--primary);
+  --xy-connectionline-stroke-default: var(--primary);
+  --xy-node-border-default: var(--border);
+  --xy-attribution-background-color-default: transparent;
+}
+.react-flow__controls-button {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  color: var(--foreground);
+  fill: var(--foreground);
+}
+.react-flow__controls-button:hover {
+  background: var(--accent);
+}
+.react-flow__minimap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+/* Edge styling by confidence: structured solid, heuristic faint + dashed,
+   ownership very faint. */
+.rel-edge-structured .react-flow__edge-path {
+  stroke: var(--muted-foreground);
+  stroke-width: 1.5;
+}
+.rel-edge-heuristic .react-flow__edge-path {
+  stroke: var(--muted-foreground);
+  stroke-dasharray: 5 4;
+  opacity: 0.5;
+}
+.rel-edge-owns .react-flow__edge-path {
+  stroke: var(--border);
+  opacity: 0.4;
+}
+
 @utility font-code {
   font-family: var(--font-code);
 }

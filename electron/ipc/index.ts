@@ -3,6 +3,7 @@ import { registerFilesystemIpc } from './filesystem.ipc'
 import { registerAgentIpc } from './agent.ipc'
 import { registerConfigIpc } from './config.ipc'
 import { registerCollectionsIpc } from './collections.ipc'
+import { registerRelationsIpc } from './relations.ipc'
 import { registerCodexSubagentsIpc } from './codex-subagents.ipc'
 import { registerGeminiCommandsIpc } from './gemini-commands.ipc'
 import { registerChatIpc } from './chat.ipc'
@@ -21,6 +22,7 @@ export function registerIpcHandlers(ctx: IpcContext): void {
   registerAgentIpc(ctx)
   registerConfigIpc(ctx)
   registerCollectionsIpc(ctx)
+  registerRelationsIpc()
   registerCodexSubagentsIpc()
   registerGeminiCommandsIpc()
   registerChatIpc(ctx)

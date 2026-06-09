@@ -82,7 +82,7 @@ export const claudeDefinition: AgentDefinition = {
   displayName: 'Claude Code',
   defaultThemeId: 'claude-dusk',
   iconName: 'sparkles',
-  docsUrl: 'https://platform.claude.com/docs/en/managed-agents/overview',
+  docsUrl: 'https://code.claude.com/docs/en/overview',
   capabilities: {
     instructions: true,
     mcp: true,
@@ -259,7 +259,7 @@ export const windsurfDefinition: AgentDefinition = {
   displayName: 'Windsurf',
   defaultThemeId: 'windsurf-wave',
   iconName: 'wind',
-  docsUrl: 'https://docs.windsurf.com/windsurf/cascade/mcp',
+  docsUrl: 'https://docs.devin.ai/cli',
   capabilities: {
     instructions: true,
     mcp: true,
@@ -294,7 +294,7 @@ export const continueDefinition: AgentDefinition = {
   displayName: 'Continue',
   defaultThemeId: 'continue-loop',
   iconName: 'infinity',
-  docsUrl: 'https://docs.continue.dev/reference',
+  docsUrl: 'https://docs.continue.dev/cli/quickstart',
   capabilities: {
     instructions: true,
     mcp: false,
@@ -363,7 +363,7 @@ export const clineDefinition: AgentDefinition = {
   displayName: 'Cline',
   defaultThemeId: 'cline-night',
   iconName: 'bot',
-  docsUrl: 'https://docs.cline.bot/customization/cline-rules',
+  docsUrl: 'https://docs.cline.bot/cline-overview',
   capabilities: {
     instructions: true,
     mcp: false,

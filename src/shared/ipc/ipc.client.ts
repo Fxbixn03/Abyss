@@ -253,6 +253,10 @@ export const ipc = {
     onCollision: SkillCollisionMode,
   ) => invoke(IpcChannel.ImportSkill, { basePath, archivePath, onCollision }),
 
+  // --- Relations map --------------------------------------------------------
+  buildRelationGraph: (agentId: string, basePath: string, projectDir?: string) =>
+    invoke(IpcChannel.BuildRelationGraph, { agentId, basePath, projectDir }),
+
   // --- Codex custom subagents (TOML in <base>/agents/) ----------------------
   listCodexSubagents: (basePath: string) =>
     invoke(IpcChannel.ListCodexSubagents, { basePath }),
