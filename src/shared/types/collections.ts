@@ -27,6 +27,8 @@ export interface CollectionItem {
   alwaysApply?: boolean
   /** Absolute path of the underlying file. */
   path: string
+  /** File modification time (epoch millis), for "recently edited" sorting. */
+  mtime?: number
 }
 
 /** How to react when an imported skill's folder name already exists on disk. */

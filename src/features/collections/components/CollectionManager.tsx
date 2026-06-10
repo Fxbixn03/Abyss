@@ -77,7 +77,10 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
               </Button>
             )}
             {kind === 'agents' && (
-              <Button variant="outline" onClick={() => cm.setDiscoverOpen(true)}>
+              <Button
+                variant="outline"
+                onClick={() => cm.setDiscoverOpen(true)}
+              >
                 <Icon name="globe" />
                 Discover
               </Button>
@@ -92,12 +95,51 @@ export function CollectionManager({ kind, icon }: CollectionManagerProps) {
 
       <CollectionNotice cm={cm} />
 
-      <div className="grid min-h-0 flex-1 grid-cols-[260px_1fr] gap-4">
-        <CollectionList cm={cm} />
-        <section className="min-h-0 rounded-lg border border-border bg-card/40 p-4">
-          <CollectionEditor cm={cm} />
-        </section>
-      </div>
+      {cm.loaded && cm.items.length === 0 ? (
+        <EmptyState
+          icon={icon}
+          title={`No ${labels.plural.toLowerCase()} yet`}
+          description={
+            kind === 'agents'
+              ? `Create a ${labels.singular.toLowerCase()} from a scaffold, or discover one from a registry.`
+              : `Create your first ${labels.singular.toLowerCase()} to get started.`
+          }
+          action={
+            <div className="flex items-center gap-2">
+              <Button onClick={() => cm.setNewOpen(true)}>
+                <Icon name="file-plus" />
+                New {labels.singular}
+              </Button>
+              {kind === 'agents' && (
+                <Button
+                  variant="outline"
+                  onClick={() => cm.setDiscoverOpen(true)}
+                >
+                  <Icon name="globe" />
+                  Discover
+                </Button>
+              )}
+              {kind === 'skills' && (
+                <Button
+                  variant="outline"
+                  onClick={() => void cm.startImport()}
+                  disabled={cm.importing}
+                >
+                  <Icon name="download" />
+                  Import
+                </Button>
+              )}
+            </div>
+          }
+        />
+      ) : (
+        <div className="grid min-h-0 flex-1 grid-cols-[260px_1fr] gap-4">
+          <CollectionList cm={cm} />
+          <section className="min-h-0 rounded-lg border border-border bg-card/40 p-4">
+            <CollectionEditor cm={cm} />
+          </section>
+        </div>
+      )}
 
       <CollectionDialogs cm={cm} />
     </div>

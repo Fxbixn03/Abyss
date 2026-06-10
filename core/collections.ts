@@ -78,7 +78,10 @@ function itemFilePath(
 ): string {
   const safe = sanitizeId(id, kind)
   if (kind === 'skills') {
-    return path.join(skillFolderPath(collectionDir(agentId, basePath, 'skills'), safe), 'SKILL.md')
+    return path.join(
+      skillFolderPath(collectionDir(agentId, basePath, 'skills'), safe),
+      'SKILL.md',
+    )
   }
   return path.join(
     collectionDir(agentId, basePath, kind),
@@ -86,7 +89,11 @@ function itemFilePath(
   )
 }
 
-function summarize(id: string, filePath: string, content: string): CollectionItem {
+function summarize(
+  id: string,
+  filePath: string,
+  content: string,
+): CollectionItem {
   const { data } = parseFrontmatter(content)
   return {
     id,
@@ -113,7 +120,9 @@ async function listSkills(skillsDir: string): Promise<CollectionItem[]> {
     const skillFile = path.join(current, 'SKILL.md')
     if (current !== skillsDir && (await pathExists(skillFile))) {
       const id = path.relative(skillsDir, current).split(path.sep).join('/')
-      out.push(summarize(id, skillFile, await readTextFile(skillFile)))
+      const item = summarize(id, skillFile, await readTextFile(skillFile))
+      item.mtime = (await fs.stat(skillFile)).mtimeMs
+      out.push(item)
       return
     }
     const entries = await fs.readdir(current, { withFileTypes: true })
@@ -148,7 +157,9 @@ export async function listCollection(
       if (!entry.isFile() || !entry.name.toLowerCase().endsWith(ext)) continue
       const id = entry.name.slice(0, -ext.length)
       const filePath = path.join(dir, entry.name)
-      items.push(summarize(id, filePath, await readTextFile(filePath)))
+      const item = summarize(id, filePath, await readTextFile(filePath))
+      item.mtime = (await fs.stat(filePath)).mtimeMs
+      items.push(item)
     }
   }
 
@@ -207,9 +218,16 @@ export async function migrateCollectionItem(
     throw new Error(`A ${toKind} item named "${safeTo}" already exists.`)
   }
 
-  const { content } = await readCollectionItem(agentId, basePath, fromKind, safeFrom)
+  const { content } = await readCollectionItem(
+    agentId,
+    basePath,
+    fromKind,
+    safeFrom,
+  )
   if (!content.trim()) {
-    throw new Error(`The ${fromKind} item "${safeFrom}" has no content to migrate.`)
+    throw new Error(
+      `The ${fromKind} item "${safeFrom}" has no content to migrate.`,
+    )
   }
 
   await writeCollectionItem(agentId, basePath, toKind, safeTo, content)
@@ -229,7 +247,9 @@ export async function deleteCollectionItem(
     // A skill is a folder; remove it (and its references) entirely.
     await fs.rm(skillFolderPath(dir, safe), { recursive: true, force: true })
   } else {
-    await fs.rm(path.join(dir, `${safe}${collectionExt(kind)}`), { force: true })
+    await fs.rm(path.join(dir, `${safe}${collectionExt(kind)}`), {
+      force: true,
+    })
   }
   return { success: true }
 }

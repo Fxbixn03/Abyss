@@ -22,6 +22,15 @@ export interface CollectionNotice {
   message: string
 }
 
+/** Ordering for the item list. */
+export type CollectionSort = 'name' | 'model' | 'recent'
+
+export const COLLECTION_SORTS: { id: CollectionSort; label: string }[] = [
+  { id: 'name', label: 'Name' },
+  { id: 'model', label: 'Model' },
+  { id: 'recent', label: 'Recently edited' },
+]
+
 interface SkillCollision {
   archivePath: string
   existingId: string
@@ -71,6 +80,7 @@ export function useCollectionManager(kind: CollectionKind, icon: string) {
     null,
   )
   const [query, setQuery] = useState('')
+  const [sortBy, setSortBy] = useState<CollectionSort>('name')
   const [externalChanged, setExternalChanged] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
@@ -308,7 +318,13 @@ export function useCollectionManager(kind: CollectionKind, icon: string) {
     let moved = 0
     for (const id of ids) {
       try {
-        await ipc.migrateCollectionItem(agentId, basePath, kind, migrateKind, id)
+        await ipc.migrateCollectionItem(
+          agentId,
+          basePath,
+          kind,
+          migrateKind,
+          id,
+        )
         moved += 1
       } catch {
         // skip items that can't migrate (e.g. name clash)
@@ -350,7 +366,13 @@ export function useCollectionManager(kind: CollectionKind, icon: string) {
     if (!basePath || !migrateKind) return
     setNotice(null)
     try {
-      await ipc.migrateCollectionItem(agentId, basePath, kind, migrateKind, item.id)
+      await ipc.migrateCollectionItem(
+        agentId,
+        basePath,
+        kind,
+        migrateKind,
+        item.id,
+      )
       if (selectedId === item.id) {
         setSelectedId(null)
         setOriginal('')
@@ -424,7 +446,7 @@ export function useCollectionManager(kind: CollectionKind, icon: string) {
   const selectedItem = items.find((i) => i.id === selectedId) ?? null
 
   const q = query.trim().toLowerCase()
-  const filtered = q
+  const matched = q
     ? items.filter(
         (i) =>
           i.id.toLowerCase().includes(q) ||
@@ -432,6 +454,14 @@ export function useCollectionManager(kind: CollectionKind, icon: string) {
           (i.description ?? '').toLowerCase().includes(q),
       )
     : items
+  const filtered = [...matched].sort((a, b) => {
+    if (sortBy === 'recent') return (b.mtime ?? 0) - (a.mtime ?? 0)
+    if (sortBy === 'model') {
+      const cmp = (a.model ?? '').localeCompare(b.model ?? '')
+      if (cmp !== 0) return cmp
+    }
+    return a.name.localeCompare(b.name)
+  })
 
   return {
     // Identity / capabilities
@@ -454,6 +484,8 @@ export function useCollectionManager(kind: CollectionKind, icon: string) {
     setSelectedId,
     selectedItem,
     requestSelect,
+    sortBy,
+    setSortBy,
     selected,
     toggleSelected,
     clearSelected,

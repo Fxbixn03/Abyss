@@ -9,10 +9,19 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from '@/shared/components/ui/context-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
-import type { CollectionController } from '../hooks/useCollectionManager'
+import {
+  COLLECTION_SORTS,
+  type CollectionController,
+} from '../hooks/useCollectionManager'
 
 /** Left rail: filter, bulk-selection bar and the selectable item list. */
 export function CollectionList({ cm }: { cm: CollectionController }) {
@@ -21,11 +30,33 @@ export function CollectionList({ cm }: { cm: CollectionController }) {
   return (
     <aside className="flex min-h-0 flex-col gap-2">
       {cm.items.length > 0 && (
-        <Input
-          value={cm.query}
-          onChange={(e) => cm.setQuery(e.target.value)}
-          placeholder={`Filter ${labels.plural.toLowerCase()}…`}
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            value={cm.query}
+            onChange={(e) => cm.setQuery(e.target.value)}
+            placeholder={`Filter ${labels.plural.toLowerCase()}…`}
+            className="flex-1"
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon-sm" title="Sort">
+                <Icon name="arrow-up-down" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {COLLECTION_SORTS.map((s) => (
+                <DropdownMenuItem key={s.id} onClick={() => cm.setSortBy(s.id)}>
+                  {cm.sortBy === s.id ? (
+                    <Icon name="check" />
+                  ) : (
+                    <span className="size-4" />
+                  )}
+                  {s.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       )}
       {cm.selected.size > 0 && (
         <div className="flex items-center gap-1 rounded-md border border-primary/40 bg-accent px-2 py-1 text-xs">

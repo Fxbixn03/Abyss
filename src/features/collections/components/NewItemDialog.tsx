@@ -12,7 +12,16 @@ import {
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
+import { Icon } from '@/shared/components/Icon'
+import { cn } from '@/shared/lib/utils'
 import type { NewItemValues } from '../lib/templates'
+import {
+  KNOWN_TOOLS,
+  MODEL_SUGGESTIONS,
+  parseToolList,
+  joinToolList,
+} from '../lib/tools'
+import { SUBAGENT_SCAFFOLDS } from '../lib/subagentScaffolds'
 
 const ID_RE = /^[A-Za-z0-9._-]+$/
 
@@ -39,6 +48,8 @@ export function NewItemDialog({
   const [description, setDescription] = useState('')
   const [model, setModel] = useState('sonnet')
   const [tools, setTools] = useState('')
+  const [body, setBody] = useState('')
+  const [scaffold, setScaffold] = useState('blank')
 
   // Re-seed fields each time the dialog opens.
   const [seeded, setSeeded] = useState(false)
@@ -47,9 +58,40 @@ export function NewItemDialog({
     setDescription('')
     setModel('sonnet')
     setTools('')
+    setBody('')
+    setScaffold('blank')
     setSeeded(true)
   }
   if (!open && seeded) setSeeded(false)
+
+  const applyScaffold = (scaffoldId: string) => {
+    setScaffold(scaffoldId)
+    const s = SUBAGENT_SCAFFOLDS.find((x) => x.id === scaffoldId)
+    if (!s) return
+    if (s.id !== 'blank') {
+      if (id.trim() === '') setId(s.suggestedId)
+      setDescription(s.description)
+      setModel(s.model)
+      setTools(s.tools)
+      setBody(s.body)
+    } else {
+      setBody('')
+    }
+  }
+
+  const toolList = parseToolList(tools)
+  const toolChips = [
+    ...KNOWN_TOOLS,
+    ...toolList.filter((t) => !KNOWN_TOOLS.includes(t)),
+  ]
+  const toggleTool = (t: string) =>
+    setTools(
+      joinToolList(
+        toolList.includes(t)
+          ? toolList.filter((x) => x !== t)
+          : [...toolList, t],
+      ),
+    )
 
   const idError =
     id.trim() === ''
@@ -69,18 +111,42 @@ export function NewItemDialog({
       description,
       model: kind === 'agents' ? model : undefined,
       tools: kind === 'agents' ? tools : undefined,
+      body: kind === 'agents' ? body : undefined,
     })
     onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[88vh] max-w-md overflow-y-auto">
         <DialogHeader>
           <DialogTitle>New {labels.singular}</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
+          {kind === 'agents' && (
+            <div className="space-y-1.5">
+              <Label>Start from</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {SUBAGENT_SCAFFOLDS.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => applyScaffold(s.id)}
+                    className={cn(
+                      'rounded-full border px-2.5 py-0.5 text-xs transition-colors',
+                      scaffold === s.id
+                        ? 'border-primary/50 bg-accent text-foreground'
+                        : 'border-border text-muted-foreground hover:bg-accent/60',
+                    )}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label htmlFor="item-id">
               {kind === 'skills' ? 'Folder name / id' : 'File name / id'}
@@ -107,28 +173,56 @@ export function NewItemDialog({
           </div>
 
           {kind === 'agents' && (
-            <div className="grid grid-cols-2 gap-3">
+            <>
               <div className="space-y-1.5">
                 <Label htmlFor="item-model">Model</Label>
                 <Input
                   id="item-model"
+                  list="new-model-options"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  placeholder="sonnet"
+                  placeholder="inherit"
                   className="font-code"
                 />
+                <datalist id="new-model-options">
+                  {MODEL_SUGGESTIONS.map((m) => (
+                    <option key={m} value={m} />
+                  ))}
+                </datalist>
               </div>
+
               <div className="space-y-1.5">
-                <Label htmlFor="item-tools">Tools</Label>
-                <Input
-                  id="item-tools"
-                  value={tools}
-                  onChange={(e) => setTools(e.target.value)}
-                  placeholder="Read, Grep, Bash"
-                  className="font-code"
-                />
+                <div className="flex items-center justify-between">
+                  <Label>Tools</Label>
+                  {toolList.length === 0 && (
+                    <span className="text-[11px] text-muted-foreground">
+                      Empty = inherit all
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {toolChips.map((t) => {
+                    const on = toolList.includes(t)
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => toggleTool(t)}
+                        className={cn(
+                          'flex items-center gap-1 rounded-full border px-2 py-0.5 font-code text-xs transition-colors',
+                          on
+                            ? 'border-primary/50 bg-accent text-foreground'
+                            : 'border-border text-muted-foreground hover:bg-accent/60',
+                        )}
+                      >
+                        {on && <Icon name="check" className="size-3" />}
+                        {t}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
 

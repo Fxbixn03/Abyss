@@ -27,6 +27,8 @@ export interface ConfigEditorProps {
   language: ConfigLanguage
   onChange: (value: string) => void
   readOnly?: boolean
+  /** Receives the CodeMirror view so callers can scroll/jump programmatically. */
+  onCreateEditor?: (view: EditorView) => void
 }
 
 export function ConfigEditor({
@@ -34,6 +36,7 @@ export function ConfigEditor({
   language,
   onChange,
   readOnly = false,
+  onCreateEditor,
 }: ConfigEditorProps) {
   const appearance = useThemeStore((s) => s.appearance)
   const extensions = useMemo(
@@ -46,6 +49,7 @@ export function ConfigEditor({
       <CodeMirror
         value={value}
         onChange={onChange}
+        onCreateEditor={onCreateEditor}
         extensions={extensions}
         theme={appearance === 'dark' ? oneDark : 'light'}
         height="100%"

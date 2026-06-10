@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { EditorView } from '@codemirror/view'
 import type { ConfigLanguage } from '@/shared/types/agent'
 import { Markdown } from '@/shared/components/Markdown'
 import { cn } from '@/shared/lib/utils'
@@ -15,10 +16,12 @@ export function MarkdownEditor({
   value,
   language,
   onChange,
+  onCreateEditor,
 }: {
   value: string
   language: ConfigLanguage
   onChange: (value: string) => void
+  onCreateEditor?: (view: EditorView) => void
 }) {
   const [mode, setMode] = useState<Mode>('edit')
   const editorPaneRef = useRef<HTMLDivElement>(null)
@@ -58,7 +61,12 @@ export function MarkdownEditor({
 
   if (language !== 'markdown') {
     return (
-      <ConfigEditor value={value} language={language} onChange={onChange} />
+      <ConfigEditor
+        value={value}
+        language={language}
+        onChange={onChange}
+        onCreateEditor={onCreateEditor}
+      />
     )
   }
 
@@ -93,6 +101,7 @@ export function MarkdownEditor({
               value={value}
               language={language}
               onChange={onChange}
+              onCreateEditor={onCreateEditor}
             />
           </div>
         )}

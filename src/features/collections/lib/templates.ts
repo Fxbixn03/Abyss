@@ -6,6 +6,8 @@ export interface NewItemValues {
   description: string
   model?: string
   tools?: string
+  /** Optional prebuilt body (e.g. from a subagent scaffold). */
+  body?: string
 }
 
 /** Build the initial file content (frontmatter + body) for a new item. */
@@ -27,13 +29,22 @@ export function buildTemplate(kind: CollectionKind, v: NewItemValues): string {
     ].join('\n')
   }
 
-  const front: string[] = ['---', `name: ${name}`, `description: ${v.description}`]
+  const front: string[] = [
+    '---',
+    `name: ${name}`,
+    `description: ${v.description}`,
+  ]
 
   if (kind === 'agents') {
     if (v.tools && v.tools.trim()) front.push(`tools: ${v.tools.trim()}`)
     front.push(`model: ${v.model?.trim() || 'sonnet'}`)
   }
   front.push('---', '')
+
+  // A scaffold can supply a ready-made body; otherwise use the per-kind stub.
+  if (kind === 'agents' && v.body && v.body.trim()) {
+    return front.join('\n') + `${v.body.trim()}\n`
+  }
 
   const body =
     kind === 'agents'

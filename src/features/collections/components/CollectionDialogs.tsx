@@ -21,7 +21,9 @@ export function CollectionDialogs({ cm }: { cm: CollectionController }) {
         kind={kind}
         label={labels}
         existingIds={cm.items.map((i) => i.id)}
-        onCreate={(values) => void cm.create(values.id, buildTemplate(kind, values))}
+        onCreate={(values) =>
+          void cm.create(values.id, buildTemplate(kind, values))
+        }
       />
 
       {kind === 'agents' && (

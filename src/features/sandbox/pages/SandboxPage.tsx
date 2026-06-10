@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { SandboxRunResult } from '@/shared/types/sandbox'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Badge } from '@/shared/components/ui/badge'
@@ -11,6 +11,7 @@ import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { estimateTokens, formatTokens } from '@/features/context/lib/tokens'
+import { useSandboxIntent } from '../store/sandboxIntent.store'
 
 function CommandSandbox() {
   const [command, setCommand] = useState('')
@@ -49,12 +50,16 @@ function CommandSandbox() {
           Hook / command runner
         </h2>
         <p className="text-xs text-muted-foreground">
-          Try a hook or command shell snippet in a one-off run and see its output.
+          Try a hook or command shell snippet in a one-off run and see its
+          output.
         </p>
       </div>
 
       <div className="flex items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-2.5 py-1.5 text-xs">
-        <Icon name="alert-triangle" className="size-3.5 shrink-0 text-warning" />
+        <Icon
+          name="alert-triangle"
+          className="size-3.5 shrink-0 text-warning"
+        />
         Commands run on your real machine. Use a throwaway directory and avoid
         destructive commands.
       </div>
@@ -62,7 +67,7 @@ function CommandSandbox() {
       <Textarea
         value={command}
         onChange={(e) => setCommand(e.target.value)}
-        placeholder="e.g. echo &quot;$CLAUDE_PROJECT_DIR&quot; &amp;&amp; git status --short"
+        placeholder='e.g. echo "$CLAUDE_PROJECT_DIR" &amp;&amp; git status --short'
         className="font-code"
         rows={3}
       />
@@ -78,7 +83,9 @@ function CommandSandbox() {
           variant="outline"
           size="sm"
           onClick={async () => {
-            const { path } = await ipc.pickDirectory('Sandbox working directory')
+            const { path } = await ipc.pickDirectory(
+              'Sandbox working directory',
+            )
             if (path) setCwd(path)
           }}
         >
@@ -86,7 +93,10 @@ function CommandSandbox() {
           Pick
         </Button>
         <Button onClick={requestRun} disabled={running || !command.trim()}>
-          <Icon name={running ? 'loader' : 'play'} className={running ? 'animate-spin' : ''} />
+          <Icon
+            name={running ? 'loader' : 'play'}
+            className={running ? 'animate-spin' : ''}
+          />
           Run
         </Button>
       </div>
@@ -117,11 +127,11 @@ function CommandSandbox() {
               }
               className="font-code"
             >
-              {result.timedOut
-                ? 'timed out'
-                : `exit ${result.exitCode ?? '—'}`}
+              {result.timedOut ? 'timed out' : `exit ${result.exitCode ?? '—'}`}
             </Badge>
-            <span className="text-muted-foreground">{result.durationMs} ms</span>
+            <span className="text-muted-foreground">
+              {result.durationMs} ms
+            </span>
           </div>
           {result.stdout && (
             <div>
@@ -156,6 +166,22 @@ function PromptSandbox() {
   const [system, setSystem] = useState('')
   const [user, setUser] = useState('')
   const [copied, setCopied] = useState(false)
+
+  // Preload a prompt requested from elsewhere (e.g. "Run in Sandbox" on a
+  // subagent). setState runs only in callbacks, never synchronously here.
+  useEffect(() => {
+    const fill = (d: { system: string; user: string } | null) => {
+      if (!d) return
+      setSystem(d.system)
+      setUser(d.user)
+    }
+    void Promise.resolve().then(() =>
+      fill(useSandboxIntent.getState().consume()),
+    )
+    return useSandboxIntent.subscribe(() =>
+      fill(useSandboxIntent.getState().consume()),
+    )
+  }, [])
 
   const tokens = useMemo(
     () => ({

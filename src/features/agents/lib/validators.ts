@@ -1,4 +1,5 @@
 import type { ConfigFileSpec, ValidationIssue } from '@/shared/types/agent'
+import { checkInstructions } from '@/shared/lib/instructionChecks'
 
 /** Lightweight validation for markdown instruction files. */
 export function validateMarkdownInstructions(
@@ -24,6 +25,9 @@ export function validateMarkdownInstructions(
       )} KB). Very long instructions crowd the model's context window.`,
     })
   }
+
+  // Content-aware checks: duplicate headings, likely hard-coded secrets.
+  issues.push(...checkInstructions(content))
 
   return issues
 }

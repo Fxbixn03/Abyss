@@ -62,7 +62,8 @@ export function DiffPreviewDialog({
                 className={cn(
                   'px-3 py-px',
                   line.type === 'add' && 'bg-success/15 text-success',
-                  line.type === 'remove' && 'bg-destructive/15 text-destructive',
+                  line.type === 'remove' &&
+                    'bg-destructive/15 text-destructive',
                   line.type === 'context' && 'text-muted-foreground',
                 )}
               >

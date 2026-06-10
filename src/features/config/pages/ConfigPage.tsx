@@ -7,15 +7,28 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
-import { useInstructionsBase } from '@/features/scope/hooks/useScopedBase'
+import {
+  useInstructionsBase,
+  useScope,
+} from '@/features/scope/hooks/useScopedBase'
 import { useConfigStore } from '../store/config.store'
 import { ConfigEditorPanel } from '../components/ConfigEditorPanel'
+import { EffectiveInstructionsDialog } from '../components/EffectiveInstructionsDialog'
+import { ScopeCompareDialog } from '../components/ScopeCompareDialog'
+
+function basename(p: string): string {
+  return p.split(/[\\/]/).filter(Boolean).pop() ?? p
+}
 
 export function ConfigPage() {
   const agent = useActiveAgent()
   const basePath = useInstructionsBase(agent.id)
+  const { scope, projectDir } = useScope()
   const open = useConfigStore((s) => s.open)
   const navigate = useNavigate()
+
+  const [effectiveOpen, setEffectiveOpen] = useState(false)
+  const [compareOpen, setCompareOpen] = useState(false)
 
   const specs = agent.getConfigFileSpecs()
   const [selectedId, setSelectedId] = useState<string | undefined>(specs[0]?.id)
@@ -55,7 +68,33 @@ export function ConfigPage() {
         title="Instructions"
         description={`Configuration files for ${agent.displayName}`}
         icon="file-text"
-        actions={<Badge variant="muted">global scope</Badge>}
+        actions={
+          <div className="flex items-center gap-2">
+            <Badge variant="muted">
+              {scope === 'project' && projectDir
+                ? `project · ${basename(projectDir)}`
+                : 'global scope'}
+            </Badge>
+            {scope === 'project' && projectDir && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCompareOpen(true)}
+              >
+                <Icon name="git-compare" />
+                Compare
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEffectiveOpen(true)}
+            >
+              <Icon name="layers" />
+              Effective view
+            </Button>
+          </div>
+        }
       />
 
       <div className="grid min-h-0 flex-1 grid-cols-[240px_1fr] gap-4">
@@ -93,6 +132,19 @@ export function ConfigPage() {
           <ConfigEditorPanel />
         </section>
       </div>
+
+      <EffectiveInstructionsDialog
+        open={effectiveOpen}
+        onOpenChange={setEffectiveOpen}
+        agent={agent}
+        projectDir={projectDir}
+      />
+      <ScopeCompareDialog
+        open={compareOpen}
+        onOpenChange={setCompareOpen}
+        agent={agent}
+        projectDir={projectDir}
+      />
     </div>
   )
 }
