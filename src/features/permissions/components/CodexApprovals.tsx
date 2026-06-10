@@ -26,22 +26,57 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 
-const APPROVAL_OPTIONS: { value: CodexApprovalPolicy; label: string }[] = [
-  { value: 'untrusted', label: 'Untrusted — approve all but trusted commands' },
-  { value: 'on-failure', label: 'On failure — ask only when a command fails' },
-  { value: 'on-request', label: 'On request — the agent asks when needed' },
-  { value: 'never', label: 'Never — fully autonomous (no prompts)' },
+const APPROVAL_OPTIONS: {
+  value: CodexApprovalPolicy
+  label: string
+  description: string
+}[] = [
+  {
+    value: 'untrusted',
+    label: 'Untrusted — approve all but trusted commands',
+    description:
+      'Codex runs a small set of known-safe commands on its own and asks before anything else.',
+  },
+  {
+    value: 'on-failure',
+    label: 'On failure — ask only when a command fails',
+    description:
+      'Commands run unattended; Codex only pauses for you when one fails and needs a retry.',
+  },
+  {
+    value: 'on-request',
+    label: 'On request — the agent asks when needed',
+    description: 'Codex decides when to ask, pausing for anything it judges risky.',
+  },
+  {
+    value: 'never',
+    label: 'Never — fully autonomous (no prompts)',
+    description:
+      'Codex never asks. Combined with a wide sandbox this lets it act without any confirmation.',
+  },
 ]
 
-const SANDBOX_OPTIONS: { value: CodexSandboxMode; label: string }[] = [
-  { value: 'read-only', label: 'Read-only — no edits or commands' },
+const SANDBOX_OPTIONS: {
+  value: CodexSandboxMode
+  label: string
+  description: string
+}[] = [
+  {
+    value: 'read-only',
+    label: 'Read-only — no edits or commands',
+    description: 'Codex can read files but cannot modify anything or run commands.',
+  },
   {
     value: 'workspace-write',
     label: 'Workspace write — edit & run in workspace',
+    description:
+      'Codex may edit files and run commands inside the workspace, but not touch the wider system.',
   },
   {
     value: 'danger-full-access',
     label: 'Full access — no sandbox (dangerous)',
+    description:
+      'No sandbox at all — Codex can read, write and run anything your user account can.',
   },
 ]
 
@@ -93,9 +128,32 @@ export function CodexApprovals() {
     )
   }
 
+  const approvalMeta = APPROVAL_OPTIONS.find(
+    (o) => o.value === settings.approvalPolicy,
+  )
+  const sandboxMeta = SANDBOX_OPTIONS.find(
+    (o) => o.value === settings.sandboxMode,
+  )
+  const fullAccess = settings.sandboxMode === 'danger-full-access'
+  const autonomous = settings.approvalPolicy === 'never'
+
   return (
     <div className="flex h-full flex-col gap-4">
       {header}
+
+      {(fullAccess || autonomous) && (
+        <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <Icon name="shield-alert" className="mt-0.5 size-4 shrink-0" />
+          <span>
+            {fullAccess && autonomous
+              ? 'Full system access with no approval prompts — Codex can run any command unattended. Only use in a disposable, fully trusted environment.'
+              : fullAccess
+                ? 'Full access disables the sandbox — Codex can read, write and run anything your account can. Prefer “workspace write” unless you really need this.'
+                : 'With “never”, Codex acts without ever asking. Make sure the sandbox is restrictive enough to contain mistakes.'}
+          </span>
+        </div>
+      )}
+
       <div className="grid gap-4 overflow-y-auto md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -128,6 +186,11 @@ export function CodexApprovals() {
                 ))}
               </SelectContent>
             </Select>
+            {approvalMeta && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {approvalMeta.description}
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -159,6 +222,11 @@ export function CodexApprovals() {
                 ))}
               </SelectContent>
             </Select>
+            {sandboxMeta && (
+              <p className="text-xs text-muted-foreground">
+                {sandboxMeta.description}
+              </p>
+            )}
 
             <label className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
               <span className="flex flex-col">

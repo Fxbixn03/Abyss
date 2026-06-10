@@ -12,6 +12,7 @@ import {
   findConflicts,
 } from '@/features/permissions/lib/conflicts'
 import { evaluate } from '@/features/permissions/lib/evaluate'
+import { mergeEffective } from '@/features/permissions/lib/effective'
 import type { PermissionRules } from '@/shared/types/config'
 
 const rules = (over: Partial<PermissionRules> = {}): PermissionRules => ({
@@ -110,6 +111,36 @@ test('evaluate: no match defaults to ask', () => {
   assert.equal(r.decision, 'ask')
   assert.equal(r.matchedRule, null)
   assert.equal(r.defaulted, true)
+})
+
+// --- mergeEffective ------------------------------------------------------
+
+test('mergeEffective: global deny beats project allow', () => {
+  const eff = mergeEffective(
+    rules({ deny: ['Bash(rm:*)'] }),
+    rules({ allow: ['Bash(rm:*)'] }),
+  )
+  assert.deepEqual(eff.deny, ['Bash(rm:*)'])
+  assert.deepEqual(eff.allow, [])
+})
+
+test('mergeEffective: project overrides global ask with allow', () => {
+  const eff = mergeEffective(
+    rules({ ask: ['Write'] }),
+    rules({ allow: ['Write'] }),
+  )
+  assert.deepEqual(eff.allow, ['Write'])
+  assert.deepEqual(eff.ask, [])
+})
+
+test('mergeEffective: unions distinct rules and directories', () => {
+  const eff = mergeEffective(
+    rules({ allow: ['Read(./**)'], additionalDirectories: ['/a'] }),
+    rules({ ask: ['Bash(git push:*)'], additionalDirectories: ['/b'] }),
+  )
+  assert.deepEqual(eff.allow, ['Read(./**)'])
+  assert.deepEqual(eff.ask, ['Bash(git push:*)'])
+  assert.deepEqual(eff.additionalDirectories, ['/a', '/b'])
 })
 
 test('evaluate: mcp wildcard and server-level match', () => {

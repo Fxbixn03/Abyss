@@ -11,20 +11,42 @@ import {
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Badge } from '@/shared/components/ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
+import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
-import { useConfigBase, useScope } from '@/features/scope/hooks/useScopedBase'
+import {
+  useConfigBase,
+  useProjectDir,
+  useScope,
+} from '@/features/scope/hooks/useScopedBase'
 import { useBasePath } from '@/features/settings/hooks/useBasePath'
 import { CodexApprovals } from '../components/CodexApprovals'
-import { PermissionRuleEditor } from '../components/PermissionRuleEditor'
+import {
+  PermissionRuleEditor,
+  type RuleSort,
+} from '../components/PermissionRuleEditor'
 import { PermissionPresets } from '../components/PermissionPresets'
 import { PermissionTester } from '../components/PermissionTester'
+import { PermissionShare } from '../components/PermissionShare'
 import { PermissionMode } from '../components/PermissionMode'
 import { AdditionalDirectories } from '../components/AdditionalDirectories'
 import { buildConflictMap, findConflicts } from '../lib/conflicts'
+import { mergeEffective } from '../lib/effective'
+
+const SORT_OPTIONS: { value: RuleSort; label: string }[] = [
+  { value: 'order', label: 'Order' },
+  { value: 'az', label: 'A–Z' },
+  { value: 'tool', label: 'By tool' },
+]
 
 const EMPTY: PermissionRules = {
   allow: [],
@@ -39,6 +61,7 @@ export function PermissionsPage() {
   const basePath = useConfigBase(agent.id)
   const globalBase = useBasePath(agent.id)
   const { scope } = useScope()
+  const projectDir = useProjectDir()
   const navigate = useNavigate()
   const supported = agent.capabilities.permissions
 
@@ -47,6 +70,9 @@ export function PermissionsPage() {
   const [inherited, setInherited] = useState<PermissionRules>(EMPTY)
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query)
+  const [sort, setSort] = useState<RuleSort>('order')
+  const [view, setView] = useState<'own' | 'effective'>('own')
+  const [mcpServers, setMcpServers] = useState<string[]>([])
 
   useEffect(() => {
     if (!supported || !basePath) return
@@ -70,11 +96,35 @@ export function PermissionsPage() {
     }
   }, [supported, scope, agent.id, globalBase])
 
+  // Load configured MCP servers so the builder can offer their tools.
+  useEffect(() => {
+    if (!supported || !basePath) return
+    let active = true
+    void ipc.getMcpServers(agent.id, basePath, projectDir).then((servers) => {
+      if (active) setMcpServers(servers.map((s) => s.name))
+    })
+    return () => {
+      active = false
+    }
+  }, [supported, agent.id, basePath, projectDir])
+
   // Inherited rules only apply when overriding the global profile in a project.
   const shownInherited = scope === 'project' ? inherited : EMPTY
+  const hasInherited =
+    scope === 'project' &&
+    (inherited.allow.length > 0 ||
+      inherited.ask.length > 0 ||
+      inherited.deny.length > 0)
 
   const conflicts = useMemo(() => buildConflictMap(rules), [rules])
   const conflictCount = useMemo(() => findConflicts(rules).length, [rules])
+  const effective = useMemo(
+    () => mergeEffective(inherited, rules),
+    [inherited, rules],
+  )
+  // Effective view is only meaningful when there are inherited rules to merge.
+  const showEffective = view === 'effective' && hasInherited
+  const viewRules = showEffective ? effective : rules
 
   const persist = (next: PermissionRules) => {
     setRules(next)
@@ -178,27 +228,69 @@ export function PermissionsPage() {
         title="Permissions"
         description={`Tool permission rules for ${agent.displayName}`}
         icon="shield"
-        actions={
-          <>
-            <div className="relative">
-              <Icon
-                name="search"
-                className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
-              />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Filter rules…"
-                className="h-9 w-[180px] pl-8"
-              />
-            </div>
-            <PermissionTester rules={rules} />
-            <PermissionPresets rules={rules} onChange={persist} />
-          </>
-        }
+        actions={<PermissionPresets rules={rules} onChange={persist} />}
       />
 
-      {conflictCount > 0 && (
+      <div className="flex flex-wrap items-center gap-2">
+        {hasInherited && (
+          <div className="flex items-center rounded-md border border-border p-0.5">
+            {(['own', 'effective'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                className={cn(
+                  'rounded px-2 py-1 text-xs font-medium transition-colors',
+                  view === v
+                    ? 'bg-primary/15 text-primary'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {v === 'own' ? 'Own' : 'Effective'}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="relative">
+          <Icon
+            name="search"
+            className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Filter rules…"
+            className="h-9 w-[180px] pl-8"
+          />
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Icon name="arrow-up-down" />
+              Sort: {SORT_OPTIONS.find((o) => o.value === sort)?.label}
+              <Icon name="chevron-down" className="size-3.5 opacity-60" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {SORT_OPTIONS.map((o) => (
+              <DropdownMenuItem key={o.value} onSelect={() => setSort(o.value)}>
+                <Icon
+                  name="check"
+                  className={cn('size-3.5', sort !== o.value && 'opacity-0')}
+                />
+                {o.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <PermissionTester rules={showEffective ? effective : rules} />
+        <PermissionShare rules={rules} onChange={persist} />
+      </div>
+
+      {conflictCount > 0 && !showEffective && (
         <div className="flex items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
           <Icon name="circle-alert" className="size-4 shrink-0" />
           <span>
@@ -210,22 +302,24 @@ export function PermissionsPage() {
       )}
 
       <div className="flex flex-col gap-4 overflow-y-auto">
-        <div className="grid gap-4 md:grid-cols-2">
-          <PermissionMode
-            mode={rules.defaultMode}
-            onChange={(defaultMode) => persist({ ...rules, defaultMode })}
-          />
-          <AdditionalDirectories
-            dirs={rules.additionalDirectories ?? []}
-            onChange={(additionalDirectories) =>
-              persist({ ...rules, additionalDirectories })
-            }
-          />
-        </div>
+        {!showEffective && (
+          <div className="grid gap-4 md:grid-cols-2">
+            <PermissionMode
+              mode={rules.defaultMode}
+              onChange={(defaultMode) => persist({ ...rules, defaultMode })}
+            />
+            <AdditionalDirectories
+              dirs={rules.additionalDirectories ?? []}
+              onChange={(additionalDirectories) =>
+                persist({ ...rules, additionalDirectories })
+              }
+            />
+          </div>
+        )}
 
         <div className="grid gap-4 md:grid-cols-3">
           {sections.map((section) => {
-            const ownCount = rules[section.key].length
+            const count = viewRules[section.key].length
             const globalCount = shownInherited[section.key].length
             return (
               <Card key={section.key} className={section.accent}>
@@ -237,21 +331,28 @@ export function PermissionsPage() {
                     />
                     {section.title}
                     <span className="ml-auto flex items-center gap-1">
-                      <Badge variant={section.countVariant}>{ownCount}</Badge>
-                      {globalCount > 0 && (
+                      <Badge variant={section.countVariant}>{count}</Badge>
+                      {!showEffective && globalCount > 0 && (
                         <Badge variant="muted">+{globalCount} global</Badge>
                       )}
                     </span>
                   </CardTitle>
-                  <CardDescription>{section.description}</CardDescription>
+                  <CardDescription>
+                    {showEffective
+                      ? 'Effective rules — global merged with this project.'
+                      : section.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <PermissionRuleEditor
                     category={section.key}
-                    values={rules[section.key]}
-                    inherited={shownInherited[section.key]}
+                    values={viewRules[section.key]}
+                    inherited={showEffective ? [] : shownInherited[section.key]}
                     filter={deferredQuery}
-                    conflicts={conflicts}
+                    sort={sort}
+                    conflicts={showEffective ? undefined : conflicts}
+                    mcpServers={mcpServers}
+                    readOnly={showEffective}
                     onChange={(values) =>
                       persist({ ...rules, [section.key]: values })
                     }
