@@ -23,6 +23,22 @@ function CommandSandbox() {
   const acknowledged = useSettingsStore((s) => s.settings.sandboxAcknowledged)
   const updatePrefs = useSettingsStore((s) => s.updatePrefs)
 
+  // Preload a command requested from elsewhere (e.g. "Test in Sandbox" on a
+  // hook). setState runs only in callbacks, never synchronously here.
+  useEffect(() => {
+    const fill = (c: string | null) => {
+      if (c === null) return
+      setCommand(c)
+      setResult(null)
+    }
+    void Promise.resolve().then(() =>
+      fill(useSandboxIntent.getState().consumeCommand()),
+    )
+    return useSandboxIntent.subscribe(() =>
+      fill(useSandboxIntent.getState().consumeCommand()),
+    )
+  }, [])
+
   const run = async () => {
     if (!command.trim()) return
     setRunning(true)

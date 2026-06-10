@@ -17,6 +17,8 @@ import { readFlatHooks, writeFlatHooks } from './hooks-flat'
 interface RawHook {
   type: string
   command: string
+  /** Optional per-hook timeout in seconds (Claude-specific). */
+  timeout?: number
 }
 
 interface RawMatcherGroup {
@@ -87,6 +89,9 @@ async function readClaudeHooks(basePath: string): Promise<HookEntry[]> {
             event: event as HookEvent,
             matcher,
             command: hook.command,
+            ...(typeof hook.timeout === 'number'
+              ? { timeout: hook.timeout }
+              : {}),
           })
         }
       }
@@ -112,7 +117,11 @@ async function writeClaudeHooks(
       group = { matcher: entry.matcher, hooks: [] }
       grouped[entry.event].push(group)
     }
-    group.hooks?.push({ type: 'command', command: entry.command })
+    const rawHook: RawHook = { type: 'command', command: entry.command }
+    if (typeof entry.timeout === 'number' && entry.timeout > 0) {
+      rawHook.timeout = entry.timeout
+    }
+    group.hooks?.push(rawHook)
   }
 
   if (Object.keys(grouped).length === 0) {

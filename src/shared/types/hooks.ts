@@ -43,6 +43,12 @@ export interface HookEntry {
   matcher: string
   /** Shell command to run. */
   command: string
+  /**
+   * Optional per-hook timeout in seconds. Claude-only — Claude stores it next to
+   * the command; Gemini/Cursor's flat format has no slot for it, so it's
+   * undefined there and the UI hides the field for those agents.
+   */
+  timeout?: number
 }
 
 /** Events where a tool matcher is meaningful. */
@@ -50,3 +56,8 @@ export const MATCHER_EVENTS: ReadonlySet<HookEvent> = new Set([
   'PreToolUse',
   'PostToolUse',
 ])
+
+/** Whether the given agent's on-disk format can store a per-hook timeout. */
+export function supportsHookTimeout(agentId: string): boolean {
+  return agentId !== 'gemini' && agentId !== 'cursor'
+}

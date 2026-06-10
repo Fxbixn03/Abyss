@@ -14,6 +14,9 @@ interface HooksState {
   load: (agentId: AgentId, basePath: string) => Promise<void>
   upsert: (entry: HookEntry) => Promise<void>
   remove: (id: string) => Promise<void>
+  /** Move a hook up/down within its event+matcher group (Claude runs them in
+   *  order). No-op if it's already at the group boundary. */
+  move: (id: string, dir: 'up' | 'down') => Promise<void>
 }
 
 export const useHooksStore = create<HooksState>()((set, get) => ({
@@ -52,6 +55,29 @@ export const useHooksStore = create<HooksState>()((set, get) => ({
       get,
       get().entries.filter((e) => e.id !== id),
     )
+  },
+
+  move: async (id, dir) => {
+    const { entries } = get()
+    const index = entries.findIndex((e) => e.id === id)
+    if (index === -1) return
+    const entry = entries[index]
+    // Find the adjacent entry in the same event+matcher group to swap with.
+    const step = dir === 'up' ? -1 : 1
+    let swapWith = -1
+    for (let i = index + step; i >= 0 && i < entries.length; i += step) {
+      if (
+        entries[i].event === entry.event &&
+        entries[i].matcher === entry.matcher
+      ) {
+        swapWith = i
+        break
+      }
+    }
+    if (swapWith === -1) return
+    const next = [...entries]
+    ;[next[index], next[swapWith]] = [next[swapWith], next[index]]
+    await persist(set, get, next)
   },
 }))
 
