@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export type ShortcutActionId =
+  | 'search.open'
   | 'agent.next'
   | 'agent.prev'
   | 'nav.dashboard'
@@ -9,6 +10,7 @@ export type ShortcutActionId =
   | 'nav.settings'
 
 export const SHORTCUT_ACTIONS: { id: ShortcutActionId; label: string }[] = [
+  { id: 'search.open', label: 'Open search' },
   { id: 'agent.next', label: 'Next agent' },
   { id: 'agent.prev', label: 'Previous agent' },
   { id: 'nav.dashboard', label: 'Go to Dashboard' },
@@ -17,6 +19,7 @@ export const SHORTCUT_ACTIONS: { id: ShortcutActionId; label: string }[] = [
 ]
 
 export const DEFAULT_BINDINGS: Record<ShortcutActionId, string> = {
+  'search.open': 'Ctrl+F',
   'agent.next': 'Alt+ArrowRight',
   'agent.prev': 'Alt+ArrowLeft',
   'nav.dashboard': 'Alt+1',

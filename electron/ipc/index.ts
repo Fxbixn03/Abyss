@@ -11,6 +11,7 @@ import { registerSnapshotsIpc } from './snapshots.ipc'
 import { registerBundleIpc } from './bundle.ipc'
 import { registerProfilesIpc } from './profiles.ipc'
 import { registerThemeIpc } from './theme.ipc'
+import { registerTemplatesIpc } from './templates.ipc'
 import { registerUpdateIpc } from './update.ipc'
 import { registerSyncIpc } from './sync.ipc'
 import { registerSandboxIpc } from './sandbox.ipc'
@@ -30,6 +31,7 @@ export function registerIpcHandlers(ctx: IpcContext): void {
   registerBundleIpc(ctx)
   registerProfilesIpc(ctx)
   registerThemeIpc(ctx)
+  registerTemplatesIpc(ctx)
   registerUpdateIpc()
   registerSyncIpc(ctx)
   registerSandboxIpc(ctx)

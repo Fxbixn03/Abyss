@@ -39,6 +39,7 @@ import type { SnapshotContent, SnapshotMeta } from './snapshots'
 import type { ApplyChange, ExportBundle } from './bundle'
 import type { Profile, ProfileMeta } from './profiles'
 import type { ThemeConfig } from './theme'
+import type { TemplatePack, TemplatePackItem } from './template-pack'
 import type {
   CopyResult,
   SurfaceComparison,
@@ -190,6 +191,10 @@ export enum IpcChannel {
   // Themes (import / export)
   ThemeExport = 'theme:export',
   ThemeImport = 'theme:import',
+
+  // Prompt templates (import / export packs)
+  TemplatesExport = 'templates:export',
+  TemplatesImport = 'templates:import',
 
   // Auto-update
   UpdateCheck = 'update:check',
@@ -656,6 +661,15 @@ export interface IpcMap {
   [IpcChannel.ThemeImport]: {
     request: Record<string, never>
     response: { theme: ThemeConfig | null; error?: string }
+  }
+
+  [IpcChannel.TemplatesExport]: {
+    request: { pack: TemplatePack; suggestedName: string }
+    response: { path: string | null }
+  }
+  [IpcChannel.TemplatesImport]: {
+    request: Record<string, never>
+    response: { templates: TemplatePackItem[] | null; error?: string }
   }
 
   [IpcChannel.UpdateCheck]: {

@@ -27,6 +27,9 @@ import { useAgentStore } from '@/features/agents/store/agent.store'
 import { useThemeStore } from '@/features/themes/store/theme.store'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useCollectionSelection } from '@/features/collections/store/collectionSelection.store'
+import { useTemplatesStore } from '@/features/templates/store/templates.store'
+import { useTemplatesIntent } from '@/features/templates/store/templatesIntent.store'
+import { resolveTemplates } from '@/features/templates/lib/resolve'
 import { SETTINGS_SECTIONS } from '@/features/settings/sections'
 
 const COLLECTION_KINDS: CollectionKind[] = [
@@ -82,6 +85,15 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
   const setActiveAgent = useAgentStore((s) => s.setActiveAgent)
   const basePath = useConfigBase(activeAgent.id)
   const requestOpen = useCollectionSelection((s) => s.requestOpen)
+  const requestApplyTemplate = useTemplatesIntent((s) => s.requestApply)
+  const customTemplates = useTemplatesStore((s) => s.customTemplates)
+  const builtinOverrides = useTemplatesStore((s) => s.builtinOverrides)
+  const hiddenBuiltins = useTemplatesStore((s) => s.hiddenBuiltins)
+  const templates = useMemo(
+    () =>
+      resolveTemplates({ customTemplates, builtinOverrides, hiddenBuiltins }),
+    [customTemplates, builtinOverrides, hiddenBuiltins],
+  )
 
   const [items, setItems] = useState<PaletteItem[]>([])
   const [search, setSearch] = useState('')
@@ -257,6 +269,30 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
             </CommandItem>
           ))}
         </CommandGroup>
+
+        {templates.length > 0 && (
+          <CommandGroup heading="Prompt Templates">
+            {templates.map((t) => (
+              <CommandItem
+                key={`tpl-${t.id}`}
+                value={`template ${t.title} ${t.id}`}
+                keywords={[t.description, ...t.tags]}
+                onSelect={run(() => {
+                  requestApplyTemplate(t.id)
+                  navigate('/templates')
+                })}
+              >
+                <Icon name="library" />
+                Apply: {t.title}
+                {!t.builtin && (
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    custom
+                  </span>
+                )}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
 
         {items.length > 0 && (
           <CommandGroup heading="Items">

@@ -6,10 +6,11 @@ import {
   isAgentEnabled,
   useAgentEnabled,
 } from '@/features/agents/store/agent-enabled.store'
+import { useCommandPalette } from '@/app/command/commandPalette.store'
 import { useShortcutsStore } from '../store/shortcuts.store'
 import { comboFromEvent } from '../lib/shortcuts'
 
-/** Global keyboard shortcuts (agent switching + navigation). Mount once. */
+/** Global keyboard shortcuts (search, agent switching + navigation). Mount once. */
 export function useGlobalShortcuts(): void {
   const bindings = useShortcutsStore((s) => s.bindings)
   const navigate = useNavigate()
@@ -37,6 +38,9 @@ export function useGlobalShortcuts(): void {
       }
 
       switch (actionId) {
+        case 'search.open':
+          useCommandPalette.getState().setOpen(true)
+          break
         case 'agent.next':
           cycle(1)
           break

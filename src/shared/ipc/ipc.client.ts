@@ -21,6 +21,7 @@ import type {
 } from '@/shared/types/chat'
 import type { ExportBundle } from '@/shared/types/bundle'
 import type { ThemeConfig } from '@/shared/types/theme'
+import type { TemplatePack } from '@/shared/types/template-pack'
 import type { SyncSurface } from '@/shared/types/sync'
 import type {
   AppSettings,
@@ -254,8 +255,11 @@ export const ipc = {
   ) => invoke(IpcChannel.ImportSkill, { basePath, archivePath, onCollision }),
 
   // --- Relations map --------------------------------------------------------
-  buildRelationGraph: (agentId: string, basePath: string, projectDir?: string) =>
-    invoke(IpcChannel.BuildRelationGraph, { agentId, basePath, projectDir }),
+  buildRelationGraph: (
+    agentId: string,
+    basePath: string,
+    projectDir?: string,
+  ) => invoke(IpcChannel.BuildRelationGraph, { agentId, basePath, projectDir }),
 
   // --- Codex custom subagents (TOML in <base>/agents/) ----------------------
   listCodexSubagents: (basePath: string) =>
@@ -367,6 +371,11 @@ export const ipc = {
   themeExport: (theme: ThemeConfig, suggestedName: string) =>
     invoke(IpcChannel.ThemeExport, { theme, suggestedName }),
   themeImport: () => invoke(IpcChannel.ThemeImport, {}),
+
+  // --- Prompt template packs ------------------------------------------------
+  templatesExport: (pack: TemplatePack, suggestedName: string) =>
+    invoke(IpcChannel.TemplatesExport, { pack, suggestedName }),
+  templatesImport: () => invoke(IpcChannel.TemplatesImport, {}),
 
   // --- Auto-update ----------------------------------------------------------
   updateCheck: () => invoke(IpcChannel.UpdateCheck, {}),
