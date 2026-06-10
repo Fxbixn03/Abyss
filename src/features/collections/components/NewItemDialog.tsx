@@ -23,6 +23,7 @@ import {
 } from '../lib/tools'
 import { SUBAGENT_SCAFFOLDS } from '../lib/subagentScaffolds'
 import { COMMAND_SCAFFOLDS } from '../lib/commandScaffolds'
+import { SKILL_SCAFFOLDS } from '../lib/skillScaffolds'
 
 const ID_RE = /^[A-Za-z0-9._-]+$/
 
@@ -47,11 +48,15 @@ export function NewItemDialog({
   const labels = label ?? COLLECTION_LABELS[kind]
   const isAgents = kind === 'agents'
   const isCommands = kind === 'commands'
+  const isSkills = kind === 'skills'
+  const showTools = isAgents || isCommands || isSkills
   const scaffolds = isAgents
     ? SUBAGENT_SCAFFOLDS
     : isCommands
       ? COMMAND_SCAFFOLDS
-      : []
+      : isSkills
+        ? SKILL_SCAFFOLDS
+        : []
 
   const [id, setId] = useState('')
   const [description, setDescription] = useState('')
@@ -83,6 +88,15 @@ export function NewItemDialog({
       if (s.id !== 'blank' && id.trim() === '') setId(s.suggestedId)
       setDescription(s.description)
       setArgumentHint(s.argumentHint)
+      setTools(s.allowedTools)
+      setBody(s.body)
+      return
+    }
+    if (isSkills) {
+      const s = SKILL_SCAFFOLDS.find((x) => x.id === scaffoldId)
+      if (!s) return
+      if (s.id !== 'blank' && id.trim() === '') setId(s.suggestedId)
+      setDescription(s.description)
       setTools(s.allowedTools)
       setBody(s.body)
       return
@@ -131,14 +145,14 @@ export function NewItemDialog({
       name: id.trim(),
       description,
       model: isAgents || isCommands ? model : undefined,
-      tools: isAgents || isCommands ? tools : undefined,
+      tools: showTools ? tools : undefined,
       argumentHint: isCommands ? argumentHint : undefined,
-      body: isAgents || isCommands ? body : undefined,
+      body: showTools ? body : undefined,
     })
     onOpenChange(false)
   }
 
-  const toolsLabel = isCommands ? 'Allowed tools' : 'Tools'
+  const toolsLabel = isAgents ? 'Tools' : 'Allowed tools'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -210,56 +224,56 @@ export function NewItemDialog({
           )}
 
           {(isAgents || isCommands) && (
-            <>
-              <div className="space-y-1.5">
-                <Label htmlFor="item-model">Model</Label>
-                <Input
-                  id="item-model"
-                  list="new-model-options"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder="inherit"
-                  className="font-code"
-                />
-                <datalist id="new-model-options">
-                  {MODEL_SUGGESTIONS.map((m) => (
-                    <option key={m} value={m} />
-                  ))}
-                </datalist>
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="item-model">Model</Label>
+              <Input
+                id="item-model"
+                list="new-model-options"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                placeholder="inherit"
+                className="font-code"
+              />
+              <datalist id="new-model-options">
+                {MODEL_SUGGESTIONS.map((m) => (
+                  <option key={m} value={m} />
+                ))}
+              </datalist>
+            </div>
+          )}
 
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label>{toolsLabel}</Label>
-                  {toolList.length === 0 && (
-                    <span className="text-[11px] text-muted-foreground">
-                      Empty = inherit all
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {toolChips.map((t) => {
-                    const on = toolList.includes(t)
-                    return (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => toggleTool(t)}
-                        className={cn(
-                          'flex items-center gap-1 rounded-full border px-2 py-0.5 font-code text-xs transition-colors',
-                          on
-                            ? 'border-primary/50 bg-accent text-foreground'
-                            : 'border-border text-muted-foreground hover:bg-accent/60',
-                        )}
-                      >
-                        {on && <Icon name="check" className="size-3" />}
-                        {t}
-                      </button>
-                    )
-                  })}
-                </div>
+          {showTools && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label>{toolsLabel}</Label>
+                {toolList.length === 0 && (
+                  <span className="text-[11px] text-muted-foreground">
+                    Empty = inherit all
+                  </span>
+                )}
               </div>
-            </>
+              <div className="flex flex-wrap gap-1.5">
+                {toolChips.map((t) => {
+                  const on = toolList.includes(t)
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => toggleTool(t)}
+                      className={cn(
+                        'flex items-center gap-1 rounded-full border px-2 py-0.5 font-code text-xs transition-colors',
+                        on
+                          ? 'border-primary/50 bg-accent text-foreground'
+                          : 'border-border text-muted-foreground hover:bg-accent/60',
+                      )}
+                    >
+                      {on && <Icon name="check" className="size-3" />}
+                      {t}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           )}
         </div>
 

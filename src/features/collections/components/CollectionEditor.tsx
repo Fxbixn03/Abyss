@@ -28,6 +28,7 @@ import type { CollectionController } from '../hooks/useCollectionManager'
 import { parseFrontmatter } from '../lib/frontmatter'
 import { SubagentFields } from './SubagentFields'
 import { CommandFields } from './CommandFields'
+import { SkillFields } from './SkillFields'
 import { CollectionRelations } from './CollectionRelations'
 
 /** Right pane: header (path + actions), external-change banner and the editor. */
@@ -45,7 +46,9 @@ export function CollectionEditor({ cm }: { cm: CollectionController }) {
 
   const isAgents = kind === 'agents'
   const isCommands = kind === 'commands'
-  const hasRelations = isAgents || isCommands
+  const isSkills = kind === 'skills'
+  const hasRelations = isAgents || isCommands || isSkills
+  const relationKind = isAgents ? 'subagent' : isCommands ? 'command' : 'skill'
   const otherAgents = allAgents.filter(
     (a) => a.id !== cm.agentId && a.capabilities[kind],
   )
@@ -130,6 +133,16 @@ export function CollectionEditor({ cm }: { cm: CollectionController }) {
             <Button variant="ghost" size="sm" onClick={runInSandbox}>
               <Icon name="flask-conical" />
               Sandbox
+            </Button>
+          )}
+          {isSkills && selectedItem && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void cm.runExport(selectedItem)}
+            >
+              <Icon name="upload" />
+              Export
             </Button>
           )}
           {otherAgents.length > 0 && (
@@ -219,7 +232,7 @@ export function CollectionEditor({ cm }: { cm: CollectionController }) {
           agentId={cm.agentId}
           basePath={cm.basePath}
           projectDir={projectDir}
-          nodeKind={isAgents ? 'subagent' : 'command'}
+          nodeKind={relationKind}
           itemId={selectedItem.id}
         />
       )}
@@ -229,6 +242,8 @@ export function CollectionEditor({ cm }: { cm: CollectionController }) {
           <SubagentFields cm={cm} />
         ) : isCommands ? (
           <CommandFields cm={cm} />
+        ) : isSkills ? (
+          <SkillFields cm={cm} />
         ) : (
           <MarkdownEditor
             value={cm.draft}

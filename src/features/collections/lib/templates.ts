@@ -67,8 +67,12 @@ export function buildTemplate(kind: CollectionKind, v: NewItemValues): string {
   }
 
   // Skills.
+  const skillBody =
+    v.body && v.body.trim()
+      ? v.body.trim()
+      : `# ${name}\n\nDescribe what this skill does and when it should be used.`
   return serializeFrontmatter(
-    { name, description: v.description },
-    `# ${name}\n\nDescribe what this skill does and when it should be used.\n`,
+    { name, description: v.description, 'allowed-tools': v.tools ?? '' },
+    `${skillBody}\n`,
   )
 }

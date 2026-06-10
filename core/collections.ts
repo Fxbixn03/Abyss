@@ -12,7 +12,11 @@
 
 import path from 'node:path'
 import { promises as fs } from 'node:fs'
-import type { CollectionItem, CollectionKind } from '@/shared/types/collections'
+import type {
+  CollectionItem,
+  CollectionKind,
+  SkillFile,
+} from '@/shared/types/collections'
 import { collectionDirName } from '@/shared/agents/defs'
 import {
   ensureDir,
@@ -367,4 +371,26 @@ export async function exportCollectionItem(
     fileName: `${safe}${ext}`,
     data: Buffer.from(await readTextFile(file), 'utf8'),
   }
+}
+
+/**
+ * The bundled files inside a skill folder (everything but the SKILL.md entry),
+ * for the skill editor's file browser. Sorted by relative path.
+ */
+export async function listSkillFiles(
+  agentId: string,
+  basePath: string,
+  id: string,
+): Promise<SkillFile[]> {
+  const safe = sanitizeId(id, 'skills')
+  const dir = skillFolderPath(collectionDir(agentId, basePath, 'skills'), safe)
+  if (!(await pathExists(dir))) return []
+  const out: SkillFile[] = []
+  for (const file of await collectFiles(dir)) {
+    const relPath = path.relative(dir, file).split(path.sep).join('/')
+    if (relPath.toLowerCase() === 'skill.md') continue
+    out.push({ relPath, path: file, size: (await fs.stat(file)).size })
+  }
+  out.sort((a, b) => a.relPath.localeCompare(b.relPath))
+  return out
 }

@@ -33,6 +33,16 @@ export interface CollectionItem {
   mtime?: number
 }
 
+/** A bundled file inside a skill folder (everything but the SKILL.md entry). */
+export interface SkillFile {
+  /** POSIX path relative to the skill folder, e.g. `references/guide.md`. */
+  relPath: string
+  /** Absolute path on disk. */
+  path: string
+  /** Size in bytes. */
+  size: number
+}
+
 /** How to react when an imported skill's folder name already exists on disk. */
 export type SkillCollisionMode = 'fail' | 'suffix'
 

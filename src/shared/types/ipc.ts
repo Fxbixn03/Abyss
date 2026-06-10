@@ -19,6 +19,7 @@ import type {
   CollectionItem,
   CollectionKind,
   SkillCollisionMode,
+  SkillFile,
   SkillImportResult,
 } from './collections'
 import type { CodexSubagentSummary } from './codex-subagent'
@@ -122,6 +123,7 @@ export enum IpcChannel {
   DuplicateCollectionItem = 'collection:duplicate',
   ExportCollectionItem = 'collection:export',
   ImportSkill = 'collection:import-skill',
+  ListSkillFiles = 'collection:list-skill-files',
 
   // Relations map (component graph for one agent)
   BuildRelationGraph = 'relations:build',
@@ -455,6 +457,10 @@ export interface IpcMap {
       onCollision: SkillCollisionMode
     }
     response: SkillImportResult
+  }
+  [IpcChannel.ListSkillFiles]: {
+    request: { agentId: string; basePath: string; id: string }
+    response: { files: SkillFile[] }
   }
 
   [IpcChannel.BuildRelationGraph]: {

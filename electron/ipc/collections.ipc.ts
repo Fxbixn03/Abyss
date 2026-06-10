@@ -6,6 +6,7 @@ import {
   duplicateCollectionItem,
   exportCollectionItem,
   listCollection,
+  listSkillFiles,
   migrateCollectionItem,
   readCollectionItem,
   renameCollectionItem,
@@ -22,6 +23,9 @@ export function registerCollectionsIpc(ctx: IpcContext): void {
   handle(IpcChannel.ReadCollectionItem, ({ agentId, basePath, kind, id }) =>
     readCollectionItem(agentId, basePath, kind, id),
   )
+  handle(IpcChannel.ListSkillFiles, async ({ agentId, basePath, id }) => ({
+    files: await listSkillFiles(agentId, basePath, id),
+  }))
   handle(
     IpcChannel.WriteCollectionItem,
     ({ agentId, basePath, kind, id, content }) =>

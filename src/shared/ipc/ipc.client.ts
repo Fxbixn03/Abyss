@@ -253,6 +253,8 @@ export const ipc = {
     archivePath: string,
     onCollision: SkillCollisionMode,
   ) => invoke(IpcChannel.ImportSkill, { basePath, archivePath, onCollision }),
+  listSkillFiles: (agentId: string, basePath: string, id: string) =>
+    invoke(IpcChannel.ListSkillFiles, { agentId, basePath, id }),
 
   // --- Relations map --------------------------------------------------------
   buildRelationGraph: (
