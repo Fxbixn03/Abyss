@@ -13,6 +13,7 @@ import {
 } from '@core/claude-settings'
 import { readCodexSettings, writeCodexSettings } from '@core/codex-settings'
 import { readHooks, writeHooks } from '@core/hooks'
+import { readDisabledHooks, writeDisabledHooks } from '@core/disabled-hooks'
 import { readRawSettings, writeRawSettings } from '@core/raw-settings'
 import { assertScopedPath } from '@core/path-scope'
 import { handle } from './handle'
@@ -22,7 +23,8 @@ export function registerConfigIpc(ctx: IpcContext): void {
   // Defense-in-depth: a write must target a path under Abyss's allowed roots
   // (home / app-data / userData). Legitimate agent base paths always live under
   // home, so this only ever rejects a renderer pointing a write somewhere absurd.
-  const scope = (p: string): string => assertScopedPath(p, ctx.env, ctx.userData)
+  const scope = (p: string): string =>
+    assertScopedPath(p, ctx.env, ctx.userData)
 
   handle(IpcChannel.GetAppInfo, () => ({
     name: app.getName(),
@@ -108,6 +110,13 @@ export function registerConfigIpc(ctx: IpcContext): void {
   )
   handle(IpcChannel.SetHooks, ({ agentId, basePath, entries }) =>
     writeHooks(agentId, scope(basePath), entries),
+  )
+  // Disabled (parked) hooks live in Abyss's own store, not the agent's config.
+  handle(IpcChannel.GetDisabledHooks, ({ agentId, basePath }) =>
+    readDisabledHooks(ctx.userData, agentId, basePath),
+  )
+  handle(IpcChannel.SetDisabledHooks, ({ agentId, basePath, entries }) =>
+    writeDisabledHooks(ctx.userData, agentId, basePath, entries),
   )
 
   // Raw settings files

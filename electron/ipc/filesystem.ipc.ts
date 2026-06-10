@@ -1,7 +1,13 @@
+import { promises as fs } from 'node:fs'
 import { dialog, shell } from 'electron'
 import { IpcChannel } from '@/shared/types/ipc'
 import { detectAgentPaths } from '@core/agent-paths'
-import { pathExists, ensureDir } from '@core/json-file'
+import {
+  pathExists,
+  ensureDir,
+  readTextFile,
+  writeTextFileAtomic,
+} from '@core/json-file'
 import { resolveScopedPath, isWellFormedPath } from '@core/path-scope'
 import { logError } from '../log'
 import { watchFile, unwatchFile } from '../fs-watcher'
@@ -109,4 +115,46 @@ export function registerFilesystemIpc(ctx: IpcContext): void {
     await ensureDir(safe)
     return { success: true }
   })
+
+  // Read any text file under the allowed roots (hook scripts, config files the
+  // history diff needs, …). A missing file yields empty content + exists:false.
+  handle(IpcChannel.ReadTextFile, async ({ path }) => {
+    const safe = scope(path)
+    if (!safe) {
+      logError('ReadTextFile: rejected out-of-scope path', path)
+      return { content: '', exists: false }
+    }
+    if (!(await pathExists(safe))) return { content: '', exists: false }
+    return { content: await readTextFile(safe), exists: true }
+  })
+
+  // Write a text file under the allowed roots, through the atomic writer (so a
+  // snapshot of the previous content is captured for history). `executable`
+  // marks shell scripts +x so a freshly-created hook script can run.
+  handle(IpcChannel.WriteTextFile, async ({ path, content, executable }) => {
+    const safe = scope(path)
+    if (!safe) {
+      logError('WriteTextFile: rejected out-of-scope path', path)
+      return { success: false, path }
+    }
+    await writeTextFileAtomic(safe, content)
+    if (executable) await fs.chmod(safe, 0o755).catch(() => {})
+    return { success: true, path: safe }
+  })
+
+  // Save content to a user-picked location (hooks export). The path comes from
+  // the OS save dialog, so it isn't root-scoped — the user chose it explicitly.
+  handle(
+    IpcChannel.SaveTextFile,
+    async ({ content, defaultName, title, filters }) => {
+      const window = ctx.getWindow()
+      const options = { title, defaultPath: defaultName, filters }
+      const result = await (window
+        ? dialog.showSaveDialog(window, options)
+        : dialog.showSaveDialog(options))
+      if (result.canceled || !result.filePath) return { path: null }
+      await fs.writeFile(result.filePath, content, 'utf8')
+      return { path: result.filePath }
+    },
+  )
 }

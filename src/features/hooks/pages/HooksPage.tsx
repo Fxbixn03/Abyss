@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { AgentAdapter } from '@/shared/types/agent'
@@ -13,6 +13,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu'
 import {
@@ -38,8 +39,11 @@ import {
 } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { useSandboxIntent } from '@/features/sandbox/store/sandboxIntent.store'
+import { FileHistoryDialog } from '@/features/config/components/FileHistoryDialog'
 import { useHooksStore } from '../store/hooks.store'
 import { HookForm } from '../components/HookForm'
+import { ScriptEditorDialog } from '../components/ScriptEditorDialog'
+import { CrossAgentHooksDialog } from '../components/CrossAgentHooksDialog'
 import {
   checkHook,
   extractScriptPath,
@@ -48,12 +52,18 @@ import {
   topSeverity,
 } from '../lib/hookChecks'
 import { buildSandboxSnippet } from '../lib/hookSandbox'
+import { buildHooksBundle, parseHooksBundle } from '../lib/hooksBundle'
 
 const SEVERITY_ICON = {
   error: { icon: 'circle-alert', className: 'text-destructive' },
   warning: { icon: 'alert-triangle', className: 'text-warning' },
   info: { icon: 'info', className: 'text-muted-foreground' },
 } as const
+
+interface ScriptRef {
+  token: string
+  path: string
+}
 
 export function HooksPage() {
   const agent = useActiveAgent()
@@ -71,12 +81,19 @@ export function HooksPage() {
   const load = useHooksStore((s) => s.load)
   const upsert = useHooksStore((s) => s.upsert)
   const remove = useHooksStore((s) => s.remove)
+  const toggle = useHooksStore((s) => s.toggle)
   const move = useHooksStore((s) => s.move)
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<HookEntry | undefined>()
   const [deleting, setDeleting] = useState<HookEntry | undefined>()
   const [scriptExists, setScriptExists] = useState<Record<string, boolean>>({})
+  const [scriptEdit, setScriptEdit] = useState<ScriptRef | null>(null)
+  const [overviewOpen, setOverviewOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [historyCurrent, setHistoryCurrent] = useState('')
+  const [showOther, setShowOther] = useState(false)
+  const [otherHooks, setOtherHooks] = useState<HookEntry[]>([])
 
   const events = useMemo(() => hookEventsFor(agent.id), [agent.id])
   const hooksFile =
@@ -85,25 +102,47 @@ export function HooksPage() {
       : agent.id === 'cursor'
         ? 'hooks.json'
         : 'settings.json'
-
-  // Other enabled agents that can receive a copied hook.
-  const copyTargets = useMemo(
-    () => allAgents.filter((a) => a.id !== agent.id && a.capabilities.hooks),
-    [allAgents, agent.id],
+  const hooksFilePath = useMemo(
+    () => (basePath ? joinPath(basePath, hooksFile) : ''),
+    [basePath, hooksFile],
   )
+
+  // Resolve any agent's config base for the current scope.
+  const configBaseFor = useCallback(
+    (agentId: string): string =>
+      scope === 'global'
+        ? getBasePath(agentId)
+        : projectDir
+          ? joinPath(projectDir, `.${agentId}`)
+          : '',
+    [scope, projectDir, getBasePath],
+  )
+
+  // Other enabled agents that can receive a copied hook / appear in the overview.
+  const hookAgents = useMemo(
+    () => allAgents.filter((a) => a.capabilities.hooks),
+    [allAgents],
+  )
+  const copyTargets = useMemo(
+    () => hookAgents.filter((a) => a.id !== agent.id),
+    [hookAgents, agent.id],
+  )
+
+  const otherScope = scope === 'global' ? 'project' : 'global'
+  const canShowOther = scope === 'global' ? Boolean(projectDir) : true
 
   useEffect(() => {
     if (supported && basePath) void load(agent.id, basePath)
   }, [supported, agent.id, basePath, load])
 
-  // Per-hook resolved script path (if the command points at one).
+  // Per-hook resolved script reference (if the command points at one).
   const scriptByHook = useMemo(() => {
-    const map = new Map<string, string>()
+    const map = new Map<string, ScriptRef>()
     for (const entry of entries) {
       const token = extractScriptPath(entry.command)
       if (!token) continue
-      const resolved = resolveScriptPath(token, basePath, agent.id)
-      if (resolved) map.set(entry.id, resolved)
+      const path = resolveScriptPath(token, basePath, agent.id)
+      if (path) map.set(entry.id, { token, path })
     }
     return map
   }, [entries, basePath, agent.id])
@@ -111,7 +150,7 @@ export function HooksPage() {
   // Check whether each referenced script actually exists on disk.
   useEffect(() => {
     let cancelled = false
-    const paths = [...new Set(scriptByHook.values())]
+    const paths = [...new Set([...scriptByHook.values()].map((s) => s.path))]
     void Promise.all(
       paths.map(async (p) => [p, (await ipc.fileExists(p)).exists] as const),
     ).then((pairs) => {
@@ -122,6 +161,29 @@ export function HooksPage() {
       cancelled = true
     }
   }, [scriptByHook])
+
+  // Read the other scope's hooks when the merged view is on.
+  useEffect(() => {
+    if (!showOther) return
+    let cancelled = false
+    const otherBase =
+      otherScope === 'global'
+        ? getBasePath(agent.id)
+        : projectDir
+          ? joinPath(projectDir, `.${agent.id}`)
+          : ''
+    void Promise.resolve()
+      .then(() => (otherBase ? ipc.getHooks(agent.id, otherBase) : []))
+      .then((list) => {
+        if (!cancelled) setOtherHooks(list)
+      })
+      .catch(() => {
+        if (!cancelled) setOtherHooks([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [showOther, otherScope, agent.id, projectDir, getBasePath, entries])
 
   const grouped = useMemo(() => {
     const map = new Map<HookEvent, HookEntry[]>()
@@ -136,7 +198,7 @@ export function HooksPage() {
   }, [entries, events])
 
   const coveredEvents = useMemo(
-    () => new Set(entries.map((e) => e.event)),
+    () => new Set(entries.filter((e) => !e.disabled).map((e) => e.event)),
     [entries],
   )
 
@@ -146,12 +208,7 @@ export function HooksPage() {
   }
 
   const copyToAgent = async (entry: HookEntry, target: AgentAdapter) => {
-    const base =
-      scope === 'global'
-        ? getBasePath(target.id)
-        : projectDir
-          ? joinPath(projectDir, `.${target.id}`)
-          : ''
+    const base = configBaseFor(target.id)
     if (!base) {
       toast.error(`No config location for ${target.displayName}`)
       return
@@ -161,6 +218,7 @@ export function HooksPage() {
       const copy: HookEntry = {
         ...entry,
         id: crypto.randomUUID(),
+        disabled: undefined,
         timeout: supportsHookTimeout(target.id) ? entry.timeout : undefined,
       }
       await ipc.setHooks(target.id, base, [...existing, copy])
@@ -168,6 +226,50 @@ export function HooksPage() {
     } catch (err) {
       reportError(err, { title: "Couldn't copy hook" })
     }
+  }
+
+  const openHistory = async () => {
+    if (!hooksFilePath) return
+    const r = await ipc.readTextFile(hooksFilePath).catch(() => null)
+    setHistoryCurrent(r?.content ?? '')
+    setHistoryOpen(true)
+  }
+
+  const exportHooks = async () => {
+    const bundle = buildHooksBundle(agent.id, entries)
+    const res = await ipc
+      .saveTextFile(JSON.stringify(bundle, null, 2), {
+        defaultName: `${agent.id}-hooks.json`,
+        title: 'Export hooks',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      })
+      .catch(() => null)
+    if (res?.path) toast.success('Hooks exported')
+  }
+
+  const importHooks = async () => {
+    const picked = await ipc
+      .pickFile({
+        title: 'Import hooks',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      })
+      .catch(() => null)
+    if (!picked?.path) return
+    const r = await ipc.readTextFile(picked.path).catch(() => null)
+    if (!r?.exists) return
+    let imported: HookEntry[]
+    try {
+      imported = parseHooksBundle(r.content)
+    } catch (err) {
+      toast.error(
+        `Import failed: ${err instanceof Error ? err.message : String(err)}`,
+      )
+      return
+    }
+    for (const entry of imported) await upsert(entry)
+    toast.success(
+      `Imported ${imported.length} hook${imported.length === 1 ? '' : 's'}`,
+    )
   }
 
   if (!supported) {
@@ -209,15 +311,47 @@ export function HooksPage() {
         description={`Lifecycle hooks for ${agent.displayName} (${hooksFile})`}
         icon="webhook"
         actions={
-          <Button
-            onClick={() => {
-              setEditing(undefined)
-              setFormOpen(true)
-            }}
-          >
-            <Icon name="plus" />
-            Add hook
-          </Button>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Icon name="sliders" />
+                  More
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setOverviewOpen(true)}>
+                  <Icon name="layout-dashboard" />
+                  What runs automatically
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void openHistory()}>
+                  <Icon name="history" />
+                  File history
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => void importHooks()}>
+                  <Icon name="upload" />
+                  Import hooks…
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => void exportHooks()}
+                  disabled={entries.length === 0}
+                >
+                  <Icon name="download" />
+                  Export hooks…
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              onClick={() => {
+                setEditing(undefined)
+                setFormOpen(true)
+              }}
+            >
+              <Icon name="plus" />
+              Add hook
+            </Button>
+          </div>
         }
       />
 
@@ -254,20 +388,24 @@ export function HooksPage() {
                 {list.map((entry) => {
                   const issues = checkHook(entry)
                   const sev = topSeverity(issues)
-                  const sameMatcher = list
-                    .map((e, idx) => ({ e, idx }))
-                    .filter(({ e }) => e.matcher === entry.matcher)
+                  const sameMatcher = list.filter(
+                    (e) =>
+                      e.matcher === entry.matcher &&
+                      Boolean(e.disabled) === Boolean(entry.disabled),
+                  )
                   const posInGroup = sameMatcher.findIndex(
-                    ({ e }) => e.id === entry.id,
+                    (e) => e.id === entry.id,
                   )
                   const script = scriptByHook.get(entry.id)
-                  const missing = script
-                    ? scriptExists[script] === false
-                    : false
+                  const exists = script ? scriptExists[script.path] : undefined
+                  const missing = script ? exists === false : false
                   return (
                     <li
                       key={entry.id}
-                      className="flex items-center gap-2 rounded-lg border border-border bg-card p-3"
+                      className={cn(
+                        'flex items-center gap-2 rounded-lg border border-border bg-card p-3',
+                        entry.disabled && 'opacity-55',
+                      )}
                     >
                       {sameMatcher.length > 1 && (
                         <div className="flex flex-col">
@@ -311,6 +449,12 @@ export function HooksPage() {
                         {entry.command}
                       </code>
 
+                      {entry.disabled && (
+                        <Badge variant="muted" className="shrink-0">
+                          disabled
+                        </Badge>
+                      )}
+
                       {entry.timeout !== undefined && (
                         <Badge variant="muted" className="shrink-0 font-code">
                           <Icon name="clock" />
@@ -352,59 +496,67 @@ export function HooksPage() {
                             </span>
                           </TooltipTrigger>
                           <TooltipContent>
-                            Script file not found on disk.
+                            Script file not found — create it from the menu.
                           </TooltipContent>
                         </Tooltip>
                       )}
 
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => testInSandbox(entry)}
-                        aria-label="Test in Sandbox"
-                        title="Test in Sandbox"
-                      >
-                        <Icon name="flask-conical" />
-                      </Button>
-
-                      {script && scriptExists[script] && (
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => void ipc.revealPath(script)}
-                          aria-label="Open script"
-                          title="Reveal script file"
-                        >
-                          <Icon name="external-link" />
-                        </Button>
-                      )}
-
-                      {copyTargets.length > 0 && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label="Copy hook to another agent"
-                              title="Copy to another agent"
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="Hook actions"
+                          >
+                            <Icon name="sliders" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => testInSandbox(entry)}
+                          >
+                            <Icon name="flask-conical" />
+                            Test in Sandbox
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => void toggle(entry.id)}
+                          >
+                            <Icon name={entry.disabled ? 'play' : 'pause'} />
+                            {entry.disabled ? 'Enable' : 'Disable'}
+                          </DropdownMenuItem>
+                          {script && (
+                            <DropdownMenuItem
+                              onClick={() => setScriptEdit(script)}
                             >
-                              <Icon name="copy" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Copy to</DropdownMenuLabel>
-                            {copyTargets.map((t) => (
-                              <DropdownMenuItem
-                                key={t.id}
-                                onClick={() => void copyToAgent(entry, t)}
-                              >
-                                <Icon name={t.icon} />
-                                {t.displayName}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                              <Icon name={exists ? 'pencil' : 'file-plus'} />
+                              {exists ? 'Edit script' : 'Create script'}
+                            </DropdownMenuItem>
+                          )}
+                          {script && exists && (
+                            <DropdownMenuItem
+                              onClick={() => void ipc.revealPath(script.path)}
+                            >
+                              <Icon name="external-link" />
+                              Reveal script
+                            </DropdownMenuItem>
+                          )}
+                          {copyTargets.length > 0 && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuLabel>Copy to</DropdownMenuLabel>
+                              {copyTargets.map((t) => (
+                                <DropdownMenuItem
+                                  key={t.id}
+                                  onClick={() => void copyToAgent(entry, t)}
+                                >
+                                  <Icon name={t.icon} />
+                                  {t.displayName}
+                                </DropdownMenuItem>
+                              ))}
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
 
                       <Button
                         variant="ghost"
@@ -431,6 +583,15 @@ export function HooksPage() {
               </ul>
             </section>
           ))}
+
+          {canShowOther && (
+            <OtherScopeView
+              show={showOther}
+              onToggle={() => setShowOther((v) => !v)}
+              otherScope={otherScope}
+              hooks={otherHooks}
+            />
+          )}
         </div>
       )}
 
@@ -441,6 +602,38 @@ export function HooksPage() {
         agentId={agent.id}
         events={events}
         onSubmit={(entry) => void upsert(entry)}
+      />
+
+      {scriptEdit && (
+        <ScriptEditorDialog
+          open={scriptEdit !== null}
+          onOpenChange={(o) => {
+            if (!o) setScriptEdit(null)
+          }}
+          scriptPath={scriptEdit.path}
+          scriptToken={scriptEdit.token}
+          onSaved={() => {
+            if (basePath) void load(agent.id, basePath)
+          }}
+        />
+      )}
+
+      <CrossAgentHooksDialog
+        open={overviewOpen}
+        onOpenChange={setOverviewOpen}
+        agents={hookAgents}
+        baseFor={configBaseFor}
+        scopeLabel={scope}
+      />
+
+      <FileHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        filePath={hooksFilePath}
+        current={historyCurrent}
+        onRestored={() => {
+          if (basePath) void load(agent.id, basePath)
+        }}
       />
 
       <ConfirmDialog
@@ -459,7 +652,7 @@ export function HooksPage() {
   )
 }
 
-/** Which lifecycle events currently have at least one hook, and which don't. */
+/** Which lifecycle events currently have at least one active hook. */
 function CoverageOverview({
   events,
   covered,
@@ -502,7 +695,9 @@ function MatcherDryRun({ entries }: { entries: HookEntry[] }) {
   const toolEntries = useMemo(
     () =>
       entries.filter(
-        (e) => e.event === 'PreToolUse' || e.event === 'PostToolUse',
+        (e) =>
+          !e.disabled &&
+          (e.event === 'PreToolUse' || e.event === 'PostToolUse'),
       ),
     [entries],
   )
@@ -557,6 +752,71 @@ function MatcherDryRun({ entries }: { entries: HookEntry[] }) {
           ))}
         </ul>
       )}
+    </Card>
+  )
+}
+
+/** Read-only view of the OTHER scope's hooks, so origin is visible. */
+function OtherScopeView({
+  show,
+  onToggle,
+  otherScope,
+  hooks,
+}: {
+  show: boolean
+  onToggle: () => void
+  otherScope: 'global' | 'project'
+  hooks: HookEntry[]
+}) {
+  return (
+    <Card className="space-y-2 p-3">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center gap-2 text-xs font-medium text-muted-foreground"
+      >
+        <Icon
+          name={show ? 'chevron-down' : 'chevron-right'}
+          className="size-3.5"
+        />
+        <Icon name="git-compare" className="size-3.5" />
+        {show ? 'Hide' : 'Show'} {otherScope} scope hooks
+        {show && (
+          <Badge variant="muted" className="ml-1 font-code">
+            {hooks.length}
+          </Badge>
+        )}
+      </button>
+      {show &&
+        (hooks.length === 0 ? (
+          <p className="pl-6 text-xs text-muted-foreground">
+            No hooks in the {otherScope} scope.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-1 pl-6">
+            {hooks.map((h) => (
+              <li
+                key={h.id}
+                className="flex items-center gap-2 text-xs text-muted-foreground"
+              >
+                <Badge variant="outline" className="font-code">
+                  {otherScope}
+                </Badge>
+                <Badge variant="secondary" className="font-code">
+                  {h.event}
+                </Badge>
+                {h.matcher && (
+                  <span className="font-code text-foreground/70">
+                    {h.matcher}
+                  </span>
+                )}
+                <code className="min-w-0 flex-1 truncate font-code">
+                  {h.command}
+                </code>
+              </li>
+            ))}
+          </ul>
+        ))}
     </Card>
   )
 }

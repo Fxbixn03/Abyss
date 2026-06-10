@@ -110,6 +110,17 @@ export const ipc = {
   fsUnwatch: (path: string) => invoke(IpcChannel.FsUnwatch, { path }),
   createDirectory: (path: string) =>
     invoke(IpcChannel.CreateDirectory, { path }),
+  readTextFile: (path: string) => invoke(IpcChannel.ReadTextFile, { path }),
+  writeTextFile: (path: string, content: string, executable?: boolean) =>
+    invoke(IpcChannel.WriteTextFile, { path, content, executable }),
+  saveTextFile: (
+    content: string,
+    opts?: {
+      defaultName?: string
+      title?: string
+      filters?: { name: string; extensions: string[] }[]
+    },
+  ) => invoke(IpcChannel.SaveTextFile, { content, ...opts }),
   agentInstallStatus: (agentId: AgentId) =>
     invoke(IpcChannel.AgentInstallStatus, { agentId }),
 
@@ -291,6 +302,13 @@ export const ipc = {
     invoke(IpcChannel.GetHooks, { agentId, basePath }),
   setHooks: (agentId: AgentId, basePath: string, entries: HookEntry[]) =>
     invoke(IpcChannel.SetHooks, { agentId, basePath, entries }),
+  getDisabledHooks: (agentId: AgentId, basePath: string) =>
+    invoke(IpcChannel.GetDisabledHooks, { agentId, basePath }),
+  setDisabledHooks: (
+    agentId: AgentId,
+    basePath: string,
+    entries: HookEntry[],
+  ) => invoke(IpcChannel.SetDisabledHooks, { agentId, basePath, entries }),
 
   readRawSettings: (basePath: string, file: RawSettingsFile) =>
     invoke(IpcChannel.ReadRawSettings, { basePath, file }),

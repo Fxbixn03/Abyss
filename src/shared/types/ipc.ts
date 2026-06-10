@@ -76,6 +76,9 @@ export enum IpcChannel {
   FsWatch = 'fs:watch',
   FsUnwatch = 'fs:unwatch',
   CreateDirectory = 'fs:create-directory',
+  ReadTextFile = 'fs:read-text',
+  WriteTextFile = 'fs:write-text',
+  SaveTextFile = 'fs:save-text',
   SandboxRun = 'sandbox:run',
   BackupList = 'backup:list',
   BackupRun = 'backup:run',
@@ -145,6 +148,8 @@ export enum IpcChannel {
   // Lifecycle hooks
   GetHooks = 'hooks:get',
   SetHooks = 'hooks:set',
+  GetDisabledHooks = 'hooks:get-disabled',
+  SetDisabledHooks = 'hooks:set-disabled',
 
   // Raw settings files
   ReadRawSettings = 'raw-settings:read',
@@ -297,6 +302,23 @@ export interface IpcMap {
   [IpcChannel.CreateDirectory]: {
     request: { path: string }
     response: { success: boolean }
+  }
+  [IpcChannel.ReadTextFile]: {
+    request: { path: string }
+    response: { content: string; exists: boolean }
+  }
+  [IpcChannel.WriteTextFile]: {
+    request: { path: string; content: string; executable?: boolean }
+    response: { success: boolean; path: string }
+  }
+  [IpcChannel.SaveTextFile]: {
+    request: {
+      content: string
+      defaultName?: string
+      title?: string
+      filters?: { name: string; extensions: string[] }[]
+    }
+    response: { path: string | null }
   }
   [IpcChannel.AgentInstallStatus]: {
     request: { agentId: AgentId }
@@ -517,6 +539,14 @@ export interface IpcMap {
   [IpcChannel.SetHooks]: {
     request: { agentId: AgentId; basePath: string; entries: HookEntry[] }
     response: { success: boolean; path: string }
+  }
+  [IpcChannel.GetDisabledHooks]: {
+    request: { agentId: AgentId; basePath: string }
+    response: HookEntry[]
+  }
+  [IpcChannel.SetDisabledHooks]: {
+    request: { agentId: AgentId; basePath: string; entries: HookEntry[] }
+    response: { success: boolean }
   }
 
   [IpcChannel.ReadRawSettings]: {

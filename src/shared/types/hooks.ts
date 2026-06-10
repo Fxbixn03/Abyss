@@ -49,6 +49,12 @@ export interface HookEntry {
    * undefined there and the UI hides the field for those agents.
    */
   timeout?: number
+  /**
+   * Whether the hook is parked (kept but not active). Not an on-disk field —
+   * disabled hooks live in Abyss's own store (see `core/disabled-hooks`) and are
+   * merged into the flat list with this flag set. Active hooks leave it unset.
+   */
+  disabled?: boolean
 }
 
 /** Events where a tool matcher is meaningful. */

@@ -43,7 +43,7 @@
     {
       "label": "Abyss - Build & Deploy",
       "dependsOrder": "sequence",
-      "dependsOn": ["Build my project", "Deploy"],
+      "dependsOn": ["Abyss - Build my project", "Abyss - Deploy"],
       "group": {
         "kind": "build",
         "isDefault": true
