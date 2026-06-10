@@ -4,11 +4,22 @@
  */
 
 import path from 'node:path'
-import type { ModelEnvConfig, PermissionRules } from '@/shared/types/config'
+import type {
+  ModelEnvConfig,
+  PermissionMode,
+  PermissionRules,
+} from '@/shared/types/config'
 import { readJsonFile, writeJsonFile } from './json-file'
 
 interface ClaudeSettingsFile {
-  permissions?: { allow?: string[]; deny?: string[]; ask?: string[] }
+  permissions?: {
+    allow?: string[]
+    deny?: string[]
+    ask?: string[]
+    defaultMode?: string
+    additionalDirectories?: string[]
+    [key: string]: unknown
+  }
   model?: string
   env?: Record<string, string>
   [key: string]: unknown
@@ -26,6 +37,8 @@ export async function readPermissions(
     allow: s.permissions?.allow ?? [],
     deny: s.permissions?.deny ?? [],
     ask: s.permissions?.ask ?? [],
+    defaultMode: (s.permissions?.defaultMode as PermissionMode) ?? 'default',
+    additionalDirectories: s.permissions?.additionalDirectories ?? [],
   }
 }
 
@@ -35,7 +48,25 @@ export async function writePermissions(
 ): Promise<{ success: boolean; path: string }> {
   const p = settingsPath(basePath)
   const s = await readJsonFile<ClaudeSettingsFile>(p, {})
-  s.permissions = { allow: rules.allow, deny: rules.deny, ask: rules.ask }
+  // Merge over the existing block so unknown keys under `permissions` survive.
+  const perms = { ...s.permissions }
+  perms.allow = rules.allow
+  perms.deny = rules.deny
+  perms.ask = rules.ask
+
+  if (rules.defaultMode && rules.defaultMode !== 'default') {
+    perms.defaultMode = rules.defaultMode
+  } else {
+    delete perms.defaultMode
+  }
+
+  if (rules.additionalDirectories && rules.additionalDirectories.length > 0) {
+    perms.additionalDirectories = rules.additionalDirectories
+  } else {
+    delete perms.additionalDirectories
+  }
+
+  s.permissions = perms
   await writeJsonFile(p, s)
   return { success: true, path: p }
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { PermissionRules } from '@/shared/types/config'
+import type { PermissionColumn } from '@/shared/types/config'
 import { Input } from '@/shared/components/ui/input'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
@@ -42,13 +42,13 @@ const KNOWN_TOOLS = [
   'TodoWrite',
 ]
 
-const CATEGORY_LABELS: Record<keyof PermissionRules, string> = {
+const CATEGORY_LABELS: Record<PermissionColumn, string> = {
   allow: 'Allow',
   ask: 'Ask',
   deny: 'Deny',
 }
 
-const PRESETS: Record<keyof PermissionRules, string[]> = {
+const PRESETS: Record<PermissionColumn, string[]> = {
   allow: [
     'Bash(git status:*)',
     'Bash(git diff:*)',
@@ -68,7 +68,7 @@ interface RuleStatus {
 
 function ruleStatus(
   rule: string,
-  category: keyof PermissionRules,
+  category: PermissionColumn,
   conflict: RuleConflict | undefined,
 ): RuleStatus {
   const messages: string[] = []
@@ -116,7 +116,7 @@ export function PermissionRuleEditor({
   onChange,
   onMove,
 }: {
-  category: keyof PermissionRules
+  category: PermissionColumn
   values: string[]
   /** Rules inherited from the global profile (shown read-only when in project scope). */
   inherited?: string[]
@@ -126,7 +126,7 @@ export function PermissionRuleEditor({
   conflicts?: Map<string, RuleConflict>
   onChange: (values: string[]) => void
   /** Move a rule to another column (removes it here, adds it there). */
-  onMove?: (rule: string, target: keyof PermissionRules) => void
+  onMove?: (rule: string, target: PermissionColumn) => void
 }) {
   const [tool, setTool] = useState('Bash')
   const [specifier, setSpecifier] = useState('')
@@ -176,7 +176,7 @@ export function PermissionRuleEditor({
     !totalEmpty && shownValues.length === 0 && shownInherited.length === 0
 
   const moveTargets = (
-    Object.keys(CATEGORY_LABELS) as (keyof PermissionRules)[]
+    Object.keys(CATEGORY_LABELS) as PermissionColumn[]
   ).filter((c) => c !== category)
 
   return (

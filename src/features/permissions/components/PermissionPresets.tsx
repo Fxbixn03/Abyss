@@ -90,7 +90,12 @@ export function PermissionPresets({
         confirmLabel="Replace rules"
         destructive={false}
         onConfirm={() => {
-          if (pending) onChange(pending.rules)
+          if (pending)
+            onChange({
+              ...pending.rules,
+              defaultMode: rules.defaultMode,
+              additionalDirectories: rules.additionalDirectories,
+            })
           setPending(null)
         }}
       />

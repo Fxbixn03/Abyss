@@ -1,6 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { PermissionRules } from '@/shared/types/config'
+import type { PermissionColumn, PermissionRules } from '@/shared/types/config'
 import {
   Card,
   CardContent,
@@ -22,9 +22,17 @@ import { CodexApprovals } from '../components/CodexApprovals'
 import { PermissionRuleEditor } from '../components/PermissionRuleEditor'
 import { PermissionPresets } from '../components/PermissionPresets'
 import { PermissionTester } from '../components/PermissionTester'
+import { PermissionMode } from '../components/PermissionMode'
+import { AdditionalDirectories } from '../components/AdditionalDirectories'
 import { buildConflictMap, findConflicts } from '../lib/conflicts'
 
-const EMPTY: PermissionRules = { allow: [], deny: [], ask: [] }
+const EMPTY: PermissionRules = {
+  allow: [],
+  deny: [],
+  ask: [],
+  defaultMode: 'default',
+  additionalDirectories: [],
+}
 
 export function PermissionsPage() {
   const agent = useActiveAgent()
@@ -74,9 +82,9 @@ export function PermissionsPage() {
   }
 
   const move = (
-    from: keyof PermissionRules,
+    from: PermissionColumn,
     rule: string,
-    to: keyof PermissionRules,
+    to: PermissionColumn,
   ) => {
     if (from === to) return
     persist({
@@ -122,7 +130,7 @@ export function PermissionsPage() {
   }
 
   const sections: {
-    key: keyof PermissionRules
+    key: PermissionColumn
     title: string
     description: string
     placeholder: string
@@ -201,44 +209,59 @@ export function PermissionsPage() {
         </div>
       )}
 
-      <div className="grid gap-4 overflow-y-auto md:grid-cols-3">
-        {sections.map((section) => {
-          const ownCount = rules[section.key].length
-          const globalCount = shownInherited[section.key].length
-          return (
-            <Card key={section.key} className={section.accent}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Icon
-                    name={section.icon}
-                    className={`size-4 ${section.iconClass}`}
+      <div className="flex flex-col gap-4 overflow-y-auto">
+        <div className="grid gap-4 md:grid-cols-2">
+          <PermissionMode
+            mode={rules.defaultMode}
+            onChange={(defaultMode) => persist({ ...rules, defaultMode })}
+          />
+          <AdditionalDirectories
+            dirs={rules.additionalDirectories ?? []}
+            onChange={(additionalDirectories) =>
+              persist({ ...rules, additionalDirectories })
+            }
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {sections.map((section) => {
+            const ownCount = rules[section.key].length
+            const globalCount = shownInherited[section.key].length
+            return (
+              <Card key={section.key} className={section.accent}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon
+                      name={section.icon}
+                      className={`size-4 ${section.iconClass}`}
+                    />
+                    {section.title}
+                    <span className="ml-auto flex items-center gap-1">
+                      <Badge variant={section.countVariant}>{ownCount}</Badge>
+                      {globalCount > 0 && (
+                        <Badge variant="muted">+{globalCount} global</Badge>
+                      )}
+                    </span>
+                  </CardTitle>
+                  <CardDescription>{section.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PermissionRuleEditor
+                    category={section.key}
+                    values={rules[section.key]}
+                    inherited={shownInherited[section.key]}
+                    filter={deferredQuery}
+                    conflicts={conflicts}
+                    onChange={(values) =>
+                      persist({ ...rules, [section.key]: values })
+                    }
+                    onMove={(rule, target) => move(section.key, rule, target)}
                   />
-                  {section.title}
-                  <span className="ml-auto flex items-center gap-1">
-                    <Badge variant={section.countVariant}>{ownCount}</Badge>
-                    {globalCount > 0 && (
-                      <Badge variant="muted">+{globalCount} global</Badge>
-                    )}
-                  </span>
-                </CardTitle>
-                <CardDescription>{section.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <PermissionRuleEditor
-                  category={section.key}
-                  values={rules[section.key]}
-                  inherited={shownInherited[section.key]}
-                  filter={deferredQuery}
-                  conflicts={conflicts}
-                  onChange={(values) =>
-                    persist({ ...rules, [section.key]: values })
-                  }
-                  onMove={(rule, target) => move(section.key, rule, target)}
-                />
-              </CardContent>
-            </Card>
-          )
-        })}
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

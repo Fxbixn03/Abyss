@@ -139,7 +139,8 @@ export const TOPIC_PRESETS: PermissionPreset[] = [
   },
 ]
 
-/** Merge two rule sets, de-duplicating within each column. */
+/** Merge two rule sets, de-duplicating within each column. Keeps the base's
+ * mode and additional directories (presets only define the three columns). */
 export function mergeRules(
   base: PermissionRules,
   add: PermissionRules,
@@ -149,5 +150,7 @@ export function mergeRules(
   merged.allow = uniq([...base.allow, ...add.allow])
   merged.ask = uniq([...base.ask, ...add.ask])
   merged.deny = uniq([...base.deny, ...add.deny])
+  merged.defaultMode = base.defaultMode
+  merged.additionalDirectories = base.additionalDirectories
   return merged
 }

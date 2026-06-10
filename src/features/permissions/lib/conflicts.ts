@@ -8,10 +8,10 @@
  * Allow rules that effectively open the door too wide.
  */
 
-import type { PermissionRules } from '@/shared/types/config'
+import type { PermissionColumn, PermissionRules } from '@/shared/types/config'
 import { parseRule } from './glob'
 
-export type PermissionCategory = keyof PermissionRules
+export type PermissionCategory = PermissionColumn
 
 /** Precedence Claude Code applies when a call matches several columns. */
 const PRECEDENCE: PermissionCategory[] = ['deny', 'ask', 'allow']

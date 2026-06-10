@@ -31,11 +31,25 @@ export interface McpHealthResult {
   durationMs: number
 }
 
-/** Allow / deny / ask permission rules. */
+/** Claude Code's default permission posture (`permissions.defaultMode`). */
+export type PermissionMode =
+  | 'default'
+  | 'acceptEdits'
+  | 'plan'
+  | 'bypassPermissions'
+
+/** The three rule columns (excludes the wider `permissions` settings). */
+export type PermissionColumn = 'allow' | 'deny' | 'ask'
+
+/** Allow / deny / ask permission rules plus the wider `permissions` block. */
 export interface PermissionRules {
   allow: string[]
   deny: string[]
   ask: string[]
+  /** Default mode applied when no rule matches a call. */
+  defaultMode?: PermissionMode
+  /** Extra directories the agent may work in beyond the project root. */
+  additionalDirectories?: string[]
 }
 
 /** Codex approval + sandbox settings (its equivalent of permissions). */

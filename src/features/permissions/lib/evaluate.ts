@@ -11,10 +11,10 @@
  * Precedence is deny > ask > allow; an unmatched call defaults to `ask`.
  */
 
-import type { PermissionRules } from '@/shared/types/config'
+import type { PermissionColumn, PermissionRules } from '@/shared/types/config'
 import { globToRegExp, parseRule, PATH_TOOLS } from './glob'
 
-export type Decision = keyof PermissionRules
+export type Decision = PermissionColumn
 
 export interface EvalResult {
   decision: Decision

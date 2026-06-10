@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { AgentId } from '@/shared/types/agent'
-import type { McpServerEntry, PermissionRules } from '@/shared/types/config'
+import type {
+  McpServerEntry,
+  PermissionColumn,
+  PermissionRules,
+} from '@/shared/types/config'
 import type {
   SurfaceComparison,
   SyncAllResult,
@@ -125,7 +129,7 @@ function McpDiff({ a, b }: { a: McpServerEntry[]; b: McpServerEntry[] }) {
 }
 
 function PermissionsDiff({ a, b }: { a: PermissionRules; b: PermissionRules }) {
-  const cats: (keyof PermissionRules)[] = ['allow', 'deny', 'ask']
+  const cats: PermissionColumn[] = ['allow', 'deny', 'ask']
   return (
     <div className="flex flex-col gap-3">
       {cats.map((cat) => {

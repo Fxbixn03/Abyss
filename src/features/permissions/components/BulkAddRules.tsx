@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { PermissionRules } from '@/shared/types/config'
+import type { PermissionColumn } from '@/shared/types/config'
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { isValidRule } from '../lib/glob'
 
-const LABELS: Record<keyof PermissionRules, string> = {
+const LABELS: Record<PermissionColumn, string> = {
   allow: 'Allow',
   ask: 'Ask',
   deny: 'Deny',
@@ -37,7 +37,7 @@ export function BulkAddRules({
   existing,
   onAdd,
 }: {
-  category: keyof PermissionRules
+  category: PermissionColumn
   existing: string[]
   onAdd: (rules: string[]) => void
 }) {
