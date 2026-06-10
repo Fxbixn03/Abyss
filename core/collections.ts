@@ -101,6 +101,7 @@ function summarize(
     description: data.description || '',
     model: data.model,
     tools: data.tools,
+    argumentHint: data['argument-hint'],
     globs: data.globs,
     alwaysApply:
       data.alwaysApply === undefined ? undefined : data.alwaysApply === 'true',

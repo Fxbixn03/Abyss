@@ -21,6 +21,8 @@ export interface CollectionItem {
   model?: string
   /** Frontmatter `tools`, if present (agents). */
   tools?: string
+  /** Frontmatter `argument-hint`, if present (commands). */
+  argumentHint?: string
   /** Frontmatter `globs`, if present (rules). */
   globs?: string
   /** Frontmatter `alwaysApply`, if present (rules). */

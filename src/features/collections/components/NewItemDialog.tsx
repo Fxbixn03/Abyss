@@ -22,6 +22,7 @@ import {
   joinToolList,
 } from '../lib/tools'
 import { SUBAGENT_SCAFFOLDS } from '../lib/subagentScaffolds'
+import { COMMAND_SCAFFOLDS } from '../lib/commandScaffolds'
 
 const ID_RE = /^[A-Za-z0-9._-]+$/
 
@@ -44,10 +45,19 @@ export function NewItemDialog({
   onCreate,
 }: NewItemDialogProps) {
   const labels = label ?? COLLECTION_LABELS[kind]
+  const isAgents = kind === 'agents'
+  const isCommands = kind === 'commands'
+  const scaffolds = isAgents
+    ? SUBAGENT_SCAFFOLDS
+    : isCommands
+      ? COMMAND_SCAFFOLDS
+      : []
+
   const [id, setId] = useState('')
   const [description, setDescription] = useState('')
-  const [model, setModel] = useState('sonnet')
+  const [model, setModel] = useState('')
   const [tools, setTools] = useState('')
+  const [argumentHint, setArgumentHint] = useState('')
   const [body, setBody] = useState('')
   const [scaffold, setScaffold] = useState('blank')
 
@@ -56,8 +66,9 @@ export function NewItemDialog({
   if (open && !seeded) {
     setId('')
     setDescription('')
-    setModel('sonnet')
+    setModel(isAgents ? 'sonnet' : '')
     setTools('')
+    setArgumentHint('')
     setBody('')
     setScaffold('blank')
     setSeeded(true)
@@ -66,6 +77,16 @@ export function NewItemDialog({
 
   const applyScaffold = (scaffoldId: string) => {
     setScaffold(scaffoldId)
+    if (isCommands) {
+      const s = COMMAND_SCAFFOLDS.find((x) => x.id === scaffoldId)
+      if (!s) return
+      if (s.id !== 'blank' && id.trim() === '') setId(s.suggestedId)
+      setDescription(s.description)
+      setArgumentHint(s.argumentHint)
+      setTools(s.allowedTools)
+      setBody(s.body)
+      return
+    }
     const s = SUBAGENT_SCAFFOLDS.find((x) => x.id === scaffoldId)
     if (!s) return
     if (s.id !== 'blank') {
@@ -109,12 +130,15 @@ export function NewItemDialog({
       id: id.trim(),
       name: id.trim(),
       description,
-      model: kind === 'agents' ? model : undefined,
-      tools: kind === 'agents' ? tools : undefined,
-      body: kind === 'agents' ? body : undefined,
+      model: isAgents || isCommands ? model : undefined,
+      tools: isAgents || isCommands ? tools : undefined,
+      argumentHint: isCommands ? argumentHint : undefined,
+      body: isAgents || isCommands ? body : undefined,
     })
     onOpenChange(false)
   }
+
+  const toolsLabel = isCommands ? 'Allowed tools' : 'Tools'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -124,11 +148,11 @@ export function NewItemDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          {kind === 'agents' && (
+          {scaffolds.length > 0 && (
             <div className="space-y-1.5">
               <Label>Start from</Label>
               <div className="flex flex-wrap gap-1.5">
-                {SUBAGENT_SCAFFOLDS.map((s) => (
+                {scaffolds.map((s) => (
                   <button
                     key={s.id}
                     type="button"
@@ -172,7 +196,20 @@ export function NewItemDialog({
             />
           </div>
 
-          {kind === 'agents' && (
+          {isCommands && (
+            <div className="space-y-1.5">
+              <Label htmlFor="item-hint">Argument hint</Label>
+              <Input
+                id="item-hint"
+                value={argumentHint}
+                onChange={(e) => setArgumentHint(e.target.value)}
+                placeholder="[file] or <message>"
+                className="font-code"
+              />
+            </div>
+          )}
+
+          {(isAgents || isCommands) && (
             <>
               <div className="space-y-1.5">
                 <Label htmlFor="item-model">Model</Label>
@@ -193,7 +230,7 @@ export function NewItemDialog({
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label>Tools</Label>
+                  <Label>{toolsLabel}</Label>
                   {toolList.length === 0 && (
                     <span className="text-[11px] text-muted-foreground">
                       Empty = inherit all

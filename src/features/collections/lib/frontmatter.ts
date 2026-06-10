@@ -56,6 +56,8 @@ export function parseFrontmatter(content: string): {
 const KEY_ORDER = [
   'name',
   'description',
+  'argument-hint',
+  'allowed-tools',
   'tools',
   'model',
   'globs',

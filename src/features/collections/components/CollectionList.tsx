@@ -142,6 +142,17 @@ export function CollectionList({ cm }: { cm: CollectionController }) {
                             {item.model}
                           </Badge>
                         )}
+                        {item.argumentHint && (
+                          <Badge
+                            variant="muted"
+                            className={cn(
+                              'font-code text-[10px]',
+                              !item.model && 'ml-auto',
+                            )}
+                          >
+                            {item.argumentHint}
+                          </Badge>
+                        )}
                       </span>
                       {item.description && (
                         <span className="line-clamp-2 text-xs text-muted-foreground">

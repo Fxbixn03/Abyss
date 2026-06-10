@@ -1,12 +1,16 @@
 import type { CollectionKind } from '@/shared/types/collections'
+import { serializeFrontmatter } from './frontmatter'
 
 export interface NewItemValues {
   id: string
   name: string
   description: string
   model?: string
+  /** Subagent `tools` or command `allowed-tools` (comma-separated). */
   tools?: string
-  /** Optional prebuilt body (e.g. from a subagent scaffold). */
+  /** Command `argument-hint`. */
+  argumentHint?: string
+  /** Optional prebuilt body (e.g. from a scaffold). */
   body?: string
 }
 
@@ -15,7 +19,8 @@ export function buildTemplate(kind: CollectionKind, v: NewItemValues): string {
   const name = v.name.trim() || v.id
 
   // Cursor rules use a distinct frontmatter (no `name`): description + globs +
-  // alwaysApply control when the rule is injected into a conversation.
+  // alwaysApply control when the rule is injected into a conversation. Kept
+  // hand-built so the empty `globs:` line is preserved.
   if (kind === 'rules') {
     return [
       '---',
@@ -29,29 +34,41 @@ export function buildTemplate(kind: CollectionKind, v: NewItemValues): string {
     ].join('\n')
   }
 
-  const front: string[] = [
-    '---',
-    `name: ${name}`,
-    `description: ${v.description}`,
-  ]
+  if (kind === 'commands') {
+    const body =
+      v.body && v.body.trim()
+        ? v.body.trim()
+        : `Describe what this slash command should do. The user's arguments are available as $ARGUMENTS.`
+    return serializeFrontmatter(
+      {
+        description: v.description,
+        'argument-hint': v.argumentHint ?? '',
+        'allowed-tools': v.tools ?? '',
+        model: v.model ?? '',
+      },
+      `${body}\n`,
+    )
+  }
 
   if (kind === 'agents') {
-    if (v.tools && v.tools.trim()) front.push(`tools: ${v.tools.trim()}`)
-    front.push(`model: ${v.model?.trim() || 'sonnet'}`)
+    const body =
+      v.body && v.body.trim()
+        ? v.body.trim()
+        : `You are ${name}. Describe this subagent's role, responsibilities and step-by-step instructions here.`
+    return serializeFrontmatter(
+      {
+        name,
+        description: v.description,
+        tools: v.tools ?? '',
+        model: v.model?.trim() || 'sonnet',
+      },
+      `${body}\n`,
+    )
   }
-  front.push('---', '')
 
-  // A scaffold can supply a ready-made body; otherwise use the per-kind stub.
-  if (kind === 'agents' && v.body && v.body.trim()) {
-    return front.join('\n') + `${v.body.trim()}\n`
-  }
-
-  const body =
-    kind === 'agents'
-      ? `You are ${name}. Describe this subagent's role, responsibilities and step-by-step instructions here.\n`
-      : kind === 'commands'
-        ? `Describe what this slash command should do. The user's arguments are available as $ARGUMENTS.\n`
-        : `# ${name}\n\nDescribe what this skill does and when it should be used.\n`
-
-  return front.join('\n') + body
+  // Skills.
+  return serializeFrontmatter(
+    { name, description: v.description },
+    `# ${name}\n\nDescribe what this skill does and when it should be used.\n`,
+  )
 }

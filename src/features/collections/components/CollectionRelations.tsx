@@ -44,19 +44,21 @@ function Chips({ nodes }: { nodes: { node: RelationNode; guess: boolean }[] }) {
 }
 
 /**
- * Compact "Uses / Used by" view for one subagent, built from the relation graph
- * (subagent → tools/MCP/agents it references, and components that reference it).
+ * Compact "Uses / Used by" view for one collection item (subagent or command),
+ * built from the relation graph (what it references, and what references it).
  */
-export function SubagentRelations({
+export function CollectionRelations({
   agentId,
   basePath,
   projectDir,
-  subagentId,
+  nodeKind,
+  itemId,
 }: {
   agentId: string
   basePath: string
   projectDir?: string
-  subagentId: string
+  nodeKind: RelationNodeKind
+  itemId: string
 }) {
   const [graph, setGraph] = useState<RelationGraph | null>(null)
   const [loading, setLoading] = useState(true)
@@ -84,7 +86,7 @@ export function SubagentRelations({
     }
   }, [agentId, basePath, projectDir])
 
-  const nodeId = `subagent:${subagentId}`
+  const nodeId = `${nodeKind}:${itemId}`
   const byId = new Map((graph?.nodes ?? []).map((n) => [n.id, n]))
   const edges = (graph?.edges ?? []).filter((e) => e.kind !== 'owns')
 

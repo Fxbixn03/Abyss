@@ -27,7 +27,8 @@ import { useSandboxIntent } from '@/features/sandbox/store/sandboxIntent.store'
 import type { CollectionController } from '../hooks/useCollectionManager'
 import { parseFrontmatter } from '../lib/frontmatter'
 import { SubagentFields } from './SubagentFields'
-import { SubagentRelations } from './SubagentRelations'
+import { CommandFields } from './CommandFields'
+import { CollectionRelations } from './CollectionRelations'
 
 /** Right pane: header (path + actions), external-change banner and the editor. */
 export function CollectionEditor({ cm }: { cm: CollectionController }) {
@@ -43,6 +44,8 @@ export function CollectionEditor({ cm }: { cm: CollectionController }) {
   const [copyTarget, setCopyTarget] = useState<AgentAdapter | null>(null)
 
   const isAgents = kind === 'agents'
+  const isCommands = kind === 'commands'
+  const hasRelations = isAgents || isCommands
   const otherAgents = allAgents.filter(
     (a) => a.id !== cm.agentId && a.capabilities[kind],
   )
@@ -113,21 +116,21 @@ export function CollectionEditor({ cm }: { cm: CollectionController }) {
           )}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          {hasRelations && (
+            <Button
+              variant={relationsOpen ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setRelationsOpen((v) => !v)}
+            >
+              <Icon name="git-compare" />
+              Relations
+            </Button>
+          )}
           {isAgents && (
-            <>
-              <Button
-                variant={relationsOpen ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setRelationsOpen((v) => !v)}
-              >
-                <Icon name="git-compare" />
-                Relations
-              </Button>
-              <Button variant="ghost" size="sm" onClick={runInSandbox}>
-                <Icon name="flask-conical" />
-                Sandbox
-              </Button>
-            </>
+            <Button variant="ghost" size="sm" onClick={runInSandbox}>
+              <Icon name="flask-conical" />
+              Sandbox
+            </Button>
           )}
           {otherAgents.length > 0 && (
             <DropdownMenu>
@@ -211,18 +214,21 @@ export function CollectionEditor({ cm }: { cm: CollectionController }) {
         </div>
       )}
 
-      {isAgents && relationsOpen && (
-        <SubagentRelations
+      {hasRelations && relationsOpen && (
+        <CollectionRelations
           agentId={cm.agentId}
           basePath={cm.basePath}
           projectDir={projectDir}
-          subagentId={selectedItem.id}
+          nodeKind={isAgents ? 'subagent' : 'command'}
+          itemId={selectedItem.id}
         />
       )}
 
       <div className="min-h-0 flex-1">
         {isAgents ? (
           <SubagentFields cm={cm} />
+        ) : isCommands ? (
+          <CommandFields cm={cm} />
         ) : (
           <MarkdownEditor
             value={cm.draft}
