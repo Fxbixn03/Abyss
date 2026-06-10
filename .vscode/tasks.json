@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build my project",
+      "label": "Abyss - Build my project",
       "type": "shell",
       "command": "pnpm",
       "args": ["build"],
@@ -17,7 +17,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Deploy",
+      "label": "Abyss - Deploy",
       "type": "shell",
       "command": "echo",
       "args": ["Deploy is only supported on Linux and Windows."],
@@ -41,7 +41,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Build & Deploy",
+      "label": "Abyss - Build & Deploy",
       "dependsOrder": "sequence",
       "dependsOn": ["Build my project", "Deploy"],
       "group": {

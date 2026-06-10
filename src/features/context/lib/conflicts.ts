@@ -48,14 +48,18 @@ const STOPWORDS = new Set([
   'not',
 ])
 
-/** Significant tokens of a directive predicate, for comparing two rules. */
+/**
+ * Significant tokens of a directive predicate, for comparing two rules. Order is
+ * preserved (not sorted): "always run tests before commit" and "never commit
+ * before running tests" share the same token *set* but mean different things, so
+ * a sorted key would falsely flag them as contradictory.
+ */
 function predicateKey(text: string): string {
   return text
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
     .filter((w) => w.length >= 3 && !STOPWORDS.has(w))
-    .sort()
     .join(' ')
 }
 
