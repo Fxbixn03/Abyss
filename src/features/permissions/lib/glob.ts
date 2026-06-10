@@ -29,7 +29,7 @@ export function isValidRule(rule: string): boolean {
 }
 
 /** File tools whose specifier is a glob path (vs. a command prefix). */
-const PATH_TOOLS = new Set([
+export const PATH_TOOLS = new Set([
   'Read',
   'Edit',
   'Write',

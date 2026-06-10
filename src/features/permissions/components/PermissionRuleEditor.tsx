@@ -14,6 +14,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu'
 import {
@@ -23,6 +24,8 @@ import {
 } from '@/shared/components/ui/tooltip'
 import { cn } from '@/shared/lib/utils'
 import { isValidRule, previewSpecifier } from '../lib/glob'
+import { assessRisk, type RuleConflict } from '../lib/conflicts'
+import { BulkAddRules } from './BulkAddRules'
 
 const KNOWN_TOOLS = [
   'Bash',
@@ -39,6 +42,12 @@ const KNOWN_TOOLS = [
   'TodoWrite',
 ]
 
+const CATEGORY_LABELS: Record<keyof PermissionRules, string> = {
+  allow: 'Allow',
+  ask: 'Ask',
+  deny: 'Deny',
+}
+
 const PRESETS: Record<keyof PermissionRules, string[]> = {
   allow: [
     'Bash(git status:*)',
@@ -50,17 +59,74 @@ const PRESETS: Record<keyof PermissionRules, string[]> = {
   deny: ['Read(./.env)', 'Read(./.env.*)', 'Read(./secrets/**)'],
 }
 
+/** Combined status of a single rule row, with an aggregated tooltip. */
+interface RuleStatus {
+  icon: string
+  className: string
+  messages: string[]
+}
+
+function ruleStatus(
+  rule: string,
+  category: keyof PermissionRules,
+  conflict: RuleConflict | undefined,
+): RuleStatus {
+  const messages: string[] = []
+  let icon = 'circle-check'
+  let className = 'text-muted-foreground'
+
+  const risk = assessRisk(rule, category)
+  const losingConflict = conflict && conflict.winner !== category
+
+  if (risk.level === 'high') {
+    icon = 'shield-alert'
+    className = 'text-destructive'
+    messages.push(risk.reason)
+  } else if (risk.level === 'warn') {
+    icon = 'circle-alert'
+    className = 'text-warning'
+    messages.push(risk.reason)
+  }
+
+  if (losingConflict && conflict) {
+    if (risk.level === 'none') {
+      icon = 'circle-alert'
+      className = 'text-warning'
+    }
+    messages.push(
+      `Also in ${CATEGORY_LABELS[conflict.winner]} — ${CATEGORY_LABELS[conflict.winner]} wins.`,
+    )
+  }
+
+  if (messages.length === 0 && !isValidRule(rule)) {
+    icon = 'circle-alert'
+    className = 'text-warning'
+    messages.push('Unusual format — double-check this rule.')
+  }
+
+  return { icon, className, messages }
+}
+
 export function PermissionRuleEditor({
   category,
   values,
   inherited = [],
+  filter = '',
+  conflicts,
   onChange,
+  onMove,
 }: {
   category: keyof PermissionRules
   values: string[]
   /** Rules inherited from the global profile (shown read-only when in project scope). */
   inherited?: string[]
+  /** Case-insensitive substring filter applied to displayed rules. */
+  filter?: string
+  /** Cross-column conflicts keyed by trimmed rule. */
+  conflicts?: Map<string, RuleConflict>
   onChange: (values: string[]) => void
+  /** Move a rule to another column (removes it here, adds it there). */
+  onMove?: (rule: string, target: keyof PermissionRules) => void
 }) {
   const [tool, setTool] = useState('Bash')
   const [specifier, setSpecifier] = useState('')
@@ -76,6 +142,19 @@ export function PermissionRuleEditor({
     onChange([...values, trimmed])
   }
 
+  const addMany = (rules: string[]) => {
+    const have = new Set(values)
+    const next = [...values]
+    for (const r of rules) {
+      const t = r.trim()
+      if (t && !have.has(t)) {
+        have.add(t)
+        next.push(t)
+      }
+    }
+    if (next.length !== values.length) onChange(next)
+  }
+
   const addFromBuilder = () => {
     const spec = specifier.trim()
     addRule(spec ? `${tool}(${spec})` : tool)
@@ -87,9 +166,22 @@ export function PermissionRuleEditor({
   // Inherited rules already present locally aren't shown twice.
   const inheritedOnly = inherited.filter((r) => !values.includes(r))
 
+  const q = filter.trim().toLowerCase()
+  const match = (r: string) => !q || r.toLowerCase().includes(q)
+  const shownValues = q ? values.filter(match) : values
+  const shownInherited = q ? inheritedOnly.filter(match) : inheritedOnly
+
+  const totalEmpty = values.length === 0 && inheritedOnly.length === 0
+  const filteredEmpty =
+    !totalEmpty && shownValues.length === 0 && shownInherited.length === 0
+
+  const moveTargets = (
+    Object.keys(CATEGORY_LABELS) as (keyof PermissionRules)[]
+  ).filter((c) => c !== category)
+
   return (
     <div className="flex flex-col gap-2">
-      {inheritedOnly.map((rule) => (
+      {shownInherited.map((rule) => (
         <Tooltip key={`inherited-${rule}`}>
           <TooltipTrigger asChild>
             <div className="flex items-center gap-2 rounded-md border border-dashed border-border px-2 py-1 opacity-60">
@@ -109,38 +201,76 @@ export function PermissionRuleEditor({
         </Tooltip>
       ))}
 
-      {values.length === 0 && inheritedOnly.length === 0 ? (
+      {totalEmpty ? (
         <p className="text-xs text-muted-foreground">No rules.</p>
+      ) : filteredEmpty ? (
+        <p className="text-xs text-muted-foreground">No matches.</p>
       ) : (
-        values.map((rule) => {
-          const valid = isValidRule(rule)
+        shownValues.map((rule) => {
+          const status = ruleStatus(rule, category, conflicts?.get(rule.trim()))
           return (
             <div
               key={rule}
               className="flex items-center gap-2 rounded-md border border-border px-2 py-1"
             >
-              <Icon
-                name={valid ? 'circle-check' : 'circle-alert'}
-                className={cn(
-                  'size-3.5 shrink-0',
-                  valid ? 'text-muted-foreground' : 'text-warning',
-                )}
-              />
+              {status.messages.length > 0 ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Icon
+                        name={status.icon}
+                        className={cn('size-3.5 shrink-0', status.className)}
+                      />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[260px]">
+                    {status.messages.join(' ')}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Icon
+                  name={status.icon}
+                  className={cn('size-3.5 shrink-0', status.className)}
+                />
+              )}
               <span
                 data-selectable
                 className="min-w-0 flex-1 truncate font-code text-xs"
-                title={valid ? rule : `${rule} — unusual format`}
+                title={rule}
               >
                 {rule}
               </span>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => remove(rule)}
-                aria-label={`Remove ${rule}`}
-              >
-                <Icon name="x" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Actions for ${rule}`}
+                  >
+                    <Icon name="more-horizontal" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {onMove &&
+                    moveTargets.map((target) => (
+                      <DropdownMenuItem
+                        key={target}
+                        onSelect={() => onMove(rule, target)}
+                      >
+                        <Icon name="arrow-right" />
+                        Move to {CATEGORY_LABELS[target]}
+                      </DropdownMenuItem>
+                    ))}
+                  {onMove && <DropdownMenuSeparator />}
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onSelect={() => remove(rule)}
+                  >
+                    <Icon name="trash" />
+                    Remove
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )
         })
@@ -197,26 +327,30 @@ export function PermissionRuleEditor({
         </p>
       )}
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="self-start">
-            <Icon name="plus" />
-            Presets
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          {PRESETS[category].map((preset) => (
-            <DropdownMenuItem
-              key={preset}
-              disabled={values.includes(preset)}
-              onSelect={() => addRule(preset)}
-              className="font-code text-xs"
-            >
-              {preset}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex flex-wrap items-center gap-1">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="self-start">
+              <Icon name="plus" />
+              Presets
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {PRESETS[category].map((preset) => (
+              <DropdownMenuItem
+                key={preset}
+                disabled={values.includes(preset)}
+                onSelect={() => addRule(preset)}
+                className="font-code text-xs"
+              >
+                {preset}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <BulkAddRules category={category} existing={values} onAdd={addMany} />
+      </div>
     </div>
   )
 }
