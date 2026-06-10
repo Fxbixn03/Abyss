@@ -9,6 +9,7 @@ import assert from 'node:assert/strict'
 
 import { detectEdges, type RelationScanInput } from '@core/relations'
 import { breakCycles } from '@/features/relations/lib/breakCycles'
+import { neighbors, reachableFrom } from '@/features/relations/lib/reachable'
 import type {
   RelationEdge,
   RelationNode,
@@ -83,7 +84,7 @@ test('detectEdges: heuristic name mention in prose', () => {
   assert.equal(e[0].confidence, 'heuristic')
 })
 
-test('detectEdges: mentions inside code fences / inline code are ignored', () => {
+test('detectEdges: mentions inside fenced code blocks are ignored', () => {
   const src = node('command', 'demo')
   const edges = detectEdges([
     input(
@@ -98,13 +99,38 @@ test('detectEdges: mentions inside code fences / inline code are ignored', () =>
         '~~~',
         'humanizer',
         '~~~',
-        '',
-        'And an inline `humanizer` reference.',
       ].join('\n'),
     ),
     input(node('skill', 'humanizer'), ''),
   ])
   assert.equal(find(edges, src.id, 'skill:humanizer').length, 0)
+})
+
+test('detectEdges: inline code and frontmatter description ARE scanned', () => {
+  const fromInline = node('command', 'demo')
+  const inlineEdges = detectEdges([
+    input(fromInline, 'We run the `humanizer` skill before finishing.'),
+    input(node('skill', 'humanizer'), ''),
+  ])
+  assert.equal(find(inlineEdges, fromInline.id, 'skill:humanizer').length, 1)
+
+  const fromDesc = node('command', 'feature-request')
+  const descEdges = detectEdges([
+    input(
+      fromDesc,
+      [
+        '---',
+        'name: feature-request',
+        'description: Hands off directly to the feature-orchestrator.',
+        '---',
+        'Body without the mention.',
+      ].join('\n'),
+    ),
+    input(node('skill', 'feature-orchestrator'), ''),
+  ])
+  const e = find(descEdges, fromDesc.id, 'skill:feature-orchestrator')
+  assert.equal(e.length, 1)
+  assert.equal(e[0].confidence, 'heuristic')
 })
 
 test('detectEdges: dedupe keeps the structured edge over the heuristic one', () => {
@@ -162,4 +188,54 @@ test('breakCycles: leaves an acyclic graph unchanged', () => {
   const edges = [edge('subagent:a', 'subagent:b'), edge('subagent:a', 'skill:c')]
   const result = breakCycles(['subagent:a', 'subagent:b', 'skill:c'], edges)
   assert.equal(result, edges)
+})
+
+// --- reachableFrom ---------------------------------------------------------
+
+function ownsEdge(target: string): RelationEdge {
+  return {
+    id: `owns:${target}`,
+    source: 'agent:hub',
+    target,
+    kind: 'owns',
+    confidence: 'structured',
+  }
+}
+
+test('reachableFrom: follows the transitive chain, ignores owns edges, handles cycles', () => {
+  // hub owns everything; command:a → skill:b → subagent:c → subagent:c2,
+  // plus a cycle c ↔ c2; an unrelated skill:z is owned but unreachable.
+  const edges: RelationEdge[] = [
+    ownsEdge('command:a'),
+    ownsEdge('skill:b'),
+    ownsEdge('subagent:c'),
+    ownsEdge('subagent:c2'),
+    ownsEdge('skill:z'),
+    edge('command:a', 'skill:b'),
+    edge('skill:b', 'subagent:c'),
+    edge('subagent:c', 'subagent:c2'),
+    edge('subagent:c2', 'subagent:c'),
+  ]
+  const reached = reachableFrom('command:a', edges)
+  assert.deepEqual(
+    [...reached].sort(),
+    ['command:a', 'skill:b', 'subagent:c', 'subagent:c2'].sort(),
+  )
+  // The hub itself is not pulled in via owns edges.
+  assert.ok(!reached.has('agent:hub'))
+  assert.ok(!reached.has('skill:z'))
+})
+
+test('neighbors: direct in- and out-neighbours only, ignoring owns', () => {
+  const edges: RelationEdge[] = [
+    ownsEdge('skill:b'),
+    edge('command:a', 'skill:b'),
+    edge('skill:b', 'subagent:c'),
+    edge('subagent:x', 'skill:b'),
+  ]
+  // skill:b's neighbours: a (incoming), c (outgoing), x (incoming) — not the hub.
+  assert.deepEqual(
+    [...neighbors('skill:b', edges)].sort(),
+    ['command:a', 'skill:b', 'subagent:c', 'subagent:x'].sort(),
+  )
 })

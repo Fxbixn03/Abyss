@@ -10,6 +10,7 @@ import { ACTIVE_AGENT_IDS } from '@/shared/agents/defs'
 import { useActiveAgentId } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase, useScope } from '@/features/scope/hooks/useScopedBase'
 import { autoLayout, type XY } from '../lib/layout'
+import { neighbors, reachableFrom } from '../lib/reachable'
 import {
   toFlowEdges,
   toFlowNodes,
@@ -41,12 +42,16 @@ export function useRelations() {
   const [graph, setGraph] = useState<RelationGraph | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
   // Ownership (hub → component) links are off by default: they connect the hub
   // to everything and quickly swamp the meaningful reference edges. The
   // dependency layout and reference edges are the signal; toggle this for the
   // "what belongs to this agent" overview.
   const [showOwns, setShowOwns] = useState(false)
-  const [showHeuristic, setShowHeuristic] = useState(false)
+  // On by default: in real setups most links between commands/subagents/skills
+  // are name mentions (heuristic), so hiding them leaves the graph near-empty.
+  // Distinctive kebab ids keep false positives low; toggle off to declutter.
+  const [showHeuristic, setShowHeuristic] = useState(true)
   const [hiddenKinds, setHiddenKinds] = useState<Set<RelationNodeKind>>(
     () => new Set(),
   )
@@ -153,15 +158,28 @@ export function useRelations() {
     return { ...autoLayout(graph.nodes, graph.edges), ...(storedPositions ?? {}) }
   }, [graph, storedPositions])
 
+  // What to spotlight: hovering a node shows its direct neighbours (quick "what
+  // touches this?"), while selecting shows the full transitive downstream chain.
+  // Hover takes precedence so you can probe without losing your selection.
+  const highlight = useMemo(() => {
+    if (!graph) return null
+    if (hoveredId) return neighbors(hoveredId, graph.edges)
+    if (selectedId) return reachableFrom(selectedId, graph.edges)
+    return null
+  }, [graph, hoveredId, selectedId])
+
   const flowNodes = useMemo(
-    () => (graph ? toFlowNodes(graph.nodes, positions, filters, selectedId) : []),
-    [graph, positions, filters, selectedId],
+    () =>
+      graph
+        ? toFlowNodes(graph.nodes, positions, filters, selectedId, highlight)
+        : [],
+    [graph, positions, filters, selectedId, highlight],
   )
   const flowEdges = useMemo(() => {
     if (!graph) return []
     const visible = new Set(flowNodes.map((n) => n.id))
-    return toFlowEdges(graph.edges, visible, filters)
-  }, [graph, flowNodes, filters])
+    return toFlowEdges(graph.edges, visible, filters, highlight)
+  }, [graph, flowNodes, filters, highlight])
 
   const selectedNode: RelationNode | null = useMemo(
     () => graph?.nodes.find((n) => n.id === selectedId) ?? null,
@@ -200,6 +218,7 @@ export function useRelations() {
     setShowHeuristic,
     selectedId,
     setSelectedId,
+    setHoveredId,
     selectedNode,
     onDragStop,
     reLayout,

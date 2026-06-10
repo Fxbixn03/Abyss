@@ -6,15 +6,16 @@ import type { EntityFlowNode } from '../lib/toFlow'
 
 /** A draggable component tile in the relations graph. */
 export function EntityNode({ data, selected }: NodeProps<EntityFlowNode>) {
-  const { node } = data
+  const { node, dimmed } = data
   const isHub = node.kind === 'agent'
 
   return (
     <div
       className={cn(
-        'w-56 rounded-lg border bg-card px-3 py-2 shadow-sm transition-colors',
+        'w-56 rounded-lg border bg-card px-3 py-2 shadow-sm transition-[opacity,border-color]',
         selected ? 'border-primary ring-1 ring-primary' : 'border-border',
         isHub && 'border-primary/60 bg-primary/5',
+        dimmed && 'opacity-25',
       )}
     >
       <Handle

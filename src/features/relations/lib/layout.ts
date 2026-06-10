@@ -11,17 +11,26 @@ const NODE_WIDTH = 224
 const NODE_HEIGHT = 58
 /** Horizontal gap between the hub and the left-most laid-out rank. */
 const HUB_GAP = 320
+/** Vertical gap between the connected graph and the isolated-node grid. */
+const GRID_GAP = 140
+const GRID_COLS = 5
+const GRID_CELL_W = 250
+const GRID_CELL_H = 84
+const ORIGIN = 24
 
 /**
- * Hierarchical left-to-right layout (dagre): ranks nodes by their reference
- * dependencies and orders within ranks to minimise edge crossings — far cleaner
- * than fixed lanes once a setup has many subagents/skills.
+ * Layout for the relations graph.
  *
- * Only *reference* edges (`invokes-*` / `uses-*`) drive the hierarchy; the
- * hub's `owns` edges are excluded (they'd collapse every component onto a single
- * rank right under the hub). The graph is made acyclic first via {@link
- * breakCycles}, since dagre requires a DAG. The hub itself is placed to the left
- * of the first rank, vertically centred.
+ * **Connected** nodes (those touched by a reference edge) are laid out by dagre
+ * as a left-to-right hierarchy with crossing minimisation. **Isolated** nodes
+ * (no reference edges — standalone commands, hooks, unused skills/MCP) would
+ * otherwise be dumped into dagre's first rank and swamp the left edge, so they
+ * are instead arranged in a compact grid below the hierarchy. The agent hub sits
+ * to the left of the hierarchy, vertically centred.
+ *
+ * Only reference edges drive the hierarchy; `owns` edges are excluded (they'd
+ * collapse everything onto one rank). The graph is made acyclic first via
+ * {@link breakCycles}, since dagre requires a DAG.
  *
  * Pure. Signature `(nodes, edges) => Record<id, XY>`.
  */
@@ -36,38 +45,70 @@ export function autoLayout(
   const refEdges = edges.filter(
     (e) => e.kind !== 'owns' && ids.has(e.source) && ids.has(e.target),
   )
-  const acyclic = breakCycles(
-    rest.map((n) => n.id),
-    refEdges,
-  )
-
-  const g = new Graph({ directed: true })
-  g.setGraph({ rankdir: 'LR', nodesep: 22, ranksep: 90, marginx: 24, marginy: 24 })
-  g.setDefaultEdgeLabel(() => ({}))
-  for (const n of rest) g.setNode(n.id, { width: NODE_WIDTH, height: NODE_HEIGHT })
-  for (const e of acyclic) g.setEdge(e.source, e.target)
-  dagreLayout(g)
+  const connectedIds = new Set<string>()
+  for (const e of refEdges) {
+    connectedIds.add(e.source)
+    connectedIds.add(e.target)
+  }
+  const connected = rest.filter((n) => connectedIds.has(n.id))
+  const isolated = rest.filter((n) => !connectedIds.has(n.id))
 
   const positions: Record<string, XY> = {}
-  let minX = Infinity
-  let minY = Infinity
-  let maxY = -Infinity
-  for (const n of rest) {
-    const p = g.node(n.id)
-    if (!p || p.x === undefined || p.y === undefined) continue
-    // dagre reports node centres; React Flow positions are top-left.
-    const x = p.x - NODE_WIDTH / 2
-    const y = p.y - NODE_HEIGHT / 2
-    positions[n.id] = { x, y }
-    minX = Math.min(minX, x)
-    minY = Math.min(minY, y)
-    maxY = Math.max(maxY, y)
+
+  // --- connected nodes → dagre hierarchy ---
+  let minX = ORIGIN + HUB_GAP // so the hub lands near ORIGIN when nothing connects
+  let minY = ORIGIN
+  let maxY = ORIGIN
+  if (connected.length > 0) {
+    const acyclic = breakCycles(
+      connected.map((n) => n.id),
+      refEdges,
+    )
+    const g = new Graph({ directed: true })
+    g.setGraph({ rankdir: 'LR', nodesep: 24, ranksep: 96, marginx: ORIGIN, marginy: ORIGIN })
+    g.setDefaultEdgeLabel(() => ({}))
+    for (const n of connected) {
+      g.setNode(n.id, { width: NODE_WIDTH, height: NODE_HEIGHT })
+    }
+    for (const e of acyclic) g.setEdge(e.source, e.target)
+    dagreLayout(g)
+
+    minX = Infinity
+    minY = Infinity
+    maxY = -Infinity
+    for (const n of connected) {
+      const p = g.node(n.id)
+      if (!p || p.x === undefined || p.y === undefined) continue
+      // dagre reports node centres; React Flow positions are top-left.
+      const x = p.x - NODE_WIDTH / 2
+      const y = p.y - NODE_HEIGHT / 2
+      positions[n.id] = { x, y }
+      minX = Math.min(minX, x)
+      minY = Math.min(minY, y)
+      maxY = Math.max(maxY, y + NODE_HEIGHT)
+    }
+    if (!Number.isFinite(minX)) {
+      minX = ORIGIN + HUB_GAP
+      minY = ORIGIN
+      maxY = ORIGIN
+    }
   }
 
+  // --- isolated nodes → compact grid below the hierarchy ---
+  const gridY = connected.length > 0 ? maxY + GRID_GAP : ORIGIN
+  isolated.forEach((n, i) => {
+    const col = i % GRID_COLS
+    const row = Math.floor(i / GRID_COLS)
+    positions[n.id] = {
+      x: minX + col * GRID_CELL_W,
+      y: gridY + row * GRID_CELL_H,
+    }
+  })
+
+  // --- hub: left of the hierarchy, vertically centred ---
   if (hub) {
-    positions[hub.id] = Number.isFinite(minX)
-      ? { x: minX - HUB_GAP, y: (minY + maxY) / 2 }
-      : { x: 24, y: 24 }
+    positions[hub.id] = { x: minX - HUB_GAP, y: (minY + maxY) / 2 }
   }
+
   return positions
 }

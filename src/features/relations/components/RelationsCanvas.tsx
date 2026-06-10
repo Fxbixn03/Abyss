@@ -27,11 +27,13 @@ export function RelationsCanvas({
   nodes,
   edges,
   onSelect,
+  onHover,
   onDragStop,
 }: {
   nodes: EntityFlowNode[]
   edges: Edge[]
   onSelect: (id: string | null) => void
+  onHover: (id: string | null) => void
   onDragStop: (id: string, xy: XY) => void
 }) {
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState<EntityFlowNode>(nodes)
@@ -46,6 +48,9 @@ export function RelationsCanvas({
 
   const handleNodeClick: NodeMouseHandler<EntityFlowNode> = (_e, node) =>
     onSelect(node.id)
+  const handleNodeEnter: NodeMouseHandler<EntityFlowNode> = (_e, node) =>
+    onHover(node.id)
+  const handleNodeLeave: NodeMouseHandler<EntityFlowNode> = () => onHover(null)
   const handleDragStop: OnNodeDrag<EntityFlowNode> = (_e, node) =>
     onDragStop(node.id, node.position)
 
@@ -58,6 +63,8 @@ export function RelationsCanvas({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
+        onNodeMouseEnter={handleNodeEnter}
+        onNodeMouseLeave={handleNodeLeave}
         onNodeDragStop={handleDragStop}
         onPaneClick={() => onSelect(null)}
         nodesConnectable={false}

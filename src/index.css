@@ -172,6 +172,17 @@
   stroke: var(--border);
   opacity: 0.4;
 }
+/* Transitive-chain highlight on selection (defined last so it wins on equal
+   specificity over the base edge rules above). */
+.rel-edge-hot .react-flow__edge-path {
+  stroke: var(--primary);
+  stroke-width: 2;
+  opacity: 1;
+  stroke-dasharray: none;
+}
+.rel-edge-dim .react-flow__edge-path {
+  opacity: 0.06;
+}
 
 @utility font-code {
   font-family: var(--font-code);

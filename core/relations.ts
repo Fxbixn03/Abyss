@@ -348,9 +348,13 @@ export function detectEdges(inputs: RelationScanInput[]): RelationEdge[] {
       if (id) add(source, id, 'invokes-command', 'structured')
     }
 
-    // --- heuristic (scanned on prose with code stripped out) ---
-    const prose = extractProse(body)
-    if (!prose) continue
+    // --- heuristic (name mentions) ---
+    // Scanned on the frontmatter description PLUS the prose. Inline code is
+    // kept (config files routinely name entities in backticks, e.g.
+    // `feature-orchestrator`); only fenced code blocks (templates / examples)
+    // are dropped, since that's where a name would be a false positive.
+    const prose = `${data.description ?? ''}\n${extractProse(body)}`
+    if (!prose.trim()) continue
     for (const target of heuristicTargets) {
       if (target.nodeId === source) continue
       for (const token of target.tokens) {
@@ -397,23 +401,23 @@ interface MdNode {
 }
 
 /**
- * Markdown prose with code fences, inline code, raw HTML and frontmatter removed,
- * using a real parser (regex on raw markdown can't handle nested / tilde /
- * indented fences). Only text leaves are kept.
+ * Markdown text for the heuristic pass, using a real parser (regex on raw
+ * markdown can't handle nested / tilde / indented fences). Fenced code blocks
+ * and raw HTML are dropped (that's where a name mention is a false positive);
+ * inline code IS kept, because config files routinely name real entities in
+ * backticks.
  */
 function extractProse(markdown: string): string {
   const tree = fromMarkdown(markdown) as unknown as MdNode
   const out: string[] = []
   const walk = (node: MdNode) => {
-    if (
-      node.type === 'code' ||
-      node.type === 'inlineCode' ||
-      node.type === 'html' ||
-      node.type === 'yaml'
-    ) {
+    if (node.type === 'code' || node.type === 'html' || node.type === 'yaml') {
       return
     }
-    if (node.type === 'text' && typeof node.value === 'string') {
+    if (
+      (node.type === 'text' || node.type === 'inlineCode') &&
+      typeof node.value === 'string'
+    ) {
       out.push(node.value)
     }
     node.children?.forEach(walk)

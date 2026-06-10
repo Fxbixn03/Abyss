@@ -49,6 +49,7 @@ export function RelationsPage() {
           nodes={ctrl.flowNodes}
           edges={ctrl.flowEdges}
           onSelect={ctrl.setSelectedId}
+          onHover={ctrl.setHoveredId}
           onDragStop={ctrl.onDragStop}
         />
         <section className="flex min-h-0 flex-col rounded-lg border border-border bg-card/40 p-4">

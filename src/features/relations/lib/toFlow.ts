@@ -8,7 +8,7 @@ import type {
 import type { XY } from './layout'
 
 /** Data carried by the custom `entity` node. */
-export type EntityNodeData = { node: RelationNode }
+export type EntityNodeData = { node: RelationNode; dimmed?: boolean }
 export type EntityFlowNode = Node<EntityNodeData, 'entity'>
 
 export interface RelationFilters {
@@ -25,6 +25,8 @@ export function toFlowNodes(
   positions: Record<string, XY>,
   filters: RelationFilters,
   selectedId: string | null,
+  /** Downstream-reachable set of the selection; others are dimmed. `null` = no highlight. */
+  highlight: Set<string> | null,
 ): EntityFlowNode[] {
   return nodes
     .filter((n) => filters.kinds.has(n.kind))
@@ -33,7 +35,7 @@ export function toFlowNodes(
       type: 'entity',
       position: positions[n.id] ?? { x: 0, y: 0 },
       selected: n.id === selectedId,
-      data: { node: n },
+      data: { node: n, dimmed: highlight ? !highlight.has(n.id) : false },
     }))
 }
 
@@ -41,6 +43,8 @@ export function toFlowEdges(
   edges: RelationEdge[],
   visibleNodeIds: Set<string>,
   filters: RelationFilters,
+  /** Downstream-reachable set of the selection; in-chain edges glow, others dim. */
+  highlight: Set<string> | null,
 ): Edge[] {
   return edges
     .filter((e) => {
@@ -54,15 +58,29 @@ export function toFlowEdges(
     .map((e) => {
       const isOwns = e.kind === 'owns'
       const isHeuristic = e.confidence === 'heuristic'
-      const className = isOwns
+      const base = isOwns
         ? 'rel-edge-owns'
         : isHeuristic
           ? 'rel-edge-heuristic'
           : 'rel-edge-structured'
+      // When a chain is highlighted, reference edges fully inside it glow; the
+      // rest fade back.
+      const inChain =
+        !isOwns && highlight
+          ? highlight.has(e.source) && highlight.has(e.target)
+          : false
+      const className = !highlight
+        ? base
+        : inChain
+          ? `${base} rel-edge-hot`
+          : `${base} rel-edge-dim`
       return {
         id: e.id,
         source: e.source,
         target: e.target,
+        // Orthogonal routing reads far cleaner than overlapping bezier curves
+        // in a left-to-right hierarchy.
+        type: 'smoothstep',
         className,
         // Faint ownership links don't need a direction arrow.
         markerEnd: isOwns
