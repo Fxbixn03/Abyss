@@ -24,14 +24,25 @@ import {
   TooltipTrigger,
 } from '@/shared/components/ui/tooltip'
 import { cn } from '@/shared/lib/utils'
+import { ipc } from '@/shared/ipc/ipc.client'
 import {
   isValidRule,
   parseRule,
+  PATH_TOOLS,
   previewSpecifier,
   type RulePreview,
 } from '../lib/glob'
 import { assessRisk, type RuleConflict } from '../lib/conflicts'
 import { BulkAddRules } from './BulkAddRules'
+
+/** Turns an absolute path into a glob relative to the project base. */
+function toGlob(chosen: string, base: string | undefined, isDir: boolean): string {
+  let rel = chosen
+  if (base && chosen.startsWith(base)) rel = chosen.slice(base.length)
+  rel = rel.replace(/^[/\\]+/, '').replace(/\\/g, '/')
+  if (!rel) return isDir ? '**' : ''
+  return isDir ? `${rel}/**` : rel
+}
 
 /** Display order for a rule list (display only — never persisted). */
 export type RuleSort = 'order' | 'az' | 'tool'
@@ -124,6 +135,7 @@ export function PermissionRuleEditor({
   sort = 'order',
   conflicts,
   mcpServers = [],
+  relativeBase,
   readOnly = false,
   onChange,
   onMove,
@@ -140,6 +152,8 @@ export function PermissionRuleEditor({
   conflicts?: Map<string, RuleConflict>
   /** Names of configured MCP servers, offered in the builder's tool select. */
   mcpServers?: string[]
+  /** Base path used to relativise picked paths into globs. */
+  relativeBase?: string
   /** Render the list read-only (used for the effective-policy view). */
   readOnly?: boolean
   onChange: (values: string[]) => void
@@ -198,6 +212,26 @@ export function PermissionRuleEditor({
   }
 
   const remove = (rule: string) => onChange(values.filter((v) => v !== rule))
+
+  // Prefill the builder from an existing rule so the user can add a variant.
+  const duplicateToBuilder = (rule: string) => {
+    const { tool: t, specifier: spec } = parseRule(rule)
+    if (t.startsWith('mcp__')) {
+      const parts = t.split('__')
+      setTool(`mcp__${parts[1] ?? ''}`)
+      setSpecifier(parts.slice(2).join('__').replace(/\*$/, ''))
+    } else {
+      setTool(t)
+      setSpecifier(spec ?? '')
+    }
+  }
+
+  const pickPath = async (isDir: boolean) => {
+    const res = isDir
+      ? await ipc.pickDirectory('Choose a folder')
+      : await ipc.pickFile({ title: 'Choose a file' })
+    if (res.path) setSpecifier(toGlob(res.path, relativeBase, isDir))
+  }
 
   const startEdit = (rule: string) => {
     setEditing(rule)
@@ -353,6 +387,10 @@ export function PermissionRuleEditor({
                         <Icon name="pencil" />
                         Edit
                       </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => duplicateToBuilder(rule)}>
+                        <Icon name="copy" />
+                        Duplicate
+                      </DropdownMenuItem>
                       {onMove &&
                         moveTargets.map((target) => (
                           <DropdownMenuItem
@@ -422,6 +460,29 @@ export function PermissionRuleEditor({
                 }
               }}
             />
+            {!isMcp && PATH_TOOLS.has(tool) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    aria-label="Pick a path"
+                  >
+                    <Icon name="folder-open" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => void pickPath(true)}>
+                    <Icon name="folder" />
+                    Choose folder…
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => void pickPath(false)}>
+                    <Icon name="file-text" />
+                    Choose file…
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Button
               variant="secondary"
               size="icon"

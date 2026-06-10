@@ -41,6 +41,7 @@ import { PermissionMode } from '../components/PermissionMode'
 import { AdditionalDirectories } from '../components/AdditionalDirectories'
 import { buildConflictMap, findConflicts } from '../lib/conflicts'
 import { mergeEffective } from '../lib/effective'
+import { SECURITY_PRESETS } from '../lib/presets'
 
 const SORT_OPTIONS: { value: RuleSort; label: string }[] = [
   { value: 'order', label: 'Order' },
@@ -125,6 +126,11 @@ export function PermissionsPage() {
   // Effective view is only meaningful when there are inherited rules to merge.
   const showEffective = view === 'effective' && hasInherited
   const viewRules = showEffective ? effective : rules
+  const allEmpty =
+    rules.allow.length === 0 &&
+    rules.ask.length === 0 &&
+    rules.deny.length === 0 &&
+    !hasInherited
 
   const persist = (next: PermissionRules) => {
     setRules(next)
@@ -288,6 +294,14 @@ export function PermissionsPage() {
 
         <PermissionTester rules={showEffective ? effective : rules} />
         <PermissionShare rules={rules} onChange={persist} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/settings-file')}
+        >
+          <Icon name="braces" />
+          View as JSON
+        </Button>
       </div>
 
       {conflictCount > 0 && !showEffective && (
@@ -302,6 +316,33 @@ export function PermissionsPage() {
       )}
 
       <div className="flex flex-col gap-4 overflow-y-auto">
+        {allEmpty && (
+          <div className="flex items-center gap-3 rounded-md border border-dashed border-border bg-muted/40 px-4 py-3">
+            <Icon name="sparkles" className="size-5 shrink-0 text-primary" />
+            <div className="flex-1">
+              <p className="text-sm font-medium">No rules yet</p>
+              <p className="text-xs text-muted-foreground">
+                Start from a security preset, then fine-tune it below.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => {
+                const standard = SECURITY_PRESETS.find((p) => p.id === 'standard')
+                if (standard)
+                  persist({
+                    ...standard.rules,
+                    defaultMode: rules.defaultMode,
+                    additionalDirectories: rules.additionalDirectories,
+                  })
+              }}
+            >
+              <Icon name="shield-check" />
+              Apply Standard preset
+            </Button>
+          </div>
+        )}
+
         {!showEffective && (
           <div className="grid gap-4 md:grid-cols-2">
             <PermissionMode
@@ -352,6 +393,7 @@ export function PermissionsPage() {
                     sort={sort}
                     conflicts={showEffective ? undefined : conflicts}
                     mcpServers={mcpServers}
+                    relativeBase={projectDir}
                     readOnly={showEffective}
                     onChange={(values) =>
                       persist({ ...rules, [section.key]: values })
