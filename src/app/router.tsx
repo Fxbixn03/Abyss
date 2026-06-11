@@ -32,6 +32,8 @@ import { ActivityPage } from '@/features/activity/pages/ActivityPage'
 import { StatusLinePage } from '@/features/statusline/pages/StatusLinePage'
 import { SpinnerPage } from '@/features/spinner/pages/SpinnerPage'
 import { PluginsPage } from '@/features/plugins/pages/PluginsPage'
+import { WorkspacePage } from '@/features/workspace/pages/WorkspacePage'
+import { RuleActivationPage } from '@/features/rule-activation/pages/RuleActivationPage'
 
 // Hash history works under Electron's file:// protocol in production.
 export const router = createHashRouter([
@@ -50,6 +52,8 @@ export const router = createHashRouter([
       { path: 'validation', element: <ValidationPage /> },
       { path: 'doctor', element: <DoctorPage /> },
       { path: 'discover', element: <DiscoverPage /> },
+      { path: 'workspace', element: <WorkspacePage /> },
+      { path: 'rule-activation', element: <RuleActivationPage /> },
       { path: 'marketplace', element: <MarketplacePage /> },
       { path: 'sandbox', element: <SandboxPage /> },
       { path: 'history', element: <SnapshotsPage /> },

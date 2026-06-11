@@ -62,6 +62,7 @@ import type {
 } from './doctor'
 import type { GlobalSearchResult } from '../search/types'
 import type { RelationGraph } from './relations'
+import type { WorkspaceScanResult } from './workspace'
 import type { StatusLineConfig } from './statusline'
 import type { SpinnerConfig } from './spinner'
 import type { PluginsConfig } from './plugins'
@@ -113,6 +114,9 @@ export enum IpcChannel {
 
   // Global config search across every agent (Command palette)
   GlobalConfigSearch = 'search:global',
+
+  // Multi-repo workspace discovery (agent config across many repos)
+  WorkspaceScan = 'workspace:scan',
 
   // Config Doctor (cross-agent health scan + safe auto-fixes)
   DoctorScan = 'doctor:scan',
@@ -409,6 +413,11 @@ export interface IpcMap {
   [IpcChannel.GlobalConfigSearch]: {
     request: Record<string, never>
     response: GlobalSearchResult[]
+  }
+
+  [IpcChannel.WorkspaceScan]: {
+    request: { rootDir: string }
+    response: WorkspaceScanResult
   }
 
   [IpcChannel.DoctorScan]: {

@@ -156,7 +156,7 @@ export function DiscoverPage() {
             {toEnable.length > 0 && (
               <section className="space-y-2">
                 <h2 className="text-sm font-medium text-muted-foreground">
-                  Found on your system — not yet enabled
+                  Found on your system, not yet enabled
                 </h2>
                 {toEnable.map((f) => (
                   <Card
@@ -250,7 +250,7 @@ export function DiscoverPage() {
                         {m.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Configured in {m.foundIn.join(', ')} — not in{' '}
+                        Configured in {m.foundIn.join(', ')}, not in{' '}
                         {activeAgent.displayName}.
                       </p>
                     </div>

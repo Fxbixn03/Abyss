@@ -175,6 +175,10 @@ export const ipc = {
 
   globalConfigSearch: () => invoke(IpcChannel.GlobalConfigSearch, {}),
 
+  /** Scan a root folder for agent config across its repos (multi-repo discovery). */
+  workspaceScan: (rootDir: string) =>
+    invoke(IpcChannel.WorkspaceScan, { rootDir }),
+
   // --- Config Doctor --------------------------------------------------------
   doctorScan: (agents: DoctorAgentInput[]) =>
     invoke(IpcChannel.DoctorScan, { agents }),
