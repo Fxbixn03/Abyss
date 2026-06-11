@@ -63,11 +63,24 @@ other tool can still read them.
 
 ## Supported agents
 
-| Agent | Status | Surfaces |
+Claude Code is fully wired up; the rest are landed but still being filled in,
+surface by surface. The status reflects how many config surfaces Abyss currently
+edits for each agent — not the agent's own maturity.
+
+| Agent | Status | Config surfaces wired up |
 | --- | --- | --- |
-| **Claude Code** | Full | Instructions, Agents, Commands, Skills, MCP, Hooks, Permissions, Model & Env, Raw settings |
-| **OpenAI Codex** | Basic | Instructions (`AGENTS.md`) |
-| **Gemini CLI** | Example | Ships as the worked example for "add an agent" (one line to enable) |
+| **Claude Code** | ✅ Full | Instructions, Agents, Commands, Skills, MCP, Hooks, Permissions, Model & Env, Status line, Plugins, Raw settings, Chat |
+| **Gemini CLI** | 🚧 Partial | Instructions, Agents, Commands, Skills, MCP, Hooks, Raw settings |
+| **Cursor** | 🚧 Partial | Instructions, Agents, Commands, Skills, MCP, Hooks, Rules |
+| **OpenAI Codex** | 🚧 Partial | Instructions, Prompts, Skills, MCP, Chat |
+| **GitHub Copilot CLI** | 🚧 Early | Instructions, MCP, Raw settings |
+| **Windsurf** | 🚧 Early | Instructions, MCP |
+| **Continue** | 🚧 Early | Instructions |
+| **Aider** | 🚧 Early | Instructions |
+| **Cline** | 🚧 Early | Instructions |
+
+You can also define your own **custom agents** from the UI — point Abyss at an
+agent's config paths and it shows up like a built-in one.
 
 > Adding another agent is intentionally tiny — see
 > [the architecture guide](docs/architecture.md#extending-abyss).
@@ -105,11 +118,15 @@ see the **[Installation guide](docs/installation.md)**.
 
 ## Roadmap
 
-- [ ] Project-scoped config (per-project MCP, `.mcp.json`, scope tabs)
-- [ ] Profiles (switch between named config sets)
-- [ ] More agents (Gemini CLI on by default, others)
-- [ ] Auto-update via GitHub Releases
-- [ ] Custom theme import/export
+The original roadmap has shipped — project-scoped config (per-project `.mcp.json`
+plus scope tabs), profiles, a fleet of agents, GitHub-Releases auto-update and
+theme import/export are all in. What's next:
+
+- [ ] **macOS build** — currently Linux (AppImage) + Windows (NSIS / portable)
+- [ ] **Abyss as an MCP server** — let agents read and edit their own config through Abyss
+- [ ] **Interactive TUI** for the `abyss` CLI
+- [ ] **Community gallery** for shared themes & status-line presets
+- [ ] **Fill in the remaining agent surfaces** (see the table above)
 
 ## Contributing
 
