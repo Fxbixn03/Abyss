@@ -134,26 +134,27 @@ export function CollectionList({ cm }: { cm: CollectionController }) {
                       <span className="flex items-center gap-2 text-sm font-medium">
                         <Icon
                           name={icon}
-                          className="size-4 text-muted-foreground"
+                          className="size-4 shrink-0 text-muted-foreground"
                         />
                         <span className="truncate">{item.name}</span>
                         {item.model && (
-                          <Badge variant="muted" className="ml-auto font-code">
+                          <Badge
+                            variant="muted"
+                            className="ml-auto shrink-0 font-code"
+                          >
                             {item.model}
                           </Badge>
                         )}
-                        {item.argumentHint && (
-                          <Badge
-                            variant="muted"
-                            className={cn(
-                              'font-code text-[10px]',
-                              !item.model && 'ml-auto',
-                            )}
-                          >
-                            {item.argumentHint}
-                          </Badge>
-                        )}
                       </span>
+                      {item.argumentHint && (
+                        <Badge
+                          variant="muted"
+                          title={item.argumentHint}
+                          className="min-w-0 max-w-full self-start font-code text-[10px]"
+                        >
+                          <span className="truncate">{item.argumentHint}</span>
+                        </Badge>
+                      )}
                       {item.description && (
                         <span className="line-clamp-2 text-xs text-muted-foreground">
                           {item.description}
