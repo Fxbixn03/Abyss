@@ -210,7 +210,7 @@ It appears automatically in the ThemePicker and the command palette.
 4. Push and open a PR against `main`. In the description:
    - Explain **what** changed and **why**.
    - Note any UI changes with a screenshot or short GIF (see the recording tips
-     in the README).
+     in [docs/architecture.md](docs/architecture.md#recording-demo-gifs)).
    - Link the issue it closes.
 5. Make sure CI is green on both Ubuntu and Windows.
 
