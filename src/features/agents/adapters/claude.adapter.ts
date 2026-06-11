@@ -65,6 +65,20 @@ export const claudeAdapter: AgentAdapter = createAdapter(claudeDefinition, {
       description: 'Model & environment',
     },
     {
+      id: 'statusline',
+      label: 'Status Line',
+      icon: 'terminal',
+      route: '/statusline',
+      description: 'Build the bottom status bar',
+    },
+    {
+      id: 'plugins',
+      label: 'Plugins',
+      icon: 'plug',
+      route: '/plugins',
+      description: 'Marketplaces & plugins',
+    },
+    {
       id: 'settings-file',
       label: 'Settings (raw)',
       icon: 'braces',

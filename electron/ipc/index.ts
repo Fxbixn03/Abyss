@@ -17,6 +17,8 @@ import { registerSyncIpc } from './sync.ipc'
 import { registerSandboxIpc } from './sandbox.ipc'
 import { registerBackupIpc } from './backup.ipc'
 import { registerDoctorIpc } from './doctor.ipc'
+import { registerStatusLineIpc } from './statusline.ipc'
+import { registerPluginsIpc } from './plugins.ipc'
 
 /** Wire up every IPC handler group. Call once, after the app is ready. */
 export function registerIpcHandlers(ctx: IpcContext): void {
@@ -38,4 +40,6 @@ export function registerIpcHandlers(ctx: IpcContext): void {
   registerSandboxIpc(ctx)
   registerBackupIpc(ctx)
   registerDoctorIpc(ctx)
+  registerStatusLineIpc(ctx)
+  registerPluginsIpc(ctx)
 }

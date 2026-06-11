@@ -37,6 +37,8 @@ import type {
 import type { HookEntry } from '@/shared/types/hooks'
 import type { DiscoverySearchRequest } from '@/shared/discovery/types'
 import type { DoctorAgentInput, DoctorFix } from '@/shared/types/doctor'
+import type { StatusLineConfig } from '@/shared/types/statusline'
+import type { PluginsConfig } from '@/shared/types/plugins'
 
 /**
  * Codes the global safety net must never toast: config-parse failures are owned
@@ -188,6 +190,19 @@ export const ipc = {
     invoke(IpcChannel.GetModelEnv, { agentId, basePath }),
   setModelEnv: (agentId: AgentId, basePath: string, config: ModelEnvConfig) =>
     invoke(IpcChannel.SetModelEnv, { agentId, basePath, config }),
+
+  // --- Status line (Claude Code) --------------------------------------------
+  getStatusLine: (basePath: string) =>
+    invoke(IpcChannel.GetStatusLine, { basePath }),
+  setStatusLine: (basePath: string, config: StatusLineConfig) =>
+    invoke(IpcChannel.SetStatusLine, { basePath, config }),
+  removeStatusLine: (basePath: string) =>
+    invoke(IpcChannel.RemoveStatusLine, { basePath }),
+
+  // --- Plugins & marketplaces (Claude Code) ---------------------------------
+  getPlugins: (basePath: string) => invoke(IpcChannel.GetPlugins, { basePath }),
+  setPlugins: (basePath: string, config: PluginsConfig) =>
+    invoke(IpcChannel.SetPlugins, { basePath, config }),
 
   listCollection: (agentId: string, basePath: string, kind: CollectionKind) =>
     invoke(IpcChannel.ListCollection, { agentId, basePath, kind }),

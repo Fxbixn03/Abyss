@@ -60,6 +60,8 @@ import type {
 } from './doctor'
 import type { GlobalSearchResult } from '../search/types'
 import type { RelationGraph } from './relations'
+import type { StatusLineConfig } from './statusline'
+import type { PluginsConfig } from './plugins'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
 
@@ -126,6 +128,15 @@ export enum IpcChannel {
   // Model + env
   GetModelEnv = 'model-env:get',
   SetModelEnv = 'model-env:set',
+
+  // Status line builder (Claude Code)
+  GetStatusLine = 'statusline:get',
+  SetStatusLine = 'statusline:set',
+  RemoveStatusLine = 'statusline:remove',
+
+  // Plugins & marketplaces (Claude Code)
+  GetPlugins = 'plugins:get',
+  SetPlugins = 'plugins:set',
 
   // Markdown collections (agents / commands / skills)
   ListCollection = 'collection:list',
@@ -419,6 +430,28 @@ export interface IpcMap {
   }
   [IpcChannel.SetModelEnv]: {
     request: { agentId: AgentId; basePath: string; config: ModelEnvConfig }
+    response: { success: boolean; path: string }
+  }
+
+  [IpcChannel.GetStatusLine]: {
+    request: { basePath: string }
+    response: StatusLineConfig
+  }
+  [IpcChannel.SetStatusLine]: {
+    request: { basePath: string; config: StatusLineConfig }
+    response: { success: boolean; path: string }
+  }
+  [IpcChannel.RemoveStatusLine]: {
+    request: { basePath: string }
+    response: { success: boolean; path: string }
+  }
+
+  [IpcChannel.GetPlugins]: {
+    request: { basePath: string }
+    response: PluginsConfig
+  }
+  [IpcChannel.SetPlugins]: {
+    request: { basePath: string; config: PluginsConfig }
     response: { success: boolean; path: string }
   }
 

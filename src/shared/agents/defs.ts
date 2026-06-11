@@ -97,6 +97,8 @@ export const claudeDefinition: AgentDefinition = {
     rules: false,
     rawSettings: true,
     chats: true,
+    statusLine: true,
+    plugins: true,
   },
   configFiles: [claudeInstructions],
   resolvePaths: (env: OsEnv) => [

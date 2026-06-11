@@ -76,6 +76,10 @@ export interface AgentCapabilities {
   rawSettings: boolean
   /** Browse past conversations and chat live (Chats feature). */
   chats: boolean
+  /** Custom status line builder (settings.json `statusLine`) — Claude Code. */
+  statusLine?: boolean
+  /** Plugin & marketplace management (settings.json) — Claude Code. */
+  plugins?: boolean
 }
 
 /**

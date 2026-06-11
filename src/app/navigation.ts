@@ -55,6 +55,8 @@ const ROUTE_GROUP: Record<string, NavGroupId> = {
   '/hooks': 'system',
   '/permissions': 'system',
   '/model-env': 'system',
+  '/statusline': 'system',
+  '/plugins': 'system',
   '/settings-file': 'system',
   '/bundles': 'tools',
   '/compare': 'tools',
