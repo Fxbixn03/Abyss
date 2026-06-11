@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (z.B. v1.2.3), leer = nur Build ohne Publish'
+        description: 'Version (e.g. v1.2.3), empty = just build, no publish'
         required: false
         type: string
 permissions:
