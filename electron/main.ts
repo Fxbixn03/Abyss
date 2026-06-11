@@ -5,6 +5,7 @@ import { resolveOsEnv } from '@core/os-env'
 import { SettingsStore } from '@core/settings-store'
 import { disposeAllChats } from '@core/chat/session-manager'
 import { configureSnapshots } from '@core/snapshots'
+import { allowedRoots } from '@core/path-scope'
 import { configureProfiles } from '@core/profiles'
 import { runDailyBackup, defaultBackupDir } from '@core/backup'
 import type { IpcContext } from './ipc/context'
@@ -42,7 +43,10 @@ function createWindow(): void {
       preload: PRELOAD,
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      // OS-level sandbox for the renderer — the second line of defense behind a
+      // Chromium 0-day or XSS chain. The preload only touches contextBridge +
+      // ipcRenderer (no Node), so it stays valid under the sandbox.
+      sandbox: true,
     },
   })
 
@@ -95,6 +99,12 @@ function applySecurityPolicies(): void {
             "img-src 'self' data:",
             "font-src 'self' data:",
             "connect-src 'self'",
+            // Defense-in-depth: no plugins, no <base> hijack, no framing, no
+            // form posts off-origin.
+            "object-src 'none'",
+            "base-uri 'self'",
+            "frame-ancestors 'none'",
+            "form-action 'none'",
           ].join('; '),
         ],
       },
@@ -110,9 +120,11 @@ function buildIpcContext() {
   const userData = app.getPath('userData')
   const settings = new SettingsStore(path.join(userData, 'abyss-settings.json'))
   // Snapshot config writes; never snapshot Abyss's own data dir (avoids recursion).
+  // `allowedRoots` re-confines restore writes to Abyss's directories.
   configureSnapshots({
     root: path.join(userData, 'snapshots'),
     exclude: [userData],
+    allowedRoots: allowedRoots(env, userData),
   })
   configureProfiles(path.join(userData, 'profiles'))
   const getWindow = () => mainWindow

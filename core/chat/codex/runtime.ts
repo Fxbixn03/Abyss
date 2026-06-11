@@ -77,7 +77,9 @@ class CodexLiveSession implements LiveSession {
     }
     const args = ['exec', '--json']
     if (this.sessionId) args.push('resume', this.sessionId)
-    args.push(text)
+    // `--` ends option parsing so a message starting with `--` can't be read as
+    // a codex flag. The message is always the trailing positional argument.
+    args.push('--', text)
 
     const env = { ...process.env }
     if (this.ctx.options.apiKey) env.OPENAI_API_KEY = this.ctx.options.apiKey

@@ -11,12 +11,19 @@ import path from 'node:path'
 import { promises as fs } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { uniqueTempPath } from './tmp-path'
+import { isInsideRoot } from './path-scope'
 import type { SnapshotContent, SnapshotMeta } from '@/shared/types/snapshots'
 
 interface SnapshotConfig {
   root: string
   /** Directories whose files are never snapshotted (e.g. Abyss's own data). */
   exclude: string[]
+  /**
+   * Roots a restore is allowed to write back into. A snapshot's `originalPath`
+   * comes from on-disk meta.json; re-checking it here keeps a tampered meta from
+   * steering a restore write outside Abyss's allowed directories. Empty = allow.
+   */
+  allowedRoots?: string[]
 }
 
 /** Keep at most this many snapshots per file; older ones are pruned. */
@@ -211,9 +218,18 @@ export async function readSnapshotTarget(id: string): Promise<string | null> {
 export async function restoreSnapshot(
   id: string,
 ): Promise<{ success: boolean; path: string } | null> {
+  if (!config) return null
   const snap = await readSnapshot(id)
   if (!snap || !snap.meta.originalPath) return null
   const target = snap.meta.originalPath
+
+  // Defense-in-depth: `target` is read from on-disk meta.json. Refuse to write
+  // it back if it escapes the allowed roots (a tampered meta can't redirect the
+  // restore). An empty allow-list means "unconfigured" → fall back to allowing.
+  const roots = config.allowedRoots ?? []
+  if (roots.length > 0 && !roots.some((root) => isInsideRoot(target, root))) {
+    return null
+  }
 
   // Snapshot the current content (if any) so the restore is reversible.
   const current = await fs.readFile(target, 'utf8').catch(() => null)

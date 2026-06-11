@@ -13,10 +13,17 @@ import {
   writeCollectionItem,
 } from '@core/collections'
 import { importSkillArchive } from '@core/skill-import'
+import { assertScopedPath } from '@core/path-scope'
 import { handle } from './handle'
 import type { IpcContext } from './context'
 
 export function registerCollectionsIpc(ctx: IpcContext): void {
+  // Defense-in-depth: confine renderer-supplied write bases to Abyss's allowed
+  // roots before creating/moving collection items (skills, agents, commands) —
+  // a skill folder is agent-executed code. Reads stay unscoped, like config.ipc.
+  const scope = (p: string): string =>
+    assertScopedPath(p, ctx.env, ctx.userData)
+
   handle(IpcChannel.ListCollection, ({ agentId, basePath, kind }) =>
     listCollection(agentId, basePath, kind),
   )
@@ -29,25 +36,25 @@ export function registerCollectionsIpc(ctx: IpcContext): void {
   handle(
     IpcChannel.WriteCollectionItem,
     ({ agentId, basePath, kind, id, content }) =>
-      writeCollectionItem(agentId, basePath, kind, id, content),
+      writeCollectionItem(agentId, scope(basePath), kind, id, content),
   )
   handle(IpcChannel.DeleteCollectionItem, ({ agentId, basePath, kind, id }) =>
-    deleteCollectionItem(agentId, basePath, kind, id),
+    deleteCollectionItem(agentId, scope(basePath), kind, id),
   )
   handle(
     IpcChannel.MigrateCollectionItem,
     ({ agentId, basePath, fromKind, toKind, id }) =>
-      migrateCollectionItem(agentId, basePath, fromKind, toKind, id),
+      migrateCollectionItem(agentId, scope(basePath), fromKind, toKind, id),
   )
   handle(
     IpcChannel.RenameCollectionItem,
     ({ agentId, basePath, kind, fromId, toId }) =>
-      renameCollectionItem(agentId, basePath, kind, fromId, toId),
+      renameCollectionItem(agentId, scope(basePath), kind, fromId, toId),
   )
   handle(
     IpcChannel.DuplicateCollectionItem,
     ({ agentId, basePath, kind, id, newId }) =>
-      duplicateCollectionItem(agentId, basePath, kind, id, newId),
+      duplicateCollectionItem(agentId, scope(basePath), kind, id, newId),
   )
   handle(
     IpcChannel.ExportCollectionItem,
@@ -74,6 +81,6 @@ export function registerCollectionsIpc(ctx: IpcContext): void {
     },
   )
   handle(IpcChannel.ImportSkill, ({ basePath, archivePath, onCollision }) =>
-    importSkillArchive(basePath, archivePath, onCollision),
+    importSkillArchive(scope(basePath), archivePath, onCollision),
   )
 }
