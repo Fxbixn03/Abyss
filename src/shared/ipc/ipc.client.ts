@@ -36,6 +36,7 @@ import type {
 } from '@/shared/types/collections'
 import type { HookEntry } from '@/shared/types/hooks'
 import type { DiscoverySearchRequest } from '@/shared/discovery/types'
+import type { DoctorAgentInput, DoctorFix } from '@/shared/types/doctor'
 
 /**
  * Codes the global safety net must never toast: config-parse failures are owned
@@ -164,6 +165,11 @@ export const ipc = {
     invoke(IpcChannel.CancelRequest, { requestId }),
 
   globalConfigSearch: () => invoke(IpcChannel.GlobalConfigSearch, {}),
+
+  // --- Config Doctor --------------------------------------------------------
+  doctorScan: (agents: DoctorAgentInput[]) =>
+    invoke(IpcChannel.DoctorScan, { agents }),
+  doctorFix: (fix: DoctorFix) => invoke(IpcChannel.DoctorFix, { fix }),
 
   getPermissions: (agentId: AgentId, basePath: string) =>
     invoke(IpcChannel.GetPermissions, { agentId, basePath }),
@@ -334,6 +340,10 @@ export const ipc = {
   ) => invoke(IpcChannel.ChatExportSession, { agentId, sessionId, format }),
   chatUsageStats: (agentId: AgentId, cwd?: string) =>
     invoke(IpcChannel.ChatUsageStats, { agentId, cwd }),
+  chatUsageAnalytics: (
+    agentIds: AgentId[],
+    opts?: { cwd?: string; days?: number },
+  ) => invoke(IpcChannel.ChatUsageAnalytics, { agentIds, ...opts }),
 
   // --- Chats: auth ----------------------------------------------------------
   chatAvailability: (agentId: AgentId) =>

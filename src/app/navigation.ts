@@ -46,8 +46,11 @@ const ROUTE_GROUP: Record<string, NavGroupId> = {
   '/sandbox': 'development',
   '/chats': 'runtime',
   '/context': 'runtime',
+  '/usage': 'runtime',
   '/history': 'runtime',
+  '/activity': 'runtime',
   '/validation': 'system',
+  '/doctor': 'system',
   '/mcp': 'system',
   '/hooks': 'system',
   '/permissions': 'system',
@@ -56,6 +59,7 @@ const ROUTE_GROUP: Record<string, NavGroupId> = {
   '/bundles': 'tools',
   '/compare': 'tools',
   '/discover': 'tools',
+  '/marketplace': 'tools',
   '/profiles': 'tools',
 }
 
@@ -94,6 +98,13 @@ export const PRIMARY_NAV: NavItem[] = [
     description: 'Compiled prompt & conflicts',
   },
   {
+    id: 'usage',
+    label: 'Analytics',
+    icon: 'bar-chart-3',
+    route: '/usage',
+    description: 'Token & cost usage over time',
+  },
+  {
     id: 'validation',
     label: 'Validation',
     icon: 'clipboard-check',
@@ -101,11 +112,25 @@ export const PRIMARY_NAV: NavItem[] = [
     description: 'Lint your agent config',
   },
   {
+    id: 'doctor',
+    label: 'Doctor',
+    icon: 'stethoscope',
+    route: '/doctor',
+    description: 'Health-check & auto-fix',
+  },
+  {
     id: 'history',
     label: 'History',
     icon: 'history',
     route: '/history',
     description: 'Config snapshots & restore',
+  },
+  {
+    id: 'activity',
+    label: 'Activity',
+    icon: 'scroll-text',
+    route: '/activity',
+    description: 'What Abyss changed, with undo',
   },
   {
     id: 'bundles',
@@ -134,6 +159,13 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: 'scan-search',
     route: '/discover',
     description: 'Find agents & MCP on this machine',
+  },
+  {
+    id: 'marketplace',
+    label: 'Marketplace',
+    icon: 'store',
+    route: '/marketplace',
+    description: 'Browse & install MCP servers',
   },
   {
     id: 'templates',

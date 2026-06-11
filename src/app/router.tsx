@@ -23,6 +23,10 @@ import { ValidationPage } from '@/features/validation/pages/ValidationPage'
 import { DiscoverPage } from '@/features/discovery/pages/DiscoverPage'
 import { SandboxPage } from '@/features/sandbox/pages/SandboxPage'
 import { RelationsPage } from '@/features/relations/pages/RelationsPage'
+import { UsagePage } from '@/features/usage/pages/UsagePage'
+import { DoctorPage } from '@/features/doctor/pages/DoctorPage'
+import { MarketplacePage } from '@/features/marketplace/pages/MarketplacePage'
+import { ActivityPage } from '@/features/activity/pages/ActivityPage'
 
 // Hash history works under Electron's file:// protocol in production.
 export const router = createHashRouter([
@@ -35,10 +39,14 @@ export const router = createHashRouter([
       { path: 'config', element: <ConfigPage /> },
       { path: 'chats', element: <ChatsPage /> },
       { path: 'context', element: <ContextPage /> },
+      { path: 'usage', element: <UsagePage /> },
       { path: 'validation', element: <ValidationPage /> },
+      { path: 'doctor', element: <DoctorPage /> },
       { path: 'discover', element: <DiscoverPage /> },
+      { path: 'marketplace', element: <MarketplacePage /> },
       { path: 'sandbox', element: <SandboxPage /> },
       { path: 'history', element: <SnapshotsPage /> },
+      { path: 'activity', element: <ActivityPage /> },
       { path: 'bundles', element: <BundlesPage /> },
       { path: 'profiles', element: <ProfilesPage /> },
       { path: 'compare', element: <ComparePage /> },

@@ -33,6 +33,7 @@ import type {
   ChatStreamEnvelope,
   ChatTranscript,
   ChatUsageStats,
+  UsageAnalytics,
 } from './chat'
 import type { SandboxRunResult } from './sandbox'
 import type { BackupInfo, BackupStatus } from './backup'
@@ -51,6 +52,12 @@ import type {
   DiscoverySearchRequest,
   DiscoverySearchResponse,
 } from '../discovery/types'
+import type {
+  DoctorAgentInput,
+  DoctorFix,
+  DoctorFixResult,
+  DoctorReport,
+} from './doctor'
 import type { GlobalSearchResult } from '../search/types'
 import type { RelationGraph } from './relations'
 
@@ -100,6 +107,10 @@ export enum IpcChannel {
 
   // Global config search across every agent (Command palette)
   GlobalConfigSearch = 'search:global',
+
+  // Config Doctor (cross-agent health scan + safe auto-fixes)
+  DoctorScan = 'doctor:scan',
+  DoctorFix = 'doctor:fix',
 
   // Cancel a long-running, request-tagged op (discovery / MCP health)
   CancelRequest = 'request:cancel',
@@ -161,6 +172,7 @@ export enum IpcChannel {
   ChatDeleteSession = 'chat:delete-session',
   ChatExportSession = 'chat:export-session',
   ChatUsageStats = 'chat:usage-stats',
+  ChatUsageAnalytics = 'chat:usage-analytics',
 
   // Chats — auth (subscription login lifecycle)
   ChatAvailability = 'chat:availability',
@@ -368,6 +380,15 @@ export interface IpcMap {
   [IpcChannel.GlobalConfigSearch]: {
     request: Record<string, never>
     response: GlobalSearchResult[]
+  }
+
+  [IpcChannel.DoctorScan]: {
+    request: { agents: DoctorAgentInput[] }
+    response: DoctorReport
+  }
+  [IpcChannel.DoctorFix]: {
+    request: { fix: DoctorFix }
+    response: DoctorFixResult
   }
   [IpcChannel.CancelRequest]: {
     request: { requestId: string }
@@ -581,6 +602,10 @@ export interface IpcMap {
   [IpcChannel.ChatUsageStats]: {
     request: { agentId: AgentId; cwd?: string }
     response: ChatUsageStats
+  }
+  [IpcChannel.ChatUsageAnalytics]: {
+    request: { agentIds: AgentId[]; cwd?: string; days?: number }
+    response: UsageAnalytics
   }
 
   [IpcChannel.ChatAvailability]: {

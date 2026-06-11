@@ -122,6 +122,52 @@ export interface ChatUsageStats {
   realCostUsd?: number
 }
 
+/** One project's aggregated usage, ranked in the analytics view by tokens. */
+export interface UsageProjectStat {
+  /** Display label (basename of the working directory). */
+  label: string
+  /** Absolute working directory the sessions ran in. */
+  cwd: string
+  sessions: number
+  messages: number
+  inputTokens: number
+  outputTokens: number
+  estCostUsd: number
+}
+
+/** One agent's aggregated usage in the cross-agent analytics view. */
+export interface UsageAgentStat {
+  agentId: AgentId
+  sessions: number
+  messages: number
+  inputTokens: number
+  outputTokens: number
+  estCostUsd: number
+}
+
+/**
+ * Rich, multi-agent usage aggregate for the dedicated Analytics page. Computed
+ * in `core/chat/usage.ts` from the same mtime-cached transcript metadata that
+ * backs the dashboard panel — only this aggregate crosses the IPC boundary.
+ */
+export interface UsageAnalytics {
+  totalSessions: number
+  totalMessages: number
+  inputTokens: number
+  outputTokens: number
+  estCostUsd: number
+  /** Token totals per calendar day across the requested window (oldest first). */
+  daily: UsageDailyPoint[]
+  /** Per-agent breakdown, busiest first. */
+  byAgent: UsageAgentStat[]
+  /** Per-project breakdown, highest token use first. */
+  projects: UsageProjectStat[]
+  /** Length of the `daily` window, in days. */
+  days: number
+  /** ISO timestamp of the most recent activity across all agents, if any. */
+  lastActivityAt?: string
+}
+
 /** Whether an agent's CLI is installed and (for live chat) logged in. */
 export interface ChatAvailability {
   /** CLI binary found on PATH / resolvable. */

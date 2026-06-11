@@ -7,12 +7,15 @@
  */
 
 import { promises as fs } from 'node:fs'
-import type { OsEnv } from '@/shared/types/agent'
+import type { AgentId, OsEnv } from '@/shared/types/agent'
 import type {
   ChatListOptions,
   ChatSessionMeta,
   ChatUsageStats,
+  UsageAgentStat,
+  UsageAnalytics,
   UsageDailyPoint,
+  UsageProjectStat,
 } from '@/shared/types/chat'
 import { estimateCostUsd } from '@/shared/lib/cost'
 import { getChatRuntime, hasChatRuntime } from './registry'
@@ -152,5 +155,140 @@ export async function computeUsageStats(
     topProjects,
     daily: lastDays(TREND_DAYS, byDay),
     estCostUsd: estimateCostUsd(inputTokens, outputTokens),
+  }
+}
+
+/** Clamp the analytics window to a sane range so the daily series stays bounded. */
+const MIN_ANALYTICS_DAYS = 7
+const MAX_ANALYTICS_DAYS = 365
+
+interface ProjectAccum {
+  label: string
+  cwd: string
+  sessions: number
+  messages: number
+  inputTokens: number
+  outputTokens: number
+}
+
+/**
+ * Cross-agent usage analytics for the dedicated Analytics page. Aggregates the
+ * same mtime-cached transcript metadata used by {@link computeUsageStats} across
+ * every requested agent, producing per-day, per-agent and per-project rollups
+ * plus overall totals. Only the small aggregate crosses the IPC boundary.
+ */
+export async function computeUsageAnalytics(
+  env: OsEnv,
+  agentIds: AgentId[],
+  opts?: { cwd?: string; days?: number },
+): Promise<UsageAnalytics> {
+  const days = Math.min(
+    Math.max(Math.round(opts?.days ?? 30), MIN_ANALYTICS_DAYS),
+    MAX_ANALYTICS_DAYS,
+  )
+  const sinceDay = (() => {
+    const d = new Date()
+    d.setUTCDate(d.getUTCDate() - (days - 1))
+    return d.toISOString().slice(0, 10)
+  })()
+
+  let totalSessions = 0
+  let totalMessages = 0
+  let inputTokens = 0
+  let outputTokens = 0
+  let lastActivityAt: string | undefined
+  const byDay = new Map<string, number>()
+  const byAgent: UsageAgentStat[] = []
+  const projects = new Map<string, ProjectAccum>()
+
+  for (const agentId of agentIds) {
+    const all = await collectMetas(env, agentId)
+    const metas = opts?.cwd
+      ? all.filter((m) => isUnderDir(m.cwd, opts.cwd!))
+      : all
+    if (metas.length === 0) continue
+
+    let aIn = 0
+    let aOut = 0
+    let aMessages = 0
+    for (const m of metas) {
+      const mIn = m.inputTokens ?? 0
+      const mOut = m.outputTokens ?? 0
+      aIn += mIn
+      aOut += mOut
+      aMessages += m.messageCount
+      totalMessages += m.messageCount
+      inputTokens += mIn
+      outputTokens += mOut
+
+      if (m.updatedAt) {
+        if (!lastActivityAt || m.updatedAt > lastActivityAt) {
+          lastActivityAt = m.updatedAt
+        }
+        const day = m.updatedAt.slice(0, 10)
+        if (day >= sinceDay) {
+          byDay.set(day, (byDay.get(day) ?? 0) + mIn + mOut)
+        }
+      }
+
+      const key = m.cwd || m.projectLabel
+      const acc = projects.get(key) ?? {
+        label: m.projectLabel,
+        cwd: m.cwd,
+        sessions: 0,
+        messages: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+      }
+      acc.sessions += 1
+      acc.messages += m.messageCount
+      acc.inputTokens += mIn
+      acc.outputTokens += mOut
+      projects.set(key, acc)
+    }
+
+    totalSessions += metas.length
+    byAgent.push({
+      agentId,
+      sessions: metas.length,
+      messages: aMessages,
+      inputTokens: aIn,
+      outputTokens: aOut,
+      estCostUsd: estimateCostUsd(aIn, aOut),
+    })
+  }
+
+  byAgent.sort(
+    (a, b) =>
+      b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens),
+  )
+
+  const projectStats: UsageProjectStat[] = [...projects.values()]
+    .map((p) => ({
+      label: p.label,
+      cwd: p.cwd,
+      sessions: p.sessions,
+      messages: p.messages,
+      inputTokens: p.inputTokens,
+      outputTokens: p.outputTokens,
+      estCostUsd: estimateCostUsd(p.inputTokens, p.outputTokens),
+    }))
+    .sort(
+      (a, b) =>
+        b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens),
+    )
+    .slice(0, 12)
+
+  return {
+    totalSessions,
+    totalMessages,
+    inputTokens,
+    outputTokens,
+    estCostUsd: estimateCostUsd(inputTokens, outputTokens),
+    daily: lastDays(days, byDay),
+    byAgent,
+    projects: projectStats,
+    days,
+    lastActivityAt,
   }
 }
