@@ -274,7 +274,7 @@ export function SandboxPage() {
     <div className="flex h-full flex-col gap-4">
       <PageHeader
         title="Sandbox"
-        description="Try out commands, hooks and prompts safely — nothing is saved to your config"
+        description="Try out commands, hooks and prompts without touching your config"
         icon="flask-conical"
       />
       <div className="grid min-h-0 flex-1 content-start gap-4 overflow-y-auto pr-1 lg:grid-cols-2">

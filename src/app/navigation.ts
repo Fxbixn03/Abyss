@@ -42,6 +42,7 @@ const ROUTE_GROUP: Record<string, NavGroupId> = {
   '/commands': 'development',
   '/skills': 'development',
   '/rules': 'development',
+  '/rule-activation': 'development',
   '/templates': 'development',
   '/sandbox': 'development',
   '/chats': 'runtime',
@@ -64,6 +65,7 @@ const ROUTE_GROUP: Record<string, NavGroupId> = {
   '/bundles': 'tools',
   '/compare': 'tools',
   '/discover': 'tools',
+  '/workspace': 'tools',
   '/marketplace': 'tools',
   '/profiles': 'tools',
 }
@@ -124,6 +126,13 @@ export const PRIMARY_NAV: NavItem[] = [
     description: 'Session friction & quality signals',
   },
   {
+    id: 'rule-activation',
+    label: 'Rule Activation',
+    icon: 'crosshair',
+    route: '/rule-activation',
+    description: 'Simulate which rules fire for a file',
+  },
+  {
     id: 'validation',
     label: 'Validation',
     icon: 'clipboard-check',
@@ -178,6 +187,13 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: 'scan-search',
     route: '/discover',
     description: 'Find agents & MCP on this machine',
+  },
+  {
+    id: 'workspace',
+    label: 'Workspace',
+    icon: 'folder-tree',
+    route: '/workspace',
+    description: 'Agent config across your repos',
   },
   {
     id: 'marketplace',

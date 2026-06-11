@@ -93,8 +93,8 @@ export function ThemeBuilder() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        Build your own theme — pick colors for light and dark, preview live,
-        then save. No code required.
+        Build your own theme. Pick colors for light and dark, preview them live,
+        then save.
       </p>
 
       <Card>
