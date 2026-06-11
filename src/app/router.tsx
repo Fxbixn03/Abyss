@@ -13,6 +13,8 @@ import { RulesPage } from '@/features/collections/pages/RulesPage'
 import { HooksPage } from '@/features/hooks/pages/HooksPage'
 import { SettingsFilePage } from '@/features/settings-file/pages/SettingsFilePage'
 import { ChatsPage } from '@/features/chats/pages/ChatsPage'
+import { SessionsPage } from '@/features/sessions/pages/SessionsPage'
+import { InsightsPage } from '@/features/insights/pages/InsightsPage'
 import { SnapshotsPage } from '@/features/snapshots/pages/SnapshotsPage'
 import { BundlesPage } from '@/features/bundles/pages/BundlesPage'
 import { ProfilesPage } from '@/features/profiles/pages/ProfilesPage'
@@ -28,6 +30,7 @@ import { DoctorPage } from '@/features/doctor/pages/DoctorPage'
 import { MarketplacePage } from '@/features/marketplace/pages/MarketplacePage'
 import { ActivityPage } from '@/features/activity/pages/ActivityPage'
 import { StatusLinePage } from '@/features/statusline/pages/StatusLinePage'
+import { SpinnerPage } from '@/features/spinner/pages/SpinnerPage'
 import { PluginsPage } from '@/features/plugins/pages/PluginsPage'
 
 // Hash history works under Electron's file:// protocol in production.
@@ -40,6 +43,8 @@ export const router = createHashRouter([
       { path: 'relations', element: <RelationsPage /> },
       { path: 'config', element: <ConfigPage /> },
       { path: 'chats', element: <ChatsPage /> },
+      { path: 'sessions', element: <SessionsPage /> },
+      { path: 'insights', element: <InsightsPage /> },
       { path: 'context', element: <ContextPage /> },
       { path: 'usage', element: <UsagePage /> },
       { path: 'validation', element: <ValidationPage /> },
@@ -62,6 +67,7 @@ export const router = createHashRouter([
       { path: 'permissions', element: <PermissionsPage /> },
       { path: 'model-env', element: <ModelEnvPage /> },
       { path: 'statusline', element: <StatusLinePage /> },
+      { path: 'spinner', element: <SpinnerPage /> },
       { path: 'plugins', element: <PluginsPage /> },
       { path: 'settings-file', element: <SettingsFilePage /> },
       { path: 'settings', element: <SettingsPage /> },

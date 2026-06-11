@@ -4,6 +4,7 @@ import {
   removeStatusLine,
   writeStatusLine,
 } from '@core/statusline'
+import { readSpinner, writeSpinner } from '@core/spinner'
 import { assertScopedPath } from '@core/path-scope'
 import { handle } from './handle'
 import type { IpcContext } from './context'
@@ -20,5 +21,11 @@ export function registerStatusLineIpc(ctx: IpcContext): void {
   )
   handle(IpcChannel.RemoveStatusLine, ({ basePath }) =>
     removeStatusLine(scope(basePath)),
+  )
+
+  // Spinner verbs & tips — sibling settings.json appearance customization.
+  handle(IpcChannel.GetSpinner, ({ basePath }) => readSpinner(basePath))
+  handle(IpcChannel.SetSpinner, ({ basePath, config }) =>
+    writeSpinner(scope(basePath), config),
   )
 }

@@ -21,13 +21,34 @@ export interface McpServerEntry {
   enabled: boolean
 }
 
+/** One tool advertised by an MCP server, with its JSON-Schema for inputs. */
+export interface McpToolInfo {
+  name: string
+  description?: string
+  /** JSON Schema of the tool's arguments (`inputSchema`), when advertised. */
+  inputSchema?: unknown
+}
+
 /** Result of a "test connection" health check against an MCP server. */
 export interface McpHealthResult {
   ok: boolean
   /** Tool names reported by the server (stdio transport). */
   tools: string[]
+  /** Full tool details (name + description + input schema), stdio transport. */
+  toolDetails?: McpToolInfo[]
   serverName?: string
   serverVersion?: string
+  error?: string
+  durationMs: number
+}
+
+/** Result of invoking a single MCP tool (the "test tool" probe). */
+export interface McpToolCallResult {
+  ok: boolean
+  /** Flattened text of the tool's content blocks, when it returned any. */
+  output: string
+  /** The server marked the result as an error (`isError`). */
+  isError?: boolean
   error?: string
   durationMs: number
 }

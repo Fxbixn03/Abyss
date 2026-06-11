@@ -16,6 +16,7 @@ import { useMcpStore } from '../store/mcp.store'
 import { McpServerList } from '../components/McpServerList'
 import { McpServerForm } from '../components/McpServerForm'
 import { McpDiscoverDialog } from '../components/McpDiscoverDialog'
+import { McpToolTester } from '../components/McpToolTester'
 
 /** How often periodic monitoring re-checks every server while enabled. */
 const MONITOR_INTERVAL_MS = 30_000
@@ -42,6 +43,8 @@ export function McpPage() {
   const [discoverOpen, setDiscoverOpen] = useState(false)
   const [editing, setEditing] = useState<McpServerEntry | undefined>()
   const [autoRefresh, setAutoRefresh] = useState(false)
+  const [toolTestOpen, setToolTestOpen] = useState(false)
+  const [toolTestServer, setToolTestServer] = useState<McpServerEntry>()
 
   const supported = agent.capabilities.mcp
 
@@ -216,6 +219,10 @@ export function McpPage() {
             onToggle={(id) => void toggle(id)}
             onRemove={(id) => void remove(id)}
             onTest={(server) => void test(server)}
+            onTestTool={(server) => {
+              setToolTestServer(server)
+              setToolTestOpen(true)
+            }}
             onEdit={(server) => {
               setEditing(server)
               setFormOpen(true)
@@ -239,6 +246,12 @@ export function McpPage() {
           setEditing(entry)
           setFormOpen(true)
         }}
+      />
+
+      <McpToolTester
+        open={toolTestOpen}
+        onOpenChange={setToolTestOpen}
+        server={toolTestServer}
       />
     </div>
   )

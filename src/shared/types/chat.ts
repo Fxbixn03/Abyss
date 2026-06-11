@@ -168,6 +168,56 @@ export interface UsageAnalytics {
   lastActivityAt?: string
 }
 
+/**
+ * Per-session friction signals, derived heuristically from a transcript. These
+ * are measurable proxies — not a judgement of answer quality — surfaced by the
+ * Insights view to flag where a session got rough.
+ */
+export interface SessionFriction {
+  sessionId: string
+  title: string
+  projectLabel: string
+  updatedAt?: string
+  messages: number
+  toolCalls: number
+  /** `tool_result` blocks flagged `isError`. */
+  toolErrors: number
+  /** User turns that read like a correction ("no", "actually", "undo", …). */
+  corrections: number
+  /** Identical tool calls (same name + input) repeated within the session. */
+  redundantCalls: number
+  /** 0–100 heuristic friction score; higher means more friction. */
+  score: number
+}
+
+/** One day's average friction across the analyzed sessions (trend line). */
+export interface InsightsDailyPoint {
+  date: string
+  score: number
+  sessions: number
+}
+
+/**
+ * Aggregate friction / quality report over a bounded window of recent sessions.
+ * Computed in `core/chat/insights.ts` (full transcripts, mtime-cached); only
+ * this small aggregate crosses the IPC boundary.
+ */
+export interface InsightsReport {
+  sessionsAnalyzed: number
+  /** Mean friction score across analyzed sessions (0–100). */
+  avgScore: number
+  totalToolCalls: number
+  totalToolErrors: number
+  totalCorrections: number
+  totalRedundantCalls: number
+  /** Distribution of sessions by friction band. */
+  buckets: { smooth: number; some: number; high: number }
+  /** Roughest sessions first, capped. */
+  topFriction: SessionFriction[]
+  /** Friction trend over the window (oldest first). */
+  daily: InsightsDailyPoint[]
+}
+
 /** Whether an agent's CLI is installed and (for live chat) logged in. */
 export interface ChatAvailability {
   /** CLI binary found on PATH / resolvable. */

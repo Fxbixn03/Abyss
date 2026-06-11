@@ -11,6 +11,7 @@ import type {
   CodexSettings,
   McpHealthResult,
   McpServerEntry,
+  McpToolCallResult,
   ModelEnvConfig,
   PermissionRules,
   UpdateStatus,
@@ -33,6 +34,7 @@ import type {
   ChatStreamEnvelope,
   ChatTranscript,
   ChatUsageStats,
+  InsightsReport,
   UsageAnalytics,
 } from './chat'
 import type { SandboxRunResult } from './sandbox'
@@ -61,6 +63,7 @@ import type {
 import type { GlobalSearchResult } from '../search/types'
 import type { RelationGraph } from './relations'
 import type { StatusLineConfig } from './statusline'
+import type { SpinnerConfig } from './spinner'
 import type { PluginsConfig } from './plugins'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
@@ -103,6 +106,7 @@ export enum IpcChannel {
   GetMcpServers = 'mcp:get',
   SetMcpServers = 'mcp:set',
   McpHealthCheck = 'mcp:health-check',
+  McpCallTool = 'mcp:call-tool',
 
   // Discovery (generic: searchable registries for mcp / skills / agents / …)
   DiscoverySearch = 'discovery:search',
@@ -133,6 +137,10 @@ export enum IpcChannel {
   GetStatusLine = 'statusline:get',
   SetStatusLine = 'statusline:set',
   RemoveStatusLine = 'statusline:remove',
+
+  // Spinner verbs & tips (Claude Code)
+  GetSpinner = 'spinner:get',
+  SetSpinner = 'spinner:set',
 
   // Plugins & marketplaces (Claude Code)
   GetPlugins = 'plugins:get',
@@ -184,6 +192,7 @@ export enum IpcChannel {
   ChatExportSession = 'chat:export-session',
   ChatUsageStats = 'chat:usage-stats',
   ChatUsageAnalytics = 'chat:usage-analytics',
+  ChatInsights = 'chat:insights',
 
   // Chats — auth (subscription login lifecycle)
   ChatAvailability = 'chat:availability',
@@ -383,6 +392,15 @@ export interface IpcMap {
     request: { entry: McpServerEntry; requestId?: string }
     response: McpHealthResult
   }
+  [IpcChannel.McpCallTool]: {
+    request: {
+      entry: McpServerEntry
+      toolName: string
+      args: Record<string, unknown>
+      requestId?: string
+    }
+    response: McpToolCallResult
+  }
 
   [IpcChannel.DiscoverySearch]: {
     request: DiscoverySearchRequest
@@ -443,6 +461,15 @@ export interface IpcMap {
   }
   [IpcChannel.RemoveStatusLine]: {
     request: { basePath: string }
+    response: { success: boolean; path: string }
+  }
+
+  [IpcChannel.GetSpinner]: {
+    request: { basePath: string }
+    response: SpinnerConfig
+  }
+  [IpcChannel.SetSpinner]: {
+    request: { basePath: string; config: SpinnerConfig }
     response: { success: boolean; path: string }
   }
 
@@ -639,6 +666,10 @@ export interface IpcMap {
   [IpcChannel.ChatUsageAnalytics]: {
     request: { agentIds: AgentId[]; cwd?: string; days?: number }
     response: UsageAnalytics
+  }
+  [IpcChannel.ChatInsights]: {
+    request: { agentId: AgentId; cwd?: string; limit?: number }
+    response: InsightsReport
   }
 
   [IpcChannel.ChatAvailability]: {

@@ -38,6 +38,7 @@ import type { HookEntry } from '@/shared/types/hooks'
 import type { DiscoverySearchRequest } from '@/shared/discovery/types'
 import type { DoctorAgentInput, DoctorFix } from '@/shared/types/doctor'
 import type { StatusLineConfig } from '@/shared/types/statusline'
+import type { SpinnerConfig } from '@/shared/types/spinner'
 import type { PluginsConfig } from '@/shared/types/plugins'
 
 /**
@@ -158,6 +159,12 @@ export const ipc = {
     }),
   mcpHealthCheck: (entry: McpServerEntry, requestId?: string) =>
     invoke(IpcChannel.McpHealthCheck, { entry, requestId }),
+  mcpCallTool: (
+    entry: McpServerEntry,
+    toolName: string,
+    args: Record<string, unknown>,
+    requestId?: string,
+  ) => invoke(IpcChannel.McpCallTool, { entry, toolName, args, requestId }),
 
   discoverySearch: (req: DiscoverySearchRequest) =>
     invoke(IpcChannel.DiscoverySearch, req),
@@ -198,6 +205,11 @@ export const ipc = {
     invoke(IpcChannel.SetStatusLine, { basePath, config }),
   removeStatusLine: (basePath: string) =>
     invoke(IpcChannel.RemoveStatusLine, { basePath }),
+
+  // --- Spinner verbs & tips (Claude Code) -----------------------------------
+  getSpinner: (basePath: string) => invoke(IpcChannel.GetSpinner, { basePath }),
+  setSpinner: (basePath: string, config: SpinnerConfig) =>
+    invoke(IpcChannel.SetSpinner, { basePath, config }),
 
   // --- Plugins & marketplaces (Claude Code) ---------------------------------
   getPlugins: (basePath: string) => invoke(IpcChannel.GetPlugins, { basePath }),
@@ -359,6 +371,10 @@ export const ipc = {
     agentIds: AgentId[],
     opts?: { cwd?: string; days?: number },
   ) => invoke(IpcChannel.ChatUsageAnalytics, { agentIds, ...opts }),
+  chatInsights: (
+    agentId: AgentId,
+    opts?: { cwd?: string; limit?: number },
+  ) => invoke(IpcChannel.ChatInsights, { agentId, ...opts }),
 
   // --- Chats: auth ----------------------------------------------------------
   chatAvailability: (agentId: AgentId) =>

@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import { IpcChannel } from '@/shared/types/ipc'
 import { readMcpServers, writeMcpServers } from '@core/mcp'
-import { checkMcpHealth } from '@core/mcp-health'
+import { checkMcpHealth, callMcpTool } from '@core/mcp-health'
 import { runDiscoverySearch } from '@core/discovery'
 import { indexAllConfigsCached } from '@core/global-search'
 import { beginRequest, endRequest, cancelRequest } from './cancellation'
@@ -70,6 +70,17 @@ export function registerConfigIpc(ctx: IpcContext): void {
       endRequest(requestId)
     }
   })
+  handle(
+    IpcChannel.McpCallTool,
+    async ({ entry, toolName, args, requestId }) => {
+      const controller = beginRequest(requestId)
+      try {
+        return await callMcpTool(entry, toolName, args, controller?.signal)
+      } finally {
+        endRequest(requestId)
+      }
+    },
+  )
 
   // Discovery (searchable registries — currently the official MCP registry)
   handle(IpcChannel.DiscoverySearch, async (req) => {

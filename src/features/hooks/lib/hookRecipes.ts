@@ -72,6 +72,27 @@ export const HOOK_RECIPES: HookRecipe[] = [
       'jq -r \'.message // "Agent needs your attention"\' | xargs -I{} notify-send "Claude Code" "{}"',
   },
   {
+    id: 'sound-on-finish',
+    label: 'Sound when done',
+    icon: 'bell-ring',
+    description: 'Play a chime when the agent finishes responding.',
+    event: 'Stop',
+    matcher: '',
+    // Cross-platform best-effort: Linux paplay → Windows beep → terminal bell.
+    command:
+      'paplay /usr/share/sounds/freedesktop/stereo/complete.oga 2>/dev/null || powershell -c "[console]::beep(880,200)" 2>/dev/null || printf \'\\a\'',
+  },
+  {
+    id: 'sound-on-attention',
+    label: 'Sound when input needed',
+    icon: 'bell-dot',
+    description: 'Play an alert when the agent needs permission or input.',
+    event: 'Notification',
+    matcher: '',
+    command:
+      'paplay /usr/share/sounds/freedesktop/stereo/dialog-warning.oga 2>/dev/null || powershell -c "[console]::beep(660,150);[console]::beep(880,150)" 2>/dev/null || printf \'\\a\'',
+  },
+  {
     id: 'log-tool-calls',
     label: 'Log tool calls',
     icon: 'file-text',

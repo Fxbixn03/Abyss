@@ -12,6 +12,7 @@ export interface McpServerListProps {
   onEdit: (server: McpServerEntry) => void
   onRemove: (id: string) => void
   onTest: (server: McpServerEntry) => void
+  onTestTool: (server: McpServerEntry) => void
 }
 
 function summary(server: McpServerEntry): string {
@@ -56,6 +57,7 @@ export function McpServerList({
   onEdit,
   onRemove,
   onTest,
+  onTestTool,
 }: McpServerListProps) {
   return (
     <ul className="flex flex-col gap-2">
@@ -97,6 +99,17 @@ export function McpServerList({
               <Icon name="refresh-cw" />
               Restart
             </Button>
+            {server.type === 'stdio' && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => onTestTool(server)}
+                aria-label={`Test a tool on ${server.name}`}
+                title="Run one of this server's tools to validate it"
+              >
+                <Icon name="play" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon-sm"
