@@ -3,6 +3,7 @@
  */
 
 import type { AgentId } from './agent'
+import type { CustomAgentSpec } from '@/shared/agents/custom-agent'
 
 /** A single MCP server entry (Claude Code). */
 export interface McpServerEntry {
@@ -110,6 +111,8 @@ export interface AppSettings {
   backupKeep: number
   /** User confirmed (once) that the sandbox runs real shell commands. */
   sandboxAcknowledged: boolean
+  /** User-defined agents, persisted so main + renderer can register them. */
+  customAgents: CustomAgentSpec[]
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -124,6 +127,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   autoBackup: true,
   backupKeep: 3,
   sandboxAcknowledged: false,
+  customAgents: [],
 }
 
 /** Auto-update lifecycle, pushed to the renderer as it progresses. */

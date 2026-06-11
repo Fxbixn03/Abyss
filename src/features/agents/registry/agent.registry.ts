@@ -21,6 +21,11 @@ class AgentRegistry {
     this.adapters.set(adapter.id, adapter)
   }
 
+  /** Remove a (custom) agent adapter. Built-ins are never unregistered. */
+  unregister(id: AgentId): void {
+    this.adapters.delete(id)
+  }
+
   get(id: AgentId): AgentAdapter {
     const adapter = this.adapters.get(id)
     if (!adapter) throw new Error(`No adapter registered for agent: ${id}`)

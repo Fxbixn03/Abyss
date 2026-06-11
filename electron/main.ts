@@ -8,6 +8,7 @@ import { configureSnapshots } from '@core/snapshots'
 import { allowedRoots } from '@core/path-scope'
 import { configureProfiles } from '@core/profiles'
 import { runDailyBackup, defaultBackupDir } from '@core/backup'
+import { setCustomAgentDefinitions } from '@/shared/agents/defs'
 import type { IpcContext } from './ipc/context'
 import { registerIpcHandlers } from './ipc'
 import { createEmitter } from './ipc/emit'
@@ -35,7 +36,6 @@ function createWindow(): void {
     height: 820,
     minWidth: 960,
     minHeight: 600,
-    fullscreen: true,
     show: false,
     backgroundColor: '#0c0e14',
     autoHideMenuBar: true,
@@ -51,6 +51,7 @@ function createWindow(): void {
     },
   })
 
+  mainWindow.maximize()
   mainWindow.once('ready-to-show', () => mainWindow?.show())
   mainWindow.on('closed', () => {
     mainWindow = null
@@ -134,6 +135,16 @@ function buildIpcContext() {
   return { env, settings, userData, getWindow, emit }
 }
 
+/** Load user-defined agents from settings into the shared definition registry. */
+async function registerCustomAgents(ctx: IpcContext): Promise<void> {
+  try {
+    const settings = await ctx.settings.read()
+    setCustomAgentDefinitions(settings.customAgents ?? [])
+  } catch {
+    // A broken settings file must not block startup — just skip custom agents.
+  }
+}
+
 /** Daily auto-backup: runs once per day on first launch, honouring settings. */
 async function maybeRunDailyBackup(ctx: IpcContext): Promise<void> {
   try {
@@ -158,11 +169,14 @@ if (!gotLock) {
     }
   })
 
-  void app.whenReady().then(() => {
+  void app.whenReady().then(async () => {
     installCrashHandlers()
     applySecurityPolicies()
     const ctx = buildIpcContext()
     registerIpcHandlers(ctx)
+    // Register user-defined agents from the persisted settings before the window
+    // opens, so config IO (read/write/detect) resolves them on first paint.
+    await registerCustomAgents(ctx)
     createWindow()
     setupAutoUpdater(ctx.emit, isDev)
     void maybeRunDailyBackup(ctx)

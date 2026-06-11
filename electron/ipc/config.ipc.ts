@@ -16,6 +16,7 @@ import { readHooks, writeHooks } from '@core/hooks'
 import { readDisabledHooks, writeDisabledHooks } from '@core/disabled-hooks'
 import { readRawSettings, writeRawSettings } from '@core/raw-settings'
 import { assertScopedPath } from '@core/path-scope'
+import { setCustomAgentDefinitions } from '@/shared/agents/defs'
 import { handle } from './handle'
 import type { IpcContext } from './context'
 
@@ -37,7 +38,15 @@ export function registerConfigIpc(ctx: IpcContext): void {
 
   // App settings (Abyss's own store)
   handle(IpcChannel.GetConfig, () => ctx.settings.read())
-  handle(IpcChannel.SetConfig, ({ patch }) => ctx.settings.update(patch))
+  handle(IpcChannel.SetConfig, async ({ patch }) => {
+    const next = await ctx.settings.update(patch)
+    // Keep the live definition registry in sync when custom agents change, so a
+    // newly created/edited agent's config IO works without restarting the app.
+    if (patch.customAgents !== undefined) {
+      setCustomAgentDefinitions(next.customAgents ?? [])
+    }
+    return next
+  })
 
   // MCP servers
   handle(IpcChannel.GetMcpServers, ({ agentId, basePath, projectDir }) =>

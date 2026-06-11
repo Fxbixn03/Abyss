@@ -18,6 +18,8 @@ import type {
 } from '@/shared/types/agent'
 import type { CollectionKind } from '@/shared/types/collections'
 import { COLLECTION_LABELS } from '@/shared/types/collections'
+import type { CustomAgentSpec } from './custom-agent'
+import { customAgentToDefinition } from './custom-agent'
 
 /** Platform-aware path join — pure, so it stays renderer-safe. */
 function joinPath(platform: Platform, ...segments: string[]): string {
@@ -409,14 +411,38 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'cline',
 ]
 
+/**
+ * Runtime registry of user-created agents, keyed by id. Empty until a process
+ * calls {@link setCustomAgentDefinitions} (the renderer and the Electron main
+ * process each populate their own copy from the persisted `AppSettings`). This
+ * is the seam that lets config IO (`config-io`, `agent-paths`, …) resolve a
+ * custom agent's definition exactly like a built-in one.
+ */
+let CUSTOM_AGENT_DEFINITIONS: Record<string, AgentDefinition> = {}
+
+/** Replace the set of custom agent definitions from their serializable specs. */
+export function setCustomAgentDefinitions(specs: CustomAgentSpec[]): void {
+  CUSTOM_AGENT_DEFINITIONS = Object.fromEntries(
+    specs.map((spec) => [spec.id, customAgentToDefinition(spec)]),
+  )
+}
+
+/** Ids of the currently registered custom agents. */
+export function getCustomAgentIds(): string[] {
+  return Object.keys(CUSTOM_AGENT_DEFINITIONS)
+}
+
 export function getAgentDefinition(id: string): AgentDefinition {
-  const def = AGENT_DEFINITIONS[id]
+  const def = AGENT_DEFINITIONS[id] ?? CUSTOM_AGENT_DEFINITIONS[id]
   if (!def) throw new Error(`Unknown agent definition: ${id}`)
   return def
 }
 
 export function getActiveAgentDefinitions(): AgentDefinition[] {
-  return ACTIVE_AGENT_IDS.map(getAgentDefinition)
+  return [
+    ...ACTIVE_AGENT_IDS.map(getAgentDefinition),
+    ...Object.values(CUSTOM_AGENT_DEFINITIONS),
+  ]
 }
 
 /**

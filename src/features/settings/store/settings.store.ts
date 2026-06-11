@@ -4,6 +4,7 @@ import { DEFAULT_APP_SETTINGS } from '@/shared/types/config'
 import type { AppSettings } from '@/shared/types/config'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { reportError } from '@/shared/lib/errors'
+import { useCustomAgentStore } from '@/features/agents/store/custom-agent.store'
 
 interface SettingsState {
   settings: AppSettings
@@ -34,6 +35,9 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
         ipc.getSettings(),
         ipc.getDetectedPaths(),
       ])
+      // Register the user's custom agents before the app gates open, so the
+      // switcher/sidebar/themes pick them up on first paint.
+      useCustomAgentStore.getState().hydrate(settings.customAgents ?? [])
       set({ settings, detected, loaded: true })
     } catch (err) {
       reportError(err, { title: "Couldn't load settings" })

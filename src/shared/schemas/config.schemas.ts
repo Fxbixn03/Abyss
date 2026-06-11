@@ -50,6 +50,36 @@ export const mcpServerSchema = z
     }
   })
 
+const agentCapabilitiesSchema = z.object({
+  instructions: z.boolean(),
+  mcp: z.boolean(),
+  permissions: z.boolean(),
+  modelEnv: z.boolean(),
+  agents: z.boolean(),
+  commands: z.boolean(),
+  skills: z.boolean(),
+  hooks: z.boolean(),
+  rules: z.boolean(),
+  rawSettings: z.boolean(),
+  chats: z.boolean(),
+})
+
+/** A user-defined agent (mirrors {@link CustomAgentSpec}). */
+export const customAgentSpecSchema = z.object({
+  id: z.string().trim().min(1),
+  displayName: z.string().trim().min(1),
+  iconName: z.string().trim().min(1),
+  defaultThemeId: z.string().trim().min(1),
+  docsUrl: z.string().optional(),
+  capabilities: agentCapabilitiesSchema,
+  instructions: z.object({
+    filename: z.string().trim().min(1),
+    language: z.enum(['markdown', 'json', 'yaml', 'text']),
+    description: z.string(),
+  }),
+  configDir: z.string().trim().min(1),
+})
+
 export const permissionRulesSchema = z.object({
   allow: z.array(z.string()),
   deny: z.array(z.string()),
@@ -88,6 +118,7 @@ export const appSettingsSchema = z
     backupDir: z.string().optional().catch(undefined),
     backupKeep: z.number().optional().catch(undefined),
     sandboxAcknowledged: z.boolean().optional().catch(undefined),
+    customAgents: z.array(customAgentSpecSchema).optional().catch(undefined),
   })
   .catch({})
 
