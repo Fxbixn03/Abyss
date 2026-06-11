@@ -1,6 +1,7 @@
 {
   "name": "abyss",
   "version": "1.58.0",
+  "packageManager": "pnpm@11.0.0",
   "description": "Unified visual configuration UI for AI coding agents (Claude Code, Codex, Gemini CLI, and more).",
   "private": true,
   "author": "Fxbixn03",
