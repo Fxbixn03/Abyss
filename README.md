@@ -48,7 +48,7 @@ Builder for rolling your own. Switch the active agent and the whole app re-theme
 instantly.
 
 <div align="center">
-  <img src="assets/abyss-themes.gif" alt="Abyss cycling through its built-in themes" width="680" />
+  <img src="assets/abyss-agents.gif" alt="Abyss cycling through its built-in themes" width="680" />
 </div>
 
 ---

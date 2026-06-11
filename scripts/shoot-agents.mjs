@@ -30,8 +30,8 @@ const AGENTS = process.argv.slice(2).length
 const MODES = ['dark', 'light']
 
 // Emulated viewport — fixed so every frame is identical in size. dsf 2 = crisp.
-const VW = 1280
-const VH = 800
+const VW = 1440
+const VH = 820
 const DSF = 2
 const SETTLE_MS = 2600 // let the dashboard's IPC data fetch + render settle
 const DELAY_CS = 150 // GIF hold per frame (1/100 s)
@@ -112,9 +112,14 @@ function seedState(agentId, mode) {
     },
     version: 0,
   })
+  // Only `claude` + `codex` are enabled by default; enable every agent we shoot
+  // so `useActiveAgent` doesn't fall back to the first enabled one.
+  const enabled = Object.fromEntries(AGENTS.map((id) => [id, true]))
+  const enabledStore = JSON.stringify({ state: { enabled }, version: 0 })
   return `
     localStorage.setItem('abyss-active-agent', ${JSON.stringify(agent)});
     localStorage.setItem('abyss-themes', ${JSON.stringify(theme)});
+    localStorage.setItem('abyss-agents-enabled', ${JSON.stringify(enabledStore)});
     true;
   `
 }
