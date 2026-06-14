@@ -7,18 +7,18 @@ disk and presents them through one themed, agent-aware interface.
 
 ## Tech stack
 
-| Layer          | Choice                                            |
-| -------------- | ------------------------------------------------- |
-| Desktop shell  | Electron 42                                       |
-| UI framework   | React 18 + TypeScript (strict)                    |
-| Build          | Vite 8 + `vite-plugin-electron`                   |
+| Layer          | Choice                                                 |
+| -------------- | ------------------------------------------------------ |
+| Desktop shell  | Electron 42                                            |
+| UI framework   | React 18 + TypeScript (strict)                         |
+| Build          | Vite 8 + `vite-plugin-electron`                        |
 | UI components  | shadcn/ui (Radix primitives) in `shared/components/ui` |
-| Styling        | Tailwind CSS v4 (CSS-first, `@theme inline`)      |
-| State          | Zustand (with `persist` where it makes sense)     |
-| Editor         | CodeMirror 6 (`@uiw/react-codemirror`)            |
-| IPC            | Single typed `invoke` bridge (`IpcChannel`/`IpcMap`) |
-| Packaging      | electron-builder (AppImage / NSIS + portable)     |
-| Package mgr    | pnpm                                              |
+| Styling        | Tailwind CSS v4 (CSS-first, `@theme inline`)           |
+| State          | Zustand (with `persist` where it makes sense)          |
+| Editor         | CodeMirror 6 (`@uiw/react-codemirror`)                 |
+| IPC            | Single typed `invoke` bridge (`IpcChannel`/`IpcMap`)   |
+| Packaging      | electron-builder (AppImage / NSIS + portable)          |
+| Package mgr    | pnpm                                                   |
 
 ## Commands
 
@@ -39,7 +39,7 @@ pnpm cli -- detect # run the abyss CLI in dev (tsx)
 
 ## Architecture map
 
-```
+```txt
 core/                     Node-only config IO (fs/os/path). Reused by main + CLI.
 electron/
   main.ts                 Window, security (CSP), lifecycle, IPC wiring
@@ -88,6 +88,7 @@ already-written Gemini adapter.
    `capabilities`, `configFiles`, `resolvePaths`). Add its id to
    `ACTIVE_AGENT_IDS`.
 2. **Adapter** — one file in `src/features/agents/adapters/<id>.adapter.ts`:
+
    ```ts
    export const fooAdapter = createAdapter(fooDefinition, {
      icon: 'box',
@@ -95,6 +96,7 @@ already-written Gemini adapter.
      getSidebarSections: () => [/* optional extra nav */],
    })
    ```
+
 3. **Register** — one line in
    `src/features/agents/registry/agent.registry.ts`:
    `agentRegistry.register(fooAdapter)`.
