@@ -11,11 +11,7 @@ import { useActiveAgentId } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase, useScope } from '@/features/scope/hooks/useScopedBase'
 import { autoLayout, type XY } from '../lib/layout'
 import { neighbors, reachableFrom } from '../lib/reachable'
-import {
-  toFlowEdges,
-  toFlowNodes,
-  type RelationFilters,
-} from '../lib/toFlow'
+import { toFlowEdges, toFlowNodes, type RelationFilters } from '../lib/toFlow'
 import { layoutKey, useRelationsLayout } from '../store/relationsLayout.store'
 
 /** Every node kind — the default-visible set. */
@@ -36,7 +32,8 @@ export function useRelations() {
   const agentId = useActiveAgentId()
   const basePath = useConfigBase(agentId)
   const { scope, projectDir } = useScope()
-  const ipcProjectDir = scope === 'project' ? (projectDir ?? undefined) : undefined
+  const ipcProjectDir =
+    scope === 'project' ? (projectDir ?? undefined) : undefined
   const key = layoutKey(agentId, scope, projectDir)
 
   const [graph, setGraph] = useState<RelationGraph | null>(null)
@@ -142,9 +139,7 @@ export function useRelations() {
 
   const filters: RelationFilters = useMemo(
     () => ({
-      kinds: new Set(
-        ALL_NODE_KINDS.filter((k) => !hiddenKinds.has(k)),
-      ),
+      kinds: new Set(ALL_NODE_KINDS.filter((k) => !hiddenKinds.has(k))),
       showOwns,
       showHeuristic,
     }),
@@ -155,7 +150,10 @@ export function useRelations() {
   // position) fall back to auto-layout — the mixed-set case.
   const positions = useMemo<Record<string, XY>>(() => {
     if (!graph) return {}
-    return { ...autoLayout(graph.nodes, graph.edges), ...(storedPositions ?? {}) }
+    return {
+      ...autoLayout(graph.nodes, graph.edges),
+      ...(storedPositions ?? {}),
+    }
   }, [graph, storedPositions])
 
   // What to spotlight: hovering a node shows its direct neighbours (quick "what
@@ -202,6 +200,25 @@ export function useRelations() {
 
   const reLayout = useCallback(() => resetLayout(key), [key, resetLayout])
 
+  // PNG export: the rasterisation logic lives on the canvas (it needs the
+  // measured node sizes + the rendered DOM), so the canvas registers its
+  // exporter here and the toolbar triggers it. `exporting` drives the button's
+  // spinner / disabled state.
+  const exporterRef = useRef<(() => Promise<void>) | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const registerExporter = useCallback((fn: (() => Promise<void>) | null) => {
+    exporterRef.current = fn
+  }, [])
+  const exportPng = useCallback(async () => {
+    if (!exporterRef.current) return
+    setExporting(true)
+    try {
+      await exporterRef.current()
+    } finally {
+      setExporting(false)
+    }
+  }, [])
+
   return {
     agentId,
     basePath,
@@ -223,6 +240,9 @@ export function useRelations() {
     onDragStop,
     reLayout,
     refresh,
+    registerExporter,
+    exportPng,
+    exporting,
   }
 }
 

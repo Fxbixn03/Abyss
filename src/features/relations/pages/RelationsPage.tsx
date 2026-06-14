@@ -48,9 +48,11 @@ export function RelationsPage() {
         <RelationsCanvas
           nodes={ctrl.flowNodes}
           edges={ctrl.flowEdges}
+          agentId={ctrl.agentId}
           onSelect={ctrl.setSelectedId}
           onHover={ctrl.setHoveredId}
           onDragStop={ctrl.onDragStop}
+          registerExporter={ctrl.registerExporter}
         />
         <section className="flex min-h-0 flex-col rounded-lg border border-border bg-card/40 p-4">
           <NodeInspector ctrl={ctrl} />

@@ -56,6 +56,19 @@ export function RelationsToolbar({ ctrl }: { ctrl: RelationsController }) {
         <Button
           variant="ghost"
           size="sm"
+          onClick={() => void ctrl.exportPng()}
+          disabled={ctrl.exporting}
+          title="Download the graph as a PNG image"
+        >
+          <Icon
+            name={ctrl.exporting ? 'loader' : 'image'}
+            className={ctrl.exporting ? 'animate-spin' : ''}
+          />
+          {ctrl.exporting ? 'Exporting…' : 'Export PNG'}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => void ctrl.refresh()}
           disabled={ctrl.loading}
         >
