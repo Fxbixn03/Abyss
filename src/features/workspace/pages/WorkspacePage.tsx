@@ -164,6 +164,26 @@ export function WorkspacePage() {
         icon="folder-tree"
         actions={
           <>
+            {root && (
+              <div className="flex items-center gap-1">
+                <code className="max-w-64 truncate font-code text-xs text-muted-foreground">
+                  {root}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-6 shrink-0"
+                  title="Clear saved folder"
+                  onClick={() => {
+                    setLastRoot(null)
+                    setRoot(null)
+                    setResult(null)
+                  }}
+                >
+                  <Icon name="x" className="size-3.5" />
+                </Button>
+              </div>
+            )}
             <Button variant="outline" size="sm" onClick={() => void choose()}>
               <Icon name="folder-search" />
               Choose folder

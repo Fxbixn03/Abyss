@@ -13,6 +13,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       lastRoot: null,
       setLastRoot: (dir) => set({ lastRoot: dir }),
     }),
-    { name: 'abyss-workspace' },
+    {
+      name: 'abyss-workspace',
+      partialize: (s) => ({ lastRoot: s.lastRoot }),
+    },
   ),
 )
