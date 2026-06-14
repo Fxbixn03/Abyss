@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { CollectionKind } from '@/shared/types/collections'
 import type {
@@ -24,6 +24,7 @@ import {
   useAllAgents,
 } from '@/features/agents/hooks/useActiveAgent'
 import { useAgentStore } from '@/features/agents/store/agent.store'
+import { applyTheme } from '@/features/themes/lib/applyTheme'
 import { useThemeStore } from '@/features/themes/store/theme.store'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useCollectionSelection } from '@/features/collections/store/collectionSelection.store'
@@ -204,7 +205,20 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
   const toggleAppearance = useThemeStore((s) => s.toggleAppearance)
   const setAgentTheme = useThemeStore((s) => s.setAgentTheme)
   const getThemesForAgent = useThemeStore((s) => s.getThemesForAgent)
+  const appearance = useThemeStore((s) => s.appearance)
+  const activeTheme = useThemeStore((s) => s.getActiveTheme(activeAgent.id))
   const themes = getThemesForAgent(activeAgent.id)
+
+  const restoreActiveTheme = useCallback(() => {
+    applyTheme(activeTheme, appearance)
+  }, [activeTheme, appearance])
+
+  // Restore the active theme when the palette unmounts (e.g. Escape during hover).
+  useEffect(() => {
+    return () => {
+      restoreActiveTheme()
+    }
+  }, [restoreActiveTheme])
 
   const navItems = [
     ...PRIMARY_NAV.filter(
@@ -359,6 +373,8 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
             <CommandItem
               key={theme.id}
               value={`theme ${theme.label}`}
+              onMouseEnter={() => applyTheme(theme, appearance)}
+              onMouseLeave={restoreActiveTheme}
               onSelect={run(() => setAgentTheme(activeAgent.id, theme.id))}
             >
               <Icon name="palette" />
