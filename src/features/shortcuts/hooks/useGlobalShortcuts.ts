@@ -74,6 +74,18 @@ export function useGlobalShortcuts(): void {
         case 'nav.compare':
           navigate('/compare')
           break
+        case 'nav.permissions':
+          navigate('/permissions')
+          break
+        case 'nav.workspace':
+          navigate('/workspace')
+          break
+        case 'nav.profiles':
+          navigate('/profiles')
+          break
+        case 'nav.bundles':
+          navigate('/bundles')
+          break
       }
     }
     window.addEventListener('keydown', onKey)
