@@ -10,11 +10,13 @@ import { applyBundle, exportBundle } from '@core/bundle'
 import { redactBundleSecrets } from '@core/bundle-redact'
 import type { ExportBundle } from '@core/bundle'
 import { listAbyssMcpTools, callAbyssMcpTool } from '@core/mcp-server'
+import { configureProfiles, listProfiles, readProfile } from '@core/profiles'
 import {
-  configureProfiles,
-  listProfiles,
-  readProfile,
-} from '@core/profiles'
+  configureSnapshots,
+  listRecentSnapshots,
+  readSnapshot,
+  restoreSnapshot,
+} from '@core/snapshots'
 import { runTui } from './tui'
 import { getActiveAgentDefinitions } from '@/shared/agents/defs'
 
@@ -139,7 +141,9 @@ profileCmd
     }
     for (const p of profiles) {
       const agents = p.agentIds.join(', ') || '-'
-      console.log(`  ${p.id}  ${p.name}  (${p.agentIds.length} agent(s): ${agents})`)
+      console.log(
+        `  ${p.id}  ${p.name}  (${p.agentIds.length} agent(s): ${agents})`,
+      )
     }
   })
 
@@ -175,6 +179,63 @@ profileCmd
     }
   })
 
+const snapshotCmd = program
+  .command('snapshot')
+  .description('List and restore file snapshots created by Abyss.')
+
+snapshotCmd
+  .command('list')
+  .description('List the 20 most-recent snapshots across all config files.')
+  .action(async () => {
+    configureSnapshots({
+      root: path.join(resolveUserDataDir(), 'snapshots'),
+      exclude: [resolveUserDataDir()],
+    })
+    const snapshots = await listRecentSnapshots(20)
+    if (snapshots.length === 0) {
+      console.log('No snapshots found.')
+      return
+    }
+    for (const snap of snapshots) {
+      const date = new Date(snap.timestamp).toLocaleString()
+      const kb = (snap.sizeBytes / 1024).toFixed(1)
+      console.log(`  ${snap.id}  ${snap.fileName}  ${date}  ${kb} KB`)
+      console.log(`    ${snap.originalPath}`)
+    }
+  })
+
+snapshotCmd
+  .command('restore')
+  .description('Restore a snapshot back to its original file.')
+  .argument('<id>', 'snapshot id (from `abyss snapshot list`)')
+  .option('--dry-run', 'show what would be restored without writing')
+  .action(async (id: string, opts: { dryRun?: boolean }) => {
+    configureSnapshots({
+      root: path.join(resolveUserDataDir(), 'snapshots'),
+      exclude: [resolveUserDataDir()],
+    })
+    if (opts.dryRun) {
+      const snap = await readSnapshot(id)
+      if (!snap) {
+        console.error(`Snapshot not found: ${id}`)
+        process.exit(1)
+      }
+      console.log('Planned restore:')
+      console.log(`  ~ ${snap.meta.originalPath}`)
+      console.log(
+        `\n1 file would be restored. Re-run without --dry-run to apply.`,
+      )
+      return
+    }
+    const result = await restoreSnapshot(id)
+    if (!result) {
+      console.error(`Snapshot not found or restore not allowed: ${id}`)
+      process.exit(1)
+    }
+    console.log('Restored:')
+    console.log(`  ~ ${result.path}`)
+  })
+
 program
   .command('tui')
   .description('Interactive menu to toggle each agent’s MCP servers.')
@@ -197,7 +258,8 @@ function runMcpServer(): void {
   const env = resolveOsEnv()
   // The protocol owns stdout — every log line must go to stderr instead.
   const log = (msg: string) => process.stderr.write(`${msg}\n`)
-  const write = (obj: unknown) => process.stdout.write(`${JSON.stringify(obj)}\n`)
+  const write = (obj: unknown) =>
+    process.stdout.write(`${JSON.stringify(obj)}\n`)
   const reply = (id: unknown, result: unknown) =>
     write({ jsonrpc: '2.0', id, result })
   const fail = (id: unknown, code: number, message: string) =>
