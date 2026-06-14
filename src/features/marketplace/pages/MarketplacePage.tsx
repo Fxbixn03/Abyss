@@ -6,6 +6,7 @@ import { installSpecToEntry } from '@/shared/mcp/discovery'
 import { sourcesForKind } from '@/shared/discovery/sources'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { genId } from '@/shared/lib/id'
+import { cn } from '@/shared/lib/utils'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Card } from '@/shared/components/ui/card'
@@ -42,12 +43,44 @@ export function MarketplacePage() {
   const [error, setError] = useState<string | null>(null)
   const [ran, setRan] = useState(false)
   const [justInstalled, setJustInstalled] = useState<Set<string>>(new Set())
+  const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set())
 
   const supported = agent.capabilities.mcp
   const existingNames = useMemo(
     () => new Set(servers.map((s) => s.name)),
     [servers],
   )
+
+  // Derive distinct badge labels from the current result set for filter chips.
+  const distinctLabels = useMemo(() => {
+    const seen = new Set<string>()
+    for (const r of results) {
+      for (const b of r.badges ?? []) {
+        seen.add(b.label)
+      }
+    }
+    return [...seen].sort()
+  }, [results])
+
+  // Apply label filter: show all when nothing selected, else OR-match on badges.
+  const filteredResults = useMemo(() => {
+    if (selectedLabels.size === 0) return results
+    return results.filter((r) =>
+      (r.badges ?? []).some((b) => selectedLabels.has(b.label)),
+    )
+  }, [results, selectedLabels])
+
+  const toggleLabel = (label: string) => {
+    setSelectedLabels((prev) => {
+      const next = new Set(prev)
+      if (next.has(label)) {
+        next.delete(label)
+      } else {
+        next.add(label)
+      }
+      return next
+    })
+  }
 
   // Keep the active agent's server list loaded so install targets and the
   // "installed" state are accurate.
@@ -60,6 +93,7 @@ export function MarketplacePage() {
     else {
       setLoading(true)
       setError(null)
+      setSelectedLabels(new Set())
     }
     const requestId = genId()
     try {
@@ -158,16 +192,45 @@ export function MarketplacePage() {
 
       {!basePath && (
         <p className="text-xs text-warning">
-          No config location set for {agent.displayName} — installs are disabled.
-          Set a path in Settings first.
+          No config location set for {agent.displayName} — installs are
+          disabled. Set a path in Settings first.
         </p>
+      )}
+
+      {distinctLabels.length > 1 && results.length > 5 && (
+        <div className="flex flex-wrap gap-1.5">
+          {distinctLabels.map((label) => {
+            const active = selectedLabels.has(label)
+            return (
+              <button
+                key={label}
+                type="button"
+                onClick={() => toggleLabel(label)}
+                className={cn(
+                  'rounded-full border px-2.5 py-0.5 font-code text-xs transition-colors',
+                  active
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-transparent text-muted-foreground hover:border-primary/50 hover:text-foreground',
+                )}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
       )}
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
         {loading && results.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Searching the registry…</p>
+          <p className="text-sm text-muted-foreground">
+            Searching the registry…
+          </p>
         ) : error && results.length === 0 ? (
-          <EmptyState icon="cloud-off" title="Registry unavailable" description={error} />
+          <EmptyState
+            icon="cloud-off"
+            title="Registry unavailable"
+            description={error}
+          />
         ) : ran && results.length === 0 ? (
           <EmptyState
             icon="search-x"
@@ -176,7 +239,7 @@ export function MarketplacePage() {
           />
         ) : (
           <>
-            {results.map((result) => {
+            {filteredResults.map((result) => {
               const installed =
                 existingNames.has(result.name) || justInstalled.has(result.id)
               return (
@@ -192,7 +255,9 @@ export function MarketplacePage() {
                       {result.badges?.map((b, i) => (
                         <Badge
                           key={`${b.label}-${i}`}
-                          variant={b.variant === 'warning' ? 'warning' : 'muted'}
+                          variant={
+                            b.variant === 'warning' ? 'warning' : 'muted'
+                          }
                           className="font-code"
                         >
                           {b.label}
