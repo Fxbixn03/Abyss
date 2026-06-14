@@ -8,8 +8,14 @@ export interface KeyValueEditorProps {
   onChange: (value: Record<string, string>) => void
   keyPlaceholder?: string
   valuePlaceholder?: string
-  /** Mask values (e.g. API keys) with a per-row reveal toggle. */
+  /** Mask all values with a per-row reveal toggle. */
   secret?: boolean
+  /**
+   * Per-key predicate: when provided, only rows where `isSecretKey(key)`
+   * returns true are masked. Takes precedence over the blanket `secret` prop
+   * on a per-row basis (rows that do not match are always shown as plain text).
+   */
+  isSecretKey?: (key: string) => boolean
 }
 
 export function KeyValueEditor({
@@ -18,6 +24,7 @@ export function KeyValueEditor({
   keyPlaceholder = 'KEY',
   valuePlaceholder = 'value',
   secret = false,
+  isSecretKey,
 }: KeyValueEditorProps) {
   const [newKey, setNewKey] = useState('')
   const [newValue, setNewValue] = useState('')
@@ -47,41 +54,45 @@ export function KeyValueEditor({
 
   return (
     <div className="flex flex-col gap-2">
-      {Object.entries(value).map(([key, val]) => (
-        <div key={key} className="flex items-center gap-2">
-          <span
-            data-selectable
-            className="w-44 shrink-0 truncate font-code text-xs"
-            title={key}
-          >
-            {key}
-          </span>
-          <Input
-            type={secret && !revealed.has(key) ? 'password' : 'text'}
-            value={val}
-            onChange={(e) => onChange({ ...value, [key]: e.target.value })}
-            className="font-code"
-          />
-          {secret && (
+      {Object.entries(value).map(([key, val]) => {
+        const masked = isSecretKey ? isSecretKey(key) : secret
+        const isRevealed = revealed.has(key)
+        return (
+          <div key={key} className="flex items-center gap-2">
+            <span
+              data-selectable
+              className="w-44 shrink-0 truncate font-code text-xs"
+              title={key}
+            >
+              {key}
+            </span>
+            <Input
+              type={masked && !isRevealed ? 'password' : 'text'}
+              value={val}
+              onChange={(e) => onChange({ ...value, [key]: e.target.value })}
+              className="font-code"
+            />
+            {masked && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => toggleReveal(key)}
+                aria-label={isRevealed ? `Hide ${key}` : `Reveal ${key}`}
+              >
+                <Icon name={isRevealed ? 'eye-off' : 'eye'} />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => toggleReveal(key)}
-              aria-label={revealed.has(key) ? `Hide ${key}` : `Reveal ${key}`}
+              onClick={() => remove(key)}
+              aria-label={`Remove ${key}`}
             >
-              <Icon name="eye" />
+              <Icon name="x" />
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => remove(key)}
-            aria-label={`Remove ${key}`}
-          >
-            <Icon name="x" />
-          </Button>
-        </div>
-      ))}
+          </div>
+        )
+      })}
       <div className="flex items-center gap-2">
         <Input
           value={newKey}
@@ -90,7 +101,9 @@ export function KeyValueEditor({
           className="w-44 shrink-0 font-code"
         />
         <Input
-          type={secret ? 'password' : 'text'}
+          type={
+            (isSecretKey ? isSecretKey(newKey.trim()) : secret) ? 'password' : 'text'
+          }
           value={newValue}
           onChange={(e) => setNewValue(e.target.value)}
           placeholder={valuePlaceholder}

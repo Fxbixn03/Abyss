@@ -161,7 +161,9 @@ export function McpServerForm({
             <KeyValueEditor
               value={draft.env ?? {}}
               onChange={(env) => setDraft({ ...draft, env })}
-              secret
+              isSecretKey={(key) =>
+                /_(KEY|SECRET|TOKEN|PASSWORD|PASS)$/i.test(key)
+              }
             />
           </div>
         </div>
