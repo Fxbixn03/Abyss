@@ -9,6 +9,8 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { IpcError, IpcErrorCode } from '@/shared/ipc/ipc-error'
+import { markErrorReported } from '@/shared/lib/errors'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
@@ -66,6 +68,8 @@ export function SettingsFilePage() {
   const [exists, setExists] = useState(false)
   const [saving, setSaving] = useState(false)
   const [diffOpen, setDiffOpen] = useState(false)
+  /** Set when the server rejects a save with CONFIG_INVALID (invalid JSON). */
+  const [saveError, setSaveError] = useState<string | null>(null)
   // File the user clicked while the current one has unsaved edits.
   const [pendingFile, setPendingFile] = useState<RawSettingsFile | null>(null)
 
@@ -98,11 +102,24 @@ export function SettingsFilePage() {
   const performSave = async () => {
     if (!basePath) return
     setSaving(true)
-    await ipc.writeRawSettings(basePath, file, draft)
-    setOriginal(draft)
-    setExists(true)
-    setSaving(false)
-    setDiffOpen(false)
+    setSaveError(null)
+    try {
+      await ipc.writeRawSettings(basePath, file, draft)
+      setOriginal(draft)
+      setExists(true)
+      setDiffOpen(false)
+    } catch (err) {
+      if (err instanceof IpcError && err.code === IpcErrorCode.ConfigInvalid) {
+        // Surface as an inline banner so the user can fix the JSON without the
+        // toast disappearing. Mark it reported so the global net stays silent.
+        markErrorReported(err)
+        setSaveError(err.message)
+      } else {
+        throw err
+      }
+    } finally {
+      setSaving(false)
+    }
   }
 
   const requestSave = () => {
@@ -209,8 +226,30 @@ export function SettingsFilePage() {
       </p>
 
       <div className="min-h-0 flex-1">
-        <ConfigEditor value={draft} language="json" onChange={setDraft} />
+        <ConfigEditor
+          value={draft}
+          language="json"
+          onChange={(v) => {
+            setSaveError(null)
+            setDraft(v)
+          }}
+        />
       </div>
+
+      {saveError && (
+        <div className="flex items-start gap-2.5 rounded-md border border-destructive/40 bg-destructive/10 p-3">
+          <Icon
+            name="alert-triangle"
+            className="mt-0.5 size-4 shrink-0 text-destructive"
+          />
+          <div className="min-w-0 space-y-0.5">
+            <p className="text-sm font-medium text-foreground">
+              Save failed — invalid JSON
+            </p>
+            <p className="text-xs text-muted-foreground">{saveError}</p>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between gap-3 border-t border-border pt-2">
         <ValidationList issues={issues} />

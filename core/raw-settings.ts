@@ -7,6 +7,7 @@
 import path from 'node:path'
 import type { RawSettingsFile } from '@/shared/types/ipc'
 import { pathExists, readTextFile, writeTextFileAtomic } from './json-file'
+import { ConfigValidationError } from './config-error'
 
 const ALLOWED: ReadonlySet<string> = new Set([
   'settings.json',
@@ -35,6 +36,11 @@ export async function writeRawSettings(
   content: string,
 ): Promise<{ success: boolean; path: string }> {
   const p = resolve(basePath, file)
+  try {
+    JSON.parse(content)
+  } catch {
+    throw new ConfigValidationError(p, 'Content is not valid JSON')
+  }
   await writeTextFileAtomic(p, content)
   return { success: true, path: p }
 }
