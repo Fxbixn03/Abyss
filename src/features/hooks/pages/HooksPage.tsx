@@ -94,6 +94,9 @@ export function HooksPage() {
   const [historyCurrent, setHistoryCurrent] = useState('')
   const [showOther, setShowOther] = useState(false)
   const [otherHooks, setOtherHooks] = useState<HookEntry[]>([])
+  const [selectedEvents, setSelectedEvents] = useState<Set<HookEvent>>(
+    new Set(),
+  )
 
   const events = useMemo(() => hookEventsFor(agent.id), [agent.id])
   const hooksFile =
@@ -201,6 +204,32 @@ export function HooksPage() {
     () => new Set(entries.filter((e) => !e.disabled).map((e) => e.event)),
     [entries],
   )
+
+  // Unique event types present in entries, ordered as they appear in `events`.
+  const distinctEvents = useMemo(() => {
+    const present = new Set(entries.map((e) => e.event))
+    return events.filter((e) => present.has(e))
+  }, [entries, events])
+
+  const filteredGrouped = useMemo(
+    () =>
+      selectedEvents.size === 0
+        ? grouped
+        : grouped.filter(([event]) => selectedEvents.has(event)),
+    [grouped, selectedEvents],
+  )
+
+  const toggleEvent = (event: HookEvent) => {
+    setSelectedEvents((prev) => {
+      const next = new Set(prev)
+      if (next.has(event)) {
+        next.delete(event)
+      } else {
+        next.add(event)
+      }
+      return next
+    })
+  }
 
   const testInSandbox = (entry: HookEntry) => {
     requestCommand(buildSandboxSnippet(entry))
@@ -379,7 +408,30 @@ export function HooksPage() {
           <CoverageOverview events={events} covered={coveredEvents} />
           <MatcherDryRun entries={entries} />
 
-          {grouped.map(([event, list]) => (
+          {distinctEvents.length > 1 && (
+            <div className="flex flex-wrap gap-1.5">
+              {distinctEvents.map((event) => {
+                const active = selectedEvents.has(event)
+                return (
+                  <button
+                    key={event}
+                    type="button"
+                    onClick={() => toggleEvent(event)}
+                    className={cn(
+                      'rounded-full border px-2.5 py-0.5 font-code text-xs transition-colors',
+                      active
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-transparent text-muted-foreground hover:border-primary/50 hover:text-foreground',
+                    )}
+                  >
+                    {event}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {filteredGrouped.map(([event, list]) => (
             <section key={event} className="space-y-2">
               <h2 className="font-code text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {event}
