@@ -8,6 +8,12 @@ export type ShortcutActionId =
   | 'nav.dashboard'
   | 'nav.config'
   | 'nav.settings'
+  | 'nav.mcp'
+  | 'nav.hooks'
+  | 'nav.doctor'
+  | 'nav.snapshots'
+  | 'nav.sessions'
+  | 'nav.compare'
 
 export const SHORTCUT_ACTIONS: { id: ShortcutActionId; label: string }[] = [
   { id: 'search.open', label: 'Open search' },
@@ -16,6 +22,12 @@ export const SHORTCUT_ACTIONS: { id: ShortcutActionId; label: string }[] = [
   { id: 'nav.dashboard', label: 'Go to Dashboard' },
   { id: 'nav.config', label: 'Go to Instructions' },
   { id: 'nav.settings', label: 'Go to Settings' },
+  { id: 'nav.mcp', label: 'Go to MCP' },
+  { id: 'nav.hooks', label: 'Go to Hooks' },
+  { id: 'nav.doctor', label: 'Go to Doctor' },
+  { id: 'nav.snapshots', label: 'Go to Snapshots' },
+  { id: 'nav.sessions', label: 'Go to Sessions' },
+  { id: 'nav.compare', label: 'Go to Compare' },
 ]
 
 export const DEFAULT_BINDINGS: Record<ShortcutActionId, string> = {
@@ -25,6 +37,12 @@ export const DEFAULT_BINDINGS: Record<ShortcutActionId, string> = {
   'nav.dashboard': 'Alt+1',
   'nav.config': 'Alt+2',
   'nav.settings': 'Alt+0',
+  'nav.mcp': '',
+  'nav.hooks': '',
+  'nav.doctor': '',
+  'nav.snapshots': '',
+  'nav.sessions': '',
+  'nav.compare': '',
 }
 
 interface ShortcutsState {

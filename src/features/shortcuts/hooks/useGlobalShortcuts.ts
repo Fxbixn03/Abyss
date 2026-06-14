@@ -56,6 +56,24 @@ export function useGlobalShortcuts(): void {
         case 'nav.settings':
           navigate('/settings')
           break
+        case 'nav.mcp':
+          navigate('/mcp')
+          break
+        case 'nav.hooks':
+          navigate('/hooks')
+          break
+        case 'nav.doctor':
+          navigate('/doctor')
+          break
+        case 'nav.snapshots':
+          navigate('/history')
+          break
+        case 'nav.sessions':
+          navigate('/sessions')
+          break
+        case 'nav.compare':
+          navigate('/compare')
+          break
       }
     }
     window.addEventListener('keydown', onKey)
