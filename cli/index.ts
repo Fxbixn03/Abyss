@@ -19,6 +19,8 @@ import {
 } from '@core/snapshots'
 import { runDoctor, applyDoctorFix } from '@core/doctor'
 import type { DoctorFinding } from '@/shared/types/doctor'
+import { runValidation } from '@core/validation'
+import type { ValidationFinding } from '@core/validation'
 import { runTui } from './tui'
 import { getActiveAgentDefinitions } from '@/shared/agents/defs'
 
@@ -350,6 +352,72 @@ program
     }
 
     process.exit(counts.error > 0 ? 1 : 0)
+  })
+
+function formatValidationFinding(f: ValidationFinding): string {
+  const tag =
+    f.severity === 'error' ? colour.red('[error]') : colour.yellow('[warn]')
+  return tag + ' ' + colour.bold(f.agentId) + ': ' + f.file + ': ' + f.message
+}
+
+program
+  .command('validate')
+  .description(
+    'Run file-level checks (instruction files, settings.json, MCP config) ' +
+      'for the selected agent(s). Exit 0 when no errors, 1 when errors exist.',
+  )
+  .option('--agent <ids...>', 'limit to specific agent ids (may repeat)')
+  .action(async (opts: { agent?: string[] }) => {
+    const env = resolveOsEnv()
+    const allDefs = getActiveAgentDefinitions()
+
+    const targetDefs =
+      opts.agent && opts.agent.length > 0
+        ? allDefs.filter((d) => opts.agent!.includes(d.id))
+        : allDefs
+
+    if (targetDefs.length === 0) {
+      console.error(
+        'No matching agents found. Run `abyss detect` to list active agents.',
+      )
+      process.exit(1)
+    }
+
+    const inputs = await Promise.all(
+      targetDefs.map(async (def) => ({
+        def,
+        basePath: await effectiveBasePath(def.id, env),
+      })),
+    )
+
+    const findings = await runValidation(inputs)
+
+    if (findings.length === 0) {
+      console.log(
+        colour.green('All clear.') +
+          ' ' +
+          targetDefs.length +
+          ' agent(s) validated, no findings.',
+      )
+      process.exit(0)
+    }
+
+    const errorCount = findings.filter((f) => f.severity === 'error').length
+    const warnCount = findings.filter((f) => f.severity === 'warn').length
+
+    console.log(
+      targetDefs.length +
+        ' agent(s) validated — ' +
+        colour.red(errorCount + ' error(s)') +
+        ', ' +
+        colour.yellow(warnCount + ' warning(s)') +
+        '\n',
+    )
+    for (const f of findings) {
+      console.log(formatValidationFinding(f))
+    }
+
+    process.exit(errorCount > 0 ? 1 : 0)
   })
 
 program
