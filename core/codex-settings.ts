@@ -14,6 +14,7 @@ import type {
   CodexSandboxMode,
   CodexSettings,
 } from '@/shared/types/config'
+import { ConfigParseError } from './config-error'
 import { pathExists, readTextFile, writeTextFileAtomic } from './json-file'
 
 const APPROVALS: CodexApprovalPolicy[] = [
@@ -46,8 +47,8 @@ async function readToml(file: string): Promise<Record<string, unknown>> {
   if (!(await pathExists(file))) return {}
   try {
     return parse(await readTextFile(file)) as Record<string, unknown>
-  } catch {
-    return {}
+  } catch (err) {
+    throw new ConfigParseError(file, err)
   }
 }
 

@@ -11,6 +11,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { parse, stringify } from 'smol-toml'
 import type { McpServerEntry } from '@/shared/types/config'
+import { ConfigParseError } from './config-error'
 import { pathExists, readTextFile, writeTextFileAtomic } from './json-file'
 
 interface CodexMcpServer {
@@ -33,8 +34,8 @@ async function readToml(file: string): Promise<Record<string, unknown>> {
   if (!(await pathExists(file))) return {}
   try {
     return parse(await readTextFile(file)) as Record<string, unknown>
-  } catch {
-    return {}
+  } catch (err) {
+    throw new ConfigParseError(file, err)
   }
 }
 
