@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { SnapshotContent, SnapshotMeta } from '@/shared/types/snapshots'
 import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
 import { Badge } from '@/shared/components/ui/badge'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
@@ -113,6 +114,12 @@ export function SnapshotsPage() {
     setCurrent(live.content)
   }
 
+  /** Persist a snapshot's label to its sidecar, then refresh the list. */
+  const saveLabel = async (snap: SnapshotMeta, value: string) => {
+    await ipc.writeTextFile(snap.labelPath, value.trim())
+    await refresh()
+  }
+
   const restore = async () => {
     if (!selectedId) return
     const result = await ipc.restoreSnapshot(selectedId)
@@ -200,6 +207,7 @@ export function SnapshotsPage() {
                       snap={s}
                       active={s.id === selectedId}
                       onClick={() => void open(s.id)}
+                      onSaveLabel={(value) => saveLabel(s, value)}
                     />
                   ))}
                 </div>
@@ -213,6 +221,7 @@ export function SnapshotsPage() {
                     active={s.id === selectedId}
                     showFile
                     onClick={() => void open(s.id)}
+                    onSaveLabel={(value) => saveLabel(s, value)}
                   />
                 ))}
               </div>
@@ -236,7 +245,9 @@ export function SnapshotsPage() {
                     <p className="truncate font-code text-xs text-muted-foreground">
                       {relativeTime(selected.meta.timestamp)} ·{' '}
                       {formatBytes(selected.meta.sizeBytes)} ·{' '}
-                      {unchanged ? 'matches the live file' : 'differs from live'}
+                      {unchanged
+                        ? 'matches the live file'
+                        : 'differs from live'}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
@@ -310,38 +321,135 @@ function SnapshotButton({
   active,
   showFile,
   onClick,
+  onSaveLabel,
 }: {
   snap: SnapshotMeta
   active: boolean
   showFile?: boolean
   onClick: () => void
+  onSaveLabel: (value: string) => Promise<void>
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <div
       className={cn(
-        'flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors',
+        'group flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-xs transition-colors',
         active
           ? 'border-primary/50 bg-accent'
           : 'border-transparent hover:bg-accent/60',
       )}
     >
-      <span className="flex min-w-0 items-center gap-1.5">
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
+      >
         <Icon
           name={showFile ? 'file-text' : 'clock'}
           className="size-3 shrink-0 text-muted-foreground"
         />
         <span className="flex min-w-0 flex-col">
           {showFile && <span className="truncate">{snap.fileName}</span>}
-          <span className={cn(showFile && 'text-muted-foreground')}>
-            {relativeTime(snap.timestamp)}
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className={cn(showFile && 'text-muted-foreground')}>
+              {relativeTime(snap.timestamp)}
+            </span>
+            {snap.label && (
+              <span className="truncate font-medium text-foreground">
+                {snap.label}
+              </span>
+            )}
           </span>
         </span>
+      </button>
+      <span className="flex shrink-0 items-center gap-1.5">
+        <LabelEditor snap={snap} onSave={onSaveLabel} />
+        <span className="text-muted-foreground">
+          {formatBytes(snap.sizeBytes)}
+        </span>
       </span>
-      <span className="shrink-0 text-muted-foreground">
-        {formatBytes(snap.sizeBytes)}
-      </span>
-    </button>
+    </div>
+  )
+}
+
+/**
+ * Inline label editor: a pencil button that toggles a small popover with a text
+ * input. Saving writes the snapshot's label sidecar via WriteTextFile (no new
+ * IPC channel) and refreshes the list so the new label shows immediately.
+ */
+function LabelEditor({
+  snap,
+  onSave,
+}: {
+  snap: SnapshotMeta
+  onSave: (value: string) => Promise<void>
+}) {
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState(snap.label ?? '')
+  const [saving, setSaving] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [open])
+
+  const toggle = () => {
+    if (!open) setValue(snap.label ?? '')
+    setOpen((o) => !o)
+  }
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await onSave(value)
+      setOpen(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={toggle}
+        className="text-muted-foreground transition-colors hover:text-foreground"
+        aria-label={snap.label ? 'Edit label' : 'Add label'}
+      >
+        <Icon name="pencil" className="size-3" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-6 z-20 flex w-56 flex-col gap-2 rounded-md border border-border bg-popover p-2 text-popover-foreground shadow-md">
+          <Input
+            autoFocus
+            value={value}
+            placeholder="Add a label…"
+            className="h-8 text-xs"
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void save()
+              if (e.key === 'Escape') setOpen(false)
+            }}
+          />
+          <div className="flex justify-end gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setOpen(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button size="sm" onClick={() => void save()} disabled={saving}>
+              Save
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

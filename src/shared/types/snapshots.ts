@@ -13,6 +13,14 @@ export interface SnapshotMeta {
   /** ISO 8601 timestamp of when the snapshot was taken. */
   timestamp: string
   sizeBytes: number
+  /** Optional user-supplied label/note, read from the snapshot's sidecar file. */
+  label?: string
+  /**
+   * Absolute path of the label sidecar file (`<snapshot-id>.label.txt`), computed
+   * in core so the renderer can write the label via WriteTextFile without doing
+   * any path math of its own.
+   */
+  labelPath: string
 }
 
 export interface SnapshotContent {

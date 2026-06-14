@@ -108,6 +108,25 @@ async function readStamps(dir: string): Promise<number[]> {
     .filter((n) => !Number.isNaN(n))
 }
 
+/** Absolute path of a snapshot's label sidecar (`<dir>/<stamp>.label.txt`). */
+function labelPathFor(dir: string, stamp: number): string {
+  return path.join(dir, `${stamp}.label.txt`)
+}
+
+/** Read a snapshot's label sidecar (trimmed), or undefined when absent/empty. */
+async function readLabel(
+  dir: string,
+  stamp: number,
+): Promise<string | undefined> {
+  try {
+    const raw = await fs.readFile(labelPathFor(dir, stamp), 'utf8')
+    const trimmed = raw.trim()
+    return trimmed.length > 0 ? trimmed : undefined
+  } catch {
+    return undefined
+  }
+}
+
 async function readOriginalPath(dir: string): Promise<string | null> {
   try {
     const raw = await fs.readFile(path.join(dir, 'meta.json'), 'utf8')
@@ -137,6 +156,8 @@ async function metasForDir(
       fileName: path.basename(originalPath),
       timestamp: new Date(stamp).toISOString(),
       sizeBytes: stat.size,
+      label: await readLabel(dir, stamp),
+      labelPath: labelPathFor(dir, stamp),
     })
   }
   return out.sort((a, b) => b.timestamp.localeCompare(a.timestamp))
@@ -180,8 +201,8 @@ export async function readSnapshot(
   if (!resolved || !config) return null
   const content = await fs.readFile(resolved.file, 'utf8').catch(() => null)
   if (content === null) return null
-  const originalPath =
-    (await readOriginalPath(path.join(config.root, resolved.hash))) ?? ''
+  const dir = path.join(config.root, resolved.hash)
+  const originalPath = (await readOriginalPath(dir)) ?? ''
   const stat = await fs.stat(resolved.file).catch(() => null)
   const stamp = Number(id.split('/')[1])
   return {
@@ -191,6 +212,8 @@ export async function readSnapshot(
       fileName: path.basename(originalPath),
       timestamp: new Date(stamp).toISOString(),
       sizeBytes: stat?.size ?? content.length,
+      label: await readLabel(dir, stamp),
+      labelPath: labelPathFor(dir, stamp),
     },
     content,
   }
