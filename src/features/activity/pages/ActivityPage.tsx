@@ -5,10 +5,20 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
 import { Icon } from '@/shared/components/Icon'
 import { LineDiffView } from '@/shared/components/LineDiffView'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { reportError } from '@/shared/lib/errors'
+import { useSettingsStore } from '@/features/settings/store/settings.store'
+import { agentRegistry } from '@/features/agents/registry/agent.registry'
+import { cn } from '@/shared/lib/utils'
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime()
@@ -49,6 +59,34 @@ function dayLabel(iso: string): string {
   })
 }
 
+type DateRange = '7d' | '30d' | 'all'
+
+const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
+  { value: '7d', label: '7d' },
+  { value: '30d', label: '30d' },
+  { value: 'all', label: 'All' },
+]
+
+/** Earliest timestamp (ms) to include for the given range, or null for 'all'. */
+function rangeCutoffMs(range: DateRange): number | null {
+  if (range === 'all') return null
+  return Date.now() - (range === '7d' ? 7 : 30) * 24 * 60 * 60 * 1000
+}
+
+/** Returns the AgentId whose config base path is a prefix of the given path, or null. */
+function agentIdForPath(
+  originalPath: string,
+  agentBasePaths: Record<string, string[]>,
+): string | null {
+  const lower = originalPath.toLowerCase()
+  for (const [agentId, bases] of Object.entries(agentBasePaths)) {
+    for (const base of bases) {
+      if (base && lower.startsWith(base.toLowerCase())) return agentId
+    }
+  }
+  return null
+}
+
 interface DiffState {
   previous: string
   current: string | null
@@ -59,8 +97,28 @@ export function ActivityPage() {
   const [snapshots, setSnapshots] = useState<SnapshotMeta[]>([])
   const [loaded, setLoaded] = useState(false)
   const [filter, setFilter] = useState('')
+  const [range, setRange] = useState<DateRange>('all')
+  const [selectedAgent, setSelectedAgent] = useState<string>('all')
   const [expanded, setExpanded] = useState<Record<string, DiffState>>({})
   const [confirmUndo, setConfirmUndo] = useState<SnapshotMeta | null>(null)
+
+  const settingsDetected = useSettingsStore((s) => s.detected)
+  const settingsAgentPaths = useSettingsStore((s) => s.settings.agentPaths)
+
+  // Build agentId -> [basePath, ...] from explicit overrides and detected paths.
+  const agentBasePaths = useMemo<Record<string, string[]>>(() => {
+    const result: Record<string, string[]> = {}
+    for (const adapter of agentRegistry.getAll()) {
+      const bases: string[] = []
+      const explicit = settingsAgentPaths[adapter.id]
+      if (explicit && explicit.trim() !== '') bases.push(explicit.trim())
+      for (const det of settingsDetected[adapter.id] ?? []) {
+        if (det.path && !bases.includes(det.path)) bases.push(det.path)
+      }
+      result[adapter.id] = bases
+    }
+    return result
+  }, [settingsDetected, settingsAgentPaths])
 
   const refresh = async () => {
     const list = await ipc.listRecentSnapshots(300)
@@ -80,15 +138,37 @@ export function ActivityPage() {
     }
   }, [])
 
+  // Derive the set of agent ids that actually appear in the current snapshots.
+  const presentAgentIds = useMemo<string[]>(() => {
+    const seen = new Set<string>()
+    for (const s of snapshots) {
+      const id = agentIdForPath(s.originalPath, agentBasePaths)
+      if (id) seen.add(id)
+    }
+    return [...seen]
+  }, [snapshots, agentBasePaths])
+
   const filtered = useMemo(() => {
+    const cutoff = rangeCutoffMs(range)
     const q = filter.trim().toLowerCase()
-    if (!q) return snapshots
-    return snapshots.filter(
-      (s) =>
-        s.fileName.toLowerCase().includes(q) ||
-        s.originalPath.toLowerCase().includes(q),
-    )
-  }, [snapshots, filter])
+
+    return snapshots.filter((s) => {
+      if (cutoff !== null && new Date(s.timestamp).getTime() < cutoff)
+        return false
+      if (
+        selectedAgent !== 'all' &&
+        agentIdForPath(s.originalPath, agentBasePaths) !== selectedAgent
+      )
+        return false
+      if (
+        q &&
+        !s.fileName.toLowerCase().includes(q) &&
+        !s.originalPath.toLowerCase().includes(q)
+      )
+        return false
+      return true
+    })
+  }, [snapshots, filter, range, selectedAgent, agentBasePaths])
 
   // Group the (already newest-first) list into day buckets, preserving order.
   const groups = useMemo(() => {
@@ -170,17 +250,62 @@ export function ActivityPage() {
       />
 
       {snapshots.length > 0 && (
-        <div className="relative">
-          <Icon
-            name="search"
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <Input
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder="Filter by file name or path…"
-            className="pl-9"
-          />
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Date-range segmented control */}
+            <div className="flex rounded-md border border-border">
+              {DATE_RANGE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setRange(opt.value)}
+                  className={cn(
+                    'px-3 py-1.5 text-xs font-medium transition-colors first:rounded-l-[calc(theme(borderRadius.md)-1px)] last:rounded-r-[calc(theme(borderRadius.md)-1px)]',
+                    range === opt.value
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Agent filter — only shown when more than one agent has snapshots */}
+            {presentAgentIds.length > 1 && (
+              <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                <SelectTrigger className="h-8 w-44 text-xs">
+                  <SelectValue placeholder="All agents" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All agents</SelectItem>
+                  {presentAgentIds.map((id) => {
+                    const adapter = agentRegistry.has(id)
+                      ? agentRegistry.get(id)
+                      : null
+                    return (
+                      <SelectItem key={id} value={id}>
+                        {adapter?.displayName ?? id}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          <div className="relative">
+            <Icon
+              name="search"
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder="Filter by file name or path…"
+              className="pl-9"
+            />
+          </div>
         </div>
       )}
 
@@ -239,9 +364,7 @@ export function ActivityPage() {
                           size="sm"
                           onClick={() => void toggleDiff(snap)}
                         >
-                          <Icon
-                            name={diff ? 'chevron-up' : 'git-compare'}
-                          />
+                          <Icon name={diff ? 'chevron-up' : 'git-compare'} />
                           Diff
                         </Button>
                         <Button
