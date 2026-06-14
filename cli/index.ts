@@ -5,7 +5,7 @@ import { promises as fs } from 'node:fs'
 import { createInterface } from 'node:readline'
 import { Command } from 'commander'
 import { resolveOsEnv } from '@core/os-env'
-import { detectAllAgentPaths } from '@core/agent-paths'
+import { detectAllAgentPaths, effectiveBasePath } from '@core/agent-paths'
 import { applyBundle, exportBundle } from '@core/bundle'
 import { redactBundleSecrets } from '@core/bundle-redact'
 import type { ExportBundle } from '@core/bundle'
@@ -17,6 +17,8 @@ import {
   readSnapshot,
   restoreSnapshot,
 } from '@core/snapshots'
+import { runDoctor, applyDoctorFix } from '@core/doctor'
+import type { DoctorFinding } from '@/shared/types/doctor'
 import { runTui } from './tui'
 import { getActiveAgentDefinitions } from '@/shared/agents/defs'
 
@@ -234,6 +236,120 @@ snapshotCmd
     }
     console.log('Restored:')
     console.log(`  ~ ${result.path}`)
+  })
+
+/** ANSI colour helpers — plain text on non-TTY (pipes, CI). */
+const isTTY = process.stdout.isTTY === true
+const colour = {
+  red: (s: string) => (isTTY ? '\x1b[31m' + s + '\x1b[0m' : s),
+  yellow: (s: string) => (isTTY ? '\x1b[33m' + s + '\x1b[0m' : s),
+  cyan: (s: string) => (isTTY ? '\x1b[36m' + s + '\x1b[0m' : s),
+  green: (s: string) => (isTTY ? '\x1b[32m' + s + '\x1b[0m' : s),
+  bold: (s: string) => (isTTY ? '\x1b[1m' + s + '\x1b[0m' : s),
+}
+
+function formatFinding(f: DoctorFinding): string {
+  const tag =
+    f.severity === 'error'
+      ? colour.red('[error]')
+      : f.severity === 'warning'
+        ? colour.yellow('[warning]')
+        : colour.cyan('[info]')
+  return (
+    tag + ' ' + colour.bold(f.agentName) + ': ' + f.title + ' — ' + f.detail
+  )
+}
+
+program
+  .command('doctor')
+  .description(
+    'Run a health check across all enabled agents and print findings.',
+  )
+  .option('--fix', 'auto-fix every fixable finding after scanning')
+  .action(async (opts: { fix?: boolean }) => {
+    const env = resolveOsEnv()
+    const defs = getActiveAgentDefinitions()
+
+    const inputs = await Promise.all(
+      defs.map(async (def) => ({
+        agentId: def.id,
+        displayName: def.displayName,
+        basePath: await effectiveBasePath(def.id, env),
+        caps: {
+          mcp: def.capabilities.mcp,
+          hooks: def.capabilities.hooks,
+          permissions: def.capabilities.permissions,
+          rawSettings: def.capabilities.rawSettings,
+        },
+      })),
+    )
+
+    const report = await runDoctor(inputs)
+    const { findings, counts, agentCount } = report
+
+    if (findings.length === 0) {
+      console.log(
+        colour.green('All clear.') +
+          ' ' +
+          agentCount +
+          ' agent(s) checked, no findings.',
+      )
+      process.exit(0)
+    }
+
+    console.log(
+      agentCount +
+        ' agent(s) checked — ' +
+        colour.red(counts.error + ' error(s)') +
+        ', ' +
+        colour.yellow(counts.warning + ' warning(s)') +
+        ', ' +
+        colour.cyan(counts.info + ' info') +
+        '\n',
+    )
+    for (const f of findings) {
+      console.log(formatFinding(f))
+    }
+
+    if (opts.fix) {
+      const fixable = findings.filter((f) => f.fix !== undefined)
+      if (fixable.length === 0) {
+        console.log('\nNo auto-fixable findings.')
+      } else {
+        console.log('\nApplying ' + fixable.length + ' fix(es)...')
+        let fixed = 0
+        for (const f of fixable) {
+          // f.fix is defined — guard already checked above
+          const fix = f.fix!
+          const result = await applyDoctorFix(fix, (p) => p)
+          if (result.success) {
+            fixed++
+            console.log(
+              '  ' +
+                colour.green('fixed') +
+                '  ' +
+                f.title +
+                ': ' +
+                result.message,
+            )
+          } else {
+            console.log(
+              '  ' +
+                colour.yellow('skip') +
+                '   ' +
+                f.title +
+                ': ' +
+                result.message,
+            )
+          }
+        }
+        console.log(
+          '\n' + fixed + ' of ' + fixable.length + ' fix(es) applied.',
+        )
+      }
+    }
+
+    process.exit(counts.error > 0 ? 1 : 0)
   })
 
 program
