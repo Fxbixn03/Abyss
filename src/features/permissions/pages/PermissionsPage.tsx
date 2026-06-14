@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { PermissionColumn, PermissionRules } from '@/shared/types/config'
 import {
@@ -74,6 +74,8 @@ export function PermissionsPage() {
   const [sort, setSort] = useState<RuleSort>('order')
   const [view, setView] = useState<'own' | 'effective'>('own')
   const [mcpServers, setMcpServers] = useState<string[]>([])
+  const [copied, setCopied] = useState(false)
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!supported || !basePath) return
@@ -109,6 +111,12 @@ export function PermissionsPage() {
     }
   }, [supported, agent.id, basePath, projectDir])
 
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current !== null) clearTimeout(copyTimerRef.current)
+    }
+  }, [])
+
   // Inherited rules only apply when overriding the global profile in a project.
   const shownInherited = scope === 'project' ? inherited : EMPTY
   const hasInherited =
@@ -137,11 +145,7 @@ export function PermissionsPage() {
     if (basePath) void ipc.setPermissions(agent.id, basePath, next)
   }
 
-  const move = (
-    from: PermissionColumn,
-    rule: string,
-    to: PermissionColumn,
-  ) => {
+  const move = (from: PermissionColumn, rule: string, to: PermissionColumn) => {
     if (from === to) return
     persist({
       ...rules,
@@ -219,7 +223,8 @@ export function PermissionsPage() {
     {
       key: 'deny',
       title: 'Deny',
-      description: 'Tools that are always blocked — your wall against accidents.',
+      description:
+        'Tools that are always blocked — your wall against accidents.',
       placeholder: 'Read(./.env)',
       icon: 'shield-x',
       accent: 'border-t-2 border-t-destructive/70',
@@ -228,13 +233,45 @@ export function PermissionsPage() {
     },
   ]
 
+  const copyRulesEmpty =
+    rules.allow.length === 0 &&
+    rules.deny.length === 0 &&
+    rules.ask.length === 0
+
+  const handleCopyAsJson = () => {
+    const payload = { allow: rules.allow, deny: rules.deny, ask: rules.ask }
+    void navigator.clipboard
+      .writeText(JSON.stringify(payload, null, 2))
+      .then(() => {
+        setCopied(true)
+        if (copyTimerRef.current !== null) clearTimeout(copyTimerRef.current)
+        copyTimerRef.current = setTimeout(() => {
+          setCopied(false)
+          copyTimerRef.current = null
+        }, 1500)
+      })
+  }
+
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
         title="Permissions"
         description={`Tool permission rules for ${agent.displayName}`}
         icon="shield"
-        actions={<PermissionPresets rules={rules} onChange={persist} />}
+        actions={
+          <>
+            <PermissionPresets rules={rules} onChange={persist} />
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={copyRulesEmpty}
+              onClick={handleCopyAsJson}
+            >
+              <Icon name={copied ? 'check' : 'copy'} />
+              {copied ? 'Copied!' : 'Copy as JSON'}
+            </Button>
+          </>
+        }
       />
 
       <div className="flex flex-wrap items-center gap-2">
@@ -309,8 +346,8 @@ export function PermissionsPage() {
           <Icon name="circle-alert" className="size-4 shrink-0" />
           <span>
             {conflictCount} rule{conflictCount === 1 ? '' : 's'} appear in more
-            than one column. Claude Code applies deny &gt; ask &gt; allow, so the
-            stricter column wins.
+            than one column. Claude Code applies deny &gt; ask &gt; allow, so
+            the stricter column wins.
           </span>
         </div>
       )}
@@ -328,7 +365,9 @@ export function PermissionsPage() {
             <Button
               size="sm"
               onClick={() => {
-                const standard = SECURITY_PRESETS.find((p) => p.id === 'standard')
+                const standard = SECURITY_PRESETS.find(
+                  (p) => p.id === 'standard',
+                )
                 if (standard)
                   persist({
                     ...standard.rules,
