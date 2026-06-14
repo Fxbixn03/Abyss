@@ -1,10 +1,13 @@
+import { useNavigate } from 'react-router-dom'
 import { Icon } from '@/shared/components/Icon'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useBasePath } from '@/features/settings/hooks/useBasePath'
 import { useThemeStore } from '@/features/themes/store/theme.store'
 import { useConfigStore } from '@/features/config/store/config.store'
+import { useDoctorStore } from '@/features/doctor/store/doctor.store'
 
 export function StatusBar() {
+  const navigate = useNavigate()
   const agent = useActiveAgent()
   const basePath = useBasePath(agent.id)
   const appearance = useThemeStore((s) => s.appearance)
@@ -15,6 +18,8 @@ export function StatusBar() {
   const original = useConfigStore((s) => s.original)
   const saving = useConfigStore((s) => s.saving)
   const issues = useConfigStore((s) => s.issues)
+
+  const doctorErrors = useDoctorStore((s) => s.report?.counts.error ?? 0)
 
   const dirty = draft !== original
   const errors = issues.filter((i) => i.severity === 'error').length
@@ -58,6 +63,16 @@ export function StatusBar() {
             <Icon name="alert-triangle" className="size-3" />
             {warnings}
           </span>
+        )}
+        {doctorErrors > 0 && (
+          <button
+            type="button"
+            onClick={() => navigate('/doctor')}
+            className="flex cursor-pointer items-center gap-1 text-destructive"
+          >
+            <Icon name="stethoscope" className="size-3" />
+            Doctor: {doctorErrors} {doctorErrors === 1 ? 'error' : 'errors'}
+          </button>
         )}
         <span className="flex items-center gap-1.5">
           <Icon name={appearance === 'dark' ? 'moon' : 'sun'} className="size-3" />
