@@ -8,6 +8,12 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/shared/components/ui/tabs'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/shared/components/ui/tooltip'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
 import { Icon } from '@/shared/components/Icon'
@@ -59,6 +65,43 @@ function AgentToggles({
           </button>
         )
       })}
+    </div>
+  )
+}
+
+function IncludedAgentsSection({
+  ids,
+  selected,
+  onToggle,
+}: {
+  ids: string[]
+  selected: Set<string>
+  onToggle: (id: string) => void
+}) {
+  const [open, setOpen] = useState(true)
+  return (
+    <div className="rounded-lg border border-border">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-3 py-2 text-sm font-medium hover:bg-accent/50"
+      >
+        <span className="flex items-center gap-2">
+          Included agents
+          <Badge variant="muted" className="tabular-nums">
+            {selected.size}/{ids.length}
+          </Badge>
+        </span>
+        <Icon
+          name={open ? 'chevron-up' : 'chevron-down'}
+          className="size-4 text-muted-foreground"
+        />
+      </button>
+      {open && (
+        <div className="border-t border-border px-3 py-3">
+          <AgentToggles ids={ids} selected={selected} onToggle={onToggle} />
+        </div>
+      )}
     </div>
   )
 }
@@ -216,14 +259,11 @@ export function BundlesPage() {
 
         <TabsContent value="export" className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex flex-col gap-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Agents to include</p>
-              <AgentToggles
-                ids={allIds}
-                selected={exportSel}
-                onToggle={(id) => setExportSel((s) => toggle(s, id))}
-              />
-            </div>
+            <IncludedAgentsSection
+              ids={allIds}
+              selected={exportSel}
+              onToggle={(id) => setExportSel((s) => toggle(s, id))}
+            />
 
             <div className="space-y-1.5">
               <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
@@ -272,13 +312,26 @@ export function BundlesPage() {
                 <Icon name="eye" />
                 Preview
               </Button>
-              <Button
-                onClick={() => void doExport()}
-                disabled={busy || exportSel.size === 0}
-              >
-                <Icon name="upload" />
-                Export to file…
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span tabIndex={exportSel.size === 0 ? 0 : undefined}>
+                      <Button
+                        onClick={() => void doExport()}
+                        disabled={busy || exportSel.size === 0}
+                      >
+                        <Icon name="upload" />
+                        Export to file…
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {exportSel.size === 0 && (
+                    <TooltipContent>
+                      Select at least one agent to export
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             </div>
 
             {preview && (
