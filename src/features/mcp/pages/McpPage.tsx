@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { McpServerEntry } from '@/shared/types/config'
 import { Button } from '@/shared/components/ui/button'
@@ -47,6 +47,8 @@ export function McpPage() {
   const [toolTestOpen, setToolTestOpen] = useState(false)
   const [toolTestServer, setToolTestServer] = useState<McpServerEntry>()
   const [filterQuery, setFilterQuery] = useState('')
+  const [copied, setCopied] = useState(false)
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const supported = agent.capabilities.mcp
 
@@ -89,6 +91,54 @@ export function McpPage() {
   // Abort any in-flight health checks when leaving the page so their probes
   // don't keep running in the background.
   useEffect(() => () => cancelTests(), [cancelTests])
+
+  // Clear the "Copied!" feedback timer on unmount to avoid state updates after
+  // the component has been removed from the tree.
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current !== null) clearTimeout(copyTimerRef.current)
+    }
+  }, [])
+
+  const handleCopyAsJson = () => {
+    type McpJsonServer =
+      | { command: string; args?: string[]; env?: Record<string, string> }
+      | { url: string; env?: Record<string, string> }
+    const mcpServers: Record<string, McpJsonServer> = {}
+    for (const server of servers) {
+      if (server.type === 'stdio') {
+        const entry: {
+          command: string
+          args?: string[]
+          env?: Record<string, string>
+        } = {
+          command: server.command ?? '',
+        }
+        if (server.args !== undefined && server.args.length > 0)
+          entry.args = server.args
+        if (server.env !== undefined && Object.keys(server.env).length > 0)
+          entry.env = server.env
+        mcpServers[server.name] = entry
+      } else {
+        const entry: { url: string; env?: Record<string, string> } = {
+          url: server.url ?? '',
+        }
+        if (server.env !== undefined && Object.keys(server.env).length > 0)
+          entry.env = server.env
+        mcpServers[server.name] = entry
+      }
+    }
+    void navigator.clipboard
+      .writeText(JSON.stringify({ mcpServers }, null, 2))
+      .then(() => {
+        setCopied(true)
+        if (copyTimerRef.current !== null) clearTimeout(copyTimerRef.current)
+        copyTimerRef.current = setTimeout(() => {
+          setCopied(false)
+          copyTimerRef.current = null
+        }, 1500)
+      })
+  }
 
   if (!supported) {
     return (
@@ -136,6 +186,14 @@ export function McpPage() {
             >
               <Icon name="globe" />
               Discover
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleCopyAsJson}
+              disabled={servers.length === 0}
+            >
+              <Icon name={copied ? 'check' : 'copy'} />
+              {copied ? 'Copied!' : 'Copy JSON'}
             </Button>
             <Button
               onClick={() => {
