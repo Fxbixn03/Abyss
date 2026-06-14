@@ -2,6 +2,45 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Abyss - Setup",
+      "type": "shell",
+      "command": "echo",
+      "args": ["Setup is not supported on this platform."],
+      "osx": {
+        "command": "bash",
+        "args": ["${workspaceFolder}/scripts/initial-setup-macos.sh", "${workspaceFolder}", "setup"]
+      },
+      "linux": {
+        "command": "bash",
+        "args": ["${workspaceFolder}/scripts/initial-setup-linux.sh", "${workspaceFolder}", "setup"]
+      },
+      "windows": {
+        "command": "powershell",
+        "args": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "${workspaceFolder}/scripts/initial-setup-win.ps1",
+          "-TargetDir",
+          "${workspaceFolder}",
+          "-Action",
+          "setup"
+        ]
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "focus": true
+      },
+      "isBackground": false,
+      "problemMatcher": []
+    },
+    {
       "label": "Abyss - Build my project",
       "type": "shell",
       "command": "pnpm",
