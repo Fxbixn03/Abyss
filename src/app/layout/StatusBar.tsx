@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icon } from '@/shared/components/Icon'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
@@ -5,9 +6,17 @@ import { useBasePath } from '@/features/settings/hooks/useBasePath'
 import { useThemeStore } from '@/features/themes/store/theme.store'
 import { useConfigStore } from '@/features/config/store/config.store'
 import { useDoctorStore } from '@/features/doctor/store/doctor.store'
+import { ipc } from '@/shared/ipc/ipc.client'
+import { IpcEvent } from '@/shared/types/ipc'
+import type { UpdateStatus } from '@/shared/types/config'
 
 export function StatusBar() {
   const navigate = useNavigate()
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({
+    state: 'idle',
+  })
+
+  useEffect(() => ipc.subscribe(IpcEvent.UpdateStatus, setUpdateStatus), [])
   const agent = useActiveAgent()
   const basePath = useBasePath(agent.id)
   const appearance = useThemeStore((s) => s.appearance)
@@ -72,6 +81,26 @@ export function StatusBar() {
           >
             <Icon name="stethoscope" className="size-3" />
             Doctor: {doctorErrors} {doctorErrors === 1 ? 'error' : 'errors'}
+          </button>
+        )}
+        {updateStatus.state === 'downloaded' && (
+          <button
+            type="button"
+            onClick={() => navigate('/settings')}
+            className="flex cursor-pointer items-center gap-1 text-success"
+          >
+            <Icon name="download" className="size-3" />
+            Update ready
+          </button>
+        )}
+        {updateStatus.state === 'available' && (
+          <button
+            type="button"
+            onClick={() => navigate('/settings')}
+            className="flex cursor-pointer items-center gap-1 text-muted-foreground"
+          >
+            <Icon name="download" className="size-3" />
+            Update available
           </button>
         )}
         <span className="flex items-center gap-1.5">
