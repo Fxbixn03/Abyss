@@ -1,0 +1,68 @@
+name: 'Bug Report'
+description: Report a reproducible bug in Abyss.
+title: '[Bug]: '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in as much detail as possible so we can reproduce and fix it quickly.
+
+  - type: input
+    id: abyss-version
+    attributes:
+      label: Abyss version
+      description: Which version of Abyss are you running? (shown in the status bar or About dialog)
+      placeholder: 'e.g. 0.5.0'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      description: Which OS are you running Abyss on?
+      options:
+        - Windows
+        - Linux
+        - macOS
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: A clear, step-by-step sequence that reliably triggers the bug.
+      placeholder: |
+        1. Open Abyss
+        2. Navigate to …
+        3. Click …
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Paste any relevant log lines from the DevTools console or the Electron main process. Leave blank if not applicable.
+      render: shell
+    validations:
+      required: false

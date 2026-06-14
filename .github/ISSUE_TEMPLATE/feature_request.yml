@@ -1,0 +1,49 @@
+name: 'Feature Request'
+description: Propose a new feature or improvement for Abyss.
+title: '[Feature]: '
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Got an idea that would make Abyss better? Describe it below and we'll take a look.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem are you trying to solve, or what friction do you experience today?
+      placeholder: 'As a user, I find it hard to … because …'
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the feature or change you would like to see.
+      placeholder: 'It would help if Abyss could …'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Which part of Abyss does this feature primarily touch?
+      options:
+        - GUI
+        - CLI
+        - core
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance idea
+      description: Optional — how would you verify this feature is working correctly?
+      placeholder: 'e.g. Running `abyss detect` prints … / The settings page shows …'
+    validations:
+      required: false
