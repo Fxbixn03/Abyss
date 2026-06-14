@@ -13,6 +13,8 @@ export interface McpServerListProps {
   onRemove: (id: string) => void
   onTest: (server: McpServerEntry) => void
   onTestTool: (server: McpServerEntry) => void
+  /** Case-insensitive substring filter applied to server name and command/url. */
+  filter?: string
 }
 
 function summary(server: McpServerEntry): string {
@@ -58,10 +60,29 @@ export function McpServerList({
   onRemove,
   onTest,
   onTestTool,
+  filter,
 }: McpServerListProps) {
+  const visible = filter
+    ? servers.filter((s) => {
+        const q = filter.toLowerCase()
+        return (
+          s.name.toLowerCase().includes(q) ||
+          summary(s).toLowerCase().includes(q)
+        )
+      })
+    : servers
+
+  if (visible.length === 0) {
+    return (
+      <p className="py-6 text-center text-sm text-muted-foreground">
+        No servers match &ldquo;{filter}&rdquo;.
+      </p>
+    )
+  }
+
   return (
     <ul className="flex flex-col gap-2">
-      {servers.map((server) => {
+      {visible.map((server) => {
         const state = health[server.id]
         return (
           <li

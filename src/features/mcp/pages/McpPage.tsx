@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { McpServerEntry } from '@/shared/types/config'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
+import { Input } from '@/shared/components/ui/input'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ConfigCorruptBanner } from '@/shared/components/ConfigCorruptBanner'
@@ -45,6 +46,7 @@ export function McpPage() {
   const [autoRefresh, setAutoRefresh] = useState(false)
   const [toolTestOpen, setToolTestOpen] = useState(false)
   const [toolTestServer, setToolTestServer] = useState<McpServerEntry>()
+  const [filterQuery, setFilterQuery] = useState('')
 
   const supported = agent.capabilities.mcp
 
@@ -212,10 +214,36 @@ export function McpPage() {
           }
         />
       ) : (
-        <div className="overflow-y-auto">
+        <div className="flex flex-col gap-3 overflow-y-auto">
+          <div className="relative">
+            <Icon
+              name="search"
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setFilterQuery('')
+              }}
+              placeholder="Filter by name or command…"
+              className="pl-9 pr-8"
+            />
+            {filterQuery && (
+              <button
+                type="button"
+                aria-label="Clear filter"
+                onClick={() => setFilterQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <Icon name="x" className="size-4" />
+              </button>
+            )}
+          </div>
           <McpServerList
             servers={servers}
             health={health}
+            filter={filterQuery || undefined}
             onToggle={(id) => void toggle(id)}
             onRemove={(id) => void remove(id)}
             onTest={(server) => void test(server)}
