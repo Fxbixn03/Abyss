@@ -131,9 +131,22 @@ export function PermissionsPage() {
     () => mergeEffective(inherited, rules),
     [inherited, rules],
   )
+
   // Effective view is only meaningful when there are inherited rules to merge.
   const showEffective = view === 'effective' && hasInherited
   const viewRules = showEffective ? effective : rules
+
+  // Per-column counts that reflect the active filter (mirrors the logic in PermissionRuleEditor).
+  const filteredCounts = useMemo<Record<PermissionColumn, number>>(() => {
+    const q = deferredQuery.trim().toLowerCase()
+    const match = (r: string) => !q || r.toLowerCase().includes(q)
+    const source = showEffective ? effective : rules
+    return {
+      allow: source.allow.filter(match).length,
+      deny: source.deny.filter(match).length,
+      ask: source.ask.filter(match).length,
+    }
+  }, [deferredQuery, showEffective, effective, rules])
   const allEmpty =
     rules.allow.length === 0 &&
     rules.ask.length === 0 &&
@@ -399,8 +412,8 @@ export function PermissionsPage() {
 
         <div className="grid gap-4 md:grid-cols-3">
           {sections.map((section) => {
-            const count = viewRules[section.key].length
             const globalCount = shownInherited[section.key].length
+            const visibleCount = filteredCounts[section.key]
             return (
               <Card key={section.key} className={section.accent}>
                 <CardHeader>
@@ -411,7 +424,9 @@ export function PermissionsPage() {
                     />
                     {section.title}
                     <span className="ml-auto flex items-center gap-1">
-                      <Badge variant={section.countVariant}>{count}</Badge>
+                      <Badge variant={section.countVariant}>
+                        {visibleCount}
+                      </Badge>
                       {!showEffective && globalCount > 0 && (
                         <Badge variant="muted">+{globalCount} global</Badge>
                       )}
