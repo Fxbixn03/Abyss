@@ -313,6 +313,16 @@ export function McpPage() {
               setEditing(server)
               setFormOpen(true)
             }}
+            onDuplicate={(server) => {
+              setEditing({
+                ...server,
+                id: crypto.randomUUID(),
+                name: `Copy of ${server.name}`,
+                args: server.args ? [...server.args] : undefined,
+                env: server.env ? { ...server.env } : undefined,
+              })
+              setFormOpen(true)
+            }}
           />
         </div>
       )}

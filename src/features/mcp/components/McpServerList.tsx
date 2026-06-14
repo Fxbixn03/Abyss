@@ -10,6 +10,7 @@ export interface McpServerListProps {
   health: Record<string, McpHealthState>
   onToggle: (id: string) => void
   onEdit: (server: McpServerEntry) => void
+  onDuplicate: (server: McpServerEntry) => void
   onRemove: (id: string) => void
   onTest: (server: McpServerEntry) => void
   onTestTool: (server: McpServerEntry) => void
@@ -57,6 +58,7 @@ export function McpServerList({
   health,
   onToggle,
   onEdit,
+  onDuplicate,
   onRemove,
   onTest,
   onTestTool,
@@ -138,6 +140,15 @@ export function McpServerList({
               aria-label={`Edit ${server.name}`}
             >
               <Icon name="pencil" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => onDuplicate(server)}
+              aria-label={`Duplicate ${server.name}`}
+              title="Duplicate"
+            >
+              <Icon name="copy" />
             </Button>
             <Button
               variant="ghost"
