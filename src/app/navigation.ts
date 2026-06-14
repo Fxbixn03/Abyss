@@ -223,6 +223,36 @@ export const PRIMARY_NAV: NavItem[] = [
   },
 ]
 
+/** Routes whose pages are still beta-quality and show a "Beta" tag. */
+export const BETA_ROUTES: ReadonlySet<string> = new Set([
+  '/relations',
+  '/sandbox',
+  '/context',
+  '/usage',
+  '/sessions',
+  '/insights',
+  '/history',
+  '/activity',
+  '/validation',
+  '/doctor',
+  '/model-env',
+  '/statusline',
+  '/spinner',
+  '/plugins',
+  '/bundles',
+  '/profiles',
+  '/compare',
+  '/discover',
+  '/workspace',
+  '/marketplace',
+])
+
+/** Returns true when the given pathname belongs to a beta page. */
+export function isBetaRoute(pathname: string): boolean {
+  const seg = '/' + (pathname.split('/')[1] ?? '')
+  return BETA_ROUTES.has(seg)
+}
+
 /** Pinned to the bottom of the sidebar. */
 export const SETTINGS_NAV: NavItem = {
   id: 'settings',

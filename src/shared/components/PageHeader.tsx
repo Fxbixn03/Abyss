@@ -1,4 +1,7 @@
 import type { ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
+import { isBetaRoute } from '@/app/navigation'
+import { Badge } from '@/shared/components/ui/badge'
 import { Icon } from './Icon'
 
 export interface PageHeaderProps {
@@ -17,6 +20,9 @@ export function PageHeader({
   iconNode,
   actions,
 }: PageHeaderProps) {
+  const location = useLocation()
+  const isBeta = isBetaRoute(location.pathname)
+
   return (
     <div
       data-tour="page-header"
@@ -31,13 +37,25 @@ export function PageHeader({
               </div>
             )}
         <div>
-          <h1 className="text-lg font-semibold leading-tight">{title}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold leading-tight">{title}</h1>
+            {isBeta && (
+              <Badge
+                variant="outline"
+                className="text-[10px] uppercase tracking-wide"
+              >
+                Beta
+              </Badge>
+            )}
+          </div>
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>
           )}
         </div>
       </div>
-      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+      {actions && (
+        <div className="flex shrink-0 items-center gap-2">{actions}</div>
+      )}
     </div>
   )
 }

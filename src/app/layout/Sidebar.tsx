@@ -5,13 +5,17 @@ import {
   SETTINGS_NAV,
   NAV_GROUPS,
   groupForRoute,
+  isBetaRoute,
 } from '@/app/navigation'
 import { Icon } from '@/shared/components/Icon'
+import { Badge } from '@/shared/components/ui/badge'
 import { AbyssLogo } from '@/shared/components/AbyssLogo'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 
 function SidebarLink({ item }: { item: NavItem }) {
+  const isBeta = isBetaRoute(item.route)
+
   return (
     <NavLink
       to={item.route}
@@ -28,6 +32,14 @@ function SidebarLink({ item }: { item: NavItem }) {
     >
       <Icon name={item.icon} className="size-4 shrink-0" />
       <span className="truncate">{item.label}</span>
+      {isBeta && (
+        <Badge
+          variant="outline"
+          className="ml-auto shrink-0 text-[10px] uppercase tracking-wide"
+        >
+          Beta
+        </Badge>
+      )}
     </NavLink>
   )
 }
