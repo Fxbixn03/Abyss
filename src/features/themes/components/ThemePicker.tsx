@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { AgentId } from '@/shared/types/agent'
 import type { ThemeColors, ThemeConfig } from '@/shared/types/theme'
 import { Badge } from '@/shared/components/ui/badge'
@@ -6,6 +6,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { applyTheme } from '../lib/applyTheme'
 import { useThemeStore } from '../store/theme.store'
 
 function Swatches({ colors }: { colors: ThemeColors }) {
@@ -50,6 +51,10 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
   void customThemes
   const canDelete = allThemes().length > 1
   const themes: ThemeConfig[] = getThemesForAgent(agentId)
+
+  const restoreActiveTheme = useCallback(() => {
+    applyTheme(activeTheme, appearance)
+  }, [activeTheme, appearance])
 
   const exportActive = async () => {
     const { path } = await ipc.themeExport(activeTheme, activeTheme.id)
@@ -107,7 +112,10 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+        onMouseLeave={restoreActiveTheme}
+      >
         {themes.map((theme) => {
           const selected = theme.id === activeThemeId
           const colors = appearance === 'light' ? theme.light : theme.dark
@@ -115,6 +123,7 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
             <button
               key={theme.id}
               type="button"
+              onMouseEnter={() => applyTheme(theme, appearance)}
               onClick={() => setAgentTheme(agentId, theme.id)}
               className={cn(
                 'flex flex-col gap-3 rounded-lg border p-3 text-left transition-colors hover:border-primary/50',
