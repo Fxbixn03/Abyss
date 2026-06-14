@@ -51,6 +51,20 @@ export function ModelEnvPage() {
     setDirty(false)
   }
 
+  // Ctrl/Cmd+S to save model & env settings.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        if (!dirty || saving) return
+        void save()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, saving, basePath, model, env])
+
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">
