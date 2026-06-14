@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import path from 'node:path'
+import os from 'node:os'
 import { promises as fs } from 'node:fs'
 import { createInterface } from 'node:readline'
 import { Command } from 'commander'
@@ -8,8 +10,35 @@ import { applyBundle, exportBundle } from '@core/bundle'
 import { redactBundleSecrets } from '@core/bundle-redact'
 import type { ExportBundle } from '@core/bundle'
 import { listAbyssMcpTools, callAbyssMcpTool } from '@core/mcp-server'
+import {
+  configureProfiles,
+  listProfiles,
+  readProfile,
+} from '@core/profiles'
 import { runTui } from './tui'
 import { getActiveAgentDefinitions } from '@/shared/agents/defs'
+
+/**
+ * Resolve the Electron userData directory the same way Electron does on each
+ * platform. The CLI runs outside Electron, so we compute the equivalent path
+ * manually. Matches Electron's app.getPath('userData') conventions:
+ *   Linux  -- $XDG_CONFIG_HOME/Abyss  or  ~/.config/Abyss
+ *   macOS  -- ~/Library/Application Support/Abyss
+ *   Windows -- %APPDATA%/Abyss
+ */
+function resolveUserDataDir(): string {
+  const home = os.homedir()
+  const platform = process.platform
+  if (platform === 'win32') {
+    const appData = process.env.APPDATA ?? path.join(home, 'AppData', 'Roaming')
+    return path.join(appData, 'Abyss')
+  }
+  if (platform === 'darwin') {
+    return path.join(home, 'Library', 'Application Support', 'Abyss')
+  }
+  const xdg = process.env.XDG_CONFIG_HOME ?? path.join(home, '.config')
+  return path.join(xdg, 'Abyss')
+}
 
 const program = new Command()
 
@@ -76,6 +105,58 @@ program
     const raw = await fs.readFile(file, 'utf8')
     const bundle = JSON.parse(raw) as ExportBundle
     const changes = await applyBundle(bundle, { dryRun: opts.dryRun })
+    const changed = changes.filter((c) => c.changed)
+
+    if (changed.length === 0) {
+      console.log('Everything is already up to date.')
+      return
+    }
+
+    console.log(opts.dryRun ? 'Planned changes:' : 'Applied changes:')
+    for (const change of changed) {
+      console.log(`  ~ [${change.agentId}/${change.kind}] ${change.target}`)
+    }
+    if (opts.dryRun) {
+      console.log(
+        `\n${changed.length} target(s) would change. Re-run without --dry-run to apply.`,
+      )
+    }
+  })
+
+const profileCmd = program
+  .command('profile')
+  .description('Manage named config profiles (list / apply).')
+
+profileCmd
+  .command('list')
+  .description('List all saved profiles.')
+  .action(async () => {
+    configureProfiles(path.join(resolveUserDataDir(), 'profiles'))
+    const profiles = await listProfiles()
+    if (profiles.length === 0) {
+      console.log('No profiles saved yet.')
+      return
+    }
+    for (const p of profiles) {
+      const agents = p.agentIds.join(', ') || '-'
+      console.log(`  ${p.id}  ${p.name}  (${p.agentIds.length} agent(s): ${agents})`)
+    }
+  })
+
+profileCmd
+  .command('apply')
+  .description('Apply a saved profile to disk.')
+  .argument('<id>', 'profile id (from `abyss profile list`)')
+  .option('--dry-run', 'show what would change without writing')
+  .action(async (id: string, opts: { dryRun?: boolean }) => {
+    configureProfiles(path.join(resolveUserDataDir(), 'profiles'))
+    const profile = await readProfile(id)
+    if (!profile) {
+      console.error(`Profile not found: ${id}`)
+      process.exit(1)
+    }
+    console.log(`Profile: ${profile.meta.name}`)
+    const changes = await applyBundle(profile.bundle, { dryRun: opts.dryRun })
     const changed = changes.filter((c) => c.changed)
 
     if (changed.length === 0) {
