@@ -8,6 +8,12 @@ import { ConfigEditor } from './ConfigEditor'
 type Mode = 'edit' | 'split' | 'preview'
 const MODES: Mode[] = ['edit', 'split', 'preview']
 
+const MODE_TITLES: Record<Mode, string> = {
+  edit: 'Edit (Ctrl+Shift+E)',
+  split: 'Split',
+  preview: 'Preview (Ctrl+Shift+P)',
+}
+
 /**
  * Code editor with a rendered Markdown preview (Edit / Split / Preview). For
  * non-markdown languages it falls back to the plain editor.
@@ -61,6 +67,30 @@ export function MarkdownEditor({
     }
   }, [mode, value])
 
+  // Keyboard shortcuts for cycling view modes.
+  // Ctrl+Shift+P cycles forward (Edit → Split → Preview → Edit).
+  // Ctrl+Shift+E jumps directly to Edit mode.
+  useEffect(() => {
+    if (language !== 'markdown') return
+    const handler = (e: KeyboardEvent) => {
+      if (!e.ctrlKey || !e.shiftKey) return
+      if (e.key === 'P' || e.key === 'p') {
+        e.preventDefault()
+        setMode((prev) => {
+          const idx = MODES.indexOf(prev)
+          return MODES[(idx + 1) % MODES.length]
+        })
+      } else if (e.key === 'E' || e.key === 'e') {
+        e.preventDefault()
+        setMode('edit')
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => {
+      window.removeEventListener('keydown', handler)
+    }
+  }, [language])
+
   if (language !== 'markdown') {
     return (
       <ConfigEditor
@@ -80,6 +110,7 @@ export function MarkdownEditor({
           <button
             key={m}
             type="button"
+            title={MODE_TITLES[m]}
             onClick={() => setMode(m)}
             className={cn(
               'rounded-[5px] px-2 py-0.5 text-xs capitalize transition-colors',
