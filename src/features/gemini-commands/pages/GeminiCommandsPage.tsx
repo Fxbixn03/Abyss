@@ -41,7 +41,9 @@ export function GeminiCommandsPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [newOpen, setNewOpen] = useState(false)
-  const [renameItem, setRenameItem] = useState<GeminiCommandSummary | null>(null)
+  const [renameItem, setRenameItem] = useState<GeminiCommandSummary | null>(
+    null,
+  )
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   // Reload the list after our own create/save/delete/rename.
@@ -85,9 +87,11 @@ export function GeminiCommandsPage() {
   useEffect(() => {
     if (!selectedId || !basePath) return
     let active = true
-    void ipc.readGeminiCommand(basePath, selectedId).then(({ raw: c, path }) => {
-      if (active) applyLoaded(c, path)
-    })
+    void ipc
+      .readGeminiCommand(basePath, selectedId)
+      .then(({ raw: c, path }) => {
+        if (active) applyLoaded(c, path)
+      })
     return () => {
       active = false
     }
@@ -111,6 +115,20 @@ export function GeminiCommandsPage() {
     setSavedRaw(raw)
     await reloadList()
   }
+
+  // Ctrl/Cmd+S to save the selected command.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        if (raw === savedRaw || !!parseToml(raw).error) return
+        void save()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [raw, savedRaw, basePath, selectedId])
 
   const createNew = async (id: string) => {
     setNewOpen(false)

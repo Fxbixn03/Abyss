@@ -88,9 +88,11 @@ export function CodexSubagentsPage() {
   useEffect(() => {
     if (!selectedId || !basePath) return
     let active = true
-    void ipc.readCodexSubagent(basePath, selectedId).then(({ raw: c, path }) => {
-      if (active) applyLoaded(c, path)
-    })
+    void ipc
+      .readCodexSubagent(basePath, selectedId)
+      .then(({ raw: c, path }) => {
+        if (active) applyLoaded(c, path)
+      })
     return () => {
       active = false
     }
@@ -114,6 +116,20 @@ export function CodexSubagentsPage() {
     setSavedRaw(raw)
     await reloadList()
   }
+
+  // Ctrl/Cmd+S to save the selected subagent.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        if (raw === savedRaw || !!parseToml(raw).error) return
+        void save()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [raw, savedRaw, basePath, selectedId])
 
   const createNew = async (name: string) => {
     setNewOpen(false)
@@ -239,7 +255,10 @@ export function CodexSubagentsPage() {
                           />
                           <span className="truncate">{item.name}</span>
                           {item.model && (
-                            <Badge variant="muted" className="ml-auto font-code">
+                            <Badge
+                              variant="muted"
+                              className="ml-auto font-code"
+                            >
                               {item.model}
                             </Badge>
                           )}
