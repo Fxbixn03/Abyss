@@ -99,10 +99,7 @@ export const modelEnvSchema = z.object({
  */
 export const appSettingsSchema = z
   .object({
-    agentPaths: z
-      .record(z.string(), z.string())
-      .optional()
-      .catch(undefined),
+    agentPaths: z.record(z.string(), z.string()).optional().catch(undefined),
     startupAgentId: z.string().optional().catch(undefined),
     defaultProjectDir: z.string().optional().catch(undefined),
     confirmDiffBeforeSave: z.boolean().optional().catch(undefined),
@@ -111,7 +108,10 @@ export const appSettingsSchema = z
     tutorialDone: z.boolean().optional().catch(undefined),
     billingMode: z.enum(['subscription', 'api']).optional().catch(undefined),
     showCosts: z.boolean().optional().catch(undefined),
-    currency: z.enum(['usd', 'eur']).optional().catch(undefined),
+    currency: z
+      .enum(['usd', 'eur', 'gbp', 'cad', 'jpy'])
+      .optional()
+      .catch(undefined),
     weeklyTokenBudget: z.number().optional().catch(undefined),
     sessionTokenBudget: z.number().optional().catch(undefined),
     autoBackup: z.boolean().optional().catch(undefined),

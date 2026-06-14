@@ -119,7 +119,7 @@ export interface AppSettings {
   /** Show estimated token costs (only meaningful for API billing). */
   showCosts: boolean
   /** Currency for the cost estimate. */
-  currency: 'usd' | 'eur'
+  currency: 'usd' | 'eur' | 'gbp' | 'cad' | 'jpy'
   /** Optional weekly token budget for the usage quota gauge (0/undefined = off). */
   weeklyTokenBudget?: number
   /** Optional rolling 5-hour session token budget for the quota gauge. */

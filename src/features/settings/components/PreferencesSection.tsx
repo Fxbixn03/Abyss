@@ -144,7 +144,9 @@ export function PreferencesSection() {
                   <Select
                     value={settings.currency}
                     onValueChange={(v) =>
-                      void updatePrefs({ currency: v as 'usd' | 'eur' })
+                      void updatePrefs({
+                        currency: v as 'usd' | 'eur' | 'gbp' | 'cad' | 'jpy',
+                      })
                     }
                   >
                     <SelectTrigger className="w-[110px]">
@@ -153,6 +155,9 @@ export function PreferencesSection() {
                     <SelectContent>
                       <SelectItem value="usd">USD ($)</SelectItem>
                       <SelectItem value="eur">EUR (€)</SelectItem>
+                      <SelectItem value="gbp">GBP (£)</SelectItem>
+                      <SelectItem value="cad">CAD (C$)</SelectItem>
+                      <SelectItem value="jpy">JPY (¥)</SelectItem>
                     </SelectContent>
                   </Select>
                 }

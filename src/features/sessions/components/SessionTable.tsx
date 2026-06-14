@@ -43,7 +43,7 @@ export interface SessionTableProps {
   sessions: ChatSessionMeta[]
   sortKey: SessionSortKey
   sortDir: 'asc' | 'desc'
-  currency: 'usd' | 'eur'
+  currency: 'usd' | 'eur' | 'gbp' | 'cad' | 'jpy'
   onSort: (key: SessionSortKey) => void
   onOpen: (sessionId: string) => void
   /** Set of currently selected session ids. */
@@ -67,7 +67,8 @@ export function SessionTable({
 }: SessionTableProps) {
   const allSelected =
     sessions.length > 0 && sessions.every((s) => selectedIds?.has(s.id))
-  const someSelected = !allSelected && sessions.some((s) => selectedIds?.has(s.id))
+  const someSelected =
+    !allSelected && sessions.some((s) => selectedIds?.has(s.id))
 
   const handleHeaderCheckbox = () => {
     if (!onToggle) return
@@ -100,7 +101,9 @@ export function SessionTable({
                 )}
               >
                 {allSelected && <Icon name="check" className="size-3" />}
-                {someSelected && <Icon name="minus" className="size-3 text-primary" />}
+                {someSelected && (
+                  <Icon name="minus" className="size-3 text-primary" />
+                )}
               </button>
             </th>
           )}
@@ -180,7 +183,9 @@ export function SessionTable({
                         onToggle(s.id)
                       }
                     }}
-                    aria-label={isSelected ? 'Deselect session' : 'Select session'}
+                    aria-label={
+                      isSelected ? 'Deselect session' : 'Select session'
+                    }
                     className={cn(
                       'flex size-4 items-center justify-center rounded border transition-colors',
                       isSelected

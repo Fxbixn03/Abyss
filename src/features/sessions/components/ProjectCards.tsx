@@ -25,7 +25,7 @@ export function ProjectCards({
   maxShown = 6,
 }: {
   projects: ProjectRollup[]
-  currency: 'usd' | 'eur'
+  currency: 'usd' | 'eur' | 'gbp' | 'cad' | 'jpy'
   maxShown?: number
 }) {
   if (projects.length === 0) return null

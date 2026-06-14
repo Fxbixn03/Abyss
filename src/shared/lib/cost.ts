@@ -18,6 +18,21 @@ export const TOKEN_RATE_USD_PER_MTOK = { input: 3, output: 15 }
  */
 export const APPROX_EUR_PER_USD = 0.92
 
+/**
+ * Approximate USD→GBP conversion (static approximation).
+ */
+export const APPROX_GBP_PER_USD = 0.79
+
+/**
+ * Approximate USD→CAD conversion (static approximation).
+ */
+export const APPROX_CAD_PER_USD = 1.36
+
+/**
+ * Approximate USD→JPY conversion (static approximation).
+ */
+export const APPROX_JPY_PER_USD = 157
+
 export function estimateCostUsd(
   inputTokens: number,
   outputTokens: number,
@@ -28,8 +43,13 @@ export function estimateCostUsd(
   )
 }
 
-export function formatMoney(usd: number, currency: 'usd' | 'eur'): string {
-  const value = currency === 'eur' ? usd * APPROX_EUR_PER_USD : usd
-  const symbol = currency === 'eur' ? '€' : '$'
-  return `${symbol}${value.toFixed(2)}`
+export function formatMoney(
+  usd: number,
+  currency: 'usd' | 'eur' | 'gbp' | 'cad' | 'jpy',
+): string {
+  if (currency === 'eur') return `€${(usd * APPROX_EUR_PER_USD).toFixed(2)}`
+  if (currency === 'gbp') return `£${(usd * APPROX_GBP_PER_USD).toFixed(2)}`
+  if (currency === 'cad') return `C$${(usd * APPROX_CAD_PER_USD).toFixed(2)}`
+  if (currency === 'jpy') return `¥${Math.round(usd * APPROX_JPY_PER_USD)}`
+  return `$${usd.toFixed(2)}`
 }
