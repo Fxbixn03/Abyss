@@ -27,6 +27,7 @@ export interface ConfigEditorProps {
   language: ConfigLanguage
   onChange: (value: string) => void
   readOnly?: boolean
+  lineWrap?: boolean
   /** Receives the CodeMirror view so callers can scroll/jump programmatically. */
   onCreateEditor?: (view: EditorView) => void
 }
@@ -36,12 +37,16 @@ export function ConfigEditor({
   language,
   onChange,
   readOnly = false,
+  lineWrap = true,
   onCreateEditor,
 }: ConfigEditorProps) {
   const appearance = useThemeStore((s) => s.appearance)
   const extensions = useMemo(
-    () => [...languageExtensions(language), EditorView.lineWrapping],
-    [language],
+    () => [
+      ...languageExtensions(language),
+      ...(lineWrap ? [EditorView.lineWrapping] : []),
+    ],
+    [language, lineWrap],
   )
 
   return (

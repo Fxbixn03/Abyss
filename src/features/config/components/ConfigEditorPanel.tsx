@@ -63,6 +63,9 @@ export function ConfigEditorPanel() {
   const [externalChanged, setExternalChanged] = useState(false)
   const [showOutline, setShowOutline] = useState(false)
   const [insertOpen, setInsertOpen] = useState(false)
+  const [lineWrap, setLineWrap] = useState(
+    () => localStorage.getItem('abyss:editor:lineWrap') !== 'false',
+  )
   const [pendingTemplate, setPendingTemplate] = useState<PromptTemplate | null>(
     null,
   )
@@ -261,6 +264,18 @@ export function ConfigEditorPanel() {
             Revert
           </Button>
           <Button
+            variant={lineWrap ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => {
+              const next = !lineWrap
+              setLineWrap(next)
+              localStorage.setItem('abyss:editor:lineWrap', String(next))
+            }}
+            title="Toggle word wrap"
+          >
+            <Icon name="wrap-text" />
+          </Button>
+          <Button
             size="sm"
             onClick={requestSave}
             disabled={!isDirty || saving || hasErrors}
@@ -330,6 +345,7 @@ export function ConfigEditorPanel() {
               value={draft}
               language={spec.language}
               onChange={setDraft}
+              lineWrap={lineWrap}
               onCreateEditor={(view) => {
                 editorViewRef.current = view
               }}

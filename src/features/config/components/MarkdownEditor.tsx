@@ -17,11 +17,13 @@ export function MarkdownEditor({
   language,
   onChange,
   onCreateEditor,
+  lineWrap = true,
 }: {
   value: string
   language: ConfigLanguage
   onChange: (value: string) => void
   onCreateEditor?: (view: EditorView) => void
+  lineWrap?: boolean
 }) {
   const [mode, setMode] = useState<Mode>('edit')
   const editorPaneRef = useRef<HTMLDivElement>(null)
@@ -66,6 +68,7 @@ export function MarkdownEditor({
         language={language}
         onChange={onChange}
         onCreateEditor={onCreateEditor}
+        lineWrap={lineWrap}
       />
     )
   }
@@ -102,6 +105,7 @@ export function MarkdownEditor({
               language={language}
               onChange={onChange}
               onCreateEditor={onCreateEditor}
+              lineWrap={lineWrap}
             />
           </div>
         )}
