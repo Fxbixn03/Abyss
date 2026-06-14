@@ -145,25 +145,11 @@ export const PRIMARY_NAV: NavItem[] = [
     description: 'Lint your agent config',
   },
   {
-    id: 'doctor',
-    label: 'Doctor',
-    icon: 'stethoscope',
-    route: '/doctor',
-    description: 'Health-check & auto-fix',
-  },
-  {
     id: 'history',
     label: 'History',
     icon: 'history',
     route: '/history',
     description: 'Config snapshots & restore',
-  },
-  {
-    id: 'activity',
-    label: 'Activity',
-    icon: 'scroll-text',
-    route: '/activity',
-    description: 'What Abyss changed, with undo',
   },
   {
     id: 'bundles',

@@ -15,20 +15,18 @@ import { SettingsFilePage } from '@/features/settings-file/pages/SettingsFilePag
 import { ChatsPage } from '@/features/chats/pages/ChatsPage'
 import { SessionsPage } from '@/features/sessions/pages/SessionsPage'
 import { InsightsPage } from '@/features/insights/pages/InsightsPage'
-import { SnapshotsPage } from '@/features/snapshots/pages/SnapshotsPage'
+import { HistoryActivityPage } from '@/features/snapshots/pages/HistoryActivityPage'
 import { BundlesPage } from '@/features/bundles/pages/BundlesPage'
 import { ProfilesPage } from '@/features/profiles/pages/ProfilesPage'
 import { ComparePage } from '@/features/compare/pages/ComparePage'
 import { TemplatesPage } from '@/features/templates/pages/TemplatesPage'
 import { ContextPage } from '@/features/context/pages/ContextPage'
-import { ValidationPage } from '@/features/validation/pages/ValidationPage'
+import { ValidationDoctorPage } from '@/features/validation/pages/ValidationDoctorPage'
 import { DiscoverPage } from '@/features/discovery/pages/DiscoverPage'
 import { SandboxPage } from '@/features/sandbox/pages/SandboxPage'
 import { RelationsPage } from '@/features/relations/pages/RelationsPage'
 import { UsagePage } from '@/features/usage/pages/UsagePage'
-import { DoctorPage } from '@/features/doctor/pages/DoctorPage'
 import { MarketplacePage } from '@/features/marketplace/pages/MarketplacePage'
-import { ActivityPage } from '@/features/activity/pages/ActivityPage'
 import { StatusLinePage } from '@/features/statusline/pages/StatusLinePage'
 import { SpinnerPage } from '@/features/spinner/pages/SpinnerPage'
 import { PluginsPage } from '@/features/plugins/pages/PluginsPage'
@@ -49,15 +47,18 @@ export const router = createHashRouter([
       { path: 'insights', element: <InsightsPage /> },
       { path: 'context', element: <ContextPage /> },
       { path: 'usage', element: <UsagePage /> },
-      { path: 'validation', element: <ValidationPage /> },
-      { path: 'doctor', element: <DoctorPage /> },
+      { path: 'validation', element: <ValidationDoctorPage /> },
+      { path: 'doctor', element: <ValidationDoctorPage defaultTab="doctor" /> },
       { path: 'discover', element: <DiscoverPage /> },
       { path: 'workspace', element: <WorkspacePage /> },
       { path: 'rule-activation', element: <RuleActivationPage /> },
       { path: 'marketplace', element: <MarketplacePage /> },
       { path: 'sandbox', element: <SandboxPage /> },
-      { path: 'history', element: <SnapshotsPage /> },
-      { path: 'activity', element: <ActivityPage /> },
+      { path: 'history', element: <HistoryActivityPage /> },
+      {
+        path: 'activity',
+        element: <HistoryActivityPage defaultTab="activity" />,
+      },
       { path: 'bundles', element: <BundlesPage /> },
       { path: 'profiles', element: <ProfilesPage /> },
       { path: 'compare', element: <ComparePage /> },
