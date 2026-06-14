@@ -9,6 +9,7 @@ import { continueAdapter } from '../adapters/continue.adapter'
 import { aiderAdapter } from '../adapters/aider.adapter'
 import { clineAdapter } from '../adapters/cline.adapter'
 import { ampAdapter } from '../adapters/amp.adapter'
+import { gooseAdapter } from '../adapters/goose.adapter'
 
 /**
  * Central registry of agent adapters. The single place the app discovers which
@@ -55,3 +56,4 @@ agentRegistry.register(continueAdapter)
 agentRegistry.register(aiderAdapter)
 agentRegistry.register(clineAdapter)
 agentRegistry.register(ampAdapter)
+agentRegistry.register(gooseAdapter)

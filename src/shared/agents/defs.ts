@@ -420,6 +420,43 @@ export const ampDefinition: AgentDefinition = {
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.amp')],
 }
 
+const gooseConfig: ConfigFileSpec = {
+  id: 'instructions',
+  filename: 'config.yaml',
+  scope: 'global',
+  language: 'yaml',
+  description: 'Goose global config (profiles, extensions, toolkits).',
+}
+
+/** Goose (Block) — global config at `~/.config/goose/config.yaml`. */
+export const gooseDefinition: AgentDefinition = {
+  id: 'goose',
+  name: 'goose',
+  displayName: 'Goose',
+  defaultThemeId: 'goose-feather',
+  iconName: 'bird',
+  docsUrl: 'https://block.github.io/goose/',
+  capabilities: {
+    instructions: true,
+    mcp: false,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: false,
+    chats: false,
+  },
+  configFiles: [gooseConfig],
+  resolvePaths: (env: OsEnv) => [
+    env.platform === 'win32'
+      ? joinPath(env.platform, env.appData, 'goose')
+      : joinPath(env.platform, env.home, '.config', 'goose'),
+  ],
+}
+
 /** Every known agent definition, keyed by id. */
 export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   claude: claudeDefinition,
@@ -432,6 +469,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   aider: aiderDefinition,
   cline: clineDefinition,
   amp: ampDefinition,
+  goose: gooseDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -446,6 +484,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'aider',
   'cline',
   'amp',
+  'goose',
 ]
 
 /**
