@@ -459,6 +459,10 @@ export const ipc = {
   syncMcpAll: (fromAgent: AgentId, dryRun: boolean) =>
     invoke(IpcChannel.SyncMcpAll, { fromAgent, dryRun }),
 
+  // --- On-demand file-level config validation --------------------------------
+  validateConfig: (agents: { agentId: string; basePath: string }[]) =>
+    invoke(IpcChannel.ValidateConfig, { agents }),
+
   // --- Push subscription (streaming) ---------------------------------------
   subscribe: <E extends IpcEvent>(
     event: E,

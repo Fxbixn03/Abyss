@@ -16,15 +16,8 @@ import { readMcpServers } from './mcp'
 import { pathExists, readTextFile } from './json-file'
 import type { AgentDefinition } from '@/shared/types/agent'
 
-export type ValidationSeverity = 'warn' | 'error'
-
-export interface ValidationFinding {
-  severity: ValidationSeverity
-  agentId: string
-  agentName: string
-  file: string
-  message: string
-}
+export type { ValidationSeverity, ValidationFinding } from '@/shared/types/validation'
+import type { ValidationFinding } from '@/shared/types/validation'
 
 /** Check that the primary instruction file exists and is non-empty. */
 async function checkInstructionFile(

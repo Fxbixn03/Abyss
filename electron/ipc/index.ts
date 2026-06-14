@@ -20,6 +20,7 @@ import { registerDoctorIpc } from './doctor.ipc'
 import { registerStatusLineIpc } from './statusline.ipc'
 import { registerPluginsIpc } from './plugins.ipc'
 import { registerWorkspaceIpc } from './workspace.ipc'
+import { registerValidationIpc } from './validation.ipc'
 
 /** Wire up every IPC handler group. Call once, after the app is ready. */
 export function registerIpcHandlers(ctx: IpcContext): void {
@@ -44,4 +45,5 @@ export function registerIpcHandlers(ctx: IpcContext): void {
   registerStatusLineIpc(ctx)
   registerPluginsIpc(ctx)
   registerWorkspaceIpc(ctx)
+  registerValidationIpc()
 }

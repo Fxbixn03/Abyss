@@ -66,6 +66,7 @@ import type { WorkspaceScanResult } from './workspace'
 import type { StatusLineConfig } from './statusline'
 import type { SpinnerConfig } from './spinner'
 import type { PluginsConfig } from './plugins'
+import type { ValidationFinding } from './validation'
 
 export type RawSettingsFile = 'settings.json' | 'settings.local.json'
 
@@ -248,6 +249,9 @@ export enum IpcChannel {
   SyncCompare = 'sync:compare',
   SyncCopy = 'sync:copy',
   SyncMcpAll = 'sync:mcp-all',
+
+  // On-demand file-level config validation
+  ValidateConfig = 'validate:run',
 }
 
 /**
@@ -835,6 +839,11 @@ export interface IpcMap {
   [IpcChannel.SyncMcpAll]: {
     request: { fromAgent: AgentId; dryRun: boolean }
     response: SyncAllResult[]
+  }
+
+  [IpcChannel.ValidateConfig]: {
+    request: { agents: { agentId: string; basePath: string }[] }
+    response: ValidationFinding[]
   }
 }
 
