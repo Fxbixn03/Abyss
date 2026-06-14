@@ -20,7 +20,7 @@ import type {
 /** Allow-rules that hand an agent broad, unguarded shell/tool access. */
 const RISKY_ALLOW = new Set(['*', 'Bash', 'Bash(*)', 'Shell', 'Shell(*)'])
 
-function isRiskyAllow(rule: string): boolean {
+export function isRiskyAllow(rule: string): boolean {
   const r = rule.trim()
   return RISKY_ALLOW.has(r) || /^Bash\(\s*\*\s*\)$/.test(r)
 }
@@ -121,7 +121,7 @@ async function checkMcp(input: DoctorAgentInput): Promise<DoctorFinding[]> {
 }
 
 /** Returns true if the value looks like a placeholder the user forgot to fill in. */
-function isPlaceholderEnvValue(value: string): boolean {
+export function isPlaceholderEnvValue(value: string): boolean {
   const upper = value.toUpperCase()
   return (
     upper.endsWith('_HERE') ||
