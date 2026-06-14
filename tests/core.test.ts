@@ -48,7 +48,11 @@ import {
   writeModelEnv,
 } from '@core/claude-settings'
 import { exportBundle, applyBundle } from '@core/bundle'
-import { redactBundleSecrets, REDACTED_PLACEHOLDER } from '@core/bundle-redact'
+import {
+  redactBundleSecrets,
+  REDACTED_PLACEHOLDER,
+  isSecretEnvKey,
+} from '@core/bundle-redact'
 import {
   configureProfiles,
   saveProfile,
@@ -535,6 +539,58 @@ test('redactBundleSecrets masks secret MCP env values, keeps the rest', () => {
     bundle.agents[0].mcpServers?.[0].env?.GITHUB_TOKEN,
     'ghp_realsecret',
   )
+})
+
+test('isSecretEnvKey: matches TOKEN, SECRET, PASSWORD, PASSWD, CREDENTIAL, KEY, AUTH', () => {
+  // Each word in the regex must independently trigger a match.
+  assert.equal(isSecretEnvKey('GITHUB_TOKEN'), true)
+  assert.equal(isSecretEnvKey('MY_SECRET'), true)
+  assert.equal(isSecretEnvKey('DB_PASSWORD'), true)
+  assert.equal(isSecretEnvKey('DB_PASSWD'), true)
+  assert.equal(isSecretEnvKey('AWS_CREDENTIAL'), true)
+  assert.equal(isSecretEnvKey('BRAVE_API_KEY'), true)
+  assert.equal(isSecretEnvKey('AUTH_HEADER'), true)
+})
+
+test('isSecretEnvKey: case-insensitive matching', () => {
+  assert.equal(isSecretEnvKey('github_token'), true)
+  assert.equal(isSecretEnvKey('Github_Token'), true)
+  assert.equal(isSecretEnvKey('api_key'), true)
+  assert.equal(isSecretEnvKey('db_password'), true)
+  assert.equal(isSecretEnvKey('oauth_auth'), true)
+})
+
+test('isSecretEnvKey: matches substrings within longer keys (prefix, infix, suffix)', () => {
+  // AUTH as a prefix: AUTH_HEADER
+  assert.equal(isSecretEnvKey('AUTH_HEADER'), true)
+  // KEY as a substring: PASSKEY (contains KEY)
+  assert.equal(isSecretEnvKey('PASSKEY'), true)
+  // KEY as a suffix after a longer name: MY_API_KEY_FOR_SLACK
+  assert.equal(isSecretEnvKey('MY_API_KEY_FOR_SLACK'), true)
+  // TOKEN infix
+  assert.equal(isSecretEnvKey('OAUTH_TOKEN_EXPIRES'), true)
+})
+
+test('isSecretEnvKey: substring matches inside ordinary-looking names (intentional)', () => {
+  // The regex is deliberately broad and uses substring matching, so MONKEY
+  // matches because it contains KEY.  This test pins that intentional behaviour:
+  // over-redacting is preferable to leaking secrets.
+  assert.equal(isSecretEnvKey('MONKEY'), true)
+  // DONKEY also contains KEY.
+  assert.equal(isSecretEnvKey('DONKEY'), true)
+  // OAUTHENTICATE starts with AUTH.
+  assert.equal(isSecretEnvKey('OAUTHENTICATE'), true)
+  // TOKEN is contained in STOKENLY (hypothetical).
+  assert.equal(isSecretEnvKey('STOKENLY'), true)
+})
+
+test('isSecretEnvKey: plain non-secret keys do not match', () => {
+  assert.equal(isSecretEnvKey('NODE_ENV'), false)
+  assert.equal(isSecretEnvKey('PORT'), false)
+  assert.equal(isSecretEnvKey('HOST'), false)
+  assert.equal(isSecretEnvKey('LOG_LEVEL'), false)
+  assert.equal(isSecretEnvKey('TIMEOUT_MS'), false)
+  assert.equal(isSecretEnvKey(''), false)
 })
 
 test('profiles save → read round-trip', async () => {
