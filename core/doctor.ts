@@ -91,7 +91,44 @@ async function checkMcp(input: DoctorAgentInput): Promise<DoctorFinding[]> {
       })
     }
   }
+
+  for (const s of servers) {
+    if (!s.env) continue
+    for (const [key, value] of Object.entries(s.env)) {
+      if (!isPlaceholderEnvValue(value)) continue
+      out.push({
+        id: `${agentId}:mcp:placeholder-env:${s.id}:${key}`,
+        agentId,
+        agentName: displayName,
+        severity: 'warning',
+        category: 'mcp',
+        title: `MCP server “${s.name}” has a placeholder env value`,
+        detail: `The env key “${key}” still has a placeholder value (“${value}”). Replace it with a real value or the server will fail to authenticate.`,
+        route: '/mcp',
+        fix: {
+          kind: 'clear-mcp-env-value',
+          agentId,
+          basePath,
+          serverId: s.id,
+          serverName: s.name,
+          envKey: key,
+        },
+      })
+    }
+  }
+
   return out
+}
+
+/** Returns true if the value looks like a placeholder the user forgot to fill in. */
+function isPlaceholderEnvValue(value: string): boolean {
+  const upper = value.toUpperCase()
+  return (
+    upper.endsWith('_HERE') ||
+    value.startsWith('<') ||
+    upper === 'CHANGE_ME' ||
+    upper === 'TODO'
+  )
 }
 
 async function checkHooks(input: DoctorAgentInput): Promise<DoctorFinding[]> {
@@ -262,6 +299,25 @@ export async function applyDoctorFix(
     }
     await writeMcpServers(fix.agentId, scopePath(fix.basePath), next)
     return { success: true, message: `Removed “${fix.serverName}”.` }
+  }
+
+  if (fix.kind === 'clear-mcp-env-value') {
+    const servers = await readMcpServers(fix.agentId, fix.basePath)
+    const server = servers.find((s) => s.id === fix.serverId)
+    if (!server) {
+      return { success: false, message: 'That server was already gone.' }
+    }
+    if (!server.env || !(fix.envKey in server.env)) {
+      return { success: false, message: 'That env key no longer exists.' }
+    }
+    const next = servers.map((s) =>
+      s.id === fix.serverId ? { ...s, env: { ...s.env, [fix.envKey]: '' } } : s,
+    )
+    await writeMcpServers(fix.agentId, scopePath(fix.basePath), next)
+    return {
+      success: true,
+      message: `Cleared “${fix.envKey}” on “${fix.serverName}”. Set a real value in the MCP editor.`,
+    }
   }
 
   // remove-empty-hooks

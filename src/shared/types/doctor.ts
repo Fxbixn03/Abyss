@@ -36,6 +36,14 @@ export type DoctorFix =
       agentId: AgentId
       basePath: string
     }
+  | {
+      kind: 'clear-mcp-env-value'
+      agentId: AgentId
+      basePath: string
+      serverId: string
+      serverName: string
+      envKey: string
+    }
 
 export interface DoctorFinding {
   /** Stable id for list rendering + fix de-duplication. */
