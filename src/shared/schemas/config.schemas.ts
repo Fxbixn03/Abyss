@@ -118,6 +118,10 @@ export const appSettingsSchema = z
     backupDir: z.string().optional().catch(undefined),
     backupKeep: z.number().optional().catch(undefined),
     sandboxAcknowledged: z.boolean().optional().catch(undefined),
+    uiFontSize: z
+      .enum(['small', 'medium', 'large'])
+      .optional()
+      .catch(undefined),
     customAgents: z.array(customAgentSpecSchema).optional().catch(undefined),
   })
   .catch({})

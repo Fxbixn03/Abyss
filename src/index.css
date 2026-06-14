@@ -17,6 +17,10 @@
 :root {
   --radius: 0.5rem;
 
+  /* Base UI font size; set imperatively from the uiFontSize preference. The
+     px literal lives only here — components size in rem off this root. */
+  --font-size-base: 14px;
+
   --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-code: 'JetBrains Mono', 'SFMono-Regular', 'Fira Code', ui-monospace,
     'Cascadia Code', monospace;
@@ -96,6 +100,10 @@
   body,
   #root {
     height: 100%;
+  }
+
+  html {
+    font-size: var(--font-size-base);
   }
 
   body {

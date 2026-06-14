@@ -132,6 +132,8 @@ export interface AppSettings {
   backupKeep: number
   /** User confirmed (once) that the sandbox runs real shell commands. */
   sandboxAcknowledged: boolean
+  /** Base UI font size; drives `--font-size-base` on :root. Defaults to medium. */
+  uiFontSize?: 'small' | 'medium' | 'large'
   /** User-defined agents, persisted so main + renderer can register them. */
   customAgents: CustomAgentSpec[]
 }
@@ -148,6 +150,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   autoBackup: true,
   backupKeep: 3,
   sandboxAcknowledged: false,
+  uiFontSize: 'medium',
   customAgents: [],
 }
 

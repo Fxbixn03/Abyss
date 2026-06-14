@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { useActiveAgentId } from '@/features/agents/hooks/useActiveAgent'
+import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { applyTheme } from '../lib/applyTheme'
+import { applyFontSize } from '../lib/applyFontSize'
 import { useThemeStore } from '../store/theme.store'
 
 /**
@@ -13,9 +15,14 @@ export function useThemeApplier(): void {
   const agentThemeMap = useThemeStore((s) => s.agentThemeMap)
   const customThemes = useThemeStore((s) => s.customThemes)
   const getActiveTheme = useThemeStore((s) => s.getActiveTheme)
+  const uiFontSize = useSettingsStore((s) => s.settings.uiFontSize)
 
   useEffect(() => {
     applyTheme(getActiveTheme(activeAgentId), appearance)
     // agentThemeMap & customThemes are dependencies so re-selecting re-applies.
   }, [activeAgentId, appearance, agentThemeMap, customThemes, getActiveTheme])
+
+  useEffect(() => {
+    applyFontSize(uiFontSize)
+  }, [uiFontSize])
 }
