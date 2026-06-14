@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Button } from '@/shared/components/ui/button'
@@ -7,11 +7,16 @@ import { Icon } from '@/shared/components/Icon'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useProjectDir } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
+import { ipc } from '@/shared/ipc/ipc.client'
+import type { ChatExportFormat } from '@/shared/types/ipc'
+import type { ChatTranscript } from '@/shared/types/chat'
+import { reportError } from '@/shared/lib/errors'
 import { useSessionsStore } from '../store/sessions.store'
 import { ProjectCards } from '../components/ProjectCards'
 import { SessionTable } from '../components/SessionTable'
 import { SessionDetail } from '../components/SessionDetail'
 import { rollupByProject, sortSessions, type SessionSortKey } from '../lib/aggregate'
+import { bulkExportContent } from '../lib/export-format'
 
 export function SessionsPage() {
   const agent = useActiveAgent()
@@ -19,6 +24,7 @@ export function SessionsPage() {
   const projectDir = useProjectDir()
   const currency = useSettingsStore((s) => s.settings.currency)
 
+  const agentId = useSessionsStore((s) => s.agentId)
   const sessions = useSessionsStore((s) => s.sessions)
   const loading = useSessionsStore((s) => s.loading)
   const selectedId = useSessionsStore((s) => s.selectedId)
@@ -31,6 +37,9 @@ export function SessionsPage() {
   const [query, setQuery] = useState('')
   const [sortKey, setSortKey] = useState<SessionSortKey>('updatedAt')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [exportFormat, setExportFormat] = useState<ChatExportFormat>('markdown')
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     if (supported) void load(agent.id, projectDir)
@@ -60,6 +69,58 @@ export function SessionsPage() {
       setSortDir('desc')
     }
   }
+
+  const onToggle = useCallback((sessionId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(sessionId)) {
+        next.delete(sessionId)
+      } else {
+        next.add(sessionId)
+      }
+      return next
+    })
+  }, [])
+
+  const onToggleRange = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        for (let i = fromIndex; i <= toIndex; i++) {
+          const id = filtered[i]?.id
+          if (id !== undefined) next.add(id)
+        }
+        return next
+      })
+    },
+    [filtered],
+  )
+
+  const handleBulkExport = useCallback(async () => {
+    if (selectedIds.size === 0 || !agentId) return
+    setExporting(true)
+    try {
+      const ids = [...selectedIds]
+      const transcripts: ChatTranscript[] = await Promise.all(
+        ids.map((id) => ipc.chatReadSession(agentId, id)),
+      )
+      const content = bulkExportContent(transcripts, exportFormat)
+      const ext = exportFormat === 'markdown' ? 'md' : 'json'
+      await ipc.saveTextFile(content, {
+        title: 'Export Sessions',
+        defaultName: `sessions-export.${ext}`,
+        filters: [
+          exportFormat === 'markdown'
+            ? { name: 'Markdown', extensions: ['md'] }
+            : { name: 'JSON', extensions: ['json'] },
+        ],
+      })
+    } catch (err) {
+      reportError(err, { title: "Couldn't export sessions" })
+    } finally {
+      setExporting(false)
+    }
+  }, [selectedIds, agentId, exportFormat])
 
   if (!supported) {
     return (
@@ -138,6 +199,42 @@ export function SessionsPage() {
             <span className="text-xs text-muted-foreground">
               {filtered.length} of {sessions.length}
             </span>
+            {selectedIds.size > 0 && (
+              <>
+                <div className="flex items-center rounded-md border border-border">
+                  <button
+                    type="button"
+                    onClick={() => setExportFormat('markdown')}
+                    className={`rounded-l-md px-2 py-1 text-xs transition-colors ${
+                      exportFormat === 'markdown'
+                        ? 'bg-accent text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    MD
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExportFormat('json')}
+                    className={`rounded-r-md px-2 py-1 text-xs transition-colors ${
+                      exportFormat === 'json'
+                        ? 'bg-accent text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    JSON
+                  </button>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => void handleBulkExport()}
+                  disabled={exporting}
+                >
+                  <Icon name={exporting ? 'loader' : 'download'} className={exporting ? 'animate-spin' : ''} />
+                  Export {selectedIds.size} session{selectedIds.size !== 1 ? 's' : ''}
+                </Button>
+              </>
+            )}
           </div>
 
           <div className="overflow-hidden rounded-lg border border-border">
@@ -148,6 +245,9 @@ export function SessionsPage() {
               currency={currency}
               onSort={onSort}
               onOpen={(id) => void open(id)}
+              selectedIds={selectedIds}
+              onToggle={onToggle}
+              onToggleRange={onToggleRange}
             />
           </div>
         </div>
