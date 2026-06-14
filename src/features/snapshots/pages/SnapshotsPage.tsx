@@ -3,6 +3,13 @@ import type { SnapshotContent, SnapshotMeta } from '@/shared/types/snapshots'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Badge } from '@/shared/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
@@ -10,6 +17,22 @@ import { Icon } from '@/shared/components/Icon'
 import { LineDiffView } from '@/shared/components/LineDiffView'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { useSettingsStore } from '@/features/settings/store/settings.store'
+import { agentRegistry } from '@/features/agents/registry/agent.registry'
+
+/** Returns the agent id whose config base path is a prefix of the given path, or null. */
+function agentIdForPath(
+  originalPath: string,
+  agentBasePaths: Record<string, string[]>,
+): string | null {
+  const lower = originalPath.toLowerCase()
+  for (const [agentId, bases] of Object.entries(agentBasePaths)) {
+    for (const base of bases) {
+      if (base && lower.startsWith(base.toLowerCase())) return agentId
+    }
+  }
+  return null
+}
 
 type ViewMode = 'file' | 'timeline'
 type DetailView = 'content' | 'diff'
@@ -73,6 +96,35 @@ export function SnapshotsPage() {
   const [detailView, setDetailView] = useState<DetailView>('content')
   const [confirmRestore, setConfirmRestore] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [selectedAgent, setSelectedAgent] = useState<string>('all')
+
+  const settingsDetected = useSettingsStore((s) => s.detected)
+  const settingsAgentPaths = useSettingsStore((s) => s.settings.agentPaths)
+
+  // Build agentId -> [basePath, ...] from explicit overrides and detected paths.
+  const agentBasePaths = useMemo<Record<string, string[]>>(() => {
+    const result: Record<string, string[]> = {}
+    for (const adapter of agentRegistry.getAll()) {
+      const bases: string[] = []
+      const explicit = settingsAgentPaths[adapter.id]
+      if (explicit && explicit.trim() !== '') bases.push(explicit.trim())
+      for (const det of settingsDetected[adapter.id] ?? []) {
+        if (det.path && !bases.includes(det.path)) bases.push(det.path)
+      }
+      result[adapter.id] = bases
+    }
+    return result
+  }, [settingsDetected, settingsAgentPaths])
+
+  // Derive distinct agent ids that actually appear in the loaded snapshots.
+  const presentAgentIds = useMemo<string[]>(() => {
+    const seen = new Set<string>()
+    for (const s of snapshots) {
+      const id = agentIdForPath(s.originalPath, agentBasePaths)
+      if (id) seen.add(id)
+    }
+    return [...seen]
+  }, [snapshots, agentBasePaths])
 
   const refresh = async () => {
     const list = await ipc.listRecentSnapshots(200)
@@ -92,15 +144,23 @@ export function SnapshotsPage() {
     }
   }, [])
 
+  // Snapshots visible after the agent filter is applied.
+  const filteredSnapshots = useMemo(() => {
+    if (selectedAgent === 'all') return snapshots
+    return snapshots.filter(
+      (s) => agentIdForPath(s.originalPath, agentBasePaths) === selectedAgent,
+    )
+  }, [snapshots, selectedAgent, agentBasePaths])
+
   const groups = useMemo(() => {
     const byFile = new Map<string, SnapshotMeta[]>()
-    for (const s of snapshots) {
+    for (const s of filteredSnapshots) {
       const list = byFile.get(s.originalPath) ?? []
       list.push(s)
       byFile.set(s.originalPath, list)
     }
     return [...byFile.entries()]
-  }, [snapshots])
+  }, [filteredSnapshots])
 
   const open = async (id: string) => {
     setSelectedId(id)
@@ -141,6 +201,23 @@ export function SnapshotsPage() {
         icon="history"
         actions={
           <div className="flex items-center gap-2">
+            {presentAgentIds.length > 1 && (
+              <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                <SelectTrigger className="h-8 w-44 text-xs">
+                  <SelectValue placeholder="All agents" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All agents</SelectItem>
+                  {presentAgentIds.map((id) => (
+                    <SelectItem key={id} value={id}>
+                      {agentRegistry.has(id)
+                        ? agentRegistry.get(id).displayName
+                        : id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Segmented
               value={viewMode}
               onChange={setViewMode}
@@ -180,6 +257,12 @@ export function SnapshotsPage() {
           title="No snapshots yet"
           description="Abyss saves a snapshot automatically each time it overwrites a config file. They will appear here."
         />
+      ) : loaded && filteredSnapshots.length === 0 ? (
+        <EmptyState
+          icon="search-x"
+          title="No snapshots for this agent"
+          description="No snapshots match the selected agent filter."
+        />
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-[320px_1fr] gap-4">
           <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
@@ -214,7 +297,7 @@ export function SnapshotsPage() {
               ))
             ) : (
               <div className="flex flex-col gap-1">
-                {snapshots.map((s) => (
+                {filteredSnapshots.map((s) => (
                   <SnapshotButton
                     key={s.id}
                     snap={s}
