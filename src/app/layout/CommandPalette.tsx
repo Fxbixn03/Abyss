@@ -207,7 +207,11 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
   const themes = getThemesForAgent(activeAgent.id)
 
   const navItems = [
-    ...PRIMARY_NAV,
+    ...PRIMARY_NAV.filter(
+      (item) =>
+        !item.requiresCapability ||
+        !!activeAgent.capabilities[item.requiresCapability],
+    ),
     ...(activeAgent.getSidebarSections?.() ?? []),
     SETTINGS_NAV,
   ]

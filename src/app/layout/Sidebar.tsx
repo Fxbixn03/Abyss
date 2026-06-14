@@ -45,7 +45,12 @@ export function Sidebar() {
   for (const item of merged) {
     if (!seen.has(item.route)) {
       seen.add(item.route)
-      unique.push(item)
+      if (
+        !item.requiresCapability ||
+        !!agent.capabilities[item.requiresCapability]
+      ) {
+        unique.push(item)
+      }
     }
   }
 

@@ -1,3 +1,5 @@
+import type { AgentCapabilities } from '@/shared/types/agent'
+
 export interface NavItem {
   id: string
   label: string
@@ -5,6 +7,8 @@ export interface NavItem {
   route: string
   /** Short tooltip shown in the sidebar. */
   description?: string
+  /** Nav item is only visible when the active agent has this capability. */
+  requiresCapability?: keyof AgentCapabilities
 }
 
 /** Sidebar grouping — every nav route is bucketed into one of these. */
@@ -131,6 +135,7 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: 'crosshair',
     route: '/rule-activation',
     description: 'Simulate which rules fire for a file',
+    requiresCapability: 'rules',
   },
   {
     id: 'validation',
