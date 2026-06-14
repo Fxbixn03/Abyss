@@ -11,7 +11,7 @@ behind Claude Code, OpenAI Codex and more into one calm, themed control panel �
 so you can spend your time using your agents, not wrangling their config.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-444)
+![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20macOS-444)
 ![Electron](https://img.shields.io/badge/Electron-42-47848F?logo=electron&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
@@ -94,11 +94,14 @@ Grab the latest build for your platform from
 
 - **Linux** — `Abyss-<version>-x86_64.AppImage`
 - **Windows** — the NSIS installer or portable build
+- **macOS** — `Abyss-<version>-x64.dmg` (Intel) or `Abyss-<version>-arm64.dmg` (Apple Silicon)
 
 ```bash
 # Linux
 chmod +x Abyss-*-x86_64.AppImage
 ./Abyss-*-x86_64.AppImage
+
+# macOS — open the DMG, drag Abyss to Applications, then launch from there
 ```
 
 For application-menu integration, building from source, and the first-run setup,
@@ -122,7 +125,7 @@ The original roadmap has shipped — project-scoped config (per-project `.mcp.js
 plus scope tabs), profiles, a fleet of agents, GitHub-Releases auto-update and
 theme import/export are all in. What's next:
 
-- [ ] **macOS build** — currently Linux (AppImage) + Windows (NSIS / portable)
+- [x] **macOS build** — DMG + zip for x64 and arm64, alongside Linux (AppImage) + Windows (NSIS / portable)
 - [ ] **Abyss as an MCP server** — let agents read and edit their own config through Abyss
 - [ ] **Interactive TUI** for the `abyss` CLI
 - [ ] **Community gallery** for shared themes & status-line presets

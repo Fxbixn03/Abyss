@@ -1,6 +1,7 @@
 // electron-builder configuration.
 // Linux  -> AppImage (portable, no install required)
 // Windows -> NSIS installer + portable .exe
+// macOS  -> DMG + zip (x64 + arm64)
 /** @type {import('electron-builder').Configuration} */
 const config = {
   appId: 'dev.abyss.app',
@@ -27,6 +28,15 @@ const config = {
       { target: 'portable', arch: ['x64'] },
     ],
     icon: 'resources/icon.ico',
+    artifactName: '${productName}-${version}-${arch}.${ext}',
+  },
+  mac: {
+    target: [
+      { target: 'dmg', arch: ['x64', 'arm64'] },
+      { target: 'zip', arch: ['x64', 'arm64'] },
+    ],
+    category: 'public.app-category.developer-tools',
+    icon: 'resources/icon.png',
     artifactName: '${productName}-${version}-${arch}.${ext}',
   },
   nsis: {

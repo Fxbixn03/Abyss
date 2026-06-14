@@ -19,6 +19,7 @@ jobs:
         include:
           - os: ubuntu-latest
           - os: windows-latest
+          - os: macos-latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -32,6 +33,7 @@ jobs:
         run: pnpm build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -39,5 +41,7 @@ jobs:
           path: |
             release/**/*.AppImage
             release/**/*.exe
+            release/**/*.dmg
+            release/**/*.zip
           if-no-files-found: warn
           retention-days: 7
