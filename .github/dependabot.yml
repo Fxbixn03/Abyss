@@ -1,0 +1,31 @@
+version: 2
+
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    target-branch: 'main'
+    open-pull-requests-limit: 5
+    labels:
+      - 'dependencies'
+    assignees:
+      - 'Fxbixn03'
+    groups:
+      npm-all:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    target-branch: 'main'
+    labels:
+      - 'dependencies'
+    assignees:
+      - 'Fxbixn03'
+    groups:
+      github-actions-all:
+        patterns:
+          - '*'
