@@ -13,6 +13,7 @@ export default tseslint.config(
       'dist-cli/**',
       'release/**',
       'node_modules/**',
+      '.claude/**',
     ],
   },
   // Renderer + shared (browser context)

@@ -387,6 +387,39 @@ export const clineDefinition: AgentDefinition = {
   ],
 }
 
+const ampInstructions: ConfigFileSpec = {
+  id: 'instructions',
+  filename: 'AGENTS.md',
+  scope: 'global',
+  language: 'markdown',
+  description: 'Global instructions for Amp (Sourcegraph).',
+}
+
+/** Amp (Sourcegraph) — global instructions at `~/.amp/AGENTS.md`. */
+export const ampDefinition: AgentDefinition = {
+  id: 'amp',
+  name: 'amp',
+  displayName: 'Amp',
+  defaultThemeId: 'amp-forge',
+  iconName: 'zap',
+  docsUrl: 'https://ampcode.com/docs',
+  capabilities: {
+    instructions: true,
+    mcp: false,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: true,
+    chats: false,
+  },
+  configFiles: [ampInstructions],
+  resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.amp')],
+}
+
 /** Every known agent definition, keyed by id. */
 export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   claude: claudeDefinition,
@@ -398,6 +431,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   continue: continueDefinition,
   aider: aiderDefinition,
   cline: clineDefinition,
+  amp: ampDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -411,6 +445,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'continue',
   'aider',
   'cline',
+  'amp',
 ]
 
 /**
