@@ -545,6 +545,43 @@ export const kiroDefinition: AgentDefinition = {
   ],
 }
 
+const plandexInstructions: ConfigFileSpec = {
+  id: 'instructions',
+  filename: 'instructions.md',
+  scope: 'global',
+  language: 'markdown',
+  description: 'Global instructions for Plandex (stored at ~/.plandex/instructions.md).',
+}
+
+/**
+ * Plandex (open-source AI coding CLI) — global instructions at
+ * `~/.plandex/instructions.md`. Instructions-only agent; no MCP or other
+ * advanced features at the Abyss level.
+ */
+export const plandexDefinition: AgentDefinition = {
+  id: 'plandex',
+  name: 'plandex',
+  displayName: 'Plandex',
+  defaultThemeId: 'plandex-horizon',
+  iconName: 'layers',
+  docsUrl: 'https://plandex.ai/docs',
+  capabilities: {
+    instructions: true,
+    mcp: false,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: false,
+    chats: false,
+  },
+  configFiles: [plandexInstructions],
+  resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.plandex')],
+}
+
 const amazonqInstructions: ConfigFileSpec = {
   id: 'instructions',
   filename: 'system-prompt.md',
@@ -642,6 +679,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   kiro: kiroDefinition,
   amazonq: amazonqDefinition,
   warp: warpDefinition,
+  plandex: plandexDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -661,6 +699,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'kiro',
   'amazonq',
   'warp',
+  'plandex',
 ]
 
 /**
