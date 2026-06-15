@@ -24,6 +24,7 @@ import {
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
+import { ConfigCorruptBanner } from '@/shared/components/ConfigCorruptBanner'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
@@ -78,6 +79,7 @@ export function HooksPage() {
 
   const entries = useHooksStore((s) => s.entries)
   const loading = useHooksStore((s) => s.loading)
+  const parseError = useHooksStore((s) => s.parseError)
   const load = useHooksStore((s) => s.load)
   const upsert = useHooksStore((s) => s.upsert)
   const remove = useHooksStore((s) => s.remove)
@@ -384,7 +386,12 @@ export function HooksPage() {
         }
       />
 
-      {loading ? (
+      {parseError ? (
+        <ConfigCorruptBanner
+          info={parseError}
+          onRetry={() => void load(agent.id, basePath)}
+        />
+      ) : loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : entries.length === 0 ? (
         <EmptyState

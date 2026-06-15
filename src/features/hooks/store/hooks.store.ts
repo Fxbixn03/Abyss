@@ -2,7 +2,8 @@ import { create } from 'zustand'
 import type { AgentId } from '@/shared/types/agent'
 import type { HookEntry } from '@/shared/types/hooks'
 import { ipc } from '@/shared/ipc/ipc.client'
-import { reportError } from '@/shared/lib/errors'
+import { reportError, isConfigParseError } from '@/shared/lib/errors'
+import type { ConfigParseInfo } from '@/shared/lib/errors'
 
 interface HooksState {
   agentId: AgentId
@@ -10,6 +11,8 @@ interface HooksState {
   entries: HookEntry[]
   loading: boolean
   saving: boolean
+  /** Set when the config file on disk is corrupt → renderer offers a repair. */
+  parseError: ConfigParseInfo | null
 
   load: (agentId: AgentId, basePath: string) => Promise<void>
   upsert: (entry: HookEntry) => Promise<void>
@@ -44,18 +47,30 @@ export const useHooksStore = create<HooksState>()((set, get) => ({
   entries: [],
   loading: false,
   saving: false,
+  parseError: null,
 
   load: async (agentId, basePath) => {
-    set({ agentId, basePath, loading: true })
+    set({ agentId, basePath, loading: true, parseError: null })
     try {
       const entries = await loadMerged(agentId, basePath)
       if (get().basePath !== basePath || get().agentId !== agentId) return
       set({ entries, loading: false })
     } catch (err) {
-      if (get().basePath === basePath && get().agentId === agentId) {
-        set({ loading: false })
+      const current = get().basePath === basePath && get().agentId === agentId
+      if (isConfigParseError(err)) {
+        // A corrupt file isn't a transient failure — show the repair banner
+        // instead of a toast that vanishes.
+        if (current) {
+          set({
+            loading: false,
+            entries: [],
+            parseError: { message: err.message, filePath: err.filePath },
+          })
+        }
+      } else {
+        if (current) set({ loading: false })
+        reportError(err, { title: "Couldn't load hooks" })
       }
-      reportError(err, { title: "Couldn't load hooks" })
     }
   },
 
