@@ -412,18 +412,26 @@ export function ConfigEditorPanel() {
             <div className="px-1 pb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
               Outline
             </div>
-            {outline.map((h, i) => (
-              <button
-                key={`${h.line}-${i}`}
-                type="button"
-                onClick={() => jumpToLine(h.line)}
-                style={{ paddingLeft: `${(h.level - 1) * 10 + 4}px` }}
-                className="block w-full truncate rounded px-1 py-0.5 text-left text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                title={h.text}
-              >
-                {h.text}
-              </button>
-            ))}
+            {outline.map((h, i) => {
+              const isActive = activeSection?.line === h.line
+              return (
+                <button
+                  key={`${h.line}-${i}`}
+                  type="button"
+                  onClick={() => jumpToLine(h.line)}
+                  style={{ paddingLeft: `${(h.level - 1) * 10 + 4}px` }}
+                  className={cn(
+                    'block w-full truncate rounded px-1 py-0.5 text-left text-xs transition-colors hover:bg-accent hover:text-foreground',
+                    isActive
+                      ? 'bg-accent text-foreground'
+                      : 'text-muted-foreground',
+                  )}
+                  title={h.text}
+                >
+                  {h.text}
+                </button>
+              )
+            })}
           </aside>
         )}
       </div>
