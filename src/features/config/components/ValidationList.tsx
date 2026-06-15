@@ -11,7 +11,12 @@ const SEVERITY: Record<
   info: { icon: 'info', className: 'text-muted-foreground' },
 }
 
-export function ValidationList({ issues }: { issues: ValidationIssue[] }) {
+interface ValidationListProps {
+  issues: ValidationIssue[]
+  onJumpToLine?: (line: number) => void
+}
+
+export function ValidationList({ issues, onJumpToLine }: ValidationListProps) {
   if (issues.length === 0) {
     return (
       <div className="flex items-center gap-2 px-1 text-xs text-success">
@@ -36,9 +41,23 @@ export function ValidationList({ issues }: { issues: ValidationIssue[] }) {
             />
             <span>
               {issue.line !== undefined && (
-                <span className="font-code text-muted-foreground">
-                  L{issue.line}:{' '}
-                </span>
+                <>
+                  {onJumpToLine ? (
+                    <button
+                      type="button"
+                      onClick={() => onJumpToLine(issue.line!)}
+                      className="font-code text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                      title={`Jump to line ${issue.line}`}
+                    >
+                      L{issue.line}
+                    </button>
+                  ) : (
+                    <span className="font-code text-muted-foreground">
+                      L{issue.line}
+                    </span>
+                  )}
+                  {': '}
+                </>
               )}
               {issue.message}
             </span>

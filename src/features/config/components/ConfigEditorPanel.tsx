@@ -374,7 +374,7 @@ export function ConfigEditorPanel() {
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-border pt-2">
-        <ValidationList issues={issues} />
+        <ValidationList issues={issues} onJumpToLine={jumpToLine} />
         <div className="flex shrink-0 items-center gap-2 font-code text-[11px] text-muted-foreground">
           <span>~{formatTokens(tokens)} tokens</span>
           <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
