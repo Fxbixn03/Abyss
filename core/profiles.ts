@@ -12,7 +12,7 @@ import type { Profile, ProfileMeta } from '@/shared/types/profiles'
 import {
   profileSchema,
 } from '@/shared/schemas/config.schemas'
-import { readJsonFile } from './json-file'
+import { readJsonFile, writeTextFileAtomic } from './json-file'
 
 let root: string | null = null
 
@@ -41,12 +41,10 @@ export async function saveProfile(
     ...(extra?.description ? { description: extra.description } : {}),
     ...(extra?.icon ? { icon: extra.icon } : {}),
   }
-  await fs.mkdir(root, { recursive: true })
   const profile: Profile = { meta, bundle }
-  await fs.writeFile(
+  await writeTextFileAtomic(
     path.join(root, `${meta.id}.json`),
     `${JSON.stringify(profile, null, 2)}\n`,
-    'utf8',
   )
   return meta
 }
@@ -109,6 +107,6 @@ export async function renameProfile(
   const profile = await readProfileFile(file)
   if (!profile) return null
   profile.meta.name = name.trim() || profile.meta.name
-  await fs.writeFile(file, `${JSON.stringify(profile, null, 2)}\n`, 'utf8')
+  await writeTextFileAtomic(file, `${JSON.stringify(profile, null, 2)}\n`)
   return profile.meta
 }
