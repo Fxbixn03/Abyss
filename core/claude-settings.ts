@@ -10,6 +10,11 @@ import type {
   PermissionMode,
   PermissionRules,
 } from '@/shared/types/config'
+import {
+  modelEnvSchema,
+  permissionRulesSchema,
+} from '@/shared/schemas/config.schemas'
+import { ConfigValidationError } from './config-error'
 import { readJsonFile, writeJsonFile } from './json-file'
 
 /**
@@ -59,6 +64,14 @@ export async function writePermissions(
   rules: PermissionRules,
 ): Promise<{ success: boolean; path: string }> {
   const p = settingsPath(basePath)
+  try {
+    permissionRulesSchema.parse(rules)
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      throw new ConfigValidationError(p, err.message, err)
+    }
+    throw err
+  }
   const s = await readJsonFile(p, {}, claudeSettingsSchema)
   // Merge over the existing block so unknown keys under `permissions` survive.
   const perms = { ...s.permissions }
@@ -93,6 +106,14 @@ export async function writeModelEnv(
   config: ModelEnvConfig,
 ): Promise<{ success: boolean; path: string }> {
   const p = settingsPath(basePath)
+  try {
+    modelEnvSchema.parse(config)
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      throw new ConfigValidationError(p, err.message, err)
+    }
+    throw err
+  }
   const s = await readJsonFile(p, {}, claudeSettingsSchema)
   if (config.model && config.model.trim() !== '') {
     s.model = config.model
