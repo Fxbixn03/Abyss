@@ -142,6 +142,8 @@ export interface AppSettings {
   autosave: boolean
   /** Idle period (in seconds) before autosave triggers. Min 1, max 30. */
   autosaveDelaySeconds: number
+  /** Whether the config editor wraps long lines. On by default. */
+  editorLineWrap: boolean
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -161,6 +163,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   customAgents: [],
   autosave: false,
   autosaveDelaySeconds: 3,
+  editorLineWrap: true,
 }
 
 /** Auto-update lifecycle, pushed to the renderer as it progresses. */

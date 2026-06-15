@@ -117,6 +117,16 @@ export function PreferencesSection() {
             />
           )}
           <SettingRow
+            title="Editor line wrap"
+            description="Wrap long lines in the config editor instead of scrolling horizontally."
+            control={
+              <Switch
+                checked={settings.editorLineWrap}
+                onCheckedChange={(v) => void updatePrefs({ editorLineWrap: v })}
+              />
+            }
+          />
+          <SettingRow
             title="Guided tour"
             description="Replay the short walkthrough of the main areas of Abyss."
             control={

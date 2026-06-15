@@ -66,6 +66,8 @@ export function ConfigEditorPanel() {
   const autosaveDelaySeconds = useSettingsStore(
     (s) => s.settings.autosaveDelaySeconds,
   )
+  const lineWrap = useSettingsStore((s) => s.settings.editorLineWrap)
+  const updatePrefs = useSettingsStore((s) => s.updatePrefs)
   const getBasePath = useSettingsStore((s) => s.getBasePath)
   const { scope, projectDir } = useScope()
   const allAgents = useAllAgents()
@@ -75,9 +77,6 @@ export function ConfigEditorPanel() {
   const [externalChanged, setExternalChanged] = useState(false)
   const [showOutline, setShowOutline] = useState(false)
   const [insertOpen, setInsertOpen] = useState(false)
-  const [lineWrap, setLineWrap] = useState(
-    () => localStorage.getItem('abyss:editor:lineWrap') !== 'false',
-  )
   const [pendingTemplate, setPendingTemplate] = useState<PromptTemplate | null>(
     null,
   )
@@ -320,8 +319,7 @@ export function ConfigEditorPanel() {
               <DropdownMenuCheckboxItem
                 checked={lineWrap}
                 onCheckedChange={(checked) => {
-                  setLineWrap(checked)
-                  localStorage.setItem('abyss:editor:lineWrap', String(checked))
+                  void updatePrefs({ editorLineWrap: checked })
                 }}
               >
                 <Icon name="wrap-text" />

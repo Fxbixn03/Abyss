@@ -145,6 +145,9 @@ export const appSettingsSchema = z
       .optional()
       .catch(undefined),
     customAgents: z.array(customAgentSpecSchema).optional().catch(undefined),
+    autosave: z.boolean().optional().catch(undefined),
+    autosaveDelaySeconds: z.number().optional().catch(undefined),
+    editorLineWrap: z.boolean().optional().catch(undefined),
   })
   .catch({})
 
