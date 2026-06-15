@@ -10,14 +10,27 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 VERSION="$(node -p "require('./package.json').version")"
-SRC="release/${VERSION}/Abyss-${VERSION}-x86_64.AppImage"
 DEST="${HOME}/Applications/Abyss.AppImage"
 
-if [[ ! -f "$SRC" ]]; then
-  echo "Deploy failed: expected AppImage not found: $SRC" >&2
+# electron-builder names the AppImage after the build arch (x86_64 / arm64 / …),
+# which varies by the distro/machine we build on. Just take whatever AppImage
+# the build for this version produced instead of hard-coding an arch.
+shopt -s nullglob
+CANDIDATES=("release/${VERSION}"/Abyss-${VERSION}-*.AppImage)
+shopt -u nullglob
+
+if [[ ${#CANDIDATES[@]} -eq 0 ]]; then
+  echo "Deploy failed: no AppImage found in release/${VERSION}/" >&2
   echo "Did the build for version ${VERSION} succeed?" >&2
   exit 1
 fi
+
+if [[ ${#CANDIDATES[@]} -gt 1 ]]; then
+  echo "Note: multiple AppImages found for ${VERSION}, deploying the first:" >&2
+  printf '  %s\n' "${CANDIDATES[@]}" >&2
+fi
+
+SRC="${CANDIDATES[0]}"
 
 mkdir -p "$(dirname "$DEST")"
 

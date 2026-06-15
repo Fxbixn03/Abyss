@@ -1,0 +1,45 @@
+name: Build Linux (AppImage)
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  appimage:
+    name: AppImage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # pnpm 11 needs Node >= 22.13 (uses the node:sqlite builtin).
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # electron-builder's linux target is AppImage-only (see
+      # electron-builder.config.cjs), so this produces just the AppImage.
+      - name: Build & package
+        run: pnpm build
+        env:
+          # Lets electron-builder read release metadata; no publish runs here.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: abyss-linux-appimage
+          path: release/**/*.AppImage
+          if-no-files-found: error
+          retention-days: 14

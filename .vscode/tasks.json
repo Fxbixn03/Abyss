@@ -45,9 +45,14 @@
       "type": "shell",
       "command": "pnpm",
       "args": ["build"],
-      // pnpm is not on the integrated terminal's PATH here; use the absolute path.
+      // Prefer pnpm from PATH; fall back to known absolute install paths
+      // (handles pnpm moving between /usr/local/bin, ~/.local/bin, the nvm bin, …).
       "linux": {
-        "command": "${env:HOME}/.local/bin/pnpm"
+        "command": "bash",
+        "args": [
+          "-lc",
+          "for c in \"$(command -v pnpm)\" /usr/local/bin/pnpm \"$HOME/.local/bin/pnpm\"; do [ -x \"$c\" ] && exec \"$c\" build; done; echo 'pnpm not found on PATH or known locations' >&2; exit 127"
+        ]
       },
       "options": {
         "cwd": "${workspaceFolder}"
