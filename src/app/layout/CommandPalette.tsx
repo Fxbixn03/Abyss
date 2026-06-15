@@ -37,6 +37,38 @@ import { useTemplatesStore } from '@/features/templates/store/templates.store'
 import { useTemplatesIntent } from '@/features/templates/store/templatesIntent.store'
 import { resolveTemplates } from '@/features/templates/lib/resolve'
 import { SETTINGS_SECTIONS } from '@/features/settings/sections'
+import { useShortcutsStore } from '@/features/shortcuts/store/shortcuts.store'
+import { humanizeCombo } from '@/features/shortcuts/lib/shortcuts'
+
+/**
+ * Maps a nav route to the shortcut action id that navigates to it.
+ * Drives the keyboard-hint chips rendered beside Go-to items in the palette.
+ */
+const ROUTE_SHORTCUT: Record<string, string> = {
+  '/': 'nav.dashboard',
+  '/config': 'nav.config',
+  '/settings': 'nav.settings',
+  '/mcp': 'nav.mcp',
+  '/hooks': 'nav.hooks',
+  '/doctor': 'nav.doctor',
+  '/history': 'nav.snapshots',
+  '/sessions': 'nav.sessions',
+  '/compare': 'nav.compare',
+  '/permissions': 'nav.permissions',
+  '/workspace': 'nav.workspace',
+  '/profiles': 'nav.profiles',
+  '/bundles': 'nav.bundles',
+}
+
+/** Renders a themed keyboard shortcut chip. */
+function ShortcutHint({ combo }: { combo: string }) {
+  if (!combo) return null
+  return (
+    <kbd className="ml-auto shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 font-code text-[11px] text-muted-foreground">
+      {humanizeCombo(combo)}
+    </kbd>
+  )
+}
 
 const COLLECTION_KINDS: CollectionKind[] = [
   'agents',
@@ -207,6 +239,8 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
     }
   }, [basePath, activeAgent.id, activeAgent.capabilities])
 
+  const bindings = useShortcutsStore((s) => s.bindings)
+
   const toggleAppearance = useThemeStore((s) => s.toggleAppearance)
   const setAgentTheme = useThemeStore((s) => s.setAgentTheme)
   const getThemesForAgent = useThemeStore((s) => s.getThemesForAgent)
@@ -303,16 +337,21 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
         </CommandGroup>
 
         <CommandGroup heading="Go to">
-          {navItems.map((item) => (
-            <CommandItem
-              key={item.id}
-              value={`go ${item.label}`}
-              onSelect={run(() => navigate(item.route))}
-            >
-              <Icon name={item.icon} />
-              {item.label}
-            </CommandItem>
-          ))}
+          {navItems.map((item) => {
+            const actionId = ROUTE_SHORTCUT[item.route]
+            const combo = actionId ? (bindings[actionId] ?? '') : ''
+            return (
+              <CommandItem
+                key={item.id}
+                value={`go ${item.label}`}
+                onSelect={run(() => navigate(item.route))}
+              >
+                <Icon name={item.icon} />
+                {item.label}
+                <ShortcutHint combo={combo} />
+              </CommandItem>
+            )
+          })}
         </CommandGroup>
 
         <CommandGroup heading="Settings">
@@ -409,6 +448,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
           >
             <Icon name="sun" />
             Toggle light / dark
+            <ShortcutHint combo={bindings['appearance.toggle'] ?? ''} />
           </CommandItem>
           {themes.map((theme) => (
             <CommandItem

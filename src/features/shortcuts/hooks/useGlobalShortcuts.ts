@@ -7,6 +7,7 @@ import {
   useAgentEnabled,
 } from '@/features/agents/store/agent-enabled.store'
 import { useCommandPalette } from '@/app/command/commandPalette.store'
+import { useThemeStore } from '@/features/themes/store/theme.store'
 import { useShortcutsStore } from '../store/shortcuts.store'
 import { comboFromEvent } from '../lib/shortcuts'
 
@@ -46,6 +47,9 @@ export function useGlobalShortcuts(): void {
           break
         case 'agent.prev':
           cycle(-1)
+          break
+        case 'appearance.toggle':
+          useThemeStore.getState().toggleAppearance()
           break
         case 'nav.dashboard':
           navigate('/')

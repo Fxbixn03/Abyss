@@ -5,6 +5,7 @@ export type ShortcutActionId =
   | 'search.open'
   | 'agent.next'
   | 'agent.prev'
+  | 'appearance.toggle'
   | 'nav.dashboard'
   | 'nav.config'
   | 'nav.settings'
@@ -23,6 +24,7 @@ export const SHORTCUT_ACTIONS: { id: ShortcutActionId; label: string }[] = [
   { id: 'search.open', label: 'Open search' },
   { id: 'agent.next', label: 'Next agent' },
   { id: 'agent.prev', label: 'Previous agent' },
+  { id: 'appearance.toggle', label: 'Toggle light / dark' },
   { id: 'nav.dashboard', label: 'Go to Dashboard' },
   { id: 'nav.config', label: 'Go to Instructions' },
   { id: 'nav.settings', label: 'Go to Settings' },
@@ -42,6 +44,7 @@ export const DEFAULT_BINDINGS: Record<ShortcutActionId, string> = {
   'search.open': 'Ctrl+F',
   'agent.next': 'Alt+ArrowRight',
   'agent.prev': 'Alt+ArrowLeft',
+  'appearance.toggle': 'Alt+T',
   'nav.dashboard': 'Alt+1',
   'nav.config': 'Alt+2',
   'nav.settings': 'Alt+0',
