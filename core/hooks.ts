@@ -10,6 +10,7 @@
  */
 
 import path from 'node:path'
+import { z } from 'zod'
 import type { HookEntry, HookEvent } from '@/shared/types/hooks'
 import { readJsonFile, writeJsonFile } from './json-file'
 import { readFlatHooks, writeFlatHooks } from './hooks-flat'
@@ -19,17 +20,48 @@ interface RawHook {
   command: string
   /** Optional per-hook timeout in seconds (Claude-specific). */
   timeout?: number
+  [key: string]: unknown
 }
 
 interface RawMatcherGroup {
   matcher?: string
   hooks?: RawHook[]
-}
-
-interface SettingsWithHooks {
-  hooks?: Record<string, RawMatcherGroup[]>
   [key: string]: unknown
 }
+
+/**
+ * Lenient schema for Claude's `settings.json` when reading hooks. Validates the
+ * `hooks` field structure strictly enough to catch shape errors (e.g. hooks
+ * entries that are not arrays of matcher groups), while preserving all unknown
+ * top-level keys via passthrough for the round-trip write path.
+ */
+const settingsWithHooksSchema = z
+  .object({
+    hooks: z
+      .record(
+        z.string(),
+        z.array(
+          z
+            .object({
+              matcher: z.string().optional(),
+              hooks: z
+                .array(
+                  z
+                    .object({
+                      type: z.string(),
+                      command: z.string(),
+                      timeout: z.number().optional(),
+                    })
+                    .passthrough(),
+                )
+                .optional(),
+            })
+            .passthrough(),
+        ),
+      )
+      .optional(),
+  })
+  .passthrough()
 
 function settingsPath(basePath: string): string {
   return path.join(basePath, 'settings.json')
@@ -83,9 +115,10 @@ export function writeHooks(
 }
 
 async function readClaudeHooks(basePath: string): Promise<HookEntry[]> {
-  const settings = await readJsonFile<SettingsWithHooks>(
+  const settings = await readJsonFile(
     settingsPath(basePath),
     {},
+    settingsWithHooksSchema,
   )
   const hooks = settings.hooks ?? {}
   const out: HookEntry[] = []
@@ -117,7 +150,7 @@ async function writeClaudeHooks(
   entries: HookEntry[],
 ): Promise<{ success: boolean; path: string }> {
   const p = settingsPath(basePath)
-  const settings = await readJsonFile<SettingsWithHooks>(p, {})
+  const settings = await readJsonFile(p, {}, settingsWithHooksSchema)
 
   const grouped: Record<string, RawMatcherGroup[]> = {}
   for (const entry of entries) {
