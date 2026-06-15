@@ -159,6 +159,11 @@ function kiroMcpPath(basePath: string): string {
   return path.join(basePath, 'mcp.json')
 }
 
+/** Amazon Q Developer CLI keeps its `mcpServers` map in `<base>/mcp.json` (same shape as Cursor/Roo/Kiro). */
+function amazonqMcpPath(basePath: string): string {
+  return path.join(basePath, 'mcp.json')
+}
+
 /**
  * Return the on-disk path of the file that holds MCP server config for the
  * given agent. Mirrors the routing in {@link readMcpServers} so callers can
@@ -176,6 +181,7 @@ export function getMcpConfigPath(
   if (agentId === 'windsurf') return windsurfMcpPath(basePath)
   if (agentId === 'roo') return rooMcpPath(basePath)
   if (agentId === 'kiro') return kiroMcpPath(basePath)
+  if (agentId === 'amazonq') return amazonqMcpPath(basePath)
   return mcpConfigPath(projectDir)
 }
 
@@ -197,6 +203,7 @@ export function readMcpServers(
   if (agentId === 'windsurf') return readJsonMcp(windsurfMcpPath(basePath))
   if (agentId === 'roo') return readJsonMcp(rooMcpPath(basePath))
   if (agentId === 'kiro') return readJsonMcp(kiroMcpPath(basePath))
+  if (agentId === 'amazonq') return readJsonMcp(amazonqMcpPath(basePath))
   return readJsonMcp(mcpConfigPath(projectDir))
 }
 
@@ -219,5 +226,7 @@ export function writeMcpServers(
     return writeJsonMcp(rooMcpPath(basePath), entries)
   if (agentId === 'kiro')
     return writeJsonMcp(kiroMcpPath(basePath), entries)
+  if (agentId === 'amazonq')
+    return writeJsonMcp(amazonqMcpPath(basePath), entries)
   return writeJsonMcp(mcpConfigPath(projectDir), entries)
 }

@@ -12,6 +12,7 @@ import { rooAdapter } from '../adapters/roo.adapter'
 import { ampAdapter } from '../adapters/amp.adapter'
 import { gooseAdapter } from '../adapters/goose.adapter'
 import { kiroAdapter } from '../adapters/kiro.adapter'
+import { amazonqAdapter } from '../adapters/amazonq.adapter'
 
 /**
  * Central registry of agent adapters. The single place the app discovers which
@@ -61,3 +62,4 @@ agentRegistry.register(rooAdapter)
 agentRegistry.register(ampAdapter)
 agentRegistry.register(gooseAdapter)
 agentRegistry.register(kiroAdapter)
+agentRegistry.register(amazonqAdapter)

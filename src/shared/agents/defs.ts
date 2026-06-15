@@ -537,6 +537,45 @@ export const kiroDefinition: AgentDefinition = {
   ],
 }
 
+const amazonqInstructions: ConfigFileSpec = {
+  id: 'instructions',
+  filename: 'system-prompt.md',
+  scope: 'global',
+  language: 'markdown',
+  description: 'Global system prompt for Amazon Q Developer CLI.',
+}
+
+/**
+ * Amazon Q Developer CLI (AWS) — stores the global system prompt at
+ * `~/.aws/amazonq/system-prompt.md` and MCP servers at
+ * `~/.aws/amazonq/mcp.json` (standard `{ mcpServers }` JSON shape).
+ */
+export const amazonqDefinition: AgentDefinition = {
+  id: 'amazonq',
+  name: 'amazonq',
+  displayName: 'Amazon Q Developer',
+  defaultThemeId: 'amazonq-dark',
+  iconName: 'cloud',
+  docsUrl: 'https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/command-line.html',
+  capabilities: {
+    instructions: true,
+    mcp: true,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: false,
+    chats: false,
+  },
+  configFiles: [amazonqInstructions],
+  resolvePaths: (env: OsEnv) => [
+    joinPath(env.platform, env.home, '.aws', 'amazonq'),
+  ],
+}
+
 /** Every known agent definition, keyed by id. */
 export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   claude: claudeDefinition,
@@ -552,6 +591,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   amp: ampDefinition,
   goose: gooseDefinition,
   kiro: kiroDefinition,
+  amazonq: amazonqDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -569,6 +609,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'amp',
   'goose',
   'kiro',
+  'amazonq',
 ]
 
 /**
