@@ -49,6 +49,7 @@ async function checkInstructionFile(
       agentName: def.displayName,
       file: result.path,
       message: `Instruction file ${spec.filename} does not exist`,
+      route: '/editor',
     })
   } else if (result.content.trim() === '') {
     out.push({
@@ -57,6 +58,7 @@ async function checkInstructionFile(
       agentName: def.displayName,
       file: result.path,
       message: `Instruction file ${spec.filename} is empty`,
+      route: '/editor',
     })
   }
 
@@ -89,6 +91,7 @@ async function checkSettingsJson(
         message:
           'settings.json contains invalid JSON: ' +
           (err instanceof Error ? err.message : String(err)),
+        route: '/raw-settings',
       },
     ]
   }
@@ -121,6 +124,7 @@ async function checkMcpConfig(
         message:
           'MCP config could not be parsed: ' +
           (err instanceof Error ? err.message : String(err)),
+        route: '/mcp',
       },
     ]
   }
@@ -161,6 +165,7 @@ async function checkHooks(
         message:
           'Hooks config could not be parsed: ' +
           (err instanceof Error ? err.message : String(err)),
+        route: '/hooks',
       },
     ]
   }

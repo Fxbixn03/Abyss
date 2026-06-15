@@ -12,4 +12,6 @@ export interface ValidationFinding {
   agentName: string
   file: string
   message: string
+  /** Renderer route where the user can navigate to fix the issue. */
+  route?: string
 }
