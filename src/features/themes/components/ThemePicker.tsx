@@ -91,7 +91,14 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
         )}
       </div>
 
+      <p className="text-xs text-muted-foreground">
+        Hover a theme to preview it live — click to apply.
+      </p>
+
       <div
+        role="radiogroup"
+        aria-label="Theme selection"
+        tabIndex={-1}
         className="grid grid-cols-1 gap-3 sm:grid-cols-2"
         onMouseLeave={restoreActiveTheme}
         onBlur={(e) => {
@@ -108,7 +115,10 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
           return (
             <button
               key={theme.id}
+              role="radio"
               type="button"
+              aria-pressed={selected}
+              aria-checked={selected}
               onMouseEnter={() => applyTheme(theme, appearance)}
               onFocus={() => applyTheme(theme, appearance)}
               onClick={() => setAgentTheme(agentId, theme.id)}
