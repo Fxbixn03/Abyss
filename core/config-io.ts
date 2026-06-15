@@ -8,8 +8,11 @@
  */
 
 import path from 'node:path'
+import * as yaml from 'js-yaml'
 import { getAgentDefinition } from '@/shared/agents/defs'
+import type { ConfigFileSpec } from '@/shared/types/agent'
 import { pathExists, readTextFile, writeTextFileAtomic } from './json-file'
+import { ConfigValidationError } from './config-error'
 
 export interface ReadConfigResult {
   content: string
@@ -35,6 +38,33 @@ function specFilePath(
   return resolved
 }
 
+/**
+ * Validate content against the spec's declared language before writing.
+ *
+ * Throws {@link ConfigValidationError} (carrying the resolved filePath) when
+ * the language requires syntactically valid content and the content fails
+ * parsing. Markdown and plain-text specs pass through unchecked.
+ */
+export function validateContent(
+  spec: ConfigFileSpec,
+  filePath: string,
+  content: string,
+): void {
+  if (spec.language === 'json') {
+    try {
+      JSON.parse(content)
+    } catch (cause) {
+      throw new ConfigValidationError(filePath, 'Content is not valid JSON', cause)
+    }
+  } else if (spec.language === 'yaml') {
+    try {
+      yaml.load(content)
+    } catch (cause) {
+      throw new ConfigValidationError(filePath, 'Content is not valid YAML', cause)
+    }
+  }
+}
+
 export async function readAgentConfigFile(
   agentId: string,
   specId: string,
@@ -52,7 +82,13 @@ export async function writeAgentConfigFile(
   basePath: string,
   content: string,
 ): Promise<{ success: boolean; path: string }> {
+  const def = getAgentDefinition(agentId)
+  const spec = def.configFiles.find((s) => s.id === specId)
+  if (!spec) {
+    throw new Error(`Unknown config spec '${specId}' for agent '${agentId}'`)
+  }
   const filePath = specFilePath(agentId, specId, basePath)
+  validateContent(spec, filePath, content)
   await writeTextFileAtomic(filePath, content)
   return { success: true, path: filePath }
 }
