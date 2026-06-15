@@ -9,6 +9,12 @@ export const ampAdapter: AgentAdapter = createAdapter(ampDefinition, {
   validate: validateMarkdownInstructions,
   getSidebarSections: (): SidebarSection[] => [
     {
+      id: 'mcp',
+      label: 'MCP Servers',
+      icon: 'plug',
+      route: '/mcp',
+    },
+    {
       id: 'settings-file',
       label: 'Settings (raw)',
       icon: 'braces',
