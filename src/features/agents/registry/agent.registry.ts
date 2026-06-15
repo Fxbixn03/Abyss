@@ -17,6 +17,7 @@ import { warpAdapter } from '../adapters/warp.adapter'
 import { plandexAdapter } from '../adapters/plandex.adapter'
 import { zedAdapter } from '../adapters/zed.adapter'
 import { codyAdapter } from '../adapters/cody.adapter'
+import { devinAdapter } from '../adapters/devin.adapter'
 
 /**
  * Central registry of agent adapters. The single place the app discovers which
@@ -71,3 +72,4 @@ agentRegistry.register(warpAdapter)
 agentRegistry.register(plandexAdapter)
 agentRegistry.register(zedAdapter)
 agentRegistry.register(codyAdapter)
+agentRegistry.register(devinAdapter)

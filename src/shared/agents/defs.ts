@@ -746,6 +746,43 @@ export const codyDefinition: AgentDefinition = {
   ],
 }
 
+const devinConfig: ConfigFileSpec = {
+  id: 'settings',
+  filename: 'config.toml',
+  scope: 'global',
+  language: 'text',
+  description: 'Devin CLI global config (~/.devin/config.toml).',
+}
+
+/**
+ * Devin CLI (Cognition AI) — global config at `~/.devin/config.toml` (TOML
+ * format). Supports raw settings editing; no MCP or advanced features at the
+ * Abyss level.
+ */
+export const devinDefinition: AgentDefinition = {
+  id: 'devin',
+  name: 'devin',
+  displayName: 'Devin',
+  defaultThemeId: 'devin-carbon',
+  iconName: 'bot',
+  docsUrl: 'https://docs.devin.ai/cli',
+  capabilities: {
+    instructions: true,
+    mcp: false,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: true,
+    chats: false,
+  },
+  configFiles: [devinConfig],
+  resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.devin')],
+}
+
 /** Every known agent definition, keyed by id. */
 export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   claude: claudeDefinition,
@@ -766,6 +803,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   plandex: plandexDefinition,
   zed: zedDefinition,
   cody: codyDefinition,
+  devin: devinDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -788,6 +826,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'plandex',
   'zed',
   'cody',
+  'devin',
 ]
 
 /**
