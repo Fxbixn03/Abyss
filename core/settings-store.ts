@@ -44,7 +44,7 @@ export class SettingsStore {
       ...patch,
       agentPaths: { ...current.agentPaths, ...(patch.agentPaths ?? {}) },
     }
-    await writeJsonFile(this.filePath, next)
+    await writeJsonFile(this.filePath, next, appSettingsSchema)
     return next
   }
 }
