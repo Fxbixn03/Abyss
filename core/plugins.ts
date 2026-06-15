@@ -6,6 +6,7 @@
  */
 
 import path from 'node:path'
+import { z } from 'zod'
 import type {
   MarketplaceSource,
   MarketplaceSourceType,
@@ -13,11 +14,21 @@ import type {
 } from '@/shared/types/plugins'
 import { readJsonFile, writeJsonFile } from './json-file'
 
-interface PluginSettingsFile {
-  extraKnownMarketplaces?: Record<string, { source?: unknown }>
-  enabledPlugins?: Record<string, boolean>
-  [key: string]: unknown
-}
+/**
+ * Lenient schema for the plugin-relevant fields in `settings.json`. The
+ * top-level object is passthrough so unknown keys survive the round-trip.
+ * Only the two keys this module actually reads are declared; shape errors
+ * inside them (e.g. `enabledPlugins` being a non-object) throw a typed
+ * `ConfigParseError` rather than a runtime `TypeError` from `Object.entries`.
+ */
+const pluginSettingsSchema = z
+  .object({
+    extraKnownMarketplaces: z
+      .record(z.string(), z.object({ source: z.unknown() }).passthrough())
+      .optional(),
+    enabledPlugins: z.record(z.string(), z.boolean()).optional(),
+  })
+  .passthrough()
 
 const SOURCE_TYPES: MarketplaceSourceType[] = [
   'github',
@@ -57,7 +68,7 @@ function cleanSource(src: MarketplaceSource): MarketplaceSource {
 }
 
 export async function readPlugins(basePath: string): Promise<PluginsConfig> {
-  const s = await readJsonFile<PluginSettingsFile>(settingsPath(basePath), {})
+  const s = await readJsonFile(settingsPath(basePath), {}, pluginSettingsSchema)
   const marketplaces = Object.entries(s.extraKnownMarketplaces ?? {}).map(
     ([name, value]) => ({ name, source: normalizeSource(value?.source) }),
   )
@@ -72,7 +83,7 @@ export async function writePlugins(
   config: PluginsConfig,
 ): Promise<{ success: boolean; path: string }> {
   const p = settingsPath(basePath)
-  const s = await readJsonFile<PluginSettingsFile>(p, {})
+  const s = await readJsonFile(p, {}, pluginSettingsSchema)
 
   if (config.marketplaces.length > 0) {
     s.extraKnownMarketplaces = Object.fromEntries(
@@ -94,6 +105,6 @@ export async function writePlugins(
     delete s.enabledPlugins
   }
 
-  await writeJsonFile(p, s)
+  await writeJsonFile(p, s, pluginSettingsSchema)
   return { success: true, path: p }
 }

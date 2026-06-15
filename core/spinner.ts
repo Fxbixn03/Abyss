@@ -7,6 +7,7 @@
  */
 
 import path from 'node:path'
+import { z } from 'zod'
 import {
   DEFAULT_SPINNER,
   type SpinnerConfig,
@@ -14,11 +15,30 @@ import {
 } from '@/shared/types/spinner'
 import { readJsonFile, writeJsonFile } from './json-file'
 
-interface SettingsWithSpinner {
-  spinnerVerbs?: { mode?: string; verbs?: unknown }
-  spinnerTipsOverride?: { tips?: unknown; excludeDefault?: unknown }
-  [key: string]: unknown
-}
+/**
+ * Lenient schema for the spinner-relevant fields in `settings.json`. The
+ * top-level object is passthrough so unknown keys survive the round-trip.
+ * Only the two sub-keys this module reads are declared; a non-object value
+ * for either would otherwise throw an untyped TypeError on property access.
+ */
+const spinnerSettingsSchema = z
+  .object({
+    spinnerVerbs: z
+      .object({
+        mode: z.string().optional(),
+        verbs: z.unknown().optional(),
+      })
+      .passthrough()
+      .optional(),
+    spinnerTipsOverride: z
+      .object({
+        tips: z.unknown().optional(),
+        excludeDefault: z.unknown().optional(),
+      })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough()
 
 function settingsPath(basePath: string): string {
   return path.join(basePath, 'settings.json')
@@ -31,7 +51,7 @@ function asStringArray(value: unknown): string[] {
 }
 
 export async function readSpinner(basePath: string): Promise<SpinnerConfig> {
-  const s = await readJsonFile<SettingsWithSpinner>(settingsPath(basePath), {})
+  const s = await readJsonFile(settingsPath(basePath), {}, spinnerSettingsSchema)
 
   const verbs = s.spinnerVerbs
   const tips = s.spinnerTipsOverride
@@ -54,7 +74,7 @@ export async function writeSpinner(
   cfg: SpinnerConfig,
 ): Promise<{ success: boolean; path: string }> {
   const p = settingsPath(basePath)
-  const s = await readJsonFile<SettingsWithSpinner>(p, {})
+  const s = await readJsonFile(p, {}, spinnerSettingsSchema)
 
   const verbs = cfg.verbs.map((v) => v.trim()).filter(Boolean)
   if (verbs.length > 0) {
@@ -73,6 +93,6 @@ export async function writeSpinner(
     delete s.spinnerTipsOverride
   }
 
-  await writeJsonFile(p, s)
+  await writeJsonFile(p, s, spinnerSettingsSchema)
   return { success: true, path: p }
 }

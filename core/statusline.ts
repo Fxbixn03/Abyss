@@ -9,6 +9,7 @@
 
 import path from 'node:path'
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { z } from 'zod'
 import {
   DEFAULT_STATUSLINE,
   type StatusLineConfig,
@@ -20,10 +21,24 @@ import { readJsonFile, writeJsonFile } from './json-file'
 const SCRIPT_NAME = 'abyss-statusline.cjs'
 const CONFIG_MARKER = 'ABYSS-CONFIG'
 
-interface SettingsWithStatusLine {
-  statusLine?: { type?: string; command?: string; padding?: number }
-  [key: string]: unknown
-}
+/**
+ * Lenient schema for the statusline-relevant fields in `settings.json`. The
+ * top-level object is passthrough so unknown keys survive the round-trip.
+ * Only the `statusLine` sub-key and its properties are declared; a corrupt
+ * value would otherwise throw an untyped TypeError on property access.
+ */
+const statusLineSettingsSchema = z
+  .object({
+    statusLine: z
+      .object({
+        type: z.string().optional(),
+        command: z.string().optional(),
+        padding: z.number().optional(),
+      })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough()
 
 function settingsPath(basePath: string): string {
   return path.join(basePath, 'settings.json')
@@ -166,9 +181,10 @@ function parseEmbedded(script: string): EmbeddedConfig | null {
 export async function readStatusLine(
   basePath: string,
 ): Promise<StatusLineConfig> {
-  const s = await readJsonFile<SettingsWithStatusLine>(
+  const s = await readJsonFile(
     settingsPath(basePath),
     {},
+    statusLineSettingsSchema,
   )
   const sl = s.statusLine
   if (!sl?.command) return { ...DEFAULT_STATUSLINE }
@@ -212,13 +228,13 @@ export async function writeStatusLine(
   await writeFile(script, generateScript(cfg), { mode: 0o755 })
 
   const p = settingsPath(basePath)
-  const s = await readJsonFile<SettingsWithStatusLine>(p, {})
+  const s = await readJsonFile(p, {}, statusLineSettingsSchema)
   s.statusLine = {
     type: 'command',
     command: `node "${script}"`,
     ...(cfg.padding > 0 ? { padding: cfg.padding } : {}),
   }
-  await writeJsonFile(p, s)
+  await writeJsonFile(p, s, statusLineSettingsSchema)
   return { success: true, path: p }
 }
 
@@ -226,9 +242,9 @@ export async function removeStatusLine(
   basePath: string,
 ): Promise<{ success: boolean; path: string }> {
   const p = settingsPath(basePath)
-  const s = await readJsonFile<SettingsWithStatusLine>(p, {})
+  const s = await readJsonFile(p, {}, statusLineSettingsSchema)
   delete s.statusLine
-  await writeJsonFile(p, s)
+  await writeJsonFile(p, s, statusLineSettingsSchema)
   // Best-effort cleanup of the generated script; absence is fine.
   try {
     await unlink(scriptPath(basePath))
