@@ -9,6 +9,7 @@ import {
 } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { AbyssLogo } from '@/shared/components/AbyssLogo'
 import { ipc } from '@/shared/ipc/ipc.client'
 
@@ -41,20 +42,14 @@ function UpdateBlock() {
   return (
     <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
       <span className="flex items-center gap-2 text-sm">
-        <Icon
-          name={
-            status.state === 'checking' || status.state === 'downloading'
-              ? 'loader'
-              : status.state === 'error'
-                ? 'circle-alert'
-                : 'refresh-cw'
-          }
-          className={
-            status.state === 'checking' || status.state === 'downloading'
-              ? 'size-4 animate-spin'
-              : 'size-4'
-          }
-        />
+        {status.state === 'checking' || status.state === 'downloading' ? (
+          <Spinner className="size-4" label={status.state === 'checking' ? 'Checking for updates…' : 'Downloading update…'} />
+        ) : (
+          <Icon
+            name={status.state === 'error' ? 'circle-alert' : 'refresh-cw'}
+            className="size-4"
+          />
+        )}
         <span
           className={status.state === 'error' ? 'text-destructive' : undefined}
         >

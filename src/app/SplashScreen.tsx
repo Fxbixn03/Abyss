@@ -1,4 +1,5 @@
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 
 /**
  * Boot splash shown while the app loads settings and probes each agent's CLI.
@@ -19,7 +20,7 @@ export function SplashScreen() {
         </div>
       </div>
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Icon name="loader" className="size-4 animate-spin" />
+        <Spinner className="size-4" label="Loading settings and detecting agents…" />
         Loading settings and detecting agents…
       </div>
     </div>

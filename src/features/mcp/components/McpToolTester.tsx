@@ -18,6 +18,7 @@ import { Label } from '@/shared/components/ui/label'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { Badge } from '@/shared/components/ui/badge'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { reportError } from '@/shared/lib/errors'
 import { genId } from '@/shared/lib/id'
@@ -168,7 +169,7 @@ export function McpToolTester({ open, onOpenChange, server }: McpToolTesterProps
 
         {loadingTools ? (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Icon name="loader" className="size-4 animate-spin" />
+            <Spinner className="size-4" label="Connecting and listing tools…" />
             Connecting and listing tools…
           </p>
         ) : loadError ? (
@@ -251,7 +252,7 @@ export function McpToolTester({ open, onOpenChange, server }: McpToolTesterProps
               </Button>
               <Button onClick={() => void run()} disabled={!selected || running}>
                 {running ? (
-                  <Icon name="loader" className="size-4 animate-spin" />
+                  <Spinner className="size-4" label="Running tool…" />
                 ) : (
                   <Icon name="play" />
                 )}

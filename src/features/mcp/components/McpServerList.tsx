@@ -3,6 +3,7 @@ import { Switch } from '@/shared/components/ui/switch'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import type { McpHealthState } from '../store/mcp.store'
 
 export interface McpServerListProps {
@@ -29,7 +30,7 @@ function HealthBadge({ state }: { state: McpHealthState }) {
   if ('loading' in state) {
     return (
       <Badge variant="muted">
-        <Icon name="loader" className="size-3 animate-spin" />
+        <Spinner className="size-3" label="Checking…" />
         checking…
       </Badge>
     )

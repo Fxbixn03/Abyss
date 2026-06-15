@@ -4,6 +4,7 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useProjectDir } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
@@ -165,7 +166,7 @@ export function SessionsPage() {
             onClick={() => void load(agent.id, projectDir)}
             disabled={loading}
           >
-            <Icon name={loading ? 'loader' : 'refresh-cw'} className={loading ? 'animate-spin' : ''} />
+            {loading ? <Spinner label="Refreshing…" /> : <Icon name="refresh-cw" />}
             Refresh
           </Button>
         }
@@ -230,7 +231,7 @@ export function SessionsPage() {
                   onClick={() => void handleBulkExport()}
                   disabled={exporting}
                 >
-                  <Icon name={exporting ? 'loader' : 'download'} className={exporting ? 'animate-spin' : ''} />
+                  {exporting ? <Spinner label="Exporting…" /> : <Icon name="download" />}
                   Export {selectedIds.size} session{selectedIds.size !== 1 ? 's' : ''}
                 </Button>
               </>

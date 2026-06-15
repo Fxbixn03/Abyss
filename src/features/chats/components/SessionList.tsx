@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { Input } from '@/shared/components/ui/input'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
 import {
   ContextMenu,
@@ -165,7 +166,7 @@ export function SessionList({ onNewChat }: { onNewChat: () => void }) {
           <div className="px-1 pb-2">
             {loadingMore ? (
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Icon name="loader" className="size-3 animate-spin" />
+                <Spinner className="size-3" label="Loading more…" />
                 Loading more…
               </p>
             ) : (

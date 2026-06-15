@@ -5,6 +5,7 @@ import { Button } from '@/shared/components/ui/button'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import {
   Select,
   SelectContent,
@@ -300,10 +301,11 @@ export function ChatsPage() {
                       disabled={scanning}
                       title="Scan this transcript for risk indicators"
                     >
-                      <Icon
-                        name={scanning ? 'loader' : 'flag'}
-                        className={scanning ? 'animate-spin' : ''}
-                      />
+                      {scanning ? (
+                        <Spinner label="Scanning…" />
+                      ) : (
+                        <Icon name="flag" />
+                      )}
                       Scan risks
                     </Button>
                   )}
@@ -462,7 +464,7 @@ export function ChatsPage() {
 
                       {status === 'starting' && (
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Icon name="loader" className="size-3 animate-spin" />
+                          <Spinner className="size-3" label="Starting…" />
                           starting…
                         </span>
                       )}

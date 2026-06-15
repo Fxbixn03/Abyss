@@ -14,6 +14,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Input } from '@/shared/components/ui/input'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import {
   useConfigBase,
@@ -182,10 +183,7 @@ export function MarketplacePage() {
           />
         </div>
         <Button type="submit" disabled={loading}>
-          <Icon
-            name={loading ? 'loader' : 'search'}
-            className={loading ? 'animate-spin' : ''}
-          />
+          {loading ? <Spinner label="Searching…" /> : <Icon name="search" />}
           Search
         </Button>
       </form>
@@ -312,10 +310,11 @@ export function MarketplacePage() {
                 onClick={() => void runSearch(query, true)}
                 disabled={loadingMore}
               >
-                <Icon
-                  name={loadingMore ? 'loader' : 'chevron-down'}
-                  className={loadingMore ? 'animate-spin' : ''}
-                />
+                {loadingMore ? (
+                  <Spinner label="Loading more…" />
+                ) : (
+                  <Icon name="chevron-down" />
+                )}
                 Load more
               </Button>
             )}

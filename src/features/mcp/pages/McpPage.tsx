@@ -8,6 +8,7 @@ import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ConfigCorruptBanner } from '@/shared/components/ConfigCorruptBanner'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import {
   useConfigBase,
@@ -227,7 +228,7 @@ export function McpPage() {
               )}
               {summary.checking > 0 && (
                 <Badge variant="muted">
-                  <Icon name="loader" className="size-3 animate-spin" />
+                  <Spinner className="size-3" label="Checking…" />
                   {summary.checking} checking
                 </Badge>
               )}

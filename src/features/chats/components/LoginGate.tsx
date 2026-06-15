@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Switch } from '@/shared/components/ui/switch'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 
 export interface LoginGateProps {
   agentName: string
@@ -71,7 +72,7 @@ export function LoginGate({
 
         {busy ? (
           <div className="flex flex-col items-center gap-2 py-4 text-sm text-muted-foreground">
-            <Icon name="loader" className="size-5 animate-spin" />
+            <Spinner className="size-5" label="Waiting for browser sign-in…" />
             Waiting for browser sign-in…
             <Button
               variant="ghost"

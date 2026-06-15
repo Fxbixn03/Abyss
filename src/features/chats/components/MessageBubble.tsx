@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import type { ChatBlock, ChatMessage } from '@/shared/types/chat'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { cn } from '@/shared/lib/utils'
 import { Markdown } from '@/shared/components/Markdown'
 
@@ -150,7 +151,7 @@ export function MessageBubble({
         </span>
         {message.blocks.length === 0 ? (
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-            <Icon name="loader" className="size-3 animate-spin" />
+            <Spinner className="size-3" label="Thinking…" />
             thinking…
           </span>
         ) : (

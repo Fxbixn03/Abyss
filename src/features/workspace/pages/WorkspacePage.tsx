@@ -7,6 +7,7 @@ import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import { Card } from '@/shared/components/ui/card'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { agentRegistry } from '@/features/agents/registry/agent.registry'
 import { useScopeStore } from '@/features/scope/store/scope.store'
@@ -194,10 +195,7 @@ export function WorkspacePage() {
               disabled={!root || loading}
               onClick={() => setRescan((n) => n + 1)}
             >
-              <Icon
-                name={loading ? 'loader' : 'refresh-cw'}
-                className={loading ? 'animate-spin' : ''}
-              />
+              {loading ? <Spinner label="Rescanning…" /> : <Icon name="refresh-cw" />}
               Rescan
             </Button>
           </>

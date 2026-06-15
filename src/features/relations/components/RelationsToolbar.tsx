@@ -1,5 +1,6 @@
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { cn } from '@/shared/lib/utils'
 import { KIND_ICON, KIND_LABEL } from '../lib/nodeMeta'
 import { ALL_NODE_KINDS, type RelationsController } from '../hooks/useRelations'
@@ -60,10 +61,11 @@ export function RelationsToolbar({ ctrl }: { ctrl: RelationsController }) {
           disabled={ctrl.exporting}
           title="Download the graph as a PNG image"
         >
-          <Icon
-            name={ctrl.exporting ? 'loader' : 'image'}
-            className={ctrl.exporting ? 'animate-spin' : ''}
-          />
+          {ctrl.exporting ? (
+            <Spinner label="Exporting…" />
+          ) : (
+            <Icon name="image" />
+          )}
           {ctrl.exporting ? 'Exporting…' : 'Export PNG'}
         </Button>
         <Button

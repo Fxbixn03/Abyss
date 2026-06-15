@@ -11,6 +11,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Input } from '@/shared/components/ui/input'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useSettingsStore } from '../store/settings.store'
 
@@ -133,10 +134,7 @@ export function BackupsSection() {
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle>Recent backups</CardTitle>
           <Button size="sm" onClick={() => void backupNow()} disabled={busy}>
-            <Icon
-              name={busy ? 'loader' : 'archive'}
-              className={busy ? 'animate-spin' : ''}
-            />
+            {busy ? <Spinner label="Backing up…" /> : <Icon name="archive" />}
             Back up now
           </Button>
         </CardHeader>

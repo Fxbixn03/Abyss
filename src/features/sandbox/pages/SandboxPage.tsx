@@ -7,6 +7,7 @@ import { Card } from '@/shared/components/ui/card'
 import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
@@ -109,10 +110,7 @@ function CommandSandbox() {
           Pick
         </Button>
         <Button onClick={requestRun} disabled={running || !command.trim()}>
-          <Icon
-            name={running ? 'loader' : 'play'}
-            className={running ? 'animate-spin' : ''}
-          />
+          {running ? <Spinner label="Running…" /> : <Icon name="play" />}
           Run
         </Button>
       </div>

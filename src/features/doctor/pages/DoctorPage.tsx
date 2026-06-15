@@ -7,6 +7,7 @@ import { Card } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { useAllAgents } from '@/features/agents/hooks/useActiveAgent'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { useDoctorStore } from '../store/doctor.store'
@@ -84,10 +85,7 @@ export function DoctorPage() {
             onClick={() => void scan(inputs)}
             disabled={scanning}
           >
-            <Icon
-              name={scanning ? 'loader' : 'refresh-cw'}
-              className={scanning ? 'animate-spin' : ''}
-            />
+            {scanning ? <Spinner label="Scanning…" /> : <Icon name="refresh-cw" />}
             Rescan
           </Button>
         }
@@ -164,10 +162,11 @@ export function DoctorPage() {
                       onClick={() => void fix(f, inputs)}
                       disabled={busy}
                     >
-                      <Icon
-                        name={busy ? 'loader' : 'wand-sparkles'}
-                        className={busy ? 'animate-spin' : ''}
-                      />
+                      {busy ? (
+                        <Spinner label="Fixing…" />
+                      ) : (
+                        <Icon name="wand-sparkles" />
+                      )}
                       Fix
                     </Button>
                   )}

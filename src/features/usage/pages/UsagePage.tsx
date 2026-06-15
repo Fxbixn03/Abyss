@@ -5,6 +5,7 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { Card } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { formatMoney } from '@/shared/lib/cost'
 import { reportError } from '@/shared/lib/errors'
@@ -192,10 +193,7 @@ export function UsagePage() {
               onClick={() => setReload((n) => n + 1)}
               disabled={loading}
             >
-              <Icon
-                name={loading ? 'loader' : 'refresh-cw'}
-                className={loading ? 'animate-spin' : ''}
-              />
+              {loading ? <Spinner label="Refreshing…" /> : <Icon name="refresh-cw" />}
               Refresh
             </Button>
           </div>

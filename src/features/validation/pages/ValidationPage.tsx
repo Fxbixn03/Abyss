@@ -8,6 +8,7 @@ import { Badge } from '@/shared/components/ui/badge'
 import { Card } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
 import {
@@ -379,10 +380,7 @@ export function ValidationPage() {
             onClick={() => setRanAt(Date.now())}
             disabled={loading}
           >
-            <Icon
-              name={loading ? 'loader' : 'refresh-cw'}
-              className={loading ? 'animate-spin' : ''}
-            />
+            {loading ? <Spinner label="Re-running…" /> : <Icon name="refresh-cw" />}
             Re-run
           </Button>
         }

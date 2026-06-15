@@ -21,6 +21,7 @@ import {
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
 import type { SpinnerVerbsMode } from '@/shared/types/spinner'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
@@ -102,7 +103,7 @@ export function SpinnerPage() {
           <div className="flex items-center gap-2">
             {dirty && <Badge variant="warning">Unsaved</Badge>}
             <Button onClick={() => void save(basePath)} disabled={!dirty || saving}>
-              <Icon name={saving ? 'loader' : 'save'} className={saving ? 'animate-spin' : ''} />
+              {saving ? <Spinner label="Saving…" /> : <Icon name="save" />}
               Save
             </Button>
           </div>
