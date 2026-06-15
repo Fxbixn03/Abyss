@@ -301,7 +301,7 @@ export const continueDefinition: AgentDefinition = {
   docsUrl: 'https://docs.continue.dev/cli/quickstart',
   capabilities: {
     instructions: true,
-    mcp: false,
+    mcp: true,
     permissions: false,
     modelEnv: false,
     agents: false,
