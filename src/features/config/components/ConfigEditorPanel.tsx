@@ -8,6 +8,7 @@ import { Icon } from '@/shared/components/Icon'
 import { EmptyState } from '@/shared/components/EmptyState'
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -289,36 +290,45 @@ export function ConfigEditorPanel() {
             </DropdownMenu>
           )}
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setHistoryOpen(true)}
-            disabled={!filePath || !fileExists}
-          >
-            <Icon name="history" />
-            History
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={revert}
-            disabled={!isDirty || saving}
-          >
-            <Icon name="rotate-ccw" />
-            Revert
-          </Button>
-          <Button
-            variant={lineWrap ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => {
-              const next = !lineWrap
-              setLineWrap(next)
-              localStorage.setItem('abyss:editor:lineWrap', String(next))
-            }}
-            title="Toggle word wrap"
-          >
-            <Icon name="wrap-text" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="More editor actions"
+                title="More actions"
+              >
+                <Icon name="more-horizontal" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setHistoryOpen(true)}
+                disabled={!filePath || !fileExists}
+              >
+                <Icon name="history" />
+                History
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={revert}
+                disabled={!isDirty || saving}
+              >
+                <Icon name="rotate-ccw" />
+                Revert
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={lineWrap}
+                onCheckedChange={(checked) => {
+                  setLineWrap(checked)
+                  localStorage.setItem('abyss:editor:lineWrap', String(checked))
+                }}
+              >
+                <Icon name="wrap-text" />
+                Word wrap
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             size="sm"
             onClick={requestSave}
