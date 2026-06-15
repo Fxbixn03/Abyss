@@ -184,6 +184,11 @@ function plandexMcpPath(basePath: string): string {
   return path.join(basePath, 'mcp.json')
 }
 
+/** Amp (Sourcegraph) keeps its `mcpServers` map inside `<base>/settings.json` (same shape as Gemini). */
+function ampMcpPath(basePath: string): string {
+  return path.join(basePath, 'settings.json')
+}
+
 /**
  * Zed Editor stores its full config (including MCP context servers) in
  * `<base>/settings.json` under the `context_servers` key. This is a different
@@ -379,6 +384,7 @@ export function getMcpConfigPath(
   if (agentId === 'kiro') return kiroMcpPath(basePath)
   if (agentId === 'amazonq') return amazonqMcpPath(basePath)
   if (agentId === 'plandex') return plandexMcpPath(basePath)
+  if (agentId === 'amp') return ampMcpPath(basePath)
   if (agentId === 'goose') return gooseConfigPath(basePath)
   if (agentId === 'zed') return zedSettingsPath(basePath)
   return mcpConfigPath(projectDir)
@@ -405,6 +411,7 @@ export function readMcpServers(
   if (agentId === 'kiro') return readJsonMcp(kiroMcpPath(basePath))
   if (agentId === 'amazonq') return readJsonMcp(amazonqMcpPath(basePath))
   if (agentId === 'plandex') return readJsonMcp(plandexMcpPath(basePath))
+  if (agentId === 'amp') return readJsonMcp(ampMcpPath(basePath))
   if (agentId === 'goose') return readGooseMcp(basePath)
   if (agentId === 'zed') return readZedMcp(basePath)
   return readJsonMcp(mcpConfigPath(projectDir))
@@ -433,6 +440,8 @@ export function writeMcpServers(
     return writeJsonMcp(amazonqMcpPath(basePath), entries)
   if (agentId === 'plandex')
     return writeJsonMcp(plandexMcpPath(basePath), entries)
+  if (agentId === 'amp')
+    return writeJsonMcp(ampMcpPath(basePath), entries)
   if (agentId === 'goose')
     return writeGooseMcp(basePath, entries)
   if (agentId === 'zed')
