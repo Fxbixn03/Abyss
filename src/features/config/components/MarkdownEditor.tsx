@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { EditorView } from '@codemirror/view'
 import type { Statistics } from '@uiw/react-codemirror'
 import type { ConfigLanguage } from '@/shared/types/agent'
@@ -13,6 +13,14 @@ const MODE_TITLES: Record<Mode, string> = {
   edit: 'Edit (Ctrl+Shift+E)',
   split: 'Split',
   preview: 'Preview (Ctrl+Shift+P)',
+}
+
+const VIEW_MODE_KEY = 'abyss:editor:viewMode'
+
+function readPersistedMode(): Mode {
+  const stored = localStorage.getItem(VIEW_MODE_KEY)
+  if (stored === 'split' || stored === 'preview') return stored
+  return 'edit'
 }
 
 /**
@@ -34,7 +42,13 @@ export function MarkdownEditor({
   onStatistics?: (stats: Statistics) => void
   lineWrap?: boolean
 }) {
-  const [mode, setMode] = useState<Mode>('edit')
+  const [mode, setMode] = useState<Mode>(readPersistedMode)
+
+  const applyMode = useCallback((next: Mode) => {
+    localStorage.setItem(VIEW_MODE_KEY, next)
+    setMode(next)
+  }, [])
+
   const editorPaneRef = useRef<HTMLDivElement>(null)
   const previewRef = useRef<HTMLDivElement>(null)
 
@@ -80,19 +94,20 @@ export function MarkdownEditor({
       if (e.key === 'P' || e.key === 'p') {
         e.preventDefault()
         setMode((prev) => {
-          const idx = MODES.indexOf(prev)
-          return MODES[(idx + 1) % MODES.length]
+          const next = MODES[(MODES.indexOf(prev) + 1) % MODES.length]
+          localStorage.setItem(VIEW_MODE_KEY, next)
+          return next
         })
       } else if (e.key === 'E' || e.key === 'e') {
         e.preventDefault()
-        setMode('edit')
+        applyMode('edit')
       }
     }
     window.addEventListener('keydown', handler)
     return () => {
       window.removeEventListener('keydown', handler)
     }
-  }, [language])
+  }, [language, applyMode])
 
   if (language !== 'markdown') {
     return (
@@ -115,7 +130,7 @@ export function MarkdownEditor({
             key={m}
             type="button"
             title={MODE_TITLES[m]}
-            onClick={() => setMode(m)}
+            onClick={() => applyMode(m)}
             className={cn(
               'rounded-[5px] px-2 py-0.5 text-xs capitalize transition-colors',
               mode === m
