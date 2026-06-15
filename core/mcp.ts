@@ -14,7 +14,7 @@ import os from 'node:os'
 import path from 'node:path'
 import type { McpServerEntry } from '@/shared/types/config'
 import { readJsonFile, writeJsonFile } from './json-file'
-import { readCodexMcp, writeCodexMcp } from './mcp-codex'
+import { codexConfigPath, readCodexMcp, writeCodexMcp } from './mcp-codex'
 
 interface RawMcpServer {
   // Free-form to tolerate agent-specific stdio tokens (Copilot uses "local").
@@ -143,6 +143,24 @@ function copilotMcpPath(basePath: string): string {
 /** Windsurf keeps its `mcpServers` map in `<base>/mcp_config.json`. */
 function windsurfMcpPath(basePath: string): string {
   return path.join(basePath, 'mcp_config.json')
+}
+
+/**
+ * Return the on-disk path of the file that holds MCP server config for the
+ * given agent. Mirrors the routing in {@link readMcpServers} so callers can
+ * check path existence without re-deriving it independently.
+ */
+export function getMcpConfigPath(
+  agentId: string,
+  basePath: string,
+  projectDir?: string,
+): string {
+  if (agentId === 'codex') return codexConfigPath(basePath)
+  if (agentId === 'cursor') return cursorMcpPath(basePath)
+  if (agentId === 'gemini') return geminiSettingsPath(basePath)
+  if (agentId === 'copilot') return copilotMcpPath(basePath)
+  if (agentId === 'windsurf') return windsurfMcpPath(basePath)
+  return mcpConfigPath(projectDir)
 }
 
 /**

@@ -22,7 +22,7 @@ interface CodexMcpServer {
 }
 
 /** `basePath` is the `.codex` dir (global `~/.codex` or `<project>/.codex`). */
-function codexConfigPath(basePath: string): string {
+export function codexConfigPath(basePath: string): string {
   const dir =
     basePath && basePath.trim() !== ''
       ? basePath

@@ -12,7 +12,8 @@
 
 import path from 'node:path'
 import { readAgentConfigFile } from './config-io'
-import { readMcpServers } from './mcp'
+import { getMcpConfigPath, readMcpServers } from './mcp'
+import { ConfigParseError } from './config-error'
 import { pathExists, readTextFile } from './json-file'
 import type { AgentDefinition } from '@/shared/types/agent'
 
@@ -99,41 +100,23 @@ async function checkMcpConfig(
 ): Promise<ValidationFinding[]> {
   if (!def.capabilities.mcp) return []
 
-  // Derive the expected MCP file path per agent (mirrors logic in core/mcp.ts).
-  let mcpFilePath: string
-  if (def.id === 'codex') {
-    mcpFilePath = path.join(basePath, 'config.toml')
-  } else if (def.id === 'cursor') {
-    mcpFilePath = path.join(basePath, 'mcp.json')
-  } else if (def.id === 'gemini') {
-    mcpFilePath = path.join(basePath, 'settings.json')
-  } else if (def.id === 'copilot') {
-    mcpFilePath = path.join(basePath, 'mcp-config.json')
-  } else if (def.id === 'windsurf') {
-    mcpFilePath = path.join(basePath, 'mcp_config.json')
-  } else {
-    // Claude: ~/.claude.json (user-scoped, outside basePath)
-    const dir = process.env.CLAUDE_CONFIG_DIR?.trim()
-    mcpFilePath = dir
-      ? path.join(dir, '.claude.json')
-      : path.join(
-          process.env.HOME ?? process.env.USERPROFILE ?? basePath,
-          '.claude.json',
-        )
-  }
-
-  if (!(await pathExists(mcpFilePath))) return []
-
   try {
     await readMcpServers(def.id, basePath)
     return []
   } catch (err) {
+    // ConfigParseError already carries filePath; fall back to the path helper
+    // for any unexpected error type so the finding always has a file reference.
+    const filePath =
+      err instanceof ConfigParseError
+        ? err.filePath
+        : getMcpConfigPath(def.id, basePath)
+
     return [
       {
         severity: 'error',
         agentId: def.id,
         agentName: def.displayName,
-        file: mcpFilePath,
+        file: filePath,
         message:
           'MCP config could not be parsed: ' +
           (err instanceof Error ? err.message : String(err)),
