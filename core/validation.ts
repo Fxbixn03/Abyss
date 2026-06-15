@@ -50,6 +50,7 @@ async function checkInstructionFile(
       file: result.path,
       message: `Instruction file ${spec.filename} does not exist`,
       route: '/editor',
+      suggestedAction: 'create-file',
     })
   } else if (result.content.trim() === '') {
     out.push({
@@ -59,6 +60,7 @@ async function checkInstructionFile(
       file: result.path,
       message: `Instruction file ${spec.filename} is empty`,
       route: '/editor',
+      suggestedAction: 'open-raw-editor',
     })
   }
 
@@ -92,6 +94,7 @@ async function checkSettingsJson(
           'settings.json contains invalid JSON: ' +
           (err instanceof Error ? err.message : String(err)),
         route: '/raw-settings',
+        suggestedAction: 'open-raw-editor',
       },
     ]
   }
@@ -125,6 +128,7 @@ async function checkMcpConfig(
           'MCP config could not be parsed: ' +
           (err instanceof Error ? err.message : String(err)),
         route: '/mcp',
+        suggestedAction: 'open-mcp',
       },
     ]
   }
@@ -166,6 +170,7 @@ async function checkHooks(
           'Hooks config could not be parsed: ' +
           (err instanceof Error ? err.message : String(err)),
         route: '/hooks',
+        suggestedAction: 'open-hooks',
       },
     ]
   }
