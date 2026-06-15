@@ -478,7 +478,7 @@ export const gooseDefinition: AgentDefinition = {
   docsUrl: 'https://block.github.io/goose/',
   capabilities: {
     instructions: true,
-    mcp: false,
+    mcp: true,
     permissions: false,
     modelEnv: false,
     agents: false,

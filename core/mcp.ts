@@ -8,14 +8,20 @@
  * We read/write that real file and carefully preserve every other key (projects,
  * oauthAccount, caches, …) and any unknown per-server fields, so Abyss can never
  * clobber the live config.
+ *
+ * Goose (Block) uses a YAML-based format (`~/.config/goose/config.yaml`) with an
+ * `extensions` key instead of `mcpServers`. Each extension entry is mapped to a
+ * {@link McpServerEntry} on read and written back while preserving all other keys.
  */
 
 import os from 'node:os'
 import path from 'node:path'
+import * as yaml from 'js-yaml'
 import type { McpServerEntry } from '@/shared/types/config'
 import { claudeMcpFileSchema } from '@/shared/schemas/config.schemas'
-import { readJsonFile, writeJsonFile } from './json-file'
+import { readJsonFile, writeJsonFile, pathExists, readTextFile, writeTextFileAtomic } from './json-file'
 import { codexConfigPath, readCodexMcp, writeCodexMcp } from './mcp-codex'
+import { ConfigParseError } from './config-error'
 
 interface RawMcpServer {
   // Free-form to tolerate agent-specific stdio tokens (Copilot uses "local").
@@ -165,6 +171,115 @@ function amazonqMcpPath(basePath: string): string {
 }
 
 /**
+ * Goose (Block) keeps MCP-compatible extensions in `config.yaml` under the
+ * `extensions` key. The file lives at `<base>/config.yaml` where `base` is
+ * `~/.config/goose` on Linux/macOS or `%APPDATA%\goose` on Windows.
+ */
+function gooseConfigPath(basePath: string): string {
+  return path.join(basePath, 'config.yaml')
+}
+
+/**
+ * Raw shape of a single Goose extension entry inside `extensions.<name>`.
+ * Goose supports stdio extensions (cmd/args) and remote extensions (url).
+ */
+interface GooseExtension {
+  type?: string
+  cmd?: string
+  args?: string[]
+  url?: string
+  env?: Record<string, string>
+  enabled?: boolean
+  [key: string]: unknown
+}
+
+/**
+ * Raw shape of `~/.config/goose/config.yaml` — we only read `extensions`;
+ * all other top-level keys are preserved as unknown pass-through.
+ */
+interface GooseConfig {
+  extensions?: Record<string, GooseExtension>
+  [key: string]: unknown
+}
+
+async function readGooseYaml(file: string): Promise<GooseConfig> {
+  if (!(await pathExists(file))) return {}
+  const raw = await readTextFile(file)
+  if (raw.trim() === '') return {}
+  try {
+    const parsed = yaml.load(raw)
+    if (parsed === null || parsed === undefined) return {}
+    if (typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    return parsed as GooseConfig
+  } catch (err) {
+    throw new ConfigParseError(file, err)
+  }
+}
+
+/** Map a Goose `type` token to the canonical {@link McpServerEntry} transport. */
+function gooseNormalizeType(ext: GooseExtension): McpServerEntry['type'] {
+  if (ext.type === 'http' || ext.type === 'sse') return ext.type
+  if (ext.url && !ext.cmd) return 'http'
+  return 'stdio'
+}
+
+export async function readGooseMcp(basePath: string): Promise<McpServerEntry[]> {
+  const file = gooseConfigPath(basePath)
+  const data = await readGooseYaml(file)
+  const extensions = data.extensions ?? {}
+  return Object.entries(extensions).map(([name, ext], index) => ({
+    id: `${name}-${index}`,
+    name,
+    type: gooseNormalizeType(ext),
+    command: ext.cmd,
+    args: ext.args,
+    url: ext.url,
+    env: ext.env,
+    enabled: ext.enabled !== false,
+  }))
+}
+
+export async function writeGooseMcp(
+  basePath: string,
+  entries: McpServerEntry[],
+): Promise<{ success: boolean; path: string }> {
+  const file = gooseConfigPath(basePath)
+  // Re-read to preserve all other top-level YAML keys.
+  const data = await readGooseYaml(file)
+  const existing = data.extensions ?? {}
+  const out: Record<string, GooseExtension> = {}
+
+  for (const entry of entries) {
+    const prev: GooseExtension = { ...(existing[entry.name] ?? {}) }
+    prev.type = entry.type === 'stdio' ? 'stdio' : entry.type
+
+    if (entry.type === 'stdio') {
+      if (entry.command) prev.cmd = entry.command
+      else delete prev.cmd
+      if (entry.args !== undefined) prev.args = entry.args
+      else delete prev.args
+      delete prev.url
+    } else {
+      if (entry.url) prev.url = entry.url
+      else delete prev.url
+      delete prev.cmd
+      delete prev.args
+    }
+
+    if (entry.env !== undefined) prev.env = entry.env
+    else delete prev.env
+
+    prev.enabled = entry.enabled
+
+    out[entry.name] = prev
+  }
+
+  data.extensions = out
+  await writeTextFileAtomic(file, yaml.dump(data, { lineWidth: -1 }))
+  return { success: true, path: file }
+}
+
+/**
  * Return the on-disk path of the file that holds MCP server config for the
  * given agent. Mirrors the routing in {@link readMcpServers} so callers can
  * check path existence without re-deriving it independently.
@@ -182,14 +297,16 @@ export function getMcpConfigPath(
   if (agentId === 'roo') return rooMcpPath(basePath)
   if (agentId === 'kiro') return kiroMcpPath(basePath)
   if (agentId === 'amazonq') return amazonqMcpPath(basePath)
+  if (agentId === 'goose') return gooseConfigPath(basePath)
   return mcpConfigPath(projectDir)
 }
 
 /**
  * Read MCP servers for an agent. Claude/Cursor/Gemini/Copilot use JSON, Codex
- * uses TOML. Claude: `~/.claude.json` / `<project>/.mcp.json`; Cursor:
- * `<base>/mcp.json`; Gemini: `<base>/settings.json`; Copilot:
- * `<base>/mcp-config.json`; Codex: `<base>/config.toml`.
+ * uses TOML, Goose uses YAML (`extensions` key). Claude: `~/.claude.json` /
+ * `<project>/.mcp.json`; Cursor: `<base>/mcp.json`; Gemini:
+ * `<base>/settings.json`; Copilot: `<base>/mcp-config.json`; Codex:
+ * `<base>/config.toml`; Goose: `<base>/config.yaml`.
  */
 export function readMcpServers(
   agentId: string,
@@ -204,6 +321,7 @@ export function readMcpServers(
   if (agentId === 'roo') return readJsonMcp(rooMcpPath(basePath))
   if (agentId === 'kiro') return readJsonMcp(kiroMcpPath(basePath))
   if (agentId === 'amazonq') return readJsonMcp(amazonqMcpPath(basePath))
+  if (agentId === 'goose') return readGooseMcp(basePath)
   return readJsonMcp(mcpConfigPath(projectDir))
 }
 
@@ -228,5 +346,7 @@ export function writeMcpServers(
     return writeJsonMcp(kiroMcpPath(basePath), entries)
   if (agentId === 'amazonq')
     return writeJsonMcp(amazonqMcpPath(basePath), entries)
+  if (agentId === 'goose')
+    return writeGooseMcp(basePath, entries)
   return writeJsonMcp(mcpConfigPath(projectDir), entries)
 }
