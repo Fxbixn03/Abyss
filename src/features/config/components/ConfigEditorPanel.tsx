@@ -39,6 +39,11 @@ import { SECTION_SNIPPETS } from '../lib/sections'
 /** Typical large-model context window — the token budget bar is relative to it. */
 const CONTEXT_WINDOW = 200_000
 
+/** Count words in a string (split on whitespace, ignoring empty tokens). */
+function countWords(text: string): number {
+  return text.trim() === '' ? 0 : text.trim().split(/\s+/).length
+}
+
 export function ConfigEditorPanel() {
   const agentId = useConfigStore((s) => s.agentId)
   const spec = useConfigStore((s) => s.spec)
@@ -72,6 +77,8 @@ export function ConfigEditorPanel() {
   )
   const [copyTarget, setCopyTarget] = useState<AgentAdapter | null>(null)
   const [cursorLine, setCursorLine] = useState(1)
+  const [selectionCode, setSelectionCode] = useState('')
+  const [hasSelection, setHasSelection] = useState(false)
 
   const editorViewRef = useRef<EditorView | null>(null)
 
@@ -87,8 +94,15 @@ export function ConfigEditorPanel() {
     null,
   )
 
+  const docWordCount = countWords(draft)
+
+  const selWordCount = hasSelection ? countWords(selectionCode) : 0
+  const selCharCount = hasSelection ? selectionCode.length : 0
+
   const onEditorStatistics = useCallback((stats: Statistics) => {
     setCursorLine(stats.line.number)
+    setHasSelection(stats.selectedText)
+    setSelectionCode(stats.selectedText ? stats.selectionCode : '')
   }, [])
 
   const otherAgents = allAgents.filter(
@@ -400,6 +414,12 @@ export function ConfigEditorPanel() {
           </button>
         )}
         <div className="flex shrink-0 items-center gap-2 font-code text-[11px] text-muted-foreground">
+          {hasSelection && (
+            <span className="rounded bg-primary/15 px-1.5 py-0.5 text-primary">
+              {selCharCount} chars · {selWordCount} words selected
+            </span>
+          )}
+          <span>{docWordCount.toLocaleString()} words</span>
           <span>~{formatTokens(tokens)} tokens</span>
           <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
             <div
