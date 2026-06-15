@@ -15,6 +15,7 @@ import { useConfigStore } from '../store/config.store'
 import { ConfigEditorPanel } from '../components/ConfigEditorPanel'
 import { EffectiveInstructionsDialog } from '../components/EffectiveInstructionsDialog'
 import { ScopeCompareDialog } from '../components/ScopeCompareDialog'
+import type { ConfigFileSpec } from '@/shared/types/agent'
 
 function basename(p: string): string {
   return p.split(/[\\/]/).filter(Boolean).pop() ?? p
@@ -27,6 +28,12 @@ export function ConfigPage() {
   const open = useConfigStore((s) => s.open)
   const navigate = useNavigate()
 
+  // Read store state for badge computation
+  const storeSpec = useConfigStore((s) => s.spec)
+  const storeDraft = useConfigStore((s) => s.draft)
+  const storeOriginal = useConfigStore((s) => s.original)
+  const storeIssues = useConfigStore((s) => s.issues)
+
   const [effectiveOpen, setEffectiveOpen] = useState(false)
   const [compareOpen, setCompareOpen] = useState(false)
 
@@ -38,6 +45,19 @@ export function ConfigPage() {
   useEffect(() => {
     if (selectedSpec && basePath) void open(agent.id, selectedSpec, basePath)
   }, [agent, selectedSpec, basePath, open])
+
+  /** Returns badge state for a given config file spec entry. */
+  function getBadgeState(spec: ConfigFileSpec): {
+    isDirty: boolean
+    hasErrors: boolean
+  } {
+    const isActiveInStore = storeSpec?.id === spec.id
+    if (!isActiveInStore) return { isDirty: false, hasErrors: false }
+    return {
+      isDirty: storeDraft !== storeOriginal,
+      hasErrors: storeIssues.some((i) => i.severity === 'error'),
+    }
+  }
 
   if (!basePath) {
     return (
@@ -101,6 +121,7 @@ export function ConfigPage() {
         <aside className="flex flex-col gap-1 overflow-y-auto">
           {specs.map((spec) => {
             const active = spec.id === selectedSpec?.id
+            const { isDirty, hasErrors } = getBadgeState(spec)
             return (
               <button
                 key={spec.id}
@@ -118,7 +139,21 @@ export function ConfigPage() {
                     name="file-text"
                     className="size-4 text-muted-foreground"
                   />
-                  {spec.filename}
+                  <span className="flex-1 truncate">{spec.filename}</span>
+                  {hasErrors && (
+                    <span
+                      className="size-2 shrink-0 rounded-full bg-destructive"
+                      title="Validation errors"
+                      aria-label="Validation errors"
+                    />
+                  )}
+                  {!hasErrors && isDirty && (
+                    <span
+                      className="size-2 shrink-0 rounded-full bg-amber-500"
+                      title="Unsaved changes"
+                      aria-label="Unsaved changes"
+                    />
+                  )}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {spec.description}
