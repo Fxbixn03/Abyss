@@ -122,6 +122,37 @@ export function ThemePreview({
           </div>
         </div>
       </div>
+
+      {/* Named color swatch strip */}
+      <div
+        style={{ borderColor: c.border }}
+        className="flex items-center justify-around border-t px-3 py-2"
+      >
+        {(
+          [
+            { key: 'background', label: 'bg' },
+            { key: 'surface', label: 'surface' },
+            { key: 'primary', label: 'primary' },
+            { key: 'sidebarActive', label: 'accent' },
+          ] as const
+        ).map(({ key, label }) => (
+          <div key={label} className="flex flex-col items-center gap-1">
+            <span
+              style={{
+                background: c[key],
+                borderColor: c.border,
+              }}
+              className="block size-4 rounded-sm border"
+            />
+            <span
+              style={{ color: c.textMuted, fontSize: '9px' }}
+              className="leading-none"
+            >
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
