@@ -25,6 +25,10 @@ import {
   MAX_RECENT_SHOWN,
 } from '@/features/navigation/store/recentNav.store'
 import {
+  useRecentActionsStore,
+  MAX_RECENT_ACTIONS_SHOWN,
+} from '@/features/navigation/store/recentActions.store'
+import {
   useActiveAgent,
   useAllAgents,
 } from '@/features/agents/hooks/useActiveAgent'
@@ -279,6 +283,9 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
     [allNavItems],
   )
 
+  const pushRecentAction = useRecentActionsStore((s) => s.push)
+  const recentActions = useRecentActionsStore((s) => s.actions)
+
   const recentRoutes = useRecentNavStore((s) => s.routes)
   const recentNavItems = useMemo(() => {
     const results: NavItem[] = []
@@ -320,12 +327,45 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
           </CommandGroup>
         )}
 
+        {search === '' && recentActions.length > 0 && (
+          <CommandGroup heading="Recent actions">
+            {recentActions.slice(0, MAX_RECENT_ACTIONS_SHOWN).map((action) => (
+              <CommandItem
+                key={`recent-action-${action.value}`}
+                value={`recent-action ${action.label} ${action.value}`}
+                onSelect={run(() => {
+                  // Re-execute the recorded action by dispatching its stored value.
+                  const [kind, id] = action.value.split(':') as [string, string]
+                  if (kind === 'agent') {
+                    setActiveAgent(id)
+                  } else if (kind === 'theme') {
+                    setAgentTheme(activeAgent.id, id)
+                  } else if (kind === 'template') {
+                    requestApplyTemplate(id)
+                    navigate('/templates')
+                  }
+                })}
+              >
+                <Icon name={action.icon} />
+                {action.label}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
         <CommandGroup heading="Agents">
           {agents.map((agent) => (
             <CommandItem
               key={agent.id}
               value={`agent ${agent.displayName} ${agent.id}`}
-              onSelect={run(() => setActiveAgent(agent.id))}
+              onSelect={run(() => {
+                setActiveAgent(agent.id)
+                pushRecentAction({
+                  label: `Switch to ${agent.displayName}`,
+                  value: `agent:${agent.id}`,
+                  icon: 'bot',
+                })
+              })}
             >
               <AgentGlyph agent={agent} className="size-4 rounded-[3px]" />
               Switch to {agent.displayName}
@@ -378,6 +418,11 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
                 onSelect={run(() => {
                   requestApplyTemplate(t.id)
                   navigate('/templates')
+                  pushRecentAction({
+                    label: `Apply template: ${t.title}`,
+                    value: `template:${t.id}`,
+                    icon: 'library',
+                  })
                 })}
               >
                 <Icon name="library" />
@@ -456,7 +501,14 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
               value={`theme ${theme.label}`}
               onMouseEnter={() => applyTheme(theme, appearance)}
               onMouseLeave={restoreActiveTheme}
-              onSelect={run(() => setAgentTheme(activeAgent.id, theme.id))}
+              onSelect={run(() => {
+                setAgentTheme(activeAgent.id, theme.id)
+                pushRecentAction({
+                  label: `Apply theme: ${theme.label}`,
+                  value: `theme:${theme.id}`,
+                  icon: 'palette',
+                })
+              })}
             >
               <Icon name="palette" />
               {theme.label}
