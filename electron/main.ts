@@ -145,6 +145,31 @@ async function registerCustomAgents(ctx: IpcContext): Promise<void> {
   }
 }
 
+/**
+ * Apply the user's `snapshotRetentionPerFile` preference (if set) by
+ * re-calling `configureSnapshots` with the same root/exclude/allowedRoots but
+ * the persisted retention cap. Runs once at startup, after settings are loaded.
+ */
+async function maybeReconfigureSnapshotRetention(
+  ctx: IpcContext,
+): Promise<void> {
+  try {
+    const settings = await ctx.settings.read()
+    const retentionPerFile = settings.snapshotRetentionPerFile
+    if (typeof retentionPerFile !== 'number') return
+    const env = ctx.env
+    const userData = ctx.userData
+    configureSnapshots({
+      root: path.join(userData, 'snapshots'),
+      exclude: [userData],
+      allowedRoots: allowedRoots(env, userData),
+      retentionPerFile,
+    })
+  } catch {
+    // Best-effort; a broken settings file must not block startup.
+  }
+}
+
 /** Daily auto-backup: runs once per day on first launch, honouring settings. */
 async function maybeRunDailyBackup(ctx: IpcContext): Promise<void> {
   try {
@@ -177,6 +202,7 @@ if (!gotLock) {
     // Register user-defined agents from the persisted settings before the window
     // opens, so config IO (read/write/detect) resolves them on first paint.
     await registerCustomAgents(ctx)
+    void maybeReconfigureSnapshotRetention(ctx)
     createWindow()
     setupAutoUpdater(ctx.emit, isDev)
     void maybeRunDailyBackup(ctx)

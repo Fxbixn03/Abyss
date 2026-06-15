@@ -24,10 +24,15 @@ interface SnapshotConfig {
    * steering a restore write outside Abyss's allowed directories. Empty = allow.
    */
   allowedRoots?: string[]
+  /**
+   * Maximum number of snapshots to keep per file. Older entries are pruned
+   * after each write. Defaults to 30 when not specified.
+   */
+  retentionPerFile?: number
 }
 
-/** Keep at most this many snapshots per file; older ones are pruned. */
-const MAX_PER_FILE = 30
+/** Fallback cap used when {@link SnapshotConfig.retentionPerFile} is not set. */
+const DEFAULT_RETENTION_PER_FILE = 30
 
 let config: SnapshotConfig | null = null
 
@@ -86,11 +91,12 @@ export async function recordSnapshot(
 }
 
 async function prune(dir: string): Promise<void> {
+  const maxPerFile = config?.retentionPerFile ?? DEFAULT_RETENTION_PER_FILE
   const stamps = await readStamps(dir)
-  if (stamps.length <= MAX_PER_FILE) return
+  if (stamps.length <= maxPerFile) return
   const toRemove = stamps
     .sort((a, b) => a - b)
-    .slice(0, stamps.length - MAX_PER_FILE)
+    .slice(0, stamps.length - maxPerFile)
   await Promise.all(
     toRemove.map((s) =>
       fs

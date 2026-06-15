@@ -133,6 +133,12 @@ export const appSettingsSchema = z
     autoBackup: z.boolean().optional().catch(undefined),
     backupDir: z.string().optional().catch(undefined),
     backupKeep: z.number().optional().catch(undefined),
+    snapshotRetentionPerFile: z
+      .number()
+      .min(5)
+      .max(200)
+      .optional()
+      .catch(undefined),
     sandboxAcknowledged: z.boolean().optional().catch(undefined),
     uiFontSize: z
       .enum(['small', 'medium', 'large'])

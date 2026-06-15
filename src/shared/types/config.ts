@@ -130,6 +130,8 @@ export interface AppSettings {
   backupDir?: string
   /** How many most-recent backups to keep. */
   backupKeep: number
+  /** How many snapshots to keep per file (default 30, min 5, max 200). */
+  snapshotRetentionPerFile: number
   /** User confirmed (once) that the sandbox runs real shell commands. */
   sandboxAcknowledged: boolean
   /** Base UI font size; drives `--font-size-base` on :root. Defaults to medium. */
@@ -149,6 +151,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   currency: 'usd',
   autoBackup: true,
   backupKeep: 3,
+  snapshotRetentionPerFile: 30,
   sandboxAcknowledged: false,
   uiFontSize: 'medium',
   customAgents: [],
