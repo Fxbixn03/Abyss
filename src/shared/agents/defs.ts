@@ -545,6 +545,47 @@ const amazonqInstructions: ConfigFileSpec = {
   description: 'Global system prompt for Amazon Q Developer CLI.',
 }
 
+const warpInstructions: ConfigFileSpec = {
+  id: 'instructions',
+  filename: 'default.md',
+  scope: 'global',
+  language: 'markdown',
+  description: 'Global agent instructions for Warp terminal AI (default.md).',
+}
+
+/**
+ * Warp terminal AI — reads global instructions from `~/.warp/agents/default.md`
+ * (Warp 2025+ global agent config). On Windows, the config lives under
+ * `%APPDATA%\warp\agents`.
+ */
+export const warpDefinition: AgentDefinition = {
+  id: 'warp',
+  name: 'warp',
+  displayName: 'Warp',
+  defaultThemeId: 'warp-night',
+  iconName: 'terminal',
+  docsUrl: 'https://docs.warp.dev/features/warp-ai',
+  capabilities: {
+    instructions: true,
+    mcp: false,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: false,
+    chats: false,
+  },
+  configFiles: [warpInstructions],
+  resolvePaths: (env: OsEnv) => [
+    env.platform === 'win32'
+      ? joinPath(env.platform, env.appData, 'warp', 'agents')
+      : joinPath(env.platform, env.home, '.warp', 'agents'),
+  ],
+}
+
 /**
  * Amazon Q Developer CLI (AWS) — stores the global system prompt at
  * `~/.aws/amazonq/system-prompt.md` and MCP servers at
@@ -592,6 +633,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   goose: gooseDefinition,
   kiro: kiroDefinition,
   amazonq: amazonqDefinition,
+  warp: warpDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -610,6 +652,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'goose',
   'kiro',
   'amazonq',
+  'warp',
 ]
 
 /**
