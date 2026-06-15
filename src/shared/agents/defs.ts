@@ -324,6 +324,14 @@ const aiderConfig: ConfigFileSpec = {
   description: 'Aider global configuration (~/.aider.conf.yml).',
 }
 
+const aiderModelSettings: ConfigFileSpec = {
+  id: 'model-settings',
+  filename: '.aider.model.settings.yml',
+  scope: 'global',
+  language: 'yaml',
+  description: 'Per-model settings overrides for Aider.',
+}
+
 /** Aider — YAML config at `~/.aider.conf.yml` (the home dir is the base). */
 export const aiderDefinition: AgentDefinition = {
   id: 'aider',
@@ -345,7 +353,7 @@ export const aiderDefinition: AgentDefinition = {
     rawSettings: false,
     chats: false,
   },
-  configFiles: [aiderConfig],
+  configFiles: [aiderConfig, aiderModelSettings],
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home)],
 }
 
