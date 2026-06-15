@@ -142,7 +142,7 @@ test('runValidation: corrupt settings.json emits an error finding', async () => 
       `expected "invalid json" in message, got: "${f.message}"`,
     )
     assert.equal(f.route, '/raw-settings')
-    assert.equal(f.suggestedAction, 'open-raw-editor')
+    assert.equal(f.suggestedAction, 'repair-settings')
   } finally {
     await fs.rm(base, { recursive: true, force: true })
   }
