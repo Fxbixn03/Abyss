@@ -34,8 +34,25 @@ export function StatusBar() {
   const errors = issues.filter((i) => i.severity === 'error').length
   const warnings = issues.filter((i) => i.severity === 'warning').length
 
+  const liveAnnouncement = [
+    doctorErrors > 0
+      ? `Config Doctor: ${doctorErrors} ${doctorErrors === 1 ? 'error' : 'errors'}`
+      : null,
+    updateStatus.state === 'downloaded' ? 'Update ready to install' : null,
+    updateStatus.state === 'available' ? 'Update available' : null,
+  ]
+    .filter(Boolean)
+    .join(', ')
+
   return (
-    <footer role="status" aria-live="polite" className="flex h-7 shrink-0 items-center justify-between gap-3 border-t border-sidebar-border bg-sidebar px-3 text-[11px] text-sidebar-foreground/70">
+    <footer role="contentinfo" className="flex h-7 shrink-0 items-center justify-between gap-3 border-t border-sidebar-border bg-sidebar px-3 text-[11px] text-sidebar-foreground/70">
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {liveAnnouncement}
+      </div>
       <div className="flex min-w-0 items-center gap-2">
         <span className="flex items-center gap-1.5">
           <Icon name={agent.icon} className="size-3" />
@@ -76,6 +93,7 @@ export function StatusBar() {
         {doctorErrors > 0 && (
           <button
             type="button"
+            aria-label={`Open Config Doctor — ${doctorErrors} ${doctorErrors === 1 ? 'error' : 'errors'}`}
             onClick={() => navigate('/doctor')}
             className="flex cursor-pointer items-center gap-1 text-destructive"
           >
@@ -86,6 +104,7 @@ export function StatusBar() {
         {updateStatus.state === 'downloaded' && (
           <button
             type="button"
+            aria-label="Update ready — click to install"
             onClick={() => navigate('/settings')}
             className="flex cursor-pointer items-center gap-1 text-success"
           >
@@ -96,6 +115,7 @@ export function StatusBar() {
         {updateStatus.state === 'available' && (
           <button
             type="button"
+            aria-label="Update available — click to view in settings"
             onClick={() => navigate('/settings')}
             className="flex cursor-pointer items-center gap-1 text-muted-foreground"
           >
