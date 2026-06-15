@@ -68,7 +68,12 @@ function SidebarLink({
     return (
       <Tooltip>
         <TooltipTrigger asChild>{link}</TooltipTrigger>
-        <TooltipContent side="right">{item.label}</TooltipContent>
+        <TooltipContent side="right">
+          <p className="font-medium">{item.label}</p>
+          {item.description && (
+            <p className="text-xs text-muted-foreground">{item.description}</p>
+          )}
+        </TooltipContent>
       </Tooltip>
     )
   }
