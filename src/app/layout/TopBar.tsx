@@ -1,11 +1,26 @@
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
 import { AgentSwitcher } from '@/features/agents/components/AgentSwitcher'
 import { AppearanceToggle } from '@/features/themes/components/AppearanceToggle'
 import { useCommandPalette } from '@/app/command/commandPalette.store'
 import { useBrowserNav } from '@/app/hooks/useBrowserNav'
+import { PRIMARY_NAV, SETTINGS_NAV } from '@/app/navigation'
 import { HelpButton } from './HelpButton'
+
+const ALL_NAV = [...PRIMARY_NAV, SETTINGS_NAV]
+
+function PageTitle() {
+  const { pathname } = useLocation()
+  const match = ALL_NAV.find((item) => item.route === pathname)
+  if (!match) return null
+  return (
+    <div className="flex min-w-0 items-center gap-1.5 text-sm">
+      <Icon name={match.icon} className="size-4 shrink-0 text-muted-foreground" />
+      <span className="truncate font-medium text-foreground">{match.label}</span>
+    </div>
+  )
+}
 
 export function TopBar() {
   const navigate = useNavigate()
@@ -14,8 +29,8 @@ export function TopBar() {
 
   return (
     <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-3">
-      <div className="flex items-center gap-2">
-        <div className="flex items-center">
+      <div className="flex min-w-0 items-center gap-2">
+        <div className="flex shrink-0 items-center">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -37,6 +52,7 @@ export function TopBar() {
             <Icon name="chevron-right" />
           </Button>
         </div>
+        <PageTitle />
         <AgentSwitcher />
       </div>
 
