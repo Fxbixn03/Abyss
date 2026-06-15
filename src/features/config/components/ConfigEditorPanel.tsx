@@ -61,6 +61,10 @@ export function ConfigEditorPanel() {
   const reload = useConfigStore((s) => s.reload)
 
   const confirmDiff = useSettingsStore((s) => s.settings.confirmDiffBeforeSave)
+  const autosave = useSettingsStore((s) => s.settings.autosave)
+  const autosaveDelaySeconds = useSettingsStore(
+    (s) => s.settings.autosaveDelaySeconds,
+  )
   const getBasePath = useSettingsStore((s) => s.getBasePath)
   const { scope, projectDir } = useScope()
   const allAgents = useAllAgents()
@@ -145,6 +149,17 @@ export function ConfigEditorPanel() {
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDirty, hasErrors, confirmDiff, draft, original])
+
+  // Debounced autosave: fire requestSave() after the configured idle period.
+  useEffect(() => {
+    if (!autosave || !isDirty || hasErrors) return
+    const delayMs = autosaveDelaySeconds * 1_000
+    const timer = window.setTimeout(() => {
+      requestSave()
+    }, delayMs)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autosave, autosaveDelaySeconds, draft, isDirty, hasErrors, confirmDiff, original])
 
   const insertIntoDraft = (content: string) => {
     const base = draft.replace(/\n+$/, '')

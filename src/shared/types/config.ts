@@ -138,6 +138,10 @@ export interface AppSettings {
   uiFontSize?: 'small' | 'medium' | 'large'
   /** User-defined agents, persisted so main + renderer can register them. */
   customAgents: CustomAgentSpec[]
+  /** Automatically save the open config file after idle for the configured delay. */
+  autosave: boolean
+  /** Idle period (in seconds) before autosave triggers. Min 1, max 30. */
+  autosaveDelaySeconds: number
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -155,6 +159,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   sandboxAcknowledged: false,
   uiFontSize: 'medium',
   customAgents: [],
+  autosave: false,
+  autosaveDelaySeconds: 3,
 }
 
 /** Auto-update lifecycle, pushed to the renderer as it progresses. */

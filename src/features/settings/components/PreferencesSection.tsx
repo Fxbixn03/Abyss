@@ -86,6 +86,37 @@ export function PreferencesSection() {
             }
           />
           <SettingRow
+            title="Autosave"
+            description="Automatically save the open config file after the configured idle period."
+            control={
+              <Switch
+                checked={settings.autosave}
+                onCheckedChange={(v) => void updatePrefs({ autosave: v })}
+              />
+            }
+          />
+          {settings.autosave && (
+            <SettingRow
+              title="Autosave delay"
+              description="Idle time (in seconds) before the file is saved automatically (1–30)."
+              control={
+                <Input
+                  type="number"
+                  min={1}
+                  max={30}
+                  step={1}
+                  value={settings.autosaveDelaySeconds}
+                  onChange={(e) => {
+                    const raw = Number(e.target.value)
+                    const clamped = Math.min(30, Math.max(1, raw || 1))
+                    void updatePrefs({ autosaveDelaySeconds: clamped })
+                  }}
+                  className="w-[80px] text-right font-code"
+                />
+              }
+            />
+          )}
+          <SettingRow
             title="Guided tour"
             description="Replay the short walkthrough of the main areas of Abyss."
             control={
