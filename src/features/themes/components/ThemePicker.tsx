@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { AgentId } from '@/shared/types/agent'
-import type { ThemeConfig } from '@/shared/types/theme'
+import type { AppearanceMode, ThemeConfig } from '@/shared/types/theme'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
@@ -27,6 +27,8 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
   const activeThemeId = activeTheme.id
 
   const [notice, setNotice] = useState<string | null>(null)
+  /** Local preview variant — defaults to the live appearance but can differ. */
+  const [previewVariant, setPreviewVariant] = useState<AppearanceMode>(appearance)
   void customThemes
   const canDelete = allThemes().length > 1
   const themes: ThemeConfig[] = getThemesForAgent(agentId)
@@ -91,9 +93,33 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Hover a theme to preview it live — click to apply.
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          Hover a theme to preview it live — click to apply.
+        </p>
+        <div
+          role="group"
+          aria-label="Preview palette"
+          className="flex rounded-md border border-border"
+        >
+          {(['light', 'dark'] as const).map((variant) => (
+            <button
+              key={variant}
+              type="button"
+              onClick={() => setPreviewVariant(variant)}
+              className={cn(
+                'px-2.5 py-1 text-xs font-medium capitalize transition-colors first:rounded-l-[calc(var(--radius)-1px)] last:rounded-r-[calc(var(--radius)-1px)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                previewVariant === variant
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              )}
+              aria-pressed={previewVariant === variant}
+            >
+              {variant}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div
         role="radiogroup"
@@ -137,7 +163,7 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
                   <Badge variant="muted">global</Badge>
                 ) : null}
               </div>
-              <ThemePreview theme={theme} variant={appearance} />
+              <ThemePreview theme={theme} variant={previewVariant} />
             </button>
           )
         })}
