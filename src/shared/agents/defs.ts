@@ -387,6 +387,46 @@ export const clineDefinition: AgentDefinition = {
   ],
 }
 
+const rooRules: ConfigFileSpec = {
+  id: 'instructions',
+  filename: 'instructions.md',
+  scope: 'global',
+  language: 'markdown',
+  description: 'Global Roo Code rules (loaded from ~/.roo/rules/).',
+}
+
+/**
+ * Roo Code (RooVetGit/Cline fork) — global rules at `~/.roo/rules/` and MCP
+ * servers in `~/.roo/mcp.json` (standard `{ mcpServers }` JSON shape).
+ */
+export const rooDefinition: AgentDefinition = {
+  id: 'roo',
+  name: 'roo',
+  displayName: 'Roo Code',
+  defaultThemeId: 'roo-circuit',
+  iconName: 'bot',
+  docsUrl: 'https://github.com/RooVetGit/Roo-Code',
+  capabilities: {
+    instructions: true,
+    mcp: true,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: false,
+    chats: false,
+  },
+  configFiles: [rooRules],
+  resolvePaths: (env: OsEnv) => [
+    env.platform === 'win32'
+      ? joinPath(env.platform, env.appData, 'roo', 'rules')
+      : joinPath(env.platform, env.home, '.roo', 'rules'),
+  ],
+}
+
 const ampInstructions: ConfigFileSpec = {
   id: 'instructions',
   filename: 'AGENTS.md',
@@ -468,6 +508,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   continue: continueDefinition,
   aider: aiderDefinition,
   cline: clineDefinition,
+  roo: rooDefinition,
   amp: ampDefinition,
   goose: gooseDefinition,
 }
@@ -483,6 +524,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'continue',
   'aider',
   'cline',
+  'roo',
   'amp',
   'goose',
 ]

@@ -8,6 +8,7 @@ import { windsurfAdapter } from '../adapters/windsurf.adapter'
 import { continueAdapter } from '../adapters/continue.adapter'
 import { aiderAdapter } from '../adapters/aider.adapter'
 import { clineAdapter } from '../adapters/cline.adapter'
+import { rooAdapter } from '../adapters/roo.adapter'
 import { ampAdapter } from '../adapters/amp.adapter'
 import { gooseAdapter } from '../adapters/goose.adapter'
 
@@ -55,5 +56,6 @@ agentRegistry.register(windsurfAdapter)
 agentRegistry.register(continueAdapter)
 agentRegistry.register(aiderAdapter)
 agentRegistry.register(clineAdapter)
+agentRegistry.register(rooAdapter)
 agentRegistry.register(ampAdapter)
 agentRegistry.register(gooseAdapter)
