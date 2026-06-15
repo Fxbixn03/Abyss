@@ -1,4 +1,4 @@
-import type { AgentAdapter } from '@/shared/types/agent'
+import type { AgentAdapter, SidebarSection } from '@/shared/types/agent'
 import { ampDefinition } from '@/shared/agents/defs'
 import { validateMarkdownInstructions } from '../lib/validators'
 import { createAdapter } from './base.adapter'
@@ -7,4 +7,13 @@ import { createAdapter } from './base.adapter'
 export const ampAdapter: AgentAdapter = createAdapter(ampDefinition, {
   icon: 'zap',
   validate: validateMarkdownInstructions,
+  getSidebarSections: (): SidebarSection[] => [
+    {
+      id: 'settings-file',
+      label: 'Settings (raw)',
+      icon: 'braces',
+      route: '/settings-file',
+      description: 'Raw settings.json',
+    },
+  ],
 })
