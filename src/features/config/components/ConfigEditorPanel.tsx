@@ -33,6 +33,7 @@ import { ValidationList } from './ValidationList'
 import { DiffPreviewDialog } from './DiffPreviewDialog'
 import { FileHistoryDialog } from './FileHistoryDialog'
 import { InsertTemplateDialog } from './InsertTemplateDialog'
+import { ConfigEditorStatusAnnouncer } from './ConfigEditorStatusAnnouncer'
 import { extractOutline } from '../lib/outline'
 import { SECTION_SNIPPETS } from '../lib/sections'
 
@@ -198,6 +199,7 @@ export function ConfigEditorPanel() {
 
   return (
     <div className="flex h-full flex-col gap-3">
+      <ConfigEditorStatusAnnouncer />
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
