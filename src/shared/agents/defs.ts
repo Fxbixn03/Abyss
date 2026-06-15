@@ -262,7 +262,7 @@ export const windsurfDefinition: AgentDefinition = {
   name: 'windsurf',
   displayName: 'Windsurf',
   defaultThemeId: 'windsurf-wave',
-  iconName: 'wind',
+  iconName: 'img:windsurf',
   docsUrl: 'https://docs.devin.ai/cli',
   capabilities: {
     instructions: true,
@@ -404,7 +404,7 @@ export const rooDefinition: AgentDefinition = {
   name: 'roo',
   displayName: 'Roo Code',
   defaultThemeId: 'roo-circuit',
-  iconName: 'bot',
+  iconName: 'img:roo',
   docsUrl: 'https://github.com/RooVetGit/Roo-Code',
   capabilities: {
     instructions: true,

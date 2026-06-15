@@ -8,7 +8,7 @@ import { createAdapter } from './base.adapter'
  * `~/.codeium/windsurf`.
  */
 export const windsurfAdapter: AgentAdapter = createAdapter(windsurfDefinition, {
-  icon: 'wind',
+  icon: 'img:windsurf',
   validate: validateMarkdownInstructions,
   getSidebarSections: (): SidebarSection[] => [
     {
