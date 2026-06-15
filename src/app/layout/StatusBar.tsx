@@ -35,7 +35,7 @@ export function StatusBar() {
   const warnings = issues.filter((i) => i.severity === 'warning').length
 
   return (
-    <footer className="flex h-7 shrink-0 items-center justify-between gap-3 border-t border-sidebar-border bg-sidebar px-3 text-[11px] text-sidebar-foreground/70">
+    <footer role="status" aria-live="polite" className="flex h-7 shrink-0 items-center justify-between gap-3 border-t border-sidebar-border bg-sidebar px-3 text-[11px] text-sidebar-foreground/70">
       <div className="flex min-w-0 items-center gap-2">
         <span className="flex items-center gap-1.5">
           <Icon name={agent.icon} className="size-3" />

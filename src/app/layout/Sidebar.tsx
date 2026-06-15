@@ -85,10 +85,11 @@ export function Sidebar() {
 
       <div className="mx-3 border-b border-sidebar-border" />
 
-      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2">
+      <nav aria-label="Main navigation" className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2">
         {groups.map(({ group, items }, index) => (
           <div key={group.id} className="flex flex-col gap-0.5">
             <p
+              aria-hidden="true"
               className={cn(
                 'px-2.5 pb-1 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/40',
                 index === 0 ? 'pt-0.5' : 'pt-3',

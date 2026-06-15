@@ -32,7 +32,7 @@ export function AppLayout() {
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar />
           <ScopeBar />
-          <main className="min-h-0 flex-1 overflow-hidden p-5">
+          <main aria-label="Page content" className="min-h-0 flex-1 overflow-hidden p-5">
             <Outlet />
           </main>
           <StatusBar />
