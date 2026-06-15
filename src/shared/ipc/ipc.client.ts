@@ -54,6 +54,7 @@ const SILENT_NET_CODES = new Set<string>([
   IpcErrorCode.Aborted,
   IpcErrorCode.WritePermission,
   IpcErrorCode.ReadPermission,
+  IpcErrorCode.DiskFull,
 ])
 
 /**

@@ -39,7 +39,8 @@ import {
 } from '@core/chat/normalize'
 import { parseFrontmatter } from '@core/frontmatter'
 import { readJsonFile } from '@core/json-file'
-import { ConfigParseError } from '@core/config-error'
+import { ConfigDiskError, ConfigParseError } from '@core/config-error'
+import { IpcErrorCode, normalizeError } from '@/shared/ipc/ipc-error'
 import { SettingsStore } from '@core/settings-store'
 import {
   readPermissions,
@@ -1094,4 +1095,32 @@ test('path-scope: assertScopedPath returns in-scope paths, throws on escape', ()
       return true
     },
   )
+})
+
+test('ConfigDiskError for ENOSPC has code DISK_FULL and normalizes to IpcErrorCode.DiskFull', () => {
+  const filePath = '/home/user/.claude/config.json'
+  const cause = Object.assign(new Error('ENOSPC: no space left on device'), { code: 'ENOSPC' })
+  const err = new ConfigDiskError(filePath, cause)
+  assert.ok(err instanceof ConfigDiskError)
+  assert.equal(err.code, IpcErrorCode.DiskFull)
+  assert.equal(err.filePath, filePath)
+  assert.ok(err.message.includes(filePath))
+  assert.ok(err.message.includes('ENOSPC'))
+  assert.equal(err.name, 'ConfigDiskError')
+  // Verify the IPC normalization pipeline maps ConfigDiskError → DISK_FULL (not UNKNOWN).
+  const normalized = normalizeError(err)
+  assert.equal(normalized.code, IpcErrorCode.DiskFull)
+  assert.equal(normalized.details?.filePath, filePath)
+})
+
+test('ConfigDiskError for EXDEV normalizes to IpcErrorCode.DiskFull rather than UNKNOWN', () => {
+  const filePath = '/tmp/config.json'
+  const cause = Object.assign(new Error('EXDEV: cross-device link not permitted'), { code: 'EXDEV' })
+  const err = new ConfigDiskError(filePath, cause)
+  assert.equal(err.code, IpcErrorCode.DiskFull)
+  assert.equal(err.filePath, filePath)
+  // Verify the IPC normalization pipeline maps ConfigDiskError → DISK_FULL (not UNKNOWN).
+  const normalized = normalizeError(err)
+  assert.equal(normalized.code, IpcErrorCode.DiskFull)
+  assert.notEqual(normalized.code, IpcErrorCode.Unknown)
 })

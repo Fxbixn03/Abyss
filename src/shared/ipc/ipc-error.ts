@@ -23,6 +23,8 @@ export const IpcErrorCode = {
   WritePermission: 'WRITE_PERMISSION_DENIED',
   /** A read was denied by the OS (EACCES or EPERM). */
   ReadPermission: 'READ_PERMISSION_DENIED',
+  /** A write failed because the disk is full (ENOSPC) or a cross-device rename was attempted (EXDEV). */
+  DiskFull: 'DISK_FULL',
   Unknown: 'UNKNOWN',
 } as const
 

@@ -8,6 +8,7 @@ import type { ZodType } from 'zod'
 import { recordSnapshot } from './snapshots'
 import { uniqueTempPath } from './tmp-path'
 import {
+  ConfigDiskError,
   ConfigParseError,
   ConfigReadError,
   ConfigValidationError,
@@ -19,6 +20,15 @@ function isPermissionError(err: unknown): boolean {
   if (err && typeof err === 'object') {
     const code = (err as Record<string, unknown>).code
     return code === 'EACCES' || code === 'EPERM'
+  }
+  return false
+}
+
+/** Returns true when a Node.js filesystem error is a disk-space or cross-device issue. */
+function isDiskError(err: unknown): boolean {
+  if (err && typeof err === 'object') {
+    const code = (err as Record<string, unknown>).code
+    return code === 'ENOSPC' || code === 'EXDEV'
   }
   return false
 }
@@ -63,12 +73,14 @@ export async function writeTextFileAtomic(
     await fs.writeFile(tmp, content, 'utf8')
   } catch (err) {
     if (isPermissionError(err)) throw new ConfigWriteError(p, err)
+    if (isDiskError(err)) throw new ConfigDiskError(p, err)
     throw err
   }
   try {
     await fs.rename(tmp, p)
   } catch (err) {
     if (isPermissionError(err)) throw new ConfigWriteError(p, err)
+    if (isDiskError(err)) throw new ConfigDiskError(p, err)
     throw err
   }
 }

@@ -58,6 +58,11 @@ export function isReadPermissionError(err: unknown): err is IpcError {
   return err instanceof IpcError && err.code === IpcErrorCode.ReadPermission
 }
 
+/** A write failed because the disk is full (ENOSPC) or a cross-device rename was attempted (EXDEV). */
+export function isDiskWriteError(err: unknown): err is IpcError {
+  return err instanceof IpcError && err.code === IpcErrorCode.DiskFull
+}
+
 /** Minimal info a store keeps about a corrupt config file, for the repair UI. */
 export interface ConfigParseInfo {
   message: string

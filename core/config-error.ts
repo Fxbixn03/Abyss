@@ -56,3 +56,16 @@ export class ConfigReadError extends Error {
     this.filePath = filePath
   }
 }
+
+/** A config write failed because the disk is full (ENOSPC) or a cross-device rename was attempted (EXDEV). */
+export class ConfigDiskError extends Error {
+  readonly code = IpcErrorCode.DiskFull
+  readonly filePath: string
+
+  constructor(filePath: string, cause?: unknown) {
+    const reason = cause instanceof Error ? cause.message : String(cause)
+    super(`Disk write failed for ${filePath}: ${reason}`, { cause })
+    this.name = 'ConfigDiskError'
+    this.filePath = filePath
+  }
+}
