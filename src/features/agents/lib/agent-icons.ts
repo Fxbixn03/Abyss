@@ -22,6 +22,7 @@ import cursorSvg from '@/assets/agents/cursor.svg?raw'
 import copilotSvg from '@/assets/agents/copilot.svg?raw'
 import windsurfSvg from '@/assets/agents/windsurf.svg?raw'
 import rooSvg from '@/assets/agents/roo.svg?raw'
+import ampSvg from '@/assets/agents/amp.svg?raw'
 
 const IMAGE_PREFIX = 'img:'
 
@@ -34,6 +35,7 @@ export const AGENT_BRAND_SVGS: Record<string, string> = {
   copilot: copilotSvg,
   windsurf: windsurfSvg,
   roo: rooSvg,
+  amp: ampSvg,
 }
 
 /** Which of the three render paths an icon string takes. */
@@ -76,6 +78,7 @@ export const BRAND_ICON_CHOICES: IconChoice[] = [
   { value: 'img:copilot', label: 'Copilot' },
   { value: 'img:windsurf', label: 'Windsurf' },
   { value: 'img:roo', label: 'Roo Code' },
+  { value: 'img:amp', label: 'Amp' },
 ]
 
 /** Curated Lucide fallbacks offered in the icon picker. */

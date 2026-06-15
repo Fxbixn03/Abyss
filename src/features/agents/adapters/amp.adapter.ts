@@ -5,7 +5,7 @@ import { createAdapter } from './base.adapter'
 
 /** Amp (Sourcegraph) — edits global instructions at `~/.amp/AGENTS.md`. */
 export const ampAdapter: AgentAdapter = createAdapter(ampDefinition, {
-  icon: 'zap',
+  icon: 'img:amp',
   validate: validateMarkdownInstructions,
   getSidebarSections: (): SidebarSection[] => [
     {
