@@ -15,6 +15,7 @@ import { kiroAdapter } from '../adapters/kiro.adapter'
 import { amazonqAdapter } from '../adapters/amazonq.adapter'
 import { warpAdapter } from '../adapters/warp.adapter'
 import { plandexAdapter } from '../adapters/plandex.adapter'
+import { zedAdapter } from '../adapters/zed.adapter'
 
 /**
  * Central registry of agent adapters. The single place the app discovers which
@@ -67,3 +68,4 @@ agentRegistry.register(kiroAdapter)
 agentRegistry.register(amazonqAdapter)
 agentRegistry.register(warpAdapter)
 agentRegistry.register(plandexAdapter)
+agentRegistry.register(zedAdapter)

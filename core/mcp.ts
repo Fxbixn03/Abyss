@@ -22,6 +22,20 @@ import { claudeMcpFileSchema } from '@/shared/schemas/config.schemas'
 import { readJsonFile, writeJsonFile, pathExists, readTextFile, writeTextFileAtomic } from './json-file'
 import { codexConfigPath, readCodexMcp, writeCodexMcp } from './mcp-codex'
 import { ConfigParseError } from './config-error'
+import { z } from 'zod'
+
+/**
+ * Lenient schema for Zed's `settings.json`. We only look at `context_servers`;
+ * all other keys are preserved via `.passthrough()` so Abyss never clobbers
+ * keymaps, themes, or any other Zed configuration.
+ */
+const zedSettingsSchema = z
+  .object({
+    context_servers: z.record(z.string(), z.unknown()).optional(),
+  })
+  .passthrough()
+
+type ZedSettings = z.infer<typeof zedSettingsSchema>
 
 interface RawMcpServer {
   // Free-form to tolerate agent-specific stdio tokens (Copilot uses "local").
@@ -166,6 +180,73 @@ function amazonqMcpPath(basePath: string): string {
 }
 
 /**
+ * Zed Editor stores its full config (including MCP context servers) in
+ * `<base>/settings.json` under the `context_servers` key. This is a different
+ * key name from the `mcpServers` used by most other agents.
+ */
+function zedSettingsPath(basePath: string): string {
+  return path.join(basePath, 'settings.json')
+}
+
+/**
+ * Raw shape of a single Zed context server entry. Zed uses similar fields to
+ * the standard MCP stdio format, with `command` and `args`.
+ */
+interface ZedContextServer {
+  command?: { path?: string; args?: string[] }
+  settings?: Record<string, unknown>
+  [key: string]: unknown
+}
+
+export async function readZedMcp(basePath: string): Promise<McpServerEntry[]> {
+  const file = zedSettingsPath(basePath)
+  const data = await readJsonFile(file, {} as ZedSettings, zedSettingsSchema)
+  const servers = data.context_servers ?? {}
+  return Object.entries(servers).map(([name, rawEntry], index) => {
+    const entry = (rawEntry ?? {}) as ZedContextServer
+    const cmd = entry.command
+    return {
+      id: `${name}-${index}`,
+      name,
+      type: 'stdio' as const,
+      command: cmd?.path,
+      args: cmd?.args,
+      enabled: true,
+    }
+  })
+}
+
+export async function writeZedMcp(
+  basePath: string,
+  entries: McpServerEntry[],
+): Promise<{ success: boolean; path: string }> {
+  const file = zedSettingsPath(basePath)
+  // Re-read to preserve all other top-level keys (keymaps, theme, etc.)
+  const data = await readJsonFile(file, {} as ZedSettings, zedSettingsSchema)
+  const existing = (data.context_servers ?? {}) as Record<string, ZedContextServer>
+  const out: Record<string, ZedContextServer> = {}
+
+  for (const entry of entries) {
+    const prev: ZedContextServer = { ...(existing[entry.name] ?? {}) }
+    // Zed only supports stdio-style (command + args) for context servers
+    const command: ZedContextServer['command'] = {
+      ...(prev.command ?? {}),
+    }
+    if (entry.command) command.path = entry.command
+    else delete command.path
+    if (entry.args !== undefined) command.args = entry.args
+    else delete command.args
+    prev.command = command
+    // Preserve any existing settings key and other unknown fields
+    out[entry.name] = prev
+  }
+
+  data.context_servers = out
+  await writeJsonFile(file, data, zedSettingsSchema)
+  return { success: true, path: file }
+}
+
+/**
  * Goose (Block) keeps MCP-compatible extensions in `config.yaml` under the
  * `extensions` key. The file lives at `<base>/config.yaml` where `base` is
  * `~/.config/goose` on Linux/macOS or `%APPDATA%\goose` on Windows.
@@ -293,6 +374,7 @@ export function getMcpConfigPath(
   if (agentId === 'kiro') return kiroMcpPath(basePath)
   if (agentId === 'amazonq') return amazonqMcpPath(basePath)
   if (agentId === 'goose') return gooseConfigPath(basePath)
+  if (agentId === 'zed') return zedSettingsPath(basePath)
   return mcpConfigPath(projectDir)
 }
 
@@ -317,6 +399,7 @@ export function readMcpServers(
   if (agentId === 'kiro') return readJsonMcp(kiroMcpPath(basePath))
   if (agentId === 'amazonq') return readJsonMcp(amazonqMcpPath(basePath))
   if (agentId === 'goose') return readGooseMcp(basePath)
+  if (agentId === 'zed') return readZedMcp(basePath)
   return readJsonMcp(mcpConfigPath(projectDir))
 }
 
@@ -343,5 +426,7 @@ export function writeMcpServers(
     return writeJsonMcp(amazonqMcpPath(basePath), entries)
   if (agentId === 'goose')
     return writeGooseMcp(basePath, entries)
+  if (agentId === 'zed')
+    return writeZedMcp(basePath, entries)
   return writeJsonMcp(mcpConfigPath(projectDir), entries)
 }

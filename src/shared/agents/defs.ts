@@ -545,6 +545,48 @@ export const kiroDefinition: AgentDefinition = {
   ],
 }
 
+const zedSettings: ConfigFileSpec = {
+  id: 'settings',
+  filename: 'settings.json',
+  scope: 'global',
+  language: 'json',
+  description: 'Zed Editor global settings (AI, context servers, keymaps, …).',
+}
+
+/**
+ * Zed Editor — full settings at `~/.config/zed/settings.json` (Linux/macOS) or
+ * `%APPDATA%\Zed\settings.json` (Windows). The AI and MCP context servers are
+ * declared inline in that single file under the `context_servers` key (unlike
+ * most agents which use a separate `mcpServers` JSON file).
+ */
+export const zedDefinition: AgentDefinition = {
+  id: 'zed',
+  name: 'zed',
+  displayName: 'Zed',
+  defaultThemeId: 'zed-void',
+  iconName: 'code-2',
+  docsUrl: 'https://zed.dev/docs/ai',
+  capabilities: {
+    instructions: true,
+    mcp: true,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: true,
+    chats: false,
+  },
+  configFiles: [zedSettings],
+  resolvePaths: (env: OsEnv) => [
+    env.platform === 'win32'
+      ? joinPath(env.platform, env.appData, 'Zed')
+      : joinPath(env.platform, env.home, '.config', 'zed'),
+  ],
+}
+
 const plandexInstructions: ConfigFileSpec = {
   id: 'instructions',
   filename: 'instructions.md',
@@ -680,6 +722,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   amazonq: amazonqDefinition,
   warp: warpDefinition,
   plandex: plandexDefinition,
+  zed: zedDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -700,6 +743,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'amazonq',
   'warp',
   'plandex',
+  'zed',
 ]
 
 /**
