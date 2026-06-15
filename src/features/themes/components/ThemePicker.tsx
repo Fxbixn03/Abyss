@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { AgentId } from '@/shared/types/agent'
-import type { ThemeColors, ThemeConfig } from '@/shared/types/theme'
+import type { ThemeConfig } from '@/shared/types/theme'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
@@ -8,28 +8,7 @@ import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { applyTheme } from '../lib/applyTheme'
 import { useThemeStore } from '../store/theme.store'
-
-function Swatches({ colors }: { colors: ThemeColors }) {
-  const keys: (keyof ThemeColors)[] = [
-    'background',
-    'surface',
-    'sidebar',
-    'primary',
-    'border',
-  ]
-  return (
-    <div className="flex gap-1">
-      {keys.map((key) => (
-        <span
-          key={key}
-          className="size-5 rounded-full border border-black/10"
-          style={{ background: colors[key] }}
-          title={`${key}: ${colors[key]}`}
-        />
-      ))}
-    </div>
-  )
-}
+import { ThemePreview } from './ThemePreview'
 
 /**
  * Per-agent theme selector. Lists every theme available to the agent (its own +
@@ -118,7 +97,6 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
       >
         {themes.map((theme) => {
           const selected = theme.id === activeThemeId
-          const colors = appearance === 'light' ? theme.light : theme.dark
           return (
             <button
               key={theme.id}
@@ -126,7 +104,7 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
               onMouseEnter={() => applyTheme(theme, appearance)}
               onClick={() => setAgentTheme(agentId, theme.id)}
               className={cn(
-                'flex flex-col gap-3 rounded-lg border p-3 text-left transition-colors hover:border-primary/50',
+                'flex flex-col gap-2 rounded-lg border p-3 text-left transition-colors hover:border-primary/50',
                 selected
                   ? 'border-primary ring-1 ring-primary/40'
                   : 'border-border',
@@ -140,18 +118,7 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
                   <Badge variant="muted">global</Badge>
                 ) : null}
               </div>
-              <div
-                className="rounded-md border p-3"
-                style={{
-                  background: colors.background,
-                  borderColor: colors.border,
-                }}
-              >
-                <Swatches colors={colors} />
-              </div>
-              <span className="font-code text-[11px] text-muted-foreground">
-                {theme.borderRadius} · {theme.fontFamily}
-              </span>
+              <ThemePreview theme={theme} variant={appearance} />
             </button>
           )
         })}
