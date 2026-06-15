@@ -15,7 +15,7 @@ import { readCodexSettings, writeCodexSettings } from '@core/codex-settings'
 import { readHooks, writeHooks } from '@core/hooks'
 import { readDisabledHooks, writeDisabledHooks } from '@core/disabled-hooks'
 import { readRawSettings, writeRawSettings } from '@core/raw-settings'
-import { assertScopedPath } from '@core/path-scope'
+import { assertScopedPath, resolveScopedPath } from '@core/path-scope'
 import { setCustomAgentDefinitions } from '@/shared/agents/defs'
 import { handle } from './handle'
 import type { IpcContext } from './context'
@@ -26,6 +26,11 @@ export function registerConfigIpc(ctx: IpcContext): void {
   // home, so this only ever rejects a renderer pointing a write somewhere absurd.
   const scope = (p: string): string =>
     assertScopedPath(p, ctx.env, ctx.userData)
+
+  // Reads degrade gracefully: return null when the path is out of scope so the
+  // caller can return an empty/not-found response rather than throwing.
+  const readScope = (p: string): string | null =>
+    resolveScopedPath(p, ctx.env, ctx.userData)
 
   handle(IpcChannel.GetAppInfo, () => ({
     name: app.getName(),
@@ -49,9 +54,10 @@ export function registerConfigIpc(ctx: IpcContext): void {
   })
 
   // MCP servers
-  handle(IpcChannel.GetMcpServers, ({ agentId, basePath, projectDir }) =>
-    readMcpServers(agentId, basePath, projectDir),
-  )
+  handle(IpcChannel.GetMcpServers, ({ agentId, basePath, projectDir }) => {
+    if (!readScope(basePath)) return Promise.resolve([])
+    return readMcpServers(agentId, basePath, projectDir)
+  })
   handle(
     IpcChannel.SetMcpServers,
     ({ agentId, basePath, servers, projectDir }) =>
@@ -105,29 +111,49 @@ export function registerConfigIpc(ctx: IpcContext): void {
   })
 
   // Tool permissions
-  handle(IpcChannel.GetPermissions, ({ basePath }) => readPermissions(basePath))
+  handle(IpcChannel.GetPermissions, ({ basePath }) => {
+    if (!readScope(basePath))
+      return Promise.resolve({
+        allow: [],
+        deny: [],
+        ask: [],
+        defaultMode: 'default' as const,
+        additionalDirectories: [],
+      })
+    return readPermissions(basePath)
+  })
   handle(IpcChannel.SetPermissions, ({ basePath, rules }) =>
     writePermissions(scope(basePath), rules),
   )
 
   // Codex approval + sandbox settings
-  handle(IpcChannel.GetCodexSettings, ({ basePath }) =>
-    readCodexSettings(basePath),
-  )
+  handle(IpcChannel.GetCodexSettings, ({ basePath }) => {
+    if (!readScope(basePath))
+      return Promise.resolve({
+        approvalPolicy: 'on-request' as const,
+        sandboxMode: 'workspace-write' as const,
+        networkAccess: false,
+      })
+    return readCodexSettings(basePath)
+  })
   handle(IpcChannel.SetCodexSettings, ({ basePath, settings }) =>
     writeCodexSettings(scope(basePath), settings),
   )
 
   // Model + env
-  handle(IpcChannel.GetModelEnv, ({ basePath }) => readModelEnv(basePath))
+  handle(IpcChannel.GetModelEnv, ({ basePath }) => {
+    if (!readScope(basePath)) return Promise.resolve({ env: {} })
+    return readModelEnv(basePath)
+  })
   handle(IpcChannel.SetModelEnv, ({ basePath, config }) =>
     writeModelEnv(scope(basePath), config),
   )
 
   // Lifecycle hooks
-  handle(IpcChannel.GetHooks, ({ agentId, basePath }) =>
-    readHooks(agentId, basePath),
-  )
+  handle(IpcChannel.GetHooks, ({ agentId, basePath }) => {
+    if (!readScope(basePath)) return Promise.resolve([])
+    return readHooks(agentId, basePath)
+  })
   handle(IpcChannel.SetHooks, ({ agentId, basePath, entries }) =>
     writeHooks(agentId, scope(basePath), entries),
   )
@@ -140,9 +166,11 @@ export function registerConfigIpc(ctx: IpcContext): void {
   )
 
   // Raw settings files
-  handle(IpcChannel.ReadRawSettings, ({ basePath, file }) =>
-    readRawSettings(basePath, file),
-  )
+  handle(IpcChannel.ReadRawSettings, ({ basePath, file }) => {
+    if (!readScope(basePath))
+      return Promise.resolve({ content: '', exists: false, path: '' })
+    return readRawSettings(basePath, file)
+  })
   handle(IpcChannel.WriteRawSettings, ({ basePath, file, content }) =>
     writeRawSettings(scope(basePath), file, content),
   )

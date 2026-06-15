@@ -2,7 +2,7 @@ import { IpcChannel } from '@/shared/types/ipc'
 import { detectAllAgentPaths } from '@core/agent-paths'
 import { readAgentConfigFile, writeAgentConfigFile } from '@core/config-io'
 import { detectAgentInstall } from '@core/agent-detect'
-import { assertScopedPath } from '@core/path-scope'
+import { assertScopedPath, resolveScopedPath } from '@core/path-scope'
 import { handle } from './handle'
 import type { IpcContext } from './context'
 
@@ -13,15 +13,21 @@ export function registerAgentIpc(ctx: IpcContext): void {
   const scope = (p: string): string =>
     assertScopedPath(p, ctx.env, ctx.userData)
 
+  // Reads degrade gracefully: return null when the path is out of scope.
+  const readScope = (p: string): string | null =>
+    resolveScopedPath(p, ctx.env, ctx.userData)
+
   handle(IpcChannel.GetDetectedPaths, () => detectAllAgentPaths(ctx.env))
 
   handle(IpcChannel.AgentInstallStatus, ({ agentId }) =>
     detectAgentInstall(agentId),
   )
 
-  handle(IpcChannel.ReadAgentConfig, ({ agentId, specId, basePath }) =>
-    readAgentConfigFile(agentId, specId, basePath),
-  )
+  handle(IpcChannel.ReadAgentConfig, ({ agentId, specId, basePath }) => {
+    if (!readScope(basePath))
+      return Promise.resolve({ content: '', exists: false, path: '' })
+    return readAgentConfigFile(agentId, specId, basePath)
+  })
 
   handle(
     IpcChannel.WriteAgentConfig,
