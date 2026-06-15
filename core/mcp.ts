@@ -125,7 +125,7 @@ async function writeJsonMcp(
   }
 
   data.mcpServers = out
-  await writeJsonFile(file, data)
+  await writeJsonFile(file, data, claudeMcpFileSchema)
   return { success: true, path: file }
 }
 

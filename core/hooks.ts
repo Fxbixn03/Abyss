@@ -175,6 +175,6 @@ async function writeClaudeHooks(
     settings.hooks = grouped
   }
 
-  await writeJsonFile(p, settings)
+  await writeJsonFile(p, settings, settingsWithHooksSchema)
   return { success: true, path: p }
 }

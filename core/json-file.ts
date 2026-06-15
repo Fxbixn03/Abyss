@@ -79,6 +79,24 @@ export async function readJsonFile<T>(
   return parsed as T
 }
 
-export async function writeJsonFile(p: string, value: unknown): Promise<void> {
+/**
+ * Serialize and write a value to a JSON config file atomically.
+ *
+ * When an optional zod `schema` is provided the value is validated with
+ * `schema.safeParse` **before** serialization so a caller bug that introduces a
+ * wrong shape is caught early with a typed {@link ConfigValidationError}
+ * (carrying the file path) rather than going to disk silently.
+ */
+export async function writeJsonFile<T = unknown>(
+  p: string,
+  value: T,
+  schema?: ZodType<T>,
+): Promise<void> {
+  if (schema) {
+    const result = schema.safeParse(value)
+    if (!result.success) {
+      throw new ConfigValidationError(p, result.error.message, result.error)
+    }
+  }
   await writeTextFileAtomic(p, `${JSON.stringify(value, null, 2)}\n`)
 }

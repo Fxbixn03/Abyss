@@ -79,7 +79,7 @@ export async function writePermissions(
   }
 
   s.permissions = perms
-  await writeJsonFile(p, s)
+  await writeJsonFile(p, s, claudeSettingsSchema)
   return { success: true, path: p }
 }
 
@@ -100,6 +100,6 @@ export async function writeModelEnv(
     delete s.model
   }
   s.env = config.env
-  await writeJsonFile(p, s)
+  await writeJsonFile(p, s, claudeSettingsSchema)
   return { success: true, path: p }
 }
