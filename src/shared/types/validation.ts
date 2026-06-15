@@ -6,6 +6,18 @@
 
 export type ValidationSeverity = 'warn' | 'error'
 
+/**
+ * Machine-readable hint for the renderer about which repair action to offer.
+ * Shared by {@link ValidationFinding} and {@link LintFinding} so the union is
+ * declared exactly once.
+ */
+export type SuggestedAction =
+  | 'open-raw-editor'
+  | 'create-file'
+  | 'open-mcp'
+  | 'open-hooks'
+  | 'repair-settings'
+
 export interface ValidationFinding {
   severity: ValidationSeverity
   agentId: string
@@ -18,5 +30,5 @@ export interface ValidationFinding {
    * Machine-readable hint for the renderer about which repair action to offer
    * the user. Optional so existing consumers compile unchanged.
    */
-  suggestedAction?: 'open-raw-editor' | 'create-file' | 'open-mcp' | 'open-hooks' | 'repair-settings'
+  suggestedAction?: SuggestedAction
 }

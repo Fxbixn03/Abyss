@@ -10,6 +10,7 @@
 
 import type { CollectionKind } from '@/shared/types/collections'
 import type { PermissionRules } from '@/shared/types/config'
+import type { SuggestedAction } from '@/shared/types/validation'
 import { detectInstructionConflicts } from '@/features/context/lib/conflicts'
 import { formatTokens, estimateTokens } from '@/features/context/lib/tokens'
 import { KNOWN_TOOLS, parseToolList } from '@/features/collections/lib/tools'
@@ -43,7 +44,7 @@ export interface LintFinding {
    * Mirrors the {@link ValidationFinding} suggestedAction union so the
    * ValidationPage can render a context-specific CTA label.
    */
-  suggestedAction?: 'open-raw-editor' | 'create-file' | 'open-mcp' | 'open-hooks' | 'repair-settings'
+  suggestedAction?: SuggestedAction
 }
 
 /** One instruction file (an agent can expose several). */
