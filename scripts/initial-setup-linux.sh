@@ -76,24 +76,67 @@ ensure_node() {
         return
     fi
 
-    # Packagemanager-Fallback (only if no nvm found)
-    if command_exists pacman; then
-        log "Installiere nodejs via pacman..."
-        sudo pacman -S --noconfirm nodejs npm
-    elif command_exists apt-get; then
+    # Paketmanager-Fallback (nur falls kein nvm gefunden).
+    # Versuch ist non-fatal: schlägt er fehl, fallen wir auf nvm zurück.
+    if install_node_via_pkg_manager; then
+        if check_node; then
+            ok "Node $(node -v) installiert."
+            return
+        fi
+        warn "Paketmanager lieferte eine zu alte/keine Node-Version — versuche nvm..."
+    else
+        warn "Installation über den Paketmanager fehlgeschlagen."
+        warn "Tipp: Paketquellen/Index aktualisieren und erneut versuchen (z.B. ein System-Update)."
+        warn "Falle auf nvm zurück..."
+    fi
+
+    install_node_via_nvm
+    check_node || die "Node-Installation fehlgeschlagen. Bitte manuell installieren: https://nodejs.org"
+    ok "Node $(node -v) installiert."
+}
+
+# Versucht Node über den erkannten System-Paketmanager zu installieren.
+# Gibt 0 zurück bei Erfolg, sonst != 0 (Aufrufer kann auf nvm zurückfallen).
+install_node_via_pkg_manager() {
+    if command_exists apt-get; then
         log "Installiere nodejs via apt..."
-        curl -fsSL https://deb.nodesource.com/setup_${REQUIRED_NODE_MAJOR}.x | sudo -E bash -
-        sudo apt-get install -y nodejs
+        curl -fsSL "https://deb.nodesource.com/setup_${REQUIRED_NODE_MAJOR}.x" | sudo -E bash - \
+            && sudo apt-get install -y nodejs
     elif command_exists dnf; then
         log "Installiere nodejs via dnf..."
         sudo dnf install -y nodejs
+    elif command_exists pacman; then
+        log "Installiere nodejs via pacman..."
+        sudo pacman -S --noconfirm nodejs npm
+    elif command_exists zypper; then
+        log "Installiere nodejs via zypper..."
+        sudo zypper install -y nodejs npm
     else
-        warn "Kein bekannter Paketmanager. Installiere nvm als Fallback..."
-        install_node_via_nvm
+        warn "Kein bekannter Paketmanager gefunden."
+        return 1
     fi
+}
 
-    check_node || die "Node-Installation fehlgeschlagen. Bitte manuell installieren: https://nodejs.org"
-    ok "Node $(node -v) installiert."
+# Ermittelt die passende Shell-Konfig-Datei für PATH-Persistierung.
+shell_rc_file() {
+    [[ -n "${ZSH_VERSION:-}" ]] && { echo "$HOME/.zshrc"; return; }
+    echo "$HOME/.bashrc"
+}
+
+# Hängt einen Verzeichnis-Eintrag dauerhaft an den PATH in der Shell-Konfig an,
+# sofern er dort noch nicht vorkommt.
+persist_path_entry() {
+    local dir="$1" rc
+    rc="$(shell_rc_file)"
+    [[ -f "$rc" ]] || touch "$rc"
+    if ! grep -qF "$dir" "$rc"; then
+        {
+            echo ''
+            echo "# hinzugefügt von Abyss-Setup"
+            echo "export PATH=\"$dir:\$PATH\""
+        } >> "$rc"
+        log "PATH-Eintrag '$dir' in $rc ergänzt (neue Shell oder 'source $rc' nötig)."
+    fi
 }
 
 ensure_pnpm() {
@@ -104,28 +147,55 @@ ensure_pnpm() {
 
     warn "pnpm nicht gefunden — wird installiert..."
 
-    if command_exists npm; then
-        npm install -g pnpm
-    else
-        curl -fsSL https://get.pnpm.io/install.sh | sh
-        # Add to PATH for this session
-        export PNPM_HOME="$HOME/.local/share/pnpm"
-        export PATH="$PNPM_HOME:$PATH"
+    # 1) Corepack (kommt mit Node ≥ 16, offizieller pnpm-Weg)
+    if command_exists corepack; then
+        log "Aktiviere pnpm via corepack..."
+        corepack enable pnpm 2>/dev/null || corepack enable 2>/dev/null || true
+        corepack prepare pnpm@latest --activate 2>/dev/null || true
     fi
 
-    command_exists pnpm || die "pnpm-Installation fehlgeschlagen."
+    # 2) Fallback: npm global
+    if ! command_exists pnpm && command_exists npm; then
+        local prefix_dir
+        prefix_dir="$(npm prefix -g 2>/dev/null)"
+        if [[ -n "$prefix_dir" && -w "$prefix_dir" ]]; then
+            log "Installiere pnpm via npm (global)..."
+            npm install -g pnpm
+        else
+            # Globales Prefix nicht beschreibbar (z.B. System-Node unter /usr).
+            # In ein user-eigenes Prefix installieren statt sudo zu erzwingen.
+            log "Globales npm-Prefix nicht beschreibbar — installiere pnpm ins User-Prefix ($HOME/.local)..."
+            npm install -g pnpm --prefix "$HOME/.local"
+            export PATH="$HOME/.local/bin:$PATH"
+            persist_path_entry "$HOME/.local/bin"
+        fi
+    fi
+
+    # 3) Fallback: Standalone-Installer
+    if ! command_exists pnpm; then
+        log "Installiere pnpm via Standalone-Installer..."
+        curl -fsSL https://get.pnpm.io/install.sh | sh -
+        # Für diese Session verfügbar machen und dauerhaft persistieren.
+        export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
+        export PATH="$PNPM_HOME:$PATH"
+        persist_path_entry "$PNPM_HOME"
+    fi
+
+    command_exists pnpm || die "pnpm-Installation fehlgeschlagen. Bitte manuell: https://pnpm.io/installation"
     ok "pnpm $(pnpm -v) installiert."
 }
 
 ensure_git() {
     command_exists git && return
     warn "git nicht gefunden — wird installiert..."
-    if command_exists pacman; then
-        sudo pacman -S --noconfirm git
-    elif command_exists apt-get; then
+    if command_exists apt-get; then
         sudo apt-get install -y git
     elif command_exists dnf; then
         sudo dnf install -y git
+    elif command_exists pacman; then
+        sudo pacman -S --noconfirm git
+    elif command_exists zypper; then
+        sudo zypper install -y git
     else
         die "git nicht gefunden und kein bekannter Paketmanager. Bitte git manuell installieren."
     fi
@@ -133,17 +203,18 @@ ensure_git() {
 }
 
 check_electron_deps() {
-    # often missing libs
+    # häufig fehlende Shared-Libs für Electron
     local missing=()
-    for lib in libxtst libnss; do
-        if ! ldconfig -p 2>/dev/null | grep -q "$lib" && ! pacman -Qq "${lib}" &>/dev/null 2>&1; then
+    for lib in libXtst libnss3; do
+        if ! ldconfig -p 2>/dev/null | grep -q "$lib"; then
             missing+=("$lib")
         fi
     done
 
     if [[ ${#missing[@]} -gt 0 ]]; then
         warn "Möglicherweise fehlende Electron-Libs: ${missing[*]}"
-        warn "Bei Problemen: sudo pacman -S libxtst nss  (oder apt: libxtst6 libnss3)"
+        warn "Bei Problemen die passenden Pakete über deinen Paketmanager nachinstallieren"
+        warn "(meist 'libxtst'/'libxtst6' und 'nss'/'libnss3')."
     fi
 }
 
@@ -172,6 +243,31 @@ install_deps() {
     ok "Dependencies installiert."
 }
 
+# Electron lädt sein Binary (~200 MB) in einem postinstall-Schritt und schreibt
+# am Ende eine path.txt. Bricht dieser Download ab, findet vite-plugin-electron
+# electron später nicht ("Unable to resolve electron" / ENOENT path.txt).
+# Hier wird das geprüft und bei Bedarf einmalig nachgeholt — vor dem Start.
+ensure_electron_binary() {
+    cd "$TARGET_DIR"
+
+    if node -e 'require("electron")' &>/dev/null; then
+        ok "Electron-Binary vorhanden."
+        return
+    fi
+
+    warn "Electron-Binary fehlt/unvollständig — Download wird nachgeholt..."
+    pnpm rebuild electron || true
+
+    if node -e 'require("electron")' &>/dev/null; then
+        ok "Electron-Binary nachinstalliert."
+        return
+    fi
+
+    warn "Electron-Binary konnte nicht automatisch beschafft werden."
+    warn "Manueller Versuch: cd \"$TARGET_DIR\" && pnpm rebuild electron"
+    warn "(Bei abgebrochenem Download hilft oft: rm -rf ~/.cache/electron, dann erneut.)"
+}
+
 run_action() {
     cd "$TARGET_DIR"
     case "$ACTION" in
@@ -182,10 +278,8 @@ run_action() {
             pnpm dev
             ;;
         build)
-            log "Erstelle Produktions-Build (AppImage)..."
-            pnpm build
-            ok "Build fertig. Ausgabe: $TARGET_DIR/release/"
-            ls -lh "$TARGET_DIR/release/" 2>/dev/null || true
+            log "Erstelle Produktions-Build (Paketformat-Auswahl folgt)..."
+            bash "$TARGET_DIR/scripts/build-linux.sh"
             ;;
         *)
             die "Unbekannte Aktion '$ACTION'. Nutze: dev | build"
@@ -209,6 +303,7 @@ main() {
     check_electron_deps
     clone_or_update
     install_deps
+    ensure_electron_binary
     echo ""
     run_action
 }
