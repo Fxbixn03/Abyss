@@ -9,6 +9,10 @@ import { promises as fs } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import type { ExportBundle } from '@/shared/types/bundle'
 import type { Profile, ProfileMeta } from '@/shared/types/profiles'
+import {
+  profileSchema,
+} from '@/shared/schemas/config.schemas'
+import { readJsonFile } from './json-file'
 
 let root: string | null = null
 
@@ -47,14 +51,25 @@ export async function saveProfile(
   return meta
 }
 
+/**
+ * Read and validate a single profile file. Uses `readJsonFile` so a corrupt
+ * JSON file throws a typed {@link ConfigParseError} (carrying `filePath`)
+ * rather than being silently dropped. Valid JSON is then run through the
+ * lenient `profileSchema` which coerces bad shapes into an empty-id object;
+ * those are rejected by the `meta.id` guard below. Returns `null` only when
+ * the file is absent or structurally valid but missing required fields.
+ */
 async function readProfileFile(file: string): Promise<Profile | null> {
-  try {
-    const parsed = JSON.parse(await fs.readFile(file, 'utf8')) as Profile
-    if (!parsed?.meta?.id || !parsed.bundle) return null
-    return parsed
-  } catch {
-    return null
-  }
+  // readJsonFile throws ConfigParseError on bad JSON — let that propagate.
+  const raw = await readJsonFile<unknown>(file, null)
+  if (raw === null) return null
+
+  // Validate the parsed shape; the schema never throws (outer .catch) but
+  // populates empty strings for required fields when the shape is wrong.
+  const stored = profileSchema.parse(raw)
+  // Treat an empty meta.id (the catch sentinel) as a structurally invalid file.
+  if (!stored.meta?.id) return null
+  return stored as unknown as Profile
 }
 
 export async function listProfiles(): Promise<ProfileMeta[]> {
@@ -63,6 +78,9 @@ export async function listProfiles(): Promise<ProfileMeta[]> {
   const metas: ProfileMeta[] = []
   for (const entry of entries) {
     if (!entry.endsWith('.json')) continue
+    // Let ConfigParseError propagate — the IPC handle wrapper encodes it as a
+    // structured IpcError with code CONFIG_PARSE_ERROR so the renderer can
+    // surface the repair flow instead of receiving a silently shortened list.
     const profile = await readProfileFile(path.join(root, entry))
     if (profile) metas.push(profile.meta)
   }

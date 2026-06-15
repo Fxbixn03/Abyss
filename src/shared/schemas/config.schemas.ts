@@ -150,6 +150,47 @@ export const appSettingsSchema = z
 
 export type StoredAppSettings = z.infer<typeof appSettingsSchema>
 
+/**
+ * Lenient schema for {@link ProfileMeta}. Each optional field falls back to
+ * `undefined` on a type mismatch so a partly-corrupt file still yields the
+ * required fields. The whole object falls back to `{}` if it isn't a plain
+ * object — but the caller in `readProfileFile` treats a missing `id` or
+ * `bundle` as an invalid file.
+ */
+export const profileMetaSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    createdAt: z.string(),
+    agentIds: z.array(z.string()),
+    description: z.string().optional().catch(undefined),
+    icon: z.string().optional().catch(undefined),
+  })
+  .catch({
+    id: '',
+    name: '',
+    createdAt: '',
+    agentIds: [],
+  })
+
+export type StoredProfileMeta = z.infer<typeof profileMetaSchema>
+
+/**
+ * Lenient schema for a full {@link Profile} on disk. The `bundle` field is
+ * treated as an opaque passthrough object — it is already validated end-to-end
+ * by the bundle apply path, so we only check that it is present and is an
+ * object. A corrupt or absent `meta.id` / `bundle` causes the schema to catch
+ * into an object that `readProfileFile` will reject as invalid.
+ */
+export const profileSchema = z
+  .object({
+    meta: profileMetaSchema,
+    bundle: z.record(z.string(), z.unknown()),
+  })
+  .catch({ meta: { id: '', name: '', createdAt: '', agentIds: [] }, bundle: {} })
+
+export type StoredProfile = z.infer<typeof profileSchema>
+
 /** Collapse a zod error into a `{ fieldPath: message }` map for forms. */
 export function fieldErrors(error: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {}
