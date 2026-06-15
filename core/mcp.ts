@@ -13,6 +13,7 @@
 import os from 'node:os'
 import path from 'node:path'
 import type { McpServerEntry } from '@/shared/types/config'
+import { claudeMcpFileSchema } from '@/shared/schemas/config.schemas'
 import { readJsonFile, writeJsonFile } from './json-file'
 import { codexConfigPath, readCodexMcp, writeCodexMcp } from './mcp-codex'
 
@@ -69,18 +70,21 @@ function normalizeType(s: RawMcpServer): McpServerEntry['type'] {
 
 /** Generic reader for a `{ mcpServers: {...} }` JSON file (Claude / Cursor). */
 async function readJsonMcp(file: string): Promise<McpServerEntry[]> {
-  const data = await readJsonFile<ClaudeUserConfig>(file, {})
+  const data = await readJsonFile(file, {}, claudeMcpFileSchema)
   const servers = data.mcpServers ?? {}
-  return Object.entries(servers).map(([name, s], index) => ({
-    id: `${name}-${index}`,
-    name,
-    type: normalizeType(s),
-    command: s.command,
-    args: s.args,
-    url: s.url,
-    env: s.env,
-    enabled: s.disabled !== true,
-  }))
+  return Object.entries(servers).map(([name, s], index) => {
+    const raw = s as RawMcpServer
+    return {
+      id: `${name}-${index}`,
+      name,
+      type: normalizeType(raw),
+      command: raw.command,
+      args: raw.args,
+      url: raw.url,
+      env: raw.env,
+      enabled: raw.disabled !== true,
+    }
+  })
 }
 
 async function writeJsonMcp(

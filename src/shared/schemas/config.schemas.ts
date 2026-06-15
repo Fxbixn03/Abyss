@@ -86,6 +86,22 @@ export const permissionRulesSchema = z.object({
   ask: z.array(z.string()),
 })
 
+/**
+ * Lenient schema for the `{ mcpServers: {...} }` JSON shape shared by Claude,
+ * Cursor, Roo Code, Kiro, Copilot and Windsurf. Accepts an absent or undefined
+ * `mcpServers` but rejects non-object values such as `null` or `42` so they
+ * surface as a {@link ConfigValidationError} (code `CONFIG_INVALID`) rather than
+ * as an untyped `TypeError` from `Object.entries`. Unknown top-level keys are
+ * preserved via `.passthrough()` so the read→write round-trip never drops fields.
+ */
+export const claudeMcpFileSchema = z
+  .object({
+    mcpServers: z.record(z.string(), z.unknown()).optional(),
+  })
+  .passthrough()
+
+export type ClaudeMcpFile = z.infer<typeof claudeMcpFileSchema>
+
 export const modelEnvSchema = z.object({
   model: z.string().optional(),
   env: z.record(z.string(), z.string()),
