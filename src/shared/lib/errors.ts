@@ -53,6 +53,11 @@ export function isWritePermissionError(err: unknown): err is IpcError {
   return err instanceof IpcError && err.code === IpcErrorCode.WritePermission
 }
 
+/** A read was denied by the OS (EACCES or EPERM on the config file). */
+export function isReadPermissionError(err: unknown): err is IpcError {
+  return err instanceof IpcError && err.code === IpcErrorCode.ReadPermission
+}
+
 /** Minimal info a store keeps about a corrupt config file, for the repair UI. */
 export interface ConfigParseInfo {
   message: string

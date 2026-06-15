@@ -21,6 +21,8 @@ export const IpcErrorCode = {
   PathScope: 'PATH_OUT_OF_SCOPE',
   /** A write was denied by the OS (EACCES or EPERM). */
   WritePermission: 'WRITE_PERMISSION_DENIED',
+  /** A read was denied by the OS (EACCES or EPERM). */
+  ReadPermission: 'READ_PERMISSION_DENIED',
   Unknown: 'UNKNOWN',
 } as const
 

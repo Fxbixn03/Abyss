@@ -44,3 +44,15 @@ export class ConfigWriteError extends Error {
     this.filePath = filePath
   }
 }
+
+/** A config read was denied by the OS (EACCES or EPERM). */
+export class ConfigReadError extends Error {
+  readonly code = IpcErrorCode.ReadPermission
+  readonly filePath: string
+
+  constructor(filePath: string, cause?: unknown) {
+    super(`Permission denied reading ${filePath}`, { cause })
+    this.name = 'ConfigReadError'
+    this.filePath = filePath
+  }
+}

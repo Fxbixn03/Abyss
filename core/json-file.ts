@@ -9,6 +9,7 @@ import { recordSnapshot } from './snapshots'
 import { uniqueTempPath } from './tmp-path'
 import {
   ConfigParseError,
+  ConfigReadError,
   ConfigValidationError,
   ConfigWriteError,
 } from './config-error'
@@ -32,7 +33,12 @@ export async function pathExists(p: string): Promise<boolean> {
 }
 
 export async function readTextFile(p: string): Promise<string> {
-  return fs.readFile(p, 'utf8')
+  try {
+    return await fs.readFile(p, 'utf8')
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigReadError(p, err)
+    throw err
+  }
 }
 
 export async function ensureDir(dir: string): Promise<void> {
