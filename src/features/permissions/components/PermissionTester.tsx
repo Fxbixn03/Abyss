@@ -61,6 +61,7 @@ export function PermissionTester({ rules }: { rules: PermissionRules }) {
         </DialogHeader>
 
         <Input
+          // eslint-disable-next-line jsx-a11y/no-autofocus -- dialog: focus input on open per WCAG 2.1
           autoFocus
           value={call}
           onChange={(e) => setCall(e.target.value)}

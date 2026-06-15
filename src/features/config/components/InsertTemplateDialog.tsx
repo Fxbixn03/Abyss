@@ -56,6 +56,7 @@ export function InsertTemplateDialog({
           <DialogTitle>Insert prompt template</DialogTitle>
         </DialogHeader>
         <Input
+          // eslint-disable-next-line jsx-a11y/no-autofocus -- dialog: focus search on open per WCAG 2.1
           autoFocus
           value={search}
           onChange={(e) => setSearch(e.target.value)}

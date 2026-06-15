@@ -43,6 +43,7 @@ export function NameDialog({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <Input
+          // eslint-disable-next-line jsx-a11y/no-autofocus -- dialog: focus input on open per WCAG 2.1
           autoFocus
           value={name}
           onChange={(e) => setName(e.target.value)}

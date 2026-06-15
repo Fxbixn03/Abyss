@@ -51,6 +51,11 @@ export default tseslint.config(
           depth: 3,
         },
       ],
+      'jsx-a11y/alt-text': 'warn',
+      'jsx-a11y/no-redundant-roles': 'warn',
+      'jsx-a11y/click-events-have-key-events': 'warn',
+      'jsx-a11y/anchor-is-valid': 'warn',
+      'jsx-a11y/no-autofocus': 'warn',
     },
   },
   // shadcn/ui copies legitimately export variant constants (cva) alongside

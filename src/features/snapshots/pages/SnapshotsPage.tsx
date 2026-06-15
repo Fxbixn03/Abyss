@@ -508,6 +508,7 @@ function LabelEditor({
       {open && (
         <div className="absolute right-0 top-6 z-20 flex w-56 flex-col gap-2 rounded-md border border-border bg-popover p-2 text-popover-foreground shadow-md">
           <Input
+            // eslint-disable-next-line jsx-a11y/no-autofocus -- popover: focus input on open per WCAG 2.1
             autoFocus
             value={value}
             placeholder="Add a label…"

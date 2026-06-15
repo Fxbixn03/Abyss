@@ -195,6 +195,7 @@ export function NewItemDialog({
               onChange={(e) => setId(e.target.value)}
               placeholder="my-helper"
               className="font-code"
+              // eslint-disable-next-line jsx-a11y/no-autofocus -- dialog: focus first input on open per WCAG 2.1
               autoFocus
             />
             {idError && <p className="text-xs text-destructive">{idError}</p>}

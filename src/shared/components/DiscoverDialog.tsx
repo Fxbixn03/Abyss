@@ -227,6 +227,7 @@ function SourceBody({
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
         placeholder={`Search ${source.label}…`}
+        // eslint-disable-next-line jsx-a11y/no-autofocus -- dialog: focus search on open per WCAG 2.1
         autoFocus
       />
       <div className="flex max-h-[55vh] min-h-[8rem] min-w-0 flex-col gap-2 overflow-y-auto pr-1">

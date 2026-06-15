@@ -93,6 +93,7 @@ export function BulkAddRules({
         </DialogHeader>
 
         <Textarea
+          // eslint-disable-next-line jsx-a11y/no-autofocus -- dialog: focus textarea on open per WCAG 2.1
           autoFocus
           value={text}
           onChange={(e) => setText(e.target.value)}

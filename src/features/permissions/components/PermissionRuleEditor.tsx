@@ -342,6 +342,7 @@ export function PermissionRuleEditor({
 
                 {editing === rule ? (
                   <Input
+                    // eslint-disable-next-line jsx-a11y/no-autofocus -- inline edit: auto-focus replaces the rule span that triggered it
                     autoFocus
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
@@ -365,7 +366,19 @@ export function PermissionRuleEditor({
                       !readOnly && 'cursor-text',
                     )}
                     title={rule}
+                    role={readOnly ? undefined : 'button'}
+                    tabIndex={readOnly ? undefined : 0}
                     onClick={readOnly ? undefined : () => startEdit(rule)}
+                    onKeyDown={
+                      readOnly
+                        ? undefined
+                        : (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              startEdit(rule)
+                            }
+                          }
+                    }
                   >
                     {rule}
                   </span>
