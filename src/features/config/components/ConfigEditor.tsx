@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import CodeMirror from '@uiw/react-codemirror'
+import type { Statistics } from '@uiw/react-codemirror'
 import { EditorView } from '@codemirror/view'
 import type { Extension } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
@@ -30,6 +31,8 @@ export interface ConfigEditorProps {
   lineWrap?: boolean
   /** Receives the CodeMirror view so callers can scroll/jump programmatically. */
   onCreateEditor?: (view: EditorView) => void
+  /** Called on every editor update with cursor/selection statistics. */
+  onStatistics?: (stats: Statistics) => void
 }
 
 export function ConfigEditor({
@@ -39,6 +42,7 @@ export function ConfigEditor({
   readOnly = false,
   lineWrap = true,
   onCreateEditor,
+  onStatistics,
 }: ConfigEditorProps) {
   const appearance = useThemeStore((s) => s.appearance)
   const extensions = useMemo(
@@ -55,6 +59,7 @@ export function ConfigEditor({
         value={value}
         onChange={onChange}
         onCreateEditor={onCreateEditor}
+        onStatistics={onStatistics}
         extensions={extensions}
         theme={appearance === 'dark' ? oneDark : 'light'}
         height="100%"

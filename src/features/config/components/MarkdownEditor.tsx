@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { EditorView } from '@codemirror/view'
+import type { Statistics } from '@uiw/react-codemirror'
 import type { ConfigLanguage } from '@/shared/types/agent'
 import { Markdown } from '@/shared/components/Markdown'
 import { cn } from '@/shared/lib/utils'
@@ -23,12 +24,14 @@ export function MarkdownEditor({
   language,
   onChange,
   onCreateEditor,
+  onStatistics,
   lineWrap = true,
 }: {
   value: string
   language: ConfigLanguage
   onChange: (value: string) => void
   onCreateEditor?: (view: EditorView) => void
+  onStatistics?: (stats: Statistics) => void
   lineWrap?: boolean
 }) {
   const [mode, setMode] = useState<Mode>('edit')
@@ -98,6 +101,7 @@ export function MarkdownEditor({
         language={language}
         onChange={onChange}
         onCreateEditor={onCreateEditor}
+        onStatistics={onStatistics}
         lineWrap={lineWrap}
       />
     )
@@ -136,6 +140,7 @@ export function MarkdownEditor({
               language={language}
               onChange={onChange}
               onCreateEditor={onCreateEditor}
+              onStatistics={onStatistics}
               lineWrap={lineWrap}
             />
           </div>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { EditorView } from '@codemirror/view'
+import type { Statistics } from '@uiw/react-codemirror'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Icon } from '@/shared/components/Icon'
@@ -70,6 +71,7 @@ export function ConfigEditorPanel() {
     null,
   )
   const [copyTarget, setCopyTarget] = useState<AgentAdapter | null>(null)
+  const [cursorLine, setCursorLine] = useState(1)
 
   const editorViewRef = useRef<EditorView | null>(null)
 
@@ -78,6 +80,17 @@ export function ConfigEditorPanel() {
   const tokens = estimateTokens(draft)
   const pct = (tokens / CONTEXT_WINDOW) * 100
   const outline = extractOutline(draft)
+
+  // Deepest heading whose line is at or before the current cursor line.
+  const activeSection = outline.reduce<(typeof outline)[0] | null>(
+    (found, item) => (item.line <= cursorLine ? item : found),
+    null,
+  )
+
+  const onEditorStatistics = useCallback((stats: Statistics) => {
+    setCursorLine(stats.line.number)
+  }, [])
+
   const otherAgents = allAgents.filter(
     (a) => a.id !== agentId && a.capabilities.instructions,
   )
@@ -349,6 +362,7 @@ export function ConfigEditorPanel() {
               onCreateEditor={(view) => {
                 editorViewRef.current = view
               }}
+              onStatistics={onEditorStatistics}
             />
           )}
         </div>
@@ -375,6 +389,16 @@ export function ConfigEditorPanel() {
 
       <div className="flex items-center justify-between gap-3 border-t border-border pt-2">
         <ValidationList issues={issues} onJumpToLine={jumpToLine} />
+        {activeSection && (
+          <button
+            type="button"
+            onClick={() => jumpToLine(activeSection.line)}
+            title={`Jump to: ${activeSection.text}`}
+            className="max-w-[200px] truncate font-code text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            {activeSection.text}
+          </button>
+        )}
         <div className="flex shrink-0 items-center gap-2 font-code text-[11px] text-muted-foreground">
           <span>~{formatTokens(tokens)} tokens</span>
           <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
