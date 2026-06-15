@@ -76,12 +76,18 @@ export async function writeTextFileAtomic(
     if (isDiskError(err)) throw new ConfigDiskError(p, err)
     throw err
   }
+  let renamed = false
   try {
     await fs.rename(tmp, p)
+    renamed = true
   } catch (err) {
     if (isPermissionError(err)) throw new ConfigWriteError(p, err)
     if (isDiskError(err)) throw new ConfigDiskError(p, err)
     throw err
+  } finally {
+    // If the rename did not complete, the temp file was orphaned — remove it so
+    // .abyss-tmp-* sidecars never accumulate next to live config files.
+    if (!renamed) await fs.rm(tmp, { force: true })
   }
 }
 
