@@ -89,6 +89,20 @@ export function isDiskWriteError(err: unknown): err is IpcError {
   return err instanceof IpcError && err.code === IpcErrorCode.DiskFull
 }
 
+/**
+ * Show a targeted 'Disk is full — free up space and try again' toast for a
+ * disk-full error, with the affected file path as the description. Marks the
+ * error as handled so the global IPC net stays quiet.
+ *
+ * @param err - The caught error (checked via {@link isDiskWriteError}).
+ */
+export function reportDiskWriteError(err: IpcError): void {
+  markErrorReported(err)
+  toast.error('Disk is full — free up space and try again', {
+    description: err.filePath,
+  })
+}
+
 /** Minimal info a store keeps about a corrupt config file, for the repair UI. */
 export interface ConfigParseInfo {
   message: string

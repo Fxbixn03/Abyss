@@ -7,7 +7,9 @@ import type {
 import { ipc } from '@/shared/ipc/ipc.client'
 import { agentRegistry } from '@/features/agents/registry/agent.registry'
 import {
+  isDiskWriteError,
   isWritePermissionError,
+  reportDiskWriteError,
   reportError,
   reportWritePermissionError,
 } from '@/shared/lib/errors'
@@ -104,6 +106,8 @@ export const useConfigStore = create<ConfigEditorState>()((set, get) => ({
     } catch (err) {
       if (isWritePermissionError(err)) {
         reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+      } else if (isDiskWriteError(err)) {
+        reportDiskWriteError(err)
       } else {
         reportError(err, { title: `Couldn't save ${spec.filename}` })
       }

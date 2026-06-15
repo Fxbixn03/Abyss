@@ -11,7 +11,9 @@ import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
 import {
   isConfigValidationError,
+  isDiskWriteError,
   isWritePermissionError,
+  reportDiskWriteError,
   reportError,
   reportWritePermissionError,
 } from '@/shared/lib/errors'
@@ -124,6 +126,8 @@ export function SettingsFilePage() {
         setSaveError(err.message)
       } else if (isWritePermissionError(err)) {
         reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+      } else if (isDiskWriteError(err)) {
+        reportDiskWriteError(err)
       } else {
         throw err
       }

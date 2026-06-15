@@ -4,7 +4,9 @@ import type { HookEntry } from '@/shared/types/hooks'
 import { ipc } from '@/shared/ipc/ipc.client'
 import {
   isConfigParseError,
+  isDiskWriteError,
   isWritePermissionError,
+  reportDiskWriteError,
   reportError,
   reportWritePermissionError,
 } from '@/shared/lib/errors'
@@ -152,6 +154,8 @@ async function persist(
     set({ entries: previous }) // roll back the optimistic update
     if (isWritePermissionError(err)) {
       reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+    } else if (isDiskWriteError(err)) {
+      reportDiskWriteError(err)
     } else {
       reportError(err, { title: "Couldn't save hooks" })
     }
