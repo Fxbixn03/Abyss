@@ -16,6 +16,7 @@ import { amazonqThemes } from './amazonq.theme'
 import { warpThemes } from './warp.theme'
 import { plandexThemes } from './plandex.theme'
 import { zedThemes } from './zed.theme'
+import { codyThemes } from './cody.theme'
 import { abyssThemes } from './abyss.theme'
 
 /**
@@ -40,5 +41,6 @@ export const BUILTIN_THEMES: ThemeConfig[] = [
   ...warpThemes,
   ...plandexThemes,
   ...zedThemes,
+  ...codyThemes,
   ...abyssThemes,
 ]

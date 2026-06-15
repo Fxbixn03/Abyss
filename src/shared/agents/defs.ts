@@ -704,6 +704,48 @@ export const amazonqDefinition: AgentDefinition = {
   ],
 }
 
+const codyConfig: ConfigFileSpec = {
+  id: 'instructions',
+  filename: 'config.json',
+  scope: 'global',
+  language: 'json',
+  description:
+    'Sourcegraph Cody CLI config (includes customInstructions field).',
+}
+
+/**
+ * Sourcegraph Cody CLI — global config at `~/.sourcegraph/cody/config.json`
+ * (Linux/macOS) or `%APPDATA%\Sourcegraph\Cody\config.json` (Windows).
+ * Supports a `customInstructions` field for global AI instructions.
+ */
+export const codyDefinition: AgentDefinition = {
+  id: 'cody',
+  name: 'cody',
+  displayName: 'Sourcegraph Cody',
+  defaultThemeId: 'cody-nebula',
+  iconName: 'search-code',
+  docsUrl: 'https://sourcegraph.com/cody',
+  capabilities: {
+    instructions: true,
+    mcp: false,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: false,
+    chats: false,
+  },
+  configFiles: [codyConfig],
+  resolvePaths: (env: OsEnv) => [
+    env.platform === 'win32'
+      ? joinPath(env.platform, env.appData, 'Sourcegraph', 'Cody')
+      : joinPath(env.platform, env.home, '.sourcegraph', 'cody'),
+  ],
+}
+
 /** Every known agent definition, keyed by id. */
 export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   claude: claudeDefinition,
@@ -723,6 +765,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   warp: warpDefinition,
   plandex: plandexDefinition,
   zed: zedDefinition,
+  cody: codyDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -744,6 +787,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'warp',
   'plandex',
   'zed',
+  'cody',
 ]
 
 /**
