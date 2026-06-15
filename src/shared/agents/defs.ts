@@ -609,7 +609,7 @@ export const plandexDefinition: AgentDefinition = {
   docsUrl: 'https://plandex.ai/docs',
   capabilities: {
     instructions: true,
-    mcp: false,
+    mcp: true,
     permissions: false,
     modelEnv: false,
     agents: false,
