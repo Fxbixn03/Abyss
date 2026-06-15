@@ -455,7 +455,9 @@ export function ValidationPage() {
                         onClick={() => openFinding(f)}
                       >
                         <Icon name="arrow-right" />
-                        Open
+                        {f.suggestedAction === 'repair-settings'
+                          ? 'Open settings editor'
+                          : 'Open'}
                       </Button>
                     )}
                     {f.path && (

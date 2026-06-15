@@ -38,6 +38,12 @@ export interface LintFinding {
   line?: number
   /** Jump target for a "Open" action. */
   open?: LintOpen
+  /**
+   * Machine-readable hint for the renderer about which repair action to offer.
+   * Mirrors the {@link ValidationFinding} suggestedAction union so the
+   * ValidationPage can render a context-specific CTA label.
+   */
+  suggestedAction?: 'open-raw-editor' | 'create-file' | 'open-mcp' | 'open-hooks' | 'repair-settings'
 }
 
 /** One instruction file (an agent can expose several). */
@@ -583,6 +589,8 @@ export function runLint(input: LintInput): LintFinding[] {
         title: `${raw.file} is not valid JSON`,
         detail: err instanceof Error ? err.message : 'Parse error.',
         path: raw.path,
+        open: { route: '/raw-settings' },
+        suggestedAction: 'repair-settings',
       })
     }
   }

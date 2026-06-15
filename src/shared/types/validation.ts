@@ -18,5 +18,5 @@ export interface ValidationFinding {
    * Machine-readable hint for the renderer about which repair action to offer
    * the user. Optional so existing consumers compile unchanged.
    */
-  suggestedAction?: 'open-raw-editor' | 'create-file' | 'open-mcp' | 'open-hooks'
+  suggestedAction?: 'open-raw-editor' | 'create-file' | 'open-mcp' | 'open-hooks' | 'repair-settings'
 }

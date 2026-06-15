@@ -94,7 +94,7 @@ async function checkSettingsJson(
           'settings.json contains invalid JSON: ' +
           (err instanceof Error ? err.message : String(err)),
         route: '/raw-settings',
-        suggestedAction: 'open-raw-editor',
+        suggestedAction: 'repair-settings',
       },
     ]
   }
