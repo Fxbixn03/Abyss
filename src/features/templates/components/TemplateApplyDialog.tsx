@@ -129,7 +129,7 @@ export function TemplateApplyDialog({
   useEffect(() => {
     if (!open || !source) return
     let cancelled = false
-    Promise.all(
+    void Promise.all(
       agents.map(async (agent) => {
         const base = resolveBase(agent.id)
         if (!base) return [agent.id, { path: '', before: '' }] as const

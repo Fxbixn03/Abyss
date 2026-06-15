@@ -25,6 +25,10 @@ export default tseslint.config(
       ecmaVersion: 2022,
       sourceType: 'module',
       globals: { ...globals.browser },
+      parserOptions: {
+        project: './tsconfig.app.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     plugins: {
       'react-hooks': reactHooks,
@@ -42,6 +46,7 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      '@typescript-eslint/no-floating-promises': 'error',
       'jsx-a11y/interactive-supports-focus': 'error',
       'jsx-a11y/aria-props': 'error',
       'jsx-a11y/label-has-associated-control': [
