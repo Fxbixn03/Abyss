@@ -58,6 +58,32 @@ export function isReadPermissionError(err: unknown): err is IpcError {
   return err instanceof IpcError && err.code === IpcErrorCode.ReadPermission
 }
 
+/**
+ * Show a targeted 'File is read-only — check permissions' toast for a
+ * write-permission error, with an action that reveals the file in the OS file
+ * manager. Marks the error as handled so the global IPC net stays quiet.
+ *
+ * @param err   - The caught error (checked via {@link isWritePermissionError}).
+ * @param revealPath - Called with the error's `filePath` when the user clicks
+ *                     the action button.  Accepts `undefined` gracefully.
+ */
+export function reportWritePermissionError(
+  err: IpcError,
+  revealPath: (path: string) => void,
+): void {
+  markErrorReported(err)
+  const filePath = err.filePath
+  toast.error('File is read-only — check permissions', {
+    description: filePath,
+    action: filePath
+      ? {
+          label: 'Show in folder',
+          onClick: () => revealPath(filePath),
+        }
+      : undefined,
+  })
+}
+
 /** A write failed because the disk is full (ENOSPC) or a cross-device rename was attempted (EXDEV). */
 export function isDiskWriteError(err: unknown): err is IpcError {
   return err instanceof IpcError && err.code === IpcErrorCode.DiskFull

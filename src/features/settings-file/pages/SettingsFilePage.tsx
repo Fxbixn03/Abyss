@@ -9,7 +9,12 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
-import { reportError, isConfigValidationError } from '@/shared/lib/errors'
+import {
+  isConfigValidationError,
+  isWritePermissionError,
+  reportError,
+  reportWritePermissionError,
+} from '@/shared/lib/errors'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
@@ -117,6 +122,8 @@ export function SettingsFilePage() {
           silent: true,
         })
         setSaveError(err.message)
+      } else if (isWritePermissionError(err)) {
+        reportWritePermissionError(err, (path) => void ipc.revealPath(path))
       } else {
         throw err
       }

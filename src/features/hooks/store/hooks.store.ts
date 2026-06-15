@@ -2,7 +2,12 @@ import { create } from 'zustand'
 import type { AgentId } from '@/shared/types/agent'
 import type { HookEntry } from '@/shared/types/hooks'
 import { ipc } from '@/shared/ipc/ipc.client'
-import { reportError, isConfigParseError } from '@/shared/lib/errors'
+import {
+  isConfigParseError,
+  isWritePermissionError,
+  reportError,
+  reportWritePermissionError,
+} from '@/shared/lib/errors'
 import type { ConfigParseInfo } from '@/shared/lib/errors'
 
 interface HooksState {
@@ -145,7 +150,11 @@ async function persist(
     set({ entries })
   } catch (err) {
     set({ entries: previous }) // roll back the optimistic update
-    reportError(err, { title: "Couldn't save hooks" })
+    if (isWritePermissionError(err)) {
+      reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+    } else {
+      reportError(err, { title: "Couldn't save hooks" })
+    }
   } finally {
     set({ saving: false })
   }

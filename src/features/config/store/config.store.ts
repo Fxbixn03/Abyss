@@ -6,7 +6,11 @@ import type {
 } from '@/shared/types/agent'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { agentRegistry } from '@/features/agents/registry/agent.registry'
-import { reportError } from '@/shared/lib/errors'
+import {
+  isWritePermissionError,
+  reportError,
+  reportWritePermissionError,
+} from '@/shared/lib/errors'
 
 interface ConfigEditorState {
   agentId: AgentId | null
@@ -98,7 +102,11 @@ export const useConfigStore = create<ConfigEditorState>()((set, get) => ({
       set({ original: draft, fileExists: true })
       return { path: result.path }
     } catch (err) {
-      reportError(err, { title: `Couldn't save ${spec.filename}` })
+      if (isWritePermissionError(err)) {
+        reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+      } else {
+        reportError(err, { title: `Couldn't save ${spec.filename}` })
+      }
       throw err
     } finally {
       set({ saving: false })

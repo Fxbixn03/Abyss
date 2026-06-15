@@ -2,7 +2,12 @@ import { create } from 'zustand'
 import type { AgentId } from '@/shared/types/agent'
 import type { McpHealthResult, McpServerEntry } from '@/shared/types/config'
 import { ipc } from '@/shared/ipc/ipc.client'
-import { reportError, isConfigParseError } from '@/shared/lib/errors'
+import {
+  isConfigParseError,
+  isWritePermissionError,
+  reportError,
+  reportWritePermissionError,
+} from '@/shared/lib/errors'
 import type { ConfigParseInfo } from '@/shared/lib/errors'
 import { genId } from '@/shared/lib/id'
 
@@ -162,7 +167,11 @@ async function persist(
     await ipc.setMcpServers(agentId, basePath, next, projectDir)
   } catch (err) {
     set({ servers: previous }) // roll back the optimistic update
-    reportError(err, { title: "Couldn't save MCP servers" })
+    if (isWritePermissionError(err)) {
+      reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+    } else {
+      reportError(err, { title: "Couldn't save MCP servers" })
+    }
   } finally {
     set({ saving: false })
   }
