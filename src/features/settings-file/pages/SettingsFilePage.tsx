@@ -9,8 +9,7 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
-import { IpcError, IpcErrorCode } from '@/shared/ipc/ipc-error'
-import { markErrorReported } from '@/shared/lib/errors'
+import { reportError, isConfigValidationError } from '@/shared/lib/errors'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
@@ -109,10 +108,14 @@ export function SettingsFilePage() {
       setExists(true)
       setDiffOpen(false)
     } catch (err) {
-      if (err instanceof IpcError && err.code === IpcErrorCode.ConfigInvalid) {
+      if (isConfigValidationError(err)) {
         // Surface as an inline banner so the user can fix the JSON without the
-        // toast disappearing. Mark it reported so the global net stays silent.
-        markErrorReported(err)
+        // toast disappearing. reportError marks it handled so the global net
+        // (which already silences ConfigInvalid) stays quiet.
+        reportError(err, {
+          title: 'Invalid JSON — please fix before saving',
+          silent: true,
+        })
         setSaveError(err.message)
       } else {
         throw err

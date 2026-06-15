@@ -43,11 +43,14 @@ import type { PluginsConfig } from '@/shared/types/plugins'
 
 /**
  * Codes the global safety net must never toast: config-parse failures are owned
- * by the repair flow (see `isConfigParseError`), and aborts are deliberate
- * cancellations (discovery search, MCP health checks), not user-facing errors.
+ * by the repair flow (see `isConfigParseError`), config-invalid failures are
+ * owned by the inline save-error banner (see `isConfigValidationError`), and
+ * aborts are deliberate cancellations (discovery search, MCP health checks),
+ * not user-facing errors.
  */
 const SILENT_NET_CODES = new Set<string>([
   IpcErrorCode.ConfigParse,
+  IpcErrorCode.ConfigInvalid,
   IpcErrorCode.Aborted,
 ])
 

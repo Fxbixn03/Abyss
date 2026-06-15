@@ -38,6 +38,11 @@ export function isConfigParseError(err: unknown): err is IpcError {
   return err instanceof IpcError && err.code === IpcErrorCode.ConfigParse
 }
 
+/** A save was rejected because the content failed JSON/schema validation. */
+export function isConfigValidationError(err: unknown): err is IpcError {
+  return err instanceof IpcError && err.code === IpcErrorCode.ConfigInvalid
+}
+
 /** Minimal info a store keeps about a corrupt config file, for the repair UI. */
 export interface ConfigParseInfo {
   message: string
