@@ -7,7 +7,20 @@ import path from 'node:path'
 import type { ZodType } from 'zod'
 import { recordSnapshot } from './snapshots'
 import { uniqueTempPath } from './tmp-path'
-import { ConfigParseError, ConfigValidationError } from './config-error'
+import {
+  ConfigParseError,
+  ConfigValidationError,
+  ConfigWriteError,
+} from './config-error'
+
+/** Returns true when a Node.js filesystem error is a permission denial. */
+function isPermissionError(err: unknown): boolean {
+  if (err && typeof err === 'object') {
+    const code = (err as Record<string, unknown>).code
+    return code === 'EACCES' || code === 'EPERM'
+  }
+  return false
+}
 
 export async function pathExists(p: string): Promise<boolean> {
   try {
@@ -40,8 +53,18 @@ export async function writeTextFileAtomic(
     }
   }
   const tmp = uniqueTempPath(p)
-  await fs.writeFile(tmp, content, 'utf8')
-  await fs.rename(tmp, p)
+  try {
+    await fs.writeFile(tmp, content, 'utf8')
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(p, err)
+    throw err
+  }
+  try {
+    await fs.rename(tmp, p)
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(p, err)
+    throw err
+  }
 }
 
 /**

@@ -19,6 +19,8 @@ export const IpcErrorCode = {
   Aborted: 'ABORTED',
   /** A renderer-supplied path escaped Abyss's allowed directories. */
   PathScope: 'PATH_OUT_OF_SCOPE',
+  /** A write was denied by the OS (EACCES or EPERM). */
+  WritePermission: 'WRITE_PERMISSION_DENIED',
   Unknown: 'UNKNOWN',
 } as const
 

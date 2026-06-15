@@ -32,3 +32,15 @@ export class ConfigValidationError extends Error {
     this.filePath = filePath
   }
 }
+
+/** A config write was denied by the OS (EACCES or EPERM). */
+export class ConfigWriteError extends Error {
+  readonly code = IpcErrorCode.WritePermission
+  readonly filePath: string
+
+  constructor(filePath: string, cause?: unknown) {
+    super(`Permission denied writing ${filePath}`, { cause })
+    this.name = 'ConfigWriteError'
+    this.filePath = filePath
+  }
+}
