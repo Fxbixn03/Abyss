@@ -43,6 +43,7 @@ export function AgentCard({
     <Card
       role="button"
       tabIndex={0}
+      aria-label={`Switch to ${agent.displayName} agent`}
       onClick={() => setActiveAgent(agent.id)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') setActiveAgent(agent.id)

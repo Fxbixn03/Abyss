@@ -39,12 +39,18 @@ export function BackupCard({ refreshKey = 0 }: { refreshKey?: number }) {
 
   const open = () => navigate('/history')
 
+  const backupAriaLabel =
+    status.count === 0
+      ? 'Backups: no backups yet — navigate to History'
+      : `Backups: last backup ${status.last ? relativeDate(status.last.createdAt) : 'unknown'} — navigate to History`
+
   return (
     <section className="space-y-3">
       <h2 className="text-sm font-medium text-muted-foreground">Backups</h2>
       <Card
         role="button"
         tabIndex={0}
+        aria-label={backupAriaLabel}
         onClick={open}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {

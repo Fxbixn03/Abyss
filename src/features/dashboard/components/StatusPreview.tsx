@@ -17,6 +17,7 @@ function StatusChip({
   value,
   on,
   onClick,
+  ariaLabel,
 }: {
   icon: string
   label: string
@@ -24,12 +25,15 @@ function StatusChip({
   on: boolean
   /** When set, the chip becomes an interactive button that navigates. */
   onClick?: () => void
+  /** Descriptive label for screen readers when the chip is interactive. */
+  ariaLabel?: string
 }) {
   const interactive = Boolean(onClick)
   return (
     <Card
       role={interactive ? 'button' : undefined}
       tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? ariaLabel : undefined}
       onClick={onClick}
       onKeyDown={
         interactive
@@ -115,6 +119,7 @@ export function StatusPreview() {
             }
             on={liveActive}
             onClick={() => navigate('/chats')}
+            ariaLabel={`Live chat: ${liveActive ? (status === 'streaming' ? 'streaming' : 'active') : 'idle'} — navigate to Chats page`}
           />
         )}
         {hasMcp && enabledMcp.length > 0 && (
@@ -124,6 +129,7 @@ export function StatusPreview() {
             value={`${onlineMcp}/${enabledMcp.length} online`}
             on={onlineMcp > 0}
             onClick={() => navigate('/mcp')}
+            ariaLabel={`MCP servers: ${onlineMcp} of ${enabledMcp.length} online — navigate to MCP page`}
           />
         )}
       </div>
