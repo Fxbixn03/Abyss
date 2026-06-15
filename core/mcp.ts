@@ -34,11 +34,6 @@ interface RawMcpServer {
   [key: string]: unknown
 }
 
-interface ClaudeUserConfig {
-  mcpServers?: Record<string, RawMcpServer>
-  [key: string]: unknown
-}
-
 /**
  * Location of Claude's user config. Honors CLAUDE_CONFIG_DIR (used by Claude
  * Code to relocate its config), otherwise `~/.claude.json`.
@@ -100,8 +95,8 @@ async function writeJsonMcp(
 ): Promise<{ success: boolean; path: string }> {
   // Re-read immediately before writing to minimize the lost-update window and
   // keep all sibling keys (and unknown per-server fields) intact.
-  const data = await readJsonFile<ClaudeUserConfig>(file, {})
-  const existing = data.mcpServers ?? {}
+  const data = await readJsonFile(file, {}, claudeMcpFileSchema)
+  const existing = (data.mcpServers ?? {}) as Record<string, RawMcpServer>
   const out: Record<string, RawMcpServer> = {}
 
   for (const entry of entries) {
