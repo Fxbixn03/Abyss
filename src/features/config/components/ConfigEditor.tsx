@@ -8,6 +8,7 @@ import { json } from '@codemirror/lang-json'
 import { yaml } from '@codemirror/lang-yaml'
 import type { ConfigLanguage } from '@/shared/types/agent'
 import { useThemeStore } from '@/features/themes/store/theme.store'
+import { buildHighlightStyle } from './cmHighlight'
 
 function languageExtensions(language: ConfigLanguage): Extension[] {
   switch (language) {
@@ -145,6 +146,7 @@ export function ConfigEditor({
       ...languageExtensions(language),
       ...(lineWrap ? [EditorView.lineWrapping] : []),
       buildCmTheme(appearance === 'dark'),
+      buildHighlightStyle(appearance === 'dark'),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [language, lineWrap, appearance, agentThemeMap],
