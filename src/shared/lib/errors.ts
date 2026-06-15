@@ -43,6 +43,11 @@ export function isConfigValidationError(err: unknown): err is IpcError {
   return err instanceof IpcError && err.code === IpcErrorCode.ConfigInvalid
 }
 
+/** A renderer-supplied path was rejected because it escaped Abyss's allowed directories. */
+export function isPathScopeError(err: unknown): err is IpcError {
+  return err instanceof IpcError && err.code === IpcErrorCode.PathScope
+}
+
 /** Minimal info a store keeps about a corrupt config file, for the repair UI. */
 export interface ConfigParseInfo {
   message: string

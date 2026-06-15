@@ -8,7 +8,11 @@ import {
   readTextFile,
   writeTextFileAtomic,
 } from '@core/json-file'
-import { resolveScopedPath, isWellFormedPath } from '@core/path-scope'
+import {
+  resolveScopedPath,
+  assertScopedPath,
+  isWellFormedPath,
+} from '@core/path-scope'
 import { logError } from '../log'
 import { watchFile, unwatchFile } from '../fs-watcher'
 import { handle } from './handle'
@@ -20,6 +24,11 @@ export function registerFilesystemIpc(ctx: IpcContext): void {
   // path, or null when the path is malformed or escapes those roots.
   const scope = (p: string): string | null =>
     resolveScopedPath(p, ctx.env, ctx.userData)
+
+  // Like scope() but throws a PathScopeError for mutating handlers — callers get
+  // a structured IpcError with code PATH_OUT_OF_SCOPE rather than a silent failure.
+  const assertScope = (p: string): string =>
+    assertScopedPath(p, ctx.env, ctx.userData)
 
   handle(IpcChannel.ResolvePaths, ({ agentId }) =>
     detectAgentPaths(agentId, ctx.env),
@@ -107,11 +116,7 @@ export function registerFilesystemIpc(ctx: IpcContext): void {
   })
 
   handle(IpcChannel.CreateDirectory, async ({ path }) => {
-    const safe = scope(path)
-    if (!safe) {
-      logError('CreateDirectory: rejected out-of-scope path', path)
-      return { success: false }
-    }
+    const safe = assertScope(path)
     await ensureDir(safe)
     return { success: true }
   })
@@ -132,11 +137,7 @@ export function registerFilesystemIpc(ctx: IpcContext): void {
   // snapshot of the previous content is captured for history). `executable`
   // marks shell scripts +x so a freshly-created hook script can run.
   handle(IpcChannel.WriteTextFile, async ({ path, content, executable }) => {
-    const safe = scope(path)
-    if (!safe) {
-      logError('WriteTextFile: rejected out-of-scope path', path)
-      return { success: false, path }
-    }
+    const safe = assertScope(path)
     await writeTextFileAtomic(safe, content)
     if (executable) await fs.chmod(safe, 0o755).catch(() => {})
     return { success: true, path: safe }
