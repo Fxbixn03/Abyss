@@ -168,6 +168,11 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
     [agents],
   )
 
+  const agentById = useMemo(
+    () => new Map(agents.map((a) => [a.id, a])),
+    [agents],
+  )
+
   // Substring-match the global index ourselves (cheap, predictable), capped so
   // the palette stays readable. We inject the query as a keyword below so cmdk
   // keeps these items in the rendered list.
@@ -476,9 +481,22 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
                   navigate(r.route)
                 })}
               >
-                <Icon name={GLOBAL_KIND_ICON[r.kind]} />
+                <span className="relative shrink-0">
+                  {agentById.get(r.agentId) ? (
+                    <AgentGlyph
+                      agent={agentById.get(r.agentId)!}
+                      className="size-4 rounded-[3px]"
+                    />
+                  ) : (
+                    <Icon name={GLOBAL_KIND_ICON[r.kind]} />
+                  )}
+                </span>
                 <span className="truncate">{r.label}</span>
-                <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                <span className="ml-auto flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                  <Icon
+                    name={GLOBAL_KIND_ICON[r.kind]}
+                    className="size-3 opacity-60"
+                  />
                   {agentNames.get(r.agentId) ?? r.agentId} · {r.kind}
                 </span>
               </CommandItem>
