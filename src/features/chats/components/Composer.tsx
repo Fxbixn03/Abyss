@@ -55,6 +55,7 @@ export function Composer({
             size="icon"
             onClick={onStop}
             title="Stop"
+            aria-label="Stop"
           >
             <Icon name="square" />
           </Button>
@@ -64,6 +65,7 @@ export function Composer({
             onClick={submit}
             disabled={disabled || text.trim() === ''}
             title="Send (Enter)"
+            aria-label="Send (Enter)"
           >
             <Icon name="send" />
           </Button>

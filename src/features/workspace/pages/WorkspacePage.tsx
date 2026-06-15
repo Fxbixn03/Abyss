@@ -54,6 +54,7 @@ function FindRow({ find }: { find: WorkspaceConfigFind }) {
         size="icon"
         className="size-7"
         title="Reveal in file manager"
+        aria-label="Reveal in file manager"
         onClick={() => void ipc.revealPath(find.absPath)}
       >
         <Icon name="folder-open" className="size-3.5" />
@@ -175,6 +176,7 @@ export function WorkspacePage() {
                   size="icon"
                   className="size-6 shrink-0"
                   title="Clear saved folder"
+                  aria-label="Clear saved folder"
                   onClick={() => {
                     setLastRoot(null)
                     setRoot(null)
