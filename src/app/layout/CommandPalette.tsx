@@ -18,7 +18,12 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import { reportError } from '@/shared/lib/errors'
 import { AgentGlyph } from '@/features/agents/components/AgentGlyph'
 import { PRIMARY_NAV, SETTINGS_NAV } from '@/app/navigation'
+import type { NavItem } from '@/app/navigation'
 import { useCommandPalette } from '@/app/command/commandPalette.store'
+import {
+  useRecentNavStore,
+  MAX_RECENT_SHOWN,
+} from '@/features/navigation/store/recentNav.store'
 import {
   useActiveAgent,
   useAllAgents,
@@ -230,6 +235,27 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
     SETTINGS_NAV,
   ]
 
+  // All possible nav entries for label/icon lookup (regardless of capability filter).
+  const allNavItems = useMemo(
+    () => [...PRIMARY_NAV, ...(activeAgent.getSidebarSections?.() ?? []), SETTINGS_NAV],
+    [activeAgent],
+  )
+  const navByRoute = useMemo(
+    () => new Map(allNavItems.map((item) => [item.route, item])),
+    [allNavItems],
+  )
+
+  const recentRoutes = useRecentNavStore((s) => s.routes)
+  const recentNavItems = useMemo(() => {
+    const results: NavItem[] = []
+    for (const route of recentRoutes) {
+      const item = navByRoute.get(route)
+      if (item) results.push(item)
+      if (results.length >= MAX_RECENT_SHOWN) break
+    }
+    return results
+  }, [recentRoutes, navByRoute])
+
   const run = (fn: () => void) => () => {
     fn()
     onClose()
@@ -244,6 +270,21 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
       />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
+
+        {search === '' && recentNavItems.length > 0 && (
+          <CommandGroup heading="Recent">
+            {recentNavItems.map((item) => (
+              <CommandItem
+                key={`recent-${item.route}`}
+                value={`recent ${item.label} ${item.route}`}
+                onSelect={run(() => navigate(item.route))}
+              >
+                <Icon name={item.icon} />
+                {item.label}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
 
         <CommandGroup heading="Agents">
           {agents.map((agent) => (

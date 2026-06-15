@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { TooltipProvider } from '@/shared/components/ui/tooltip'
 import { useCommandPalette } from '@/app/command/commandPalette.store'
 import { useGlobalShortcuts } from '@/features/shortcuts/hooks/useGlobalShortcuts'
+import { useRecentNavStore } from '@/features/navigation/store/recentNav.store'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { StatusBar } from './StatusBar'
@@ -13,6 +14,14 @@ import { TourOverlay } from '@/features/tour/components/TourOverlay'
 export function AppLayout() {
   const toggle = useCommandPalette((s) => s.toggle)
   useGlobalShortcuts()
+  const location = useLocation()
+  const pushRecentRoute = useRecentNavStore((s) => s.push)
+
+  // Record every route change into the recent-nav store so the command
+  // palette can surface the most recently visited pages at the top.
+  useEffect(() => {
+    pushRecentRoute(location.pathname)
+  }, [location.pathname, pushRecentRoute])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
