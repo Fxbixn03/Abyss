@@ -145,6 +145,11 @@ function windsurfMcpPath(basePath: string): string {
   return path.join(basePath, 'mcp_config.json')
 }
 
+/** Roo Code keeps its `mcpServers` map in `<base>/mcp.json` (same shape as Cursor). */
+function rooMcpPath(basePath: string): string {
+  return path.join(basePath, 'mcp.json')
+}
+
 /**
  * Return the on-disk path of the file that holds MCP server config for the
  * given agent. Mirrors the routing in {@link readMcpServers} so callers can
@@ -160,6 +165,7 @@ export function getMcpConfigPath(
   if (agentId === 'gemini') return geminiSettingsPath(basePath)
   if (agentId === 'copilot') return copilotMcpPath(basePath)
   if (agentId === 'windsurf') return windsurfMcpPath(basePath)
+  if (agentId === 'roo') return rooMcpPath(basePath)
   return mcpConfigPath(projectDir)
 }
 
@@ -179,6 +185,7 @@ export function readMcpServers(
   if (agentId === 'gemini') return readJsonMcp(geminiSettingsPath(basePath))
   if (agentId === 'copilot') return readJsonMcp(copilotMcpPath(basePath))
   if (agentId === 'windsurf') return readJsonMcp(windsurfMcpPath(basePath))
+  if (agentId === 'roo') return readJsonMcp(rooMcpPath(basePath))
   return readJsonMcp(mcpConfigPath(projectDir))
 }
 
@@ -197,5 +204,7 @@ export function writeMcpServers(
     return writeJsonMcp(copilotMcpPath(basePath), entries, stdioTypeFor(agentId))
   if (agentId === 'windsurf')
     return writeJsonMcp(windsurfMcpPath(basePath), entries)
+  if (agentId === 'roo')
+    return writeJsonMcp(rooMcpPath(basePath), entries)
   return writeJsonMcp(mcpConfigPath(projectDir), entries)
 }
