@@ -518,7 +518,7 @@ export const kiroDefinition: AgentDefinition = {
   docsUrl: 'https://kiro.dev/docs/',
   capabilities: {
     instructions: true,
-    mcp: false,
+    mcp: true,
     permissions: false,
     modelEnv: false,
     agents: false,
