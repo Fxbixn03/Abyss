@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import type { NavItem } from '@/app/navigation'
 import {
   PRIMARY_NAV,
@@ -19,6 +19,10 @@ import { AbyssLogo } from '@/shared/components/AbyssLogo'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useSidebarStore } from '@/features/sidebar/store/sidebar.store'
+import { useRecentNavStore } from '@/features/navigation/store/recentNav.store'
+
+/** Maximum number of recent routes shown in the sidebar pinned section. */
+const MAX_PINNED = 3
 
 function SidebarLink({
   item,
@@ -85,6 +89,8 @@ export function Sidebar() {
   const agent = useActiveAgent()
   const agentSections = agent.getSidebarSections?.() ?? []
   const { collapsed, toggle } = useSidebarStore()
+  const { pathname } = useLocation()
+  const recentRoutes = useRecentNavStore((s) => s.routes)
 
   // Merge static + agent-specific nav, dedupe by route, then bucket into the
   // ordered groups. Empty groups are dropped so each agent only shows what it
@@ -108,6 +114,20 @@ export function Sidebar() {
     group,
     items: unique.filter((item) => groupForRoute(item.route) === group.id),
   })).filter((entry) => entry.items.length > 0)
+
+  // Build a lookup map covering all possible nav items (including agent sections
+  // and the settings entry) so recent routes resolve to their NavItem metadata.
+  const allNavItems = [...PRIMARY_NAV, ...agentSections, SETTINGS_NAV]
+  const navByRoute = new Map(allNavItems.map((item) => [item.route, item]))
+
+  // Show up to MAX_PINNED recent routes, excluding the current page.
+  const pinnedItems: NavItem[] = []
+  for (const route of recentRoutes) {
+    if (route === pathname) continue
+    const item = navByRoute.get(route)
+    if (item) pinnedItems.push(item)
+    if (pinnedItems.length >= MAX_PINNED) break
+  }
 
   return (
     <aside
@@ -140,6 +160,31 @@ export function Sidebar() {
           collapsed ? 'items-center px-1.5' : 'px-2',
         )}
       >
+        {pinnedItems.length > 0 && (
+          <div
+            className={cn(
+              'flex flex-col gap-0.5',
+              collapsed && 'w-full items-center',
+            )}
+          >
+            {!collapsed && (
+              <p
+                aria-hidden="true"
+                className="px-2.5 pb-1 pt-0.5 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/40"
+              >
+                Recent
+              </p>
+            )}
+            {pinnedItems.map((item) => (
+              <SidebarLink key={`pinned-${item.route}`} item={item} collapsed={collapsed} />
+            ))}
+            {collapsed ? (
+              <div className="my-1.5 w-6 border-t border-sidebar-border" />
+            ) : (
+              <div className="mx-2.5 mb-1 mt-2 border-t border-sidebar-border" />
+            )}
+          </div>
+        )}
         {groups.map(({ group, items }, index) => (
           <div
             key={group.id}
