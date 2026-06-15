@@ -45,6 +45,18 @@ function cursorHooksPath(basePath: string): string {
   return path.join(basePath, 'hooks.json')
 }
 
+/**
+ * Return the on-disk path of the dedicated hooks file for the given agent, or
+ * `null` when the agent embeds hooks inside `settings.json` (e.g. Claude).
+ * Mirrors {@link readHooks} routing so callers can derive the path without
+ * re-implementing the dispatch logic.
+ */
+export function getHooksFilePath(agentId: string, basePath: string): string | null {
+  if (agentId === 'gemini') return geminiHooksPath(basePath)
+  if (agentId === 'cursor') return cursorHooksPath(basePath)
+  return null
+}
+
 /** Read hooks for an agent, dispatching to the right on-disk format. */
 export function readHooks(
   agentId: string,

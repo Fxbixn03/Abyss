@@ -13,6 +13,7 @@
 import path from 'node:path'
 import { readAgentConfigFile } from './config-io'
 import { getMcpConfigPath, readMcpServers } from './mcp'
+import { readHooks, getHooksFilePath } from './hooks'
 import { ConfigParseError } from './config-error'
 import { pathExists, readTextFile } from './json-file'
 import type { AgentDefinition } from '@/shared/types/agent'
@@ -125,6 +126,46 @@ async function checkMcpConfig(
   }
 }
 
+/**
+ * Check that the dedicated hooks config file is parseable (only for agents that
+ * store hooks in a separate file — Gemini and Cursor). Agents that embed hooks
+ * inside `settings.json` (e.g. Claude) are skipped here because `checkSettingsJson`
+ * already covers them.
+ */
+async function checkHooks(
+  def: AgentDefinition,
+  basePath: string,
+): Promise<ValidationFinding[]> {
+  if (!def.capabilities.hooks) return []
+
+  // If the agent has no dedicated hooks file it embeds hooks in settings.json,
+  // which checkSettingsJson already validates — skip to avoid a duplicate finding.
+  const hooksPath = getHooksFilePath(def.id, basePath)
+  if (hooksPath === null) return []
+
+  try {
+    await readHooks(def.id, basePath)
+    return []
+  } catch (err) {
+    // ConfigParseError carries filePath; fall back to the path helper for any
+    // unexpected error type so the finding always has a file reference.
+    const filePath =
+      err instanceof ConfigParseError ? err.filePath : hooksPath
+
+    return [
+      {
+        severity: 'error',
+        agentId: def.id,
+        agentName: def.displayName,
+        file: filePath,
+        message:
+          'Hooks config could not be parsed: ' +
+          (err instanceof Error ? err.message : String(err)),
+      },
+    ]
+  }
+}
+
 export interface ValidationAgentInput {
   def: AgentDefinition
   basePath: string
@@ -140,6 +181,7 @@ export async function runValidation(
         checkInstructionFile(def, basePath),
         checkSettingsJson(def, basePath),
         checkMcpConfig(def, basePath),
+        checkHooks(def, basePath),
       ])
       return groups.flat()
     }),
