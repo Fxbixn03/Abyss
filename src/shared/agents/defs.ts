@@ -497,6 +497,46 @@ export const gooseDefinition: AgentDefinition = {
   ],
 }
 
+const kiroInstructions: ConfigFileSpec = {
+  id: 'instructions',
+  filename: '.kiro/steering/product.md',
+  scope: 'global',
+  language: 'markdown',
+  description: 'Kiro steering instructions (product.md).',
+}
+
+/**
+ * Kiro (AWS) — AWS's AI coding agent (launched 2025) storing its config under
+ * `~/.kiro/`. Abyss edits the global steering file at `.kiro/steering/product.md`.
+ */
+export const kiroDefinition: AgentDefinition = {
+  id: 'kiro',
+  name: 'kiro',
+  displayName: 'Kiro',
+  defaultThemeId: 'kiro-nimbus',
+  iconName: 'cloud',
+  docsUrl: 'https://kiro.dev/docs/',
+  capabilities: {
+    instructions: true,
+    mcp: false,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: false,
+    chats: false,
+  },
+  configFiles: [kiroInstructions],
+  resolvePaths: (env: OsEnv) => [
+    env.platform === 'win32'
+      ? joinPath(env.platform, env.home, '.kiro')
+      : joinPath(env.platform, env.home, '.kiro'),
+  ],
+}
+
 /** Every known agent definition, keyed by id. */
 export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   claude: claudeDefinition,
@@ -511,6 +551,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   roo: rooDefinition,
   amp: ampDefinition,
   goose: gooseDefinition,
+  kiro: kiroDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -527,6 +568,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'roo',
   'amp',
   'goose',
+  'kiro',
 ]
 
 /**

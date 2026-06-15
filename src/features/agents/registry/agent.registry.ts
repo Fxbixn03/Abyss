@@ -11,6 +11,7 @@ import { clineAdapter } from '../adapters/cline.adapter'
 import { rooAdapter } from '../adapters/roo.adapter'
 import { ampAdapter } from '../adapters/amp.adapter'
 import { gooseAdapter } from '../adapters/goose.adapter'
+import { kiroAdapter } from '../adapters/kiro.adapter'
 
 /**
  * Central registry of agent adapters. The single place the app discovers which
@@ -59,3 +60,4 @@ agentRegistry.register(clineAdapter)
 agentRegistry.register(rooAdapter)
 agentRegistry.register(ampAdapter)
 agentRegistry.register(gooseAdapter)
+agentRegistry.register(kiroAdapter)
