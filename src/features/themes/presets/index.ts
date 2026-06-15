@@ -4,7 +4,16 @@ import { codexThemes } from './codex.theme'
 import { geminiThemes } from './gemini.theme'
 import { cursorThemes } from './cursor.theme'
 import { copilotThemes } from './copilot.theme'
-import { moreAgentThemes } from './more-agents.theme'
+import { windsurfThemes } from './windsurf.theme'
+import { continueThemes } from './continue.theme'
+import { aiderThemes } from './aider.theme'
+import { clineThemes } from './cline.theme'
+import { rooThemes } from './roo.theme'
+import { ampThemes } from './amp.theme'
+import { gooseThemes } from './goose.theme'
+import { kiroThemes } from './kiro.theme'
+import { amazonqThemes } from './amazonq.theme'
+import { warpThemes } from './warp.theme'
 import { abyssThemes } from './abyss.theme'
 
 /**
@@ -17,6 +26,15 @@ export const BUILTIN_THEMES: ThemeConfig[] = [
   ...geminiThemes,
   ...cursorThemes,
   ...copilotThemes,
-  ...moreAgentThemes,
+  ...windsurfThemes,
+  ...continueThemes,
+  ...aiderThemes,
+  ...clineThemes,
+  ...rooThemes,
+  ...ampThemes,
+  ...gooseThemes,
+  ...kiroThemes,
+  ...amazonqThemes,
+  ...warpThemes,
   ...abyssThemes,
 ]
