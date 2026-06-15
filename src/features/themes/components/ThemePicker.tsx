@@ -94,6 +94,14 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
       <div
         className="grid grid-cols-1 gap-3 sm:grid-cols-2"
         onMouseLeave={restoreActiveTheme}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+            restoreActiveTheme()
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') restoreActiveTheme()
+        }}
       >
         {themes.map((theme) => {
           const selected = theme.id === activeThemeId
@@ -102,6 +110,7 @@ export function ThemePicker({ agentId }: { agentId: AgentId }) {
               key={theme.id}
               type="button"
               onMouseEnter={() => applyTheme(theme, appearance)}
+              onFocus={() => applyTheme(theme, appearance)}
               onClick={() => setAgentTheme(agentId, theme.id)}
               className={cn(
                 'flex flex-col gap-2 rounded-lg border p-3 text-left transition-colors hover:border-primary/50',
