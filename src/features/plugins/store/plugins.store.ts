@@ -4,7 +4,13 @@ import {
   type PluginsConfig,
 } from '@/shared/types/plugins'
 import { ipc } from '@/shared/ipc/ipc.client'
-import { reportError } from '@/shared/lib/errors'
+import {
+  isDiskWriteError,
+  isWritePermissionError,
+  reportDiskWriteError,
+  reportError,
+  reportWritePermissionError,
+} from '@/shared/lib/errors'
 
 interface PluginsState {
   config: PluginsConfig
@@ -43,7 +49,13 @@ export const usePluginsStore = create<PluginsState>()((set, get) => ({
       set((s) => ({ saving: false, saved: s.config }))
     } catch (err) {
       set({ saving: false })
-      reportError(err, { title: "Couldn't save plugins" })
+      if (isWritePermissionError(err)) {
+        reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+      } else if (isDiskWriteError(err)) {
+        reportDiskWriteError(err)
+      } else {
+        reportError(err, { title: "Couldn't save plugins" })
+      }
     }
   },
 }))

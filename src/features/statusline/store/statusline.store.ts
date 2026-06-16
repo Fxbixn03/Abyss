@@ -4,7 +4,13 @@ import {
   type StatusLineConfig,
 } from '@/shared/types/statusline'
 import { ipc } from '@/shared/ipc/ipc.client'
-import { reportError } from '@/shared/lib/errors'
+import {
+  isDiskWriteError,
+  isWritePermissionError,
+  reportDiskWriteError,
+  reportError,
+  reportWritePermissionError,
+} from '@/shared/lib/errors'
 
 interface StatusLineState {
   config: StatusLineConfig
@@ -50,7 +56,13 @@ export const useStatusLineStore = create<StatusLineState>()((set, get) => ({
       set({ saving: false, config, saved: config })
     } catch (err) {
       set({ saving: false })
-      reportError(err, { title: "Couldn't save the status line" })
+      if (isWritePermissionError(err)) {
+        reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+      } else if (isDiskWriteError(err)) {
+        reportDiskWriteError(err)
+      } else {
+        reportError(err, { title: "Couldn't save the status line" })
+      }
     }
   },
 

@@ -1,7 +1,13 @@
 import { create } from 'zustand'
 import { DEFAULT_SPINNER, type SpinnerConfig } from '@/shared/types/spinner'
 import { ipc } from '@/shared/ipc/ipc.client'
-import { reportError } from '@/shared/lib/errors'
+import {
+  isDiskWriteError,
+  isWritePermissionError,
+  reportDiskWriteError,
+  reportError,
+  reportWritePermissionError,
+} from '@/shared/lib/errors'
 
 interface SpinnerState {
   config: SpinnerConfig
@@ -45,7 +51,13 @@ export const useSpinnerStore = create<SpinnerState>()((set, get) => ({
       set({ saving: false, config, saved: config })
     } catch (err) {
       set({ saving: false })
-      reportError(err, { title: "Couldn't save spinner settings" })
+      if (isWritePermissionError(err)) {
+        reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+      } else if (isDiskWriteError(err)) {
+        reportDiskWriteError(err)
+      } else {
+        reportError(err, { title: "Couldn't save spinner settings" })
+      }
     }
   },
 }))
