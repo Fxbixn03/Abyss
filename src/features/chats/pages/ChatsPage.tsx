@@ -74,6 +74,9 @@ export function ChatsPage() {
     markers: SuspicionMarker[]
   } | null>(null)
   const [scanning, setScanning] = useState(false)
+  // Whether the in-transcript search bar is open.
+  const [transcriptSearchOpen, setTranscriptSearchOpen] = useState(false)
+
   // Session replay: when set, the transcript reveals messages up to `index`.
   // `key` ties the replay to its session so it's ignored after switching chats.
   const [replay, setReplay] = useState<{
@@ -280,6 +283,19 @@ export function ChatsPage() {
                       {formatCost(usage.totalCostUsd)}
                     </Badge>
                   )}
+                  {messages.length > 0 && (
+                    <Button
+                      variant={transcriptSearchOpen ? 'secondary' : 'outline'}
+                      size="icon"
+                      onClick={() =>
+                        setTranscriptSearchOpen((o) => !o)
+                      }
+                      aria-label="Search transcript"
+                      title="Search transcript (Ctrl+F)"
+                    >
+                      <Icon name="search" className="size-4" />
+                    </Button>
+                  )}
                   {messages.length > 1 && (
                     <Button
                       variant="outline"
@@ -419,6 +435,8 @@ export function ChatsPage() {
                   messages={shownMessages}
                   loading={transcriptLoading}
                   agentName={agent.displayName}
+                  searchOpen={transcriptSearchOpen}
+                  onSearchOpenChange={setTranscriptSearchOpen}
                 />
               </div>
 

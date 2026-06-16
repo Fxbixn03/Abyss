@@ -1,27 +1,74 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChatMessage } from '@/shared/types/chat'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { MessageBubble } from './MessageBubble'
 import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
 import { Icon } from '@/shared/components/Icon'
+import { cn } from '@/shared/lib/utils'
+
+/** Extract all plain text from a message's text blocks. */
+function extractText(message: ChatMessage): string {
+  return message.blocks
+    .filter((b): b is Extract<typeof b, { kind: 'text' }> => b.kind === 'text')
+    .map((b) => b.text)
+    .join(' ')
+}
 
 export function ChatTranscript({
   messages,
   loading,
   agentName,
+  searchOpen: searchOpenProp,
+  onSearchOpenChange,
 }: {
   messages: ChatMessage[]
   loading: boolean
   agentName?: string
+  /** Controlled open state from the parent (optional). */
+  searchOpen?: boolean
+  /** Callback when the search bar is opened/closed internally. */
+  onSearchOpenChange?: (open: boolean) => void
 }) {
   const endRef = useRef<HTMLDivElement>(null)
   const bottomLocked = useRef(true)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const messageRefs = useRef<(HTMLDivElement | null)[]>([])
+  const inputRef = useRef<HTMLInputElement>(null)
 
   // Whether the user has scrolled more than one viewport height from the top.
   const [showJumpTop, setShowJumpTop] = useState(false)
   // Whether the user is NOT at the bottom (bottomLocked === false).
   const [showJumpBottom, setShowJumpBottom] = useState(false)
+
+  // Search state — all local
+  const [searchOpenInternal, setSearchOpenInternal] = useState(false)
+  const [query, setQuery] = useState('')
+  const [activeMatch, setActiveMatch] = useState(0)
+
+  // Controlled or uncontrolled search open
+  const searchOpen = searchOpenProp ?? searchOpenInternal
+
+  const setSearchOpen = useCallback(
+    (open: boolean) => {
+      if (searchOpenProp === undefined) {
+        setSearchOpenInternal(open)
+      }
+      onSearchOpenChange?.(open)
+    },
+    [searchOpenProp, onSearchOpenChange],
+  )
+
+  // Compute match indices whenever query or messages change (memoised to keep the
+  // array reference stable so the scroll useEffect only re-fires when needed).
+  const matchIndices = useMemo(() => {
+    if (query.trim() === '') return []
+    const lower = query.toLowerCase()
+    return messages.reduce<number[]>((acc, msg, i) => {
+      if (extractText(msg).toLowerCase().includes(lower)) acc.push(i)
+      return acc
+    }, [])
+  }, [query, messages])
 
   // Track whether the user is pinned near the bottom; only autoscroll if so.
   const onScroll = () => {
@@ -39,6 +86,34 @@ export function ChatTranscript({
     }
   }, [messages])
 
+  // When searchOpen becomes true, focus the input
+  useEffect(() => {
+    if (searchOpen) {
+      setTimeout(() => inputRef.current?.focus(), 0)
+    }
+  }, [searchOpen])
+
+  // Scroll to the active match
+  useEffect(() => {
+    if (matchIndices.length === 0) return
+    const idx = matchIndices[activeMatch]
+    if (idx === undefined) return
+    const el = messageRefs.current[idx]
+    if (el) {
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [activeMatch, matchIndices])
+
+  const openSearch = useCallback(() => {
+    setSearchOpen(true)
+  }, [setSearchOpen])
+
+  const closeSearch = useCallback(() => {
+    setSearchOpen(false)
+    setQuery('')
+    setActiveMatch(0)
+  }, [setSearchOpen])
+
   const jumpToTop = () => {
     const el = scrollRef.current
     if (!el) return
@@ -54,6 +129,35 @@ export function ChatTranscript({
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
     bottomLocked.current = true
     setShowJumpBottom(false)
+  }
+
+  const goToPrev = () => {
+    if (matchIndices.length === 0) return
+    setActiveMatch((i) => (i - 1 + matchIndices.length) % matchIndices.length)
+  }
+
+  const goToNext = () => {
+    if (matchIndices.length === 0) return
+    setActiveMatch((i) => (i + 1) % matchIndices.length)
+  }
+
+  const handleContainerKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.ctrlKey && e.key === 'f') {
+      e.preventDefault()
+      openSearch()
+    }
+  }
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      closeSearch()
+    } else if (e.key === 'Enter') {
+      if (e.shiftKey) {
+        goToPrev()
+      } else {
+        goToNext()
+      }
+    }
   }
 
   if (loading) {
@@ -75,18 +179,100 @@ export function ChatTranscript({
   }
 
   return (
-    <div className="relative h-full">
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      className="relative h-full"
+      onKeyDown={handleContainerKeyDown}
+    >
+      {/* Search bar overlay */}
+      {searchOpen && (
+        <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-1.5 border-b border-border bg-background/95 px-2 py-1.5 backdrop-blur-sm">
+          <Icon name="search" className="size-3.5 shrink-0 text-muted-foreground" />
+          <Input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setActiveMatch(0)
+            }}
+            onKeyDown={handleSearchKeyDown}
+            placeholder="Search messages…"
+            className="h-7 flex-1 border-none bg-transparent px-1 text-sm shadow-none focus-visible:ring-0"
+            aria-label="Search messages"
+          />
+          <span
+            className="shrink-0 text-xs text-muted-foreground"
+            aria-live="polite"
+          >
+            {query.trim() === '' ? '' : matchIndices.length === 0
+              ? 'No results'
+              : `${activeMatch + 1} / ${matchIndices.length}`}
+          </span>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-6 shrink-0"
+            onClick={goToPrev}
+            disabled={matchIndices.length === 0}
+            aria-label="Previous match"
+            title="Previous match"
+          >
+            <Icon name="chevron-up" className="size-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-6 shrink-0"
+            onClick={goToNext}
+            disabled={matchIndices.length === 0}
+            aria-label="Next match"
+            title="Next match"
+          >
+            <Icon name="chevron-down" className="size-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-6 shrink-0"
+            onClick={closeSearch}
+            aria-label="Close search"
+            title="Close search"
+          >
+            <Icon name="x" className="size-3.5" />
+          </Button>
+        </div>
+      )}
+
       <div
         ref={scrollRef}
         onScroll={onScroll}
         // data-selectable opts this surface out of the app-wide user-select:none
         // so conversation text can be highlighted and copied.
         data-selectable
-        className="flex h-full flex-col gap-5 overflow-y-auto px-1 py-2"
+        className={cn(
+          'flex h-full flex-col gap-5 overflow-y-auto px-1 py-2',
+          searchOpen && 'pt-11',
+        )}
       >
-        {messages.map((m) => (
-          <MessageBubble key={m.id} message={m} agentName={agentName} />
-        ))}
+        {messages.map((m, i) => {
+          const matchPos = matchIndices.indexOf(i)
+          const isMatch = matchPos !== -1
+          const isActive = isMatch && matchPos === activeMatch
+          return (
+            <div
+              key={m.id}
+              ref={(el) => {
+                messageRefs.current[i] = el
+              }}
+              className={cn(
+                isMatch && 'rounded-lg ring-1 ring-primary/50',
+                isActive && 'ring-primary',
+              )}
+            >
+              <MessageBubble message={m} agentName={agentName} />
+            </div>
+          )
+        })}
         <div ref={endRef} />
       </div>
 
