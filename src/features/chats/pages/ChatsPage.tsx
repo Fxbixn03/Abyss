@@ -207,7 +207,10 @@ export function ChatsPage() {
           style={{ width: listWidth }}
           className="flex min-h-0 shrink-0 flex-col pr-1"
         >
-          <SessionList onNewChat={() => void handleNewChat()} />
+          <SessionList
+            onNewChat={() => void handleNewChat()}
+            showNewChat={!availability?.readOnly}
+          />
         </aside>
 
         <div
@@ -240,12 +243,18 @@ export function ChatsPage() {
             <EmptyState
               icon="messages-square"
               title="Pick up a conversation"
-              description="Select a past chat on the left, or start a new one."
+              description={
+                availability?.readOnly
+                  ? 'Select a past chat on the left to view its transcript.'
+                  : 'Select a past chat on the left, or start a new one.'
+              }
               action={
-                <Button onClick={() => void handleNewChat()}>
-                  <Icon name="plus" />
-                  New chat
-                </Button>
+                !availability?.readOnly ? (
+                  <Button onClick={() => void handleNewChat()}>
+                    <Icon name="plus" />
+                    New chat
+                  </Button>
+                ) : undefined
               }
             />
           ) : (
@@ -413,65 +422,67 @@ export function ChatsPage() {
                 />
               </div>
 
-              <div className="px-4 pb-4 pt-1">
-                <Composer
-                  busy={busy}
-                  disabled={!canChat}
-                  onSend={(text) =>
-                    void send(text, {
-                      cwd,
-                      model: model === 'default' ? undefined : model,
-                      permissionMode,
-                    })
-                  }
-                  onStop={() => void interrupt()}
-                  settingsBar={
-                    <div className="flex flex-wrap items-center gap-2 border-b border-border/60 pb-2">
-                      <Select
-                        value={permissionMode}
-                        onValueChange={(v) =>
-                          setPermissionMode(v as ChatPermissionMode)
-                        }
-                      >
-                        <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
-                          <Icon name="shield" className="size-3.5" />
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PERMISSION_MODES.map((m) => (
-                            <SelectItem key={m.value} value={m.value}>
-                              {m.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      {agent.id === 'claude' && (
-                        <Select value={model} onValueChange={setModel}>
+              {!availability?.readOnly && (
+                <div className="px-4 pb-4 pt-1">
+                  <Composer
+                    busy={busy}
+                    disabled={!canChat}
+                    onSend={(text) =>
+                      void send(text, {
+                        cwd,
+                        model: model === 'default' ? undefined : model,
+                        permissionMode,
+                      })
+                    }
+                    onStop={() => void interrupt()}
+                    settingsBar={
+                      <div className="flex flex-wrap items-center gap-2 border-b border-border/60 pb-2">
+                        <Select
+                          value={permissionMode}
+                          onValueChange={(v) =>
+                            setPermissionMode(v as ChatPermissionMode)
+                          }
+                        >
                           <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
-                            <Icon name="cpu" className="size-3.5" />
+                            <Icon name="shield" className="size-3.5" />
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {CLAUDE_MODELS.map((m) => (
+                            {PERMISSION_MODES.map((m) => (
                               <SelectItem key={m.value} value={m.value}>
                                 {m.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                      )}
 
-                      {status === 'starting' && (
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Spinner className="size-3" label="Starting…" />
-                          starting…
-                        </span>
-                      )}
-                    </div>
-                  }
-                />
-              </div>
+                        {agent.id === 'claude' && (
+                          <Select value={model} onValueChange={setModel}>
+                            <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
+                              <Icon name="cpu" className="size-3.5" />
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CLAUDE_MODELS.map((m) => (
+                                <SelectItem key={m.value} value={m.value}>
+                                  {m.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+
+                        {status === 'starting' && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Spinner className="size-3" label="Starting…" />
+                            starting…
+                          </span>
+                        )}
+                      </div>
+                    }
+                  />
+                </div>
+              )}
             </div>
           )}
         </section>

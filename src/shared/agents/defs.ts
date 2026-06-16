@@ -171,7 +171,7 @@ export const geminiDefinition: AgentDefinition = {
     hooks: true,
     rules: false,
     rawSettings: true,
-    chats: false,
+    chats: true,
   },
   configFiles: [geminiInstructions],
   resolvePaths: (env: OsEnv) => [

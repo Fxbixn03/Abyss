@@ -228,6 +228,11 @@ export interface ChatAvailability {
   account?: string
   /** Why it is unavailable, for a friendly empty state. */
   reason?: string
+  /**
+   * When `true`, the runtime supports history browsing only — the live-chat
+   * Composer should be hidden. Defaults to `false` (live chat supported).
+   */
+  readOnly?: boolean
 }
 
 /** How tools are auto-approved while the agent runs. Safe default = 'default'. */

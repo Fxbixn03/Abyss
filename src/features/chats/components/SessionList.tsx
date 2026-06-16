@@ -17,7 +17,13 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import { useChatsStore } from '../store/chats.store'
 import { relativeTime } from '../lib/format'
 
-export function SessionList({ onNewChat }: { onNewChat: () => void }) {
+export function SessionList({
+  onNewChat,
+  showNewChat = true,
+}: {
+  onNewChat: () => void
+  showNewChat?: boolean
+}) {
   const sessions = useChatsStore((s) => s.sessions)
   const loading = useChatsStore((s) => s.sessionsLoading)
   const loadingMore = useChatsStore((s) => s.sessionsLoadingMore)
@@ -63,10 +69,12 @@ export function SessionList({ onNewChat }: { onNewChat: () => void }) {
 
   return (
     <div className="flex min-h-0 flex-col gap-2">
-      <Button onClick={onNewChat} className="w-full">
-        <Icon name="plus" />
-        New chat
-      </Button>
+      {showNewChat && (
+        <Button onClick={onNewChat} className="w-full">
+          <Icon name="plus" />
+          New chat
+        </Button>
+      )}
 
       <div className="relative">
         <Icon
