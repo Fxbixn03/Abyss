@@ -143,6 +143,7 @@ export function ProfilesPage() {
   const [loaded, setLoaded] = useState(false)
   const [changes, setChanges] = useState<Record<string, ApplyChange[]>>({})
   const [notice, setNotice] = useState<string | null>(null)
+  const [filter, setFilter] = useState('')
 
   const [createDraft, setCreateDraft] = useState<ProfileDraft | null>(null)
   const [renameTarget, setRenameTarget] = useState<ProfileMeta | null>(null)
@@ -213,6 +214,24 @@ export function ProfilesPage() {
     void refresh()
   }
 
+  /** Dismiss a profile's dry-run preview without applying it. */
+  const closeDryRun = (id: string) => {
+    setChanges((c) => {
+      const next = { ...c }
+      delete next[id]
+      return next
+    })
+  }
+
+  const query = filter.trim().toLowerCase()
+  const visibleProfiles = query
+    ? profiles.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          (p.description ?? '').toLowerCase().includes(query),
+      )
+    : profiles
+
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
@@ -221,6 +240,23 @@ export function ProfilesPage() {
         icon="layers"
         actions={
           <div className="flex items-center gap-2">
+            {profiles.length > 0 && (
+              <div className="relative">
+                <Icon
+                  name="search"
+                  className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setFilter('')
+                  }}
+                  placeholder="Filter profiles…"
+                  className="h-9 w-48 pl-8"
+                />
+              </div>
+            )}
             <Button onClick={() => setCreateDraft(blankDraft)}>
               <Icon name="plus" />
               New profile
@@ -296,9 +332,13 @@ export function ProfilesPage() {
             </Button>
           }
         />
+      ) : visibleProfiles.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
+          No profiles match your filter.
+        </div>
       ) : (
         <div className="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
-          {profiles.map((p) => {
+          {visibleProfiles.map((p) => {
             const diff = changes[p.id]
             return (
               <Card key={p.id} className="flex flex-col gap-3 p-4">
@@ -360,34 +400,7 @@ export function ProfilesPage() {
                   </Button>
                 </div>
 
-                {diff && (
-                  <div className="rounded-md border border-border bg-muted/30 p-2 text-xs">
-                    <p className="mb-1 font-medium">
-                      {diff.filter((c) => c.changed).length} of {diff.length}{' '}
-                      target(s) differ
-                    </p>
-                    {diff.map((c, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between gap-2"
-                      >
-                        <span className="truncate font-code text-muted-foreground">
-                          {c.kind}: {c.target}
-                        </span>
-                        <span
-                          className={cn(
-                            'shrink-0',
-                            c.changed
-                              ? 'text-warning'
-                              : 'text-muted-foreground',
-                          )}
-                        >
-                          {c.changed ? 'changes' : 'same'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {diff && <DryRunPreview diff={diff} onClose={() => closeDryRun(p.id)} />}
               </Card>
             )
           })}
@@ -437,6 +450,82 @@ export function ProfilesPage() {
         confirmLabel="Delete"
         onConfirm={() => void remove()}
       />
+    </div>
+  )
+}
+
+/**
+ * Dry-run result, grouped by agent so it's clear which files of which agent
+ * would change. Dismissable via the close button (the preview is non-committal).
+ */
+function DryRunPreview({
+  diff,
+  onClose,
+}: {
+  diff: ApplyChange[]
+  onClose: () => void
+}) {
+  const changedCount = diff.filter((c) => c.changed).length
+  const byAgent = new Map<string, ApplyChange[]>()
+  for (const c of diff) {
+    const list = byAgent.get(c.agentId) ?? []
+    list.push(c)
+    byAgent.set(c.agentId, list)
+  }
+
+  return (
+    <div className="rounded-md border border-border bg-muted/30 p-2 text-xs">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <p className="flex items-center gap-1.5 font-medium">
+          <Icon name="eye" className="size-3.5 text-muted-foreground" />
+          Dry run — {changedCount} of {diff.length} target(s) differ
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-muted-foreground transition-colors hover:text-foreground"
+          aria-label="Close dry run preview"
+        >
+          <Icon name="x" className="size-3.5" />
+        </button>
+      </div>
+      <div className="flex flex-col gap-2">
+        {[...byAgent.entries()].map(([agentId, items]) => (
+          <div key={agentId} className="flex flex-col gap-0.5">
+            <p className="flex items-center gap-1.5 font-code text-[11px] uppercase tracking-wide text-muted-foreground">
+              <Badge variant="muted">{agentId}</Badge>
+              {items.filter((c) => c.changed).length} changed
+            </p>
+            {items.map((c, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between gap-2 pl-1"
+              >
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <Icon
+                    name={c.changed ? 'triangle-alert' : 'circle-check'}
+                    className={cn(
+                      'size-3 shrink-0',
+                      c.changed ? 'text-warning' : 'text-success',
+                    )}
+                  />
+                  <span className="truncate font-code text-muted-foreground">
+                    {c.kind}: {c.target}
+                  </span>
+                </span>
+                <span
+                  className={cn(
+                    'shrink-0',
+                    c.changed ? 'text-warning' : 'text-muted-foreground',
+                  )}
+                >
+                  {c.changed ? 'changes' : 'same'}
+                </span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
