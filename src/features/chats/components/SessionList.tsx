@@ -172,6 +172,8 @@ export function SessionList({
                       <button
                         type="button"
                         onClick={() => void openSession(s.id)}
+                        aria-label={`${s.title} — ${s.projectLabel}, ${relativeTime(s.updatedAt)}, ${s.messageCount} messages`}
+                        aria-current={active ? 'true' : undefined}
                         className={cn(
                           'flex flex-col gap-0.5 rounded-md border px-2.5 py-2 text-left transition-colors',
                           active
