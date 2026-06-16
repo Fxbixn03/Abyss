@@ -16,6 +16,34 @@ import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useChatsStore } from '../store/chats.store'
 import { relativeTime } from '../lib/format'
+import type { ChatSessionMeta } from '@/shared/types/chat'
+
+type SortOrder = 'recent' | 'longest' | 'costliest'
+
+const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: 'recent', label: 'Recent' },
+  { value: 'longest', label: 'Longest' },
+  { value: 'costliest', label: 'Costliest' },
+]
+
+function sortSessions(
+  sessions: ChatSessionMeta[],
+  sort: SortOrder,
+): ChatSessionMeta[] {
+  if (sort === 'recent') return sessions
+  const copy = [...sessions]
+  if (sort === 'longest') {
+    copy.sort((a, b) => b.messageCount - a.messageCount)
+  } else {
+    // costliest: descending outputTokens, falling back to inputTokens
+    copy.sort((a, b) => {
+      const costA = (a.outputTokens ?? 0) || (a.inputTokens ?? 0)
+      const costB = (b.outputTokens ?? 0) || (b.inputTokens ?? 0)
+      return costB - costA
+    })
+  }
+  return copy
+}
 
 export function SessionList({
   onNewChat,
@@ -35,6 +63,7 @@ export function SessionList({
   const loadMoreSessions = useChatsStore((s) => s.loadMoreSessions)
 
   const [query, setQuery] = useState('')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
 
   // Infinite scroll: pull the next page as the list nears the bottom. Disabled
@@ -58,14 +87,17 @@ export function SessionList({
             s.cwd.toLowerCase().includes(q),
         )
       : sessions
-    const byProject = new Map<string, typeof filtered>()
-    for (const s of filtered) {
+    // When a search is active, skip sorting (filtering order is fine); otherwise
+    // apply the user-selected sort before grouping so groups and items both reflect it.
+    const sorted = q ? filtered : sortSessions(filtered, sortOrder)
+    const byProject = new Map<string, typeof sorted>()
+    for (const s of sorted) {
       const list = byProject.get(s.projectLabel) ?? []
       list.push(s)
       byProject.set(s.projectLabel, list)
     }
     return [...byProject.entries()]
-  }, [sessions, query])
+  }, [sessions, query, sortOrder])
 
   return (
     <div className="flex min-h-0 flex-col gap-2">
@@ -87,6 +119,33 @@ export function SessionList({
           placeholder="Search chats…"
           className="pl-8"
         />
+      </div>
+
+      <div
+        className="flex gap-0.5 rounded-md border border-border bg-muted/40 p-0.5"
+        role="group"
+        aria-label="Sort sessions"
+      >
+        {SORT_OPTIONS.map((opt) => {
+          const active = !query.trim() && sortOrder === opt.value
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setSortOrder(opt.value)}
+              disabled={!!query.trim()}
+              className={cn(
+                'flex-1 rounded px-1.5 py-0.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                active
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-50',
+              )}
+              aria-pressed={active}
+            >
+              {opt.label}
+            </button>
+          )
+        })}
       </div>
 
       <div
