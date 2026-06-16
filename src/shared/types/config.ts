@@ -158,6 +158,8 @@ export interface AppSettings {
   autoDetectPaths: boolean
   /** How absolute dates/times are rendered across the app. */
   dateTimeFormat: 'locale' | 'iso' | 'us' | 'eu'
+  /** Show beta-quality pages in the nav and let their shortcuts fire. On by default. */
+  betaFeatures: boolean
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -183,6 +185,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   language: 'en',
   autoDetectPaths: true,
   dateTimeFormat: 'locale',
+  betaFeatures: true,
 }
 
 /** Auto-update lifecycle, pushed to the renderer as it progresses. */

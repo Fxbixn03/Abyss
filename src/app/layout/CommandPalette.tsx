@@ -17,7 +17,7 @@ import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { reportError } from '@/shared/lib/errors'
 import { AgentGlyph } from '@/features/agents/components/AgentGlyph'
-import { PRIMARY_NAV, SETTINGS_NAV } from '@/app/navigation'
+import { PRIMARY_NAV, SETTINGS_NAV, isBetaRoute } from '@/app/navigation'
 import type { NavItem } from '@/app/navigation'
 import { useCommandPalette } from '@/app/command/commandPalette.store'
 import {
@@ -41,6 +41,7 @@ import { useTemplatesStore } from '@/features/templates/store/templates.store'
 import { useTemplatesIntent } from '@/features/templates/store/templatesIntent.store'
 import { resolveTemplates } from '@/features/templates/lib/resolve'
 import { SETTINGS_SECTIONS } from '@/features/settings/sections'
+import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { useShortcutsStore } from '@/features/shortcuts/store/shortcuts.store'
 import { humanizeCombo } from '@/features/shortcuts/lib/shortcuts'
 
@@ -125,6 +126,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
   const agents = useAllAgents()
   const activeAgent = useActiveAgent()
   const setActiveAgent = useAgentStore((s) => s.setActiveAgent)
+  const betaFeatures = useSettingsStore((s) => s.settings.betaFeatures)
   const basePath = useConfigBase(activeAgent.id)
   const requestOpen = useCollectionSelection((s) => s.requestOpen)
   const requestApplyTemplate = useTemplatesIntent((s) => s.requestApply)
@@ -271,8 +273,9 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
   const navItems = [
     ...PRIMARY_NAV.filter(
       (item) =>
-        !item.requiresCapability ||
-        !!activeAgent.capabilities[item.requiresCapability],
+        (!item.requiresCapability ||
+          !!activeAgent.capabilities[item.requiresCapability]) &&
+        (betaFeatures || !isBetaRoute(item.route)),
     ),
     ...(activeAgent.getSidebarSections?.() ?? []),
     SETTINGS_NAV,

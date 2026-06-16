@@ -18,8 +18,14 @@ import {
 import { AbyssLogo } from '@/shared/components/AbyssLogo'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
+import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { useSidebarStore } from '@/features/sidebar/store/sidebar.store'
 import { useRecentNavStore } from '@/features/navigation/store/recentNav.store'
+import {
+  useNavPrefsStore,
+  isNavHidden,
+  applyNavOrder,
+} from '@/features/navigation/store/navPrefs.store'
 
 /** Maximum number of recent routes shown in the sidebar pinned section. */
 const MAX_PINNED = 3
@@ -89,12 +95,17 @@ export function Sidebar() {
   const agent = useActiveAgent()
   const agentSections = agent.getSidebarSections?.() ?? []
   const { collapsed, toggle } = useSidebarStore()
+  const collapsedGroups = useSidebarStore((s) => s.collapsedGroups)
+  const toggleGroup = useSidebarStore((s) => s.toggleGroup)
   const { pathname } = useLocation()
   const recentRoutes = useRecentNavStore((s) => s.routes)
+  const betaFeatures = useSettingsStore((s) => s.settings.betaFeatures)
+  const hidden = useNavPrefsStore((s) => s.hidden)
+  const order = useNavPrefsStore((s) => s.order)
 
   // Merge static + agent-specific nav, dedupe by route, then bucket into the
   // ordered groups. Empty groups are dropped so each agent only shows what it
-  // actually supports.
+  // actually supports. Beta pages and per-agent hidden pages are filtered out.
   const merged: NavItem[] = [...PRIMARY_NAV, ...agentSections]
   const seen = new Set<string>()
   const unique: NavItem[] = []
@@ -102,17 +113,21 @@ export function Sidebar() {
     if (!seen.has(item.route)) {
       seen.add(item.route)
       if (
-        !item.requiresCapability ||
-        !!agent.capabilities[item.requiresCapability]
+        (!item.requiresCapability ||
+          !!agent.capabilities[item.requiresCapability]) &&
+        (betaFeatures || !isBetaRoute(item.route)) &&
+        !isNavHidden(hidden, agent.id, item.id)
       ) {
         unique.push(item)
       }
     }
   }
 
+  const ordered = applyNavOrder(unique, order[agent.id])
+
   const groups = NAV_GROUPS.map((group) => ({
     group,
-    items: unique.filter((item) => groupForRoute(item.route) === group.id),
+    items: ordered.filter((item) => groupForRoute(item.route) === group.id),
   })).filter((entry) => entry.items.length > 0)
 
   // Build a lookup map covering all possible nav items (including agent sections
@@ -185,30 +200,43 @@ export function Sidebar() {
             )}
           </div>
         )}
-        {groups.map(({ group, items }, index) => (
-          <div
-            key={group.id}
-            className={cn('flex flex-col gap-0.5', collapsed && 'w-full items-center')}
-          >
-            {!collapsed && (
-              <p
-                aria-hidden="true"
-                className={cn(
-                  'px-2.5 pb-1 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/40',
-                  index === 0 ? 'pt-0.5' : 'pt-3',
-                )}
-              >
-                {group.label}
-              </p>
-            )}
-            {collapsed && index > 0 && (
-              <div className="my-1.5 w-6 border-t border-sidebar-border" />
-            )}
-            {items.map((item) => (
-              <SidebarLink key={item.id} item={item} collapsed={collapsed} />
-            ))}
-          </div>
-        ))}
+        {groups.map(({ group, items }, index) => {
+          const groupCollapsed = !collapsed && collapsedGroups.includes(group.id)
+          return (
+            <div
+              key={group.id}
+              className={cn(
+                'flex flex-col gap-0.5',
+                collapsed && 'w-full items-center',
+              )}
+            >
+              {!collapsed && (
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.id)}
+                  aria-expanded={!groupCollapsed}
+                  className={cn(
+                    'group flex items-center gap-1 px-2.5 pb-1 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/40 transition-colors hover:text-sidebar-foreground/70',
+                    index === 0 ? 'pt-0.5' : 'pt-3',
+                  )}
+                >
+                  <Icon
+                    name={groupCollapsed ? 'chevron-right' : 'chevron-down'}
+                    className="size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                  />
+                  {group.label}
+                </button>
+              )}
+              {collapsed && index > 0 && (
+                <div className="my-1.5 w-6 border-t border-sidebar-border" />
+              )}
+              {!groupCollapsed &&
+                items.map((item) => (
+                  <SidebarLink key={item.id} item={item} collapsed={collapsed} />
+                ))}
+            </div>
+          )
+        })}
       </nav>
 
       <div

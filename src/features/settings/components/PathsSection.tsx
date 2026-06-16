@@ -20,6 +20,9 @@ import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { formatDateTime, type DateTimeFormat } from '@/shared/lib/datetime'
+
+/** Fixed sample timestamp for the date-format preview (kept pure for render). */
+const SAMPLE_DATE = new Date(2026, 5, 16, 14, 30)
 import { useAllAgents } from '@/features/agents/hooks/useActiveAgent'
 import { useBasePath } from '../hooks/useBasePath'
 import { useSettingsStore } from '../store/settings.store'
@@ -237,7 +240,7 @@ function DetectionControls() {
             <p className="text-sm font-medium">Date &amp; time format</p>
             <p className="text-xs text-muted-foreground">
               How absolute dates appear across the app — e.g.{' '}
-              {formatDateTime(Date.now(), dateFormat)}.
+              {formatDateTime(SAMPLE_DATE, dateFormat)}.
             </p>
           </div>
           <Select

@@ -161,6 +161,7 @@ export const appSettingsSchema = z
       .enum(['locale', 'iso', 'us', 'eu'])
       .optional()
       .catch(undefined),
+    betaFeatures: z.boolean().optional().catch(undefined),
   })
   .catch({})
 

@@ -9,6 +9,7 @@ import { AppearanceSection } from '../components/AppearanceSection'
 import { AgentIconsSection } from '../components/AgentIconsSection'
 import { ShortcutsSection } from '../components/ShortcutsSection'
 import { PreferencesSection } from '../components/PreferencesSection'
+import { NavigationSection } from '../components/NavigationSection'
 import { BackupsSection } from '../components/BackupsSection'
 import { AboutSection } from '../components/AboutSection'
 import { ThemeBuilder } from '@/features/themes/components/ThemeBuilder'
@@ -32,6 +33,7 @@ const SECTION_RENDER: Record<string, ReactNode> = {
   statusline: <StatusLineSection />,
   spinner: <SpinnerSection />,
   preferences: <PreferencesSection />,
+  navigation: <NavigationSection />,
   backups: <BackupsSection />,
   about: <AboutSection />,
 }

@@ -81,7 +81,14 @@ export const SETTINGS_SECTIONS: SettingsSectionMeta[] = [
     label: 'Agents',
     icon: 'bot',
     category: 'agents',
-    keywords: ['enable', 'disable', 'visible'],
+    keywords: ['enable', 'disable', 'visible', 'env'],
+  },
+  {
+    id: 'navigation',
+    label: 'Navigation',
+    icon: 'list-tree',
+    category: 'general',
+    keywords: ['pages', 'sidebar', 'order', 'reorder', 'beta', 'hide'],
   },
   {
     id: 'shortcuts',

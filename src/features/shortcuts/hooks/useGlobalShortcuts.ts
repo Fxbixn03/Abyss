@@ -8,6 +8,8 @@ import {
 } from '@/features/agents/store/agent-enabled.store'
 import { useCommandPalette } from '@/app/command/commandPalette.store'
 import { useThemeStore } from '@/features/themes/store/theme.store'
+import { useSettingsStore } from '@/features/settings/store/settings.store'
+import { isBetaRoute } from '@/app/navigation'
 import { useShortcutsStore } from '../store/shortcuts.store'
 import { comboFromEvent } from '../lib/shortcuts'
 
@@ -31,6 +33,12 @@ export function useGlobalShortcuts(): void {
         .getAll()
         .filter((a) => isAgentEnabled(enabled, a.id))
       const store = useAgentStore.getState()
+      // When beta features are off, beta-route shortcuts become no-ops.
+      const betaOff = !useSettingsStore.getState().settings.betaFeatures
+      const go = (route: string) => {
+        if (betaOff && isBetaRoute(route)) return
+        void navigate(route)
+      }
       const cycle = (dir: number) => {
         if (agents.length < 2) return
         const idx = agents.findIndex((a) => a.id === store.activeAgentId)
@@ -52,55 +60,55 @@ export function useGlobalShortcuts(): void {
           useThemeStore.getState().toggleAppearance()
           break
         case 'nav.dashboard':
-          void navigate('/')
+          go('/')
           break
         case 'nav.config':
-          void navigate('/config')
+          go('/config')
           break
         case 'nav.settings':
-          void navigate('/settings')
+          go('/settings')
           break
         case 'nav.mcp':
-          void navigate('/mcp')
+          go('/mcp')
           break
         case 'nav.hooks':
-          void navigate('/hooks')
+          go('/hooks')
           break
         case 'nav.doctor':
-          void navigate('/doctor')
+          go('/doctor')
           break
         case 'nav.snapshots':
-          void navigate('/history')
+          go('/history')
           break
         case 'nav.sessions':
-          void navigate('/sessions')
+          go('/sessions')
           break
         case 'nav.compare':
-          void navigate('/compare')
+          go('/compare')
           break
         case 'nav.permissions':
-          void navigate('/permissions')
+          go('/permissions')
           break
         case 'nav.workspace':
-          void navigate('/workspace')
+          go('/workspace')
           break
         case 'nav.profiles':
-          void navigate('/profiles')
+          go('/profiles')
           break
         case 'nav.bundles':
-          void navigate('/bundles')
+          go('/bundles')
           break
         case 'nav.usage':
-          void navigate('/usage')
+          go('/usage')
           break
         case 'nav.context':
-          void navigate('/context')
+          go('/context')
           break
         case 'nav.templates':
-          void navigate('/templates')
+          go('/templates')
           break
         case 'nav.sandbox':
-          void navigate('/sandbox')
+          go('/sandbox')
           break
       }
     }
