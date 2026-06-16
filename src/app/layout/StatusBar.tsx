@@ -6,6 +6,7 @@ import { useBasePath } from '@/features/settings/hooks/useBasePath'
 import { useThemeStore } from '@/features/themes/store/theme.store'
 import { useConfigStore } from '@/features/config/store/config.store'
 import { useDoctorStore } from '@/features/doctor/store/doctor.store'
+import { useScopeStore } from '@/features/scope/store/scope.store'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { IpcEvent } from '@/shared/types/ipc'
 import type { UpdateStatus } from '@/shared/types/config'
@@ -29,6 +30,12 @@ export function StatusBar() {
   const issues = useConfigStore((s) => s.issues)
 
   const doctorErrors = useDoctorStore((s) => s.report?.counts.error ?? 0)
+
+  const scope = useScopeStore((s) => s.scope)
+  const projectDir = useScopeStore((s) => s.projectDir)
+  const projectName = projectDir
+    ? projectDir.replace(/[/\\]+$/, '').split(/[/\\]/).filter(Boolean).pop()
+    : undefined
 
   const dirty = draft !== original
   const errors = issues.filter((i) => i.severity === 'error').length
@@ -58,6 +65,25 @@ export function StatusBar() {
           <Icon name={agent.icon} className="size-3" />
           {agent.displayName}
         </span>
+        <span className="opacity-40">·</span>
+        <button
+          type="button"
+          onClick={() => navigate('/workspace')}
+          className="flex shrink-0 items-center gap-1.5 transition-colors hover:text-sidebar-foreground"
+          title="Change scope / project directory"
+        >
+          {scope === 'project' && projectName ? (
+            <>
+              <Icon name="folder-open" className="size-3" />
+              project · {projectName}
+            </>
+          ) : (
+            <>
+              <Icon name="globe" className="size-3" />
+              global
+            </>
+          )}
+        </button>
         {basePath && (
           <>
             <span className="opacity-40">·</span>
