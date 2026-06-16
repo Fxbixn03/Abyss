@@ -26,8 +26,6 @@ import { DiscoverPage } from '@/features/discovery/pages/DiscoverPage'
 import { SandboxPage } from '@/features/sandbox/pages/SandboxPage'
 import { RelationsPage } from '@/features/relations/pages/RelationsPage'
 import { UsagePage } from '@/features/usage/pages/UsagePage'
-import { StatusLinePage } from '@/features/statusline/pages/StatusLinePage'
-import { SpinnerPage } from '@/features/spinner/pages/SpinnerPage'
 import { PluginsPage } from '@/features/plugins/pages/PluginsPage'
 import { WorkspacePage } from '@/features/workspace/pages/WorkspacePage'
 import { RuleActivationPage } from '@/features/rule-activation/pages/RuleActivationPage'
@@ -73,8 +71,6 @@ export const router = createHashRouter([
       { path: 'hooks', element: <HooksPage /> },
       { path: 'permissions', element: <PermissionsPage /> },
       { path: 'model-env', element: <ModelEnvPage /> },
-      { path: 'statusline', element: <StatusLinePage /> },
-      { path: 'spinner', element: <SpinnerPage /> },
       { path: 'plugins', element: <PluginsPage /> },
       { path: 'settings-file', element: <SettingsFilePage /> },
       { path: 'settings', element: <SettingsPage /> },

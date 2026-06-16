@@ -98,6 +98,7 @@ export const claudeDefinition: AgentDefinition = {
     rawSettings: true,
     chats: true,
     statusLine: true,
+    spinner: true,
     plugins: true,
   },
   configFiles: [claudeInstructions],

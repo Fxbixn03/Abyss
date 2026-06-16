@@ -78,6 +78,8 @@ export interface AgentCapabilities {
   chats: boolean
   /** Custom status line builder (settings.json `statusLine`) — Claude Code. */
   statusLine?: boolean
+  /** Custom spinner verbs & tips (settings.json) — Claude Code. */
+  spinner?: boolean
   /** Plugin & marketplace management (settings.json) — Claude Code. */
   plugins?: boolean
 }

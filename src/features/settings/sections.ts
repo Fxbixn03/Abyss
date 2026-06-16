@@ -1,3 +1,5 @@
+import type { AgentCapabilities } from '@/shared/types/agent'
+
 /**
  * Settings section metadata, shared by the Settings page and the command
  * palette so both stay in sync and sections become searchable / deep-linkable
@@ -11,6 +13,8 @@ export interface SettingsSectionMeta {
   category: SettingsCategoryId
   /** Extra search terms so the palette finds a section by what it contains. */
   keywords?: string[]
+  /** Section is only shown when the active agent has this capability. */
+  requiresCapability?: keyof AgentCapabilities
 }
 
 export type SettingsCategoryId =
@@ -85,6 +89,22 @@ export const SETTINGS_SECTIONS: SettingsSectionMeta[] = [
     icon: 'keyboard',
     category: 'system',
     keywords: ['keybinding', 'hotkey', 'key'],
+  },
+  {
+    id: 'statusline',
+    label: 'Status Line',
+    icon: 'terminal',
+    category: 'system',
+    keywords: ['status', 'bar', 'segment', 'claude'],
+    requiresCapability: 'statusLine',
+  },
+  {
+    id: 'spinner',
+    label: 'Spinner',
+    icon: 'loader',
+    category: 'system',
+    keywords: ['spinner', 'verbs', 'tips', 'loading', 'claude'],
+    requiresCapability: 'spinner',
   },
   {
     id: 'backups',

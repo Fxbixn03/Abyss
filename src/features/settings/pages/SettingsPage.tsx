@@ -12,6 +12,9 @@ import { PreferencesSection } from '../components/PreferencesSection'
 import { BackupsSection } from '../components/BackupsSection'
 import { AboutSection } from '../components/AboutSection'
 import { ThemeBuilder } from '@/features/themes/components/ThemeBuilder'
+import { StatusLineSection } from '@/features/statusline/components/StatusLineSection'
+import { SpinnerSection } from '@/features/spinner/components/SpinnerSection'
+import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import {
   SETTINGS_SECTIONS,
   SETTINGS_CATEGORIES,
@@ -26,17 +29,27 @@ const SECTION_RENDER: Record<string, ReactNode> = {
   'agent-icons': <AgentIconsSection />,
   'theme-builder': <ThemeBuilder />,
   shortcuts: <ShortcutsSection />,
+  statusline: <StatusLineSection />,
+  spinner: <SpinnerSection />,
   preferences: <PreferencesSection />,
   backups: <BackupsSection />,
   about: <AboutSection />,
 }
 
 export function SettingsPage() {
+  const agent = useActiveAgent()
+
+  // Hide capability-gated sections (Status Line, Spinner) for agents that don't
+  // support them, mirroring how the sidebar gates agent-specific nav entries.
+  const sections = SETTINGS_SECTIONS.filter(
+    (s) => !s.requiresCapability || !!agent.capabilities[s.requiresCapability],
+  )
+
   // The active section lives in the URL so it's deep-linkable from the command
   // palette (`/settings?s=shortcuts`) and survives back/forward navigation.
   const [params, setParams] = useSearchParams()
   const requested = params.get('s')
-  const activeId = SETTINGS_SECTIONS.some((s) => s.id === requested)
+  const activeId = sections.some((s) => s.id === requested)
     ? (requested as string)
     : DEFAULT_SETTINGS_SECTION
 
@@ -44,7 +57,7 @@ export function SettingsPage() {
   // dropping empty categories — mirrors the sidebar's grouped navigation.
   const groups = SETTINGS_CATEGORIES.map((category) => ({
     category,
-    sections: SETTINGS_SECTIONS.filter((s) => s.category === category.id),
+    sections: sections.filter((s) => s.category === category.id),
   })).filter((g) => g.sections.length > 0)
 
   return (

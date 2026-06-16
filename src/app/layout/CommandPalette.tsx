@@ -400,7 +400,11 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
         </CommandGroup>
 
         <CommandGroup heading="Settings">
-          {SETTINGS_SECTIONS.map((section) => (
+          {SETTINGS_SECTIONS.filter(
+            (section) =>
+              !section.requiresCapability ||
+              !!activeAgent.capabilities[section.requiresCapability],
+          ).map((section) => (
             <CommandItem
               key={section.id}
               value={`settings ${section.label}`}
