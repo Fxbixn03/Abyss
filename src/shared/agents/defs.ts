@@ -204,7 +204,7 @@ export const cursorDefinition: AgentDefinition = {
     hooks: true,
     rules: true,
     rawSettings: false,
-    chats: false,
+    chats: true,
   },
   configFiles: [cursorAgentsMd, cursorInstructions],
   resolvePaths: (env: OsEnv) => [
