@@ -351,7 +351,7 @@ export const aiderDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: false,
-    chats: false,
+    chats: true,
   },
   configFiles: [aiderConfig, aiderModelSettings],
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home)],

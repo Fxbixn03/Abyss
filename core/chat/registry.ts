@@ -8,6 +8,7 @@ import { claudeChatRuntime } from './claude/runtime'
 import { codexChatRuntime } from './codex/runtime'
 import { geminiChatRuntime } from './gemini/runtime'
 import { cursorChatRuntime } from './cursor/runtime'
+import { aiderChatRuntime } from './aider/runtime'
 
 const runtimes = new Map<string, ChatRuntime>()
 
@@ -35,3 +36,4 @@ register(claudeChatRuntime)
 register(codexChatRuntime)
 register(geminiChatRuntime)
 register(cursorChatRuntime)
+register(aiderChatRuntime)
