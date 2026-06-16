@@ -90,6 +90,18 @@ export function useGlobalShortcuts(): void {
         case 'nav.bundles':
           void navigate('/bundles')
           break
+        case 'nav.usage':
+          void navigate('/usage')
+          break
+        case 'nav.context':
+          void navigate('/context')
+          break
+        case 'nav.templates':
+          void navigate('/templates')
+          break
+        case 'nav.sandbox':
+          void navigate('/sandbox')
+          break
       }
     }
     window.addEventListener('keydown', onKey)

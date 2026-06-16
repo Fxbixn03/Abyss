@@ -19,6 +19,10 @@ export type ShortcutActionId =
   | 'nav.workspace'
   | 'nav.profiles'
   | 'nav.bundles'
+  | 'nav.usage'
+  | 'nav.context'
+  | 'nav.templates'
+  | 'nav.sandbox'
 
 export const SHORTCUT_ACTIONS: { id: ShortcutActionId; label: string }[] = [
   { id: 'search.open', label: 'Open search' },
@@ -38,6 +42,10 @@ export const SHORTCUT_ACTIONS: { id: ShortcutActionId; label: string }[] = [
   { id: 'nav.workspace', label: 'Go to Workspace' },
   { id: 'nav.profiles', label: 'Go to Profiles' },
   { id: 'nav.bundles', label: 'Go to Bundles' },
+  { id: 'nav.usage', label: 'Go to Analytics' },
+  { id: 'nav.context', label: 'Go to Context' },
+  { id: 'nav.templates', label: 'Go to Templates' },
+  { id: 'nav.sandbox', label: 'Go to Sandbox' },
 ]
 
 export const DEFAULT_BINDINGS: Record<ShortcutActionId, string> = {
@@ -58,6 +66,10 @@ export const DEFAULT_BINDINGS: Record<ShortcutActionId, string> = {
   'nav.workspace': '',
   'nav.profiles': '',
   'nav.bundles': '',
+  'nav.usage': '',
+  'nav.context': '',
+  'nav.templates': '',
+  'nav.sandbox': '',
 }
 
 interface ShortcutsState {

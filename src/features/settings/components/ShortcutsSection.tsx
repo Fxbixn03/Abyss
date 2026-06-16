@@ -62,12 +62,27 @@ export function ShortcutsSection() {
       <CardContent className="flex flex-col gap-2">
         {SHORTCUT_ACTIONS.map((action) => {
           const active = recording === action.id
+          const combo = bindings[action.id]
+          // A binding conflicts when another action uses the same combo.
+          const conflict =
+            !!combo &&
+            SHORTCUT_ACTIONS.some(
+              (other) => other.id !== action.id && bindings[other.id] === combo,
+            )
           return (
             <div
               key={action.id}
               className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
             >
-              <span className="text-sm font-medium">{action.label}</span>
+              <span className="flex items-center gap-2 text-sm font-medium">
+                {action.label}
+                {conflict && (
+                  <span className="flex items-center gap-1 text-xs font-normal text-destructive">
+                    <Icon name="triangle-alert" className="size-3" />
+                    conflict
+                  </span>
+                )}
+              </span>
               <Button
                 variant="outline"
                 size="sm"
@@ -75,9 +90,10 @@ export function ShortcutsSection() {
                 className={cn(
                   'min-w-[120px] font-code',
                   active && 'border-primary text-primary',
+                  conflict && !active && 'border-destructive text-destructive',
                 )}
               >
-                {active ? 'Press keys…' : humanizeCombo(bindings[action.id])}
+                {active ? 'Press keys…' : humanizeCombo(combo)}
               </Button>
             </div>
           )
