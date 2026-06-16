@@ -13,6 +13,7 @@
  * Node-only.
  */
 
+import { z } from 'zod'
 import type { HookEntry, HookEvent } from '@/shared/types/hooks'
 import { readJsonFile, writeJsonFile } from './json-file'
 
@@ -28,8 +29,30 @@ interface FlatHooksFile {
   [key: string]: unknown
 }
 
+/**
+ * Lenient schema for the flat hooks file format (`hooks.json`). Validates that
+ * the root is an object and that `hooks` — when present — is an array of hook
+ * objects, while preserving all unknown top-level and per-hook keys via
+ * passthrough for the round-trip write path.
+ */
+const flatHooksFileSchema = z
+  .object({
+    hooks: z
+      .array(
+        z
+          .object({
+            event: z.string().optional(),
+            tool: z.string().optional(),
+            command: z.string().optional(),
+          })
+          .passthrough(),
+      )
+      .optional(),
+  })
+  .passthrough()
+
 export async function readFlatHooks(file: string): Promise<HookEntry[]> {
-  const data = await readJsonFile<FlatHooksFile>(file, {})
+  const data = await readJsonFile<FlatHooksFile>(file, {}, flatHooksFileSchema)
   const out: HookEntry[] = []
   let counter = 0
   for (const hook of data.hooks ?? []) {
@@ -50,7 +73,7 @@ export async function writeFlatHooks(
 ): Promise<{ success: boolean; path: string }> {
   // Re-read right before writing to keep sibling keys and shrink the
   // lost-update window.
-  const data = await readJsonFile<FlatHooksFile>(file, {})
+  const data = await readJsonFile<FlatHooksFile>(file, {}, flatHooksFileSchema)
 
   const hooks: RawFlatHook[] = entries.map((entry) => {
     const raw: RawFlatHook = { event: entry.event }
