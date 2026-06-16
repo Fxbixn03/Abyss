@@ -238,6 +238,18 @@ export function HooksPage() {
     void navigate('/sandbox')
   }
 
+  // Clone a hook into the form (new id, enabled) so the user can tweak the copy
+  // before saving it through the normal upsert path. Replaces any open form.
+  const duplicate = (entry: HookEntry) => {
+    setFormOpen(false)
+    setEditing({
+      ...entry,
+      id: crypto.randomUUID(),
+      disabled: undefined,
+    })
+    setFormOpen(true)
+  }
+
   const copyToAgent = async (entry: HookEntry, target: AgentAdapter) => {
     const base = configBaseFor(target.id)
     if (!base) {
@@ -627,6 +639,14 @@ export function HooksPage() {
                         aria-label="Edit hook"
                       >
                         <Icon name="pencil" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => duplicate(entry)}
+                        aria-label="Duplicate hook"
+                      >
+                        <Icon name="copy" />
                       </Button>
                       <Button
                         variant="ghost"
