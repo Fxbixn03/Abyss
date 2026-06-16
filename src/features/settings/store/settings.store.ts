@@ -31,10 +31,11 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     if (get().loading) return
     set({ loading: true })
     try {
-      const [settings, detected] = await Promise.all([
-        ipc.getSettings(),
-        ipc.getDetectedPaths(),
-      ])
+      const settings = await ipc.getSettings()
+      // Only auto-scan disk for config locations when auto-detect is enabled;
+      // otherwise rely solely on the user's explicit per-agent overrides.
+      const detected =
+        settings.autoDetectPaths === false ? {} : await ipc.getDetectedPaths()
       // Register the user's custom agents before the app gates open, so the
       // switcher/sidebar/themes pick them up on first paint.
       useCustomAgentStore.getState().hydrate(settings.customAgents ?? [])

@@ -8,9 +8,18 @@ import {
 } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
+import { Switch } from '@/shared/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { formatDateTime, type DateTimeFormat } from '@/shared/lib/datetime'
 import { useAllAgents } from '@/features/agents/hooks/useActiveAgent'
 import { useBasePath } from '../hooks/useBasePath'
 import { useSettingsStore } from '../store/settings.store'
@@ -188,10 +197,76 @@ function PathRow({
   )
 }
 
+function DetectionControls() {
+  const autoDetect = useSettingsStore((s) => s.settings.autoDetectPaths)
+  const dateFormat = useSettingsStore((s) => s.settings.dateTimeFormat)
+  const updatePrefs = useSettingsStore((s) => s.updatePrefs)
+  const redetect = useSettingsStore((s) => s.redetect)
+
+  const onToggle = async (value: boolean) => {
+    await updatePrefs({ autoDetectPaths: value })
+    if (value) {
+      await redetect()
+    } else {
+      // Stop relying on scanned locations immediately.
+      useSettingsStore.setState({ detected: {} })
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Detection &amp; formatting</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">Auto-detect config paths</p>
+            <p className="text-xs text-muted-foreground">
+              Scan known locations on disk automatically. When off, only your
+              explicit paths below are used.
+            </p>
+          </div>
+          <Switch
+            checked={autoDetect}
+            onCheckedChange={(v) => void onToggle(v)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">Date &amp; time format</p>
+            <p className="text-xs text-muted-foreground">
+              How absolute dates appear across the app — e.g.{' '}
+              {formatDateTime(Date.now(), dateFormat)}.
+            </p>
+          </div>
+          <Select
+            value={dateFormat}
+            onValueChange={(v) =>
+              void updatePrefs({ dateTimeFormat: v as DateTimeFormat })
+            }
+          >
+            <SelectTrigger className="w-[170px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="locale">System locale</SelectItem>
+              <SelectItem value="iso">ISO (2026-06-16 14:30)</SelectItem>
+              <SelectItem value="us">US (06/16/2026 14:30)</SelectItem>
+              <SelectItem value="eu">EU (16.06.2026 14:30)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export function PathsSection() {
   const agents = useAllAgents()
   return (
     <div className="flex flex-col gap-4">
+      <DetectionControls />
       {agents.map((agent) => (
         <AgentPaths key={agent.id} agent={agent} />
       ))}

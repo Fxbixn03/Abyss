@@ -148,6 +148,10 @@ export interface AppSettings {
   autosaveDelaySeconds: number
   /** Whether the config editor wraps long lines. On by default. */
   editorLineWrap: boolean
+  /** Auto-scan disk for agent config locations. On by default. */
+  autoDetectPaths: boolean
+  /** How absolute dates/times are rendered across the app. */
+  dateTimeFormat: 'locale' | 'iso' | 'us' | 'eu'
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -169,6 +173,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   autosaveDelaySeconds: 3,
   editorLineWrap: true,
   language: 'en',
+  autoDetectPaths: true,
+  dateTimeFormat: 'locale',
 }
 
 /** Auto-update lifecycle, pushed to the renderer as it progresses. */

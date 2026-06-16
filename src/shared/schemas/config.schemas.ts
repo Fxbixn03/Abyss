@@ -150,6 +150,11 @@ export const appSettingsSchema = z
     autosave: z.boolean().optional().catch(undefined),
     autosaveDelaySeconds: z.number().optional().catch(undefined),
     editorLineWrap: z.boolean().optional().catch(undefined),
+    autoDetectPaths: z.boolean().optional().catch(undefined),
+    dateTimeFormat: z
+      .enum(['locale', 'iso', 'us', 'eu'])
+      .optional()
+      .catch(undefined),
   })
   .catch({})
 

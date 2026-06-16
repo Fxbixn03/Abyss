@@ -26,6 +26,8 @@ import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { formatDateTime } from '@/shared/lib/datetime'
+import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { ENVIRONMENT_TEMPLATES, DEFAULT_PROFILE_ICON } from '../templates'
 
 interface ProfileDraft {
@@ -149,6 +151,7 @@ export function ProfilesPage() {
   const [renameTarget, setRenameTarget] = useState<ProfileMeta | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProfileMeta | null>(null)
   const [applyTarget, setApplyTarget] = useState<ProfileMeta | null>(null)
+  const dateFormat = useSettingsStore((s) => s.settings.dateTimeFormat)
 
   const refresh = async () => {
     setProfiles(await ipc.profileList())
@@ -355,7 +358,7 @@ export function ProfilesPage() {
                         </p>
                       ) : (
                         <p className="text-xs text-muted-foreground">
-                          {new Date(p.createdAt).toLocaleString()}
+                          {formatDateTime(p.createdAt, dateFormat)}
                         </p>
                       )}
                     </div>
