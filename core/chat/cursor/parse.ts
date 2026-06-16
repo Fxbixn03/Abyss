@@ -26,6 +26,7 @@ import type {
   ChatTranscript,
 } from '@/shared/types/chat'
 import { readJsonlLines, asString, asRecord } from '../jsonl'
+import { ConfigWriteError } from '../../config-error'
 import { blocksFromAnthropicContent, projectLabelFromCwd } from '../normalize'
 import { paginateByMtime } from '../paginate'
 import {
@@ -274,5 +275,13 @@ export async function deleteCursorSession(
 ): Promise<void> {
   const filePath = await findCursorSessionFile(env, sessionId)
   if (!filePath) return
-  await fs.rm(filePath, { force: true })
+  try {
+    await fs.rm(filePath, { force: true })
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code
+    if (code === 'EACCES' || code === 'EPERM') {
+      throw new ConfigWriteError(filePath, err)
+    }
+    throw err
+  }
 }
