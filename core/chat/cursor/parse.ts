@@ -26,7 +26,7 @@ import type {
   ChatTranscript,
 } from '@/shared/types/chat'
 import { readJsonlLines, asString, asRecord } from '../jsonl'
-import { ConfigWriteError } from '../../config-error'
+import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
 import { blocksFromAnthropicContent, projectLabelFromCwd } from '../normalize'
 import { paginateByMtime } from '../paginate'
 import {
@@ -210,7 +210,7 @@ export async function readCursorSession(
   sessionId: string,
 ): Promise<ChatTranscript> {
   const filePath = await findCursorSessionFile(env, sessionId)
-  if (!filePath) throw new Error(`Cursor session not found: ${sessionId}`)
+  if (!filePath) throw new ConfigNotFoundError(sessionId)
 
   const messages: ChatMessage[] = []
   let cwd = ''

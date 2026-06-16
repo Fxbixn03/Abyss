@@ -26,7 +26,7 @@ import {
   findCodexSessionFile,
   listCodexSessionFiles,
 } from './paths'
-import { ConfigWriteError } from '../../config-error'
+import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
 
 /** Pull `{ role, text }` out of a rollout line, if it is a message item. */
 function extractMessage(
@@ -132,7 +132,7 @@ export async function readCodexSession(
   sessionId: string,
 ): Promise<ChatTranscript> {
   const filePath = await findCodexSessionFile(env, sessionId)
-  if (!filePath) throw new Error(`Codex session not found: ${sessionId}`)
+  if (!filePath) throw new ConfigNotFoundError(sessionId)
 
   const messages: ChatMessage[] = []
   let cwd = ''

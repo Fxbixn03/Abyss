@@ -27,7 +27,7 @@ import {
   findClaudeSessionFile,
   listClaudeSessionFiles,
 } from './paths'
-import { ConfigWriteError } from '../../config-error'
+import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
 
 const MESSAGE_TYPES = new Set(['user', 'assistant'])
 
@@ -127,7 +127,7 @@ export async function readClaudeSession(
   sessionId: string,
 ): Promise<ChatTranscript> {
   const found = await findClaudeSessionFile(env, sessionId)
-  if (!found) throw new Error(`Claude session not found: ${sessionId}`)
+  if (!found) throw new ConfigNotFoundError(sessionId)
 
   const messages: ChatMessage[] = []
   let cwd = ''

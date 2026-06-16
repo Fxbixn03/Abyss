@@ -27,7 +27,7 @@ import {
   listGeminiSessionFiles,
 } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
-import { ConfigWriteError } from '../../config-error'
+import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
 
 /**
  * Attempt to extract a role + content pair from a Gemini JSONL event line.
@@ -246,7 +246,7 @@ export async function readGeminiSession(
   sessionId: string,
 ): Promise<ChatTranscript> {
   const filePath = await findGeminiSessionFile(env, sessionId)
-  if (!filePath) throw new Error(`Gemini session not found: ${sessionId}`)
+  if (!filePath) throw new ConfigNotFoundError(sessionId)
 
   const messages: ChatMessage[] = []
   let cwd = ''
