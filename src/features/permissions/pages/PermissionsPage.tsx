@@ -22,6 +22,13 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 import { ipc } from '@/shared/ipc/ipc.client'
+import {
+  isDiskWriteError,
+  isWritePermissionError,
+  reportDiskWriteError,
+  reportError,
+  reportWritePermissionError,
+} from '@/shared/lib/errors'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import {
   useConfigBase,
@@ -80,9 +87,14 @@ export function PermissionsPage() {
   useEffect(() => {
     if (!supported || !basePath) return
     let active = true
-    void ipc.getPermissions(agent.id, basePath).then((r) => {
-      if (active) setRules(r)
-    })
+    ipc
+      .getPermissions(agent.id, basePath)
+      .then((r) => {
+        if (active) setRules(r)
+      })
+      .catch((err) => {
+        if (active) reportError(err, { title: "Couldn't load permissions" })
+      })
     return () => {
       active = false
     }
@@ -91,9 +103,15 @@ export function PermissionsPage() {
   useEffect(() => {
     if (!supported || scope !== 'project' || !globalBase) return
     let active = true
-    void ipc.getPermissions(agent.id, globalBase).then((r) => {
-      if (active) setInherited(r)
-    })
+    ipc
+      .getPermissions(agent.id, globalBase)
+      .then((r) => {
+        if (active) setInherited(r)
+      })
+      .catch((err) => {
+        if (active)
+          reportError(err, { title: "Couldn't load inherited permissions" })
+      })
     return () => {
       active = false
     }
@@ -153,14 +171,27 @@ export function PermissionsPage() {
     rules.deny.length === 0 &&
     !hasInherited
 
-  const persist = (next: PermissionRules) => {
+  const persist = async (next: PermissionRules) => {
+    const previous = rules
     setRules(next)
-    if (basePath) void ipc.setPermissions(agent.id, basePath, next)
+    if (!basePath) return
+    try {
+      await ipc.setPermissions(agent.id, basePath, next)
+    } catch (err) {
+      setRules(previous) // roll back the optimistic update
+      if (isWritePermissionError(err)) {
+        reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+      } else if (isDiskWriteError(err)) {
+        reportDiskWriteError(err)
+      } else {
+        reportError(err, { title: "Couldn't save permissions" })
+      }
+    }
   }
 
   const move = (from: PermissionColumn, rule: string, to: PermissionColumn) => {
     if (from === to) return
-    persist({
+    void persist({
       ...rules,
       [from]: rules[from].filter((r) => r !== rule),
       [to]: rules[to].includes(rule) ? rules[to] : [...rules[to], rule],
@@ -382,7 +413,7 @@ export function PermissionsPage() {
                   (p) => p.id === 'standard',
                 )
                 if (standard)
-                  persist({
+                  void persist({
                     ...standard.rules,
                     defaultMode: rules.defaultMode,
                     additionalDirectories: rules.additionalDirectories,
