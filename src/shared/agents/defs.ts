@@ -263,7 +263,7 @@ export const windsurfDefinition: AgentDefinition = {
   displayName: 'Windsurf',
   defaultThemeId: 'windsurf-wave',
   iconName: 'img:windsurf',
-  docsUrl: 'https://docs.devin.ai/cli',
+  docsUrl: 'https://docs.codeium.com/windsurf/mcp',
   capabilities: {
     instructions: true,
     mcp: true,
