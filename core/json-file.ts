@@ -9,6 +9,7 @@ import { recordSnapshot } from './snapshots'
 import { uniqueTempPath } from './tmp-path'
 import {
   ConfigDiskError,
+  ConfigNotFoundError,
   ConfigParseError,
   ConfigReadError,
   ConfigValidationError,
@@ -20,6 +21,15 @@ function isPermissionError(err: unknown): boolean {
   if (err && typeof err === 'object') {
     const code = (err as Record<string, unknown>).code
     return code === 'EACCES' || code === 'EPERM'
+  }
+  return false
+}
+
+/** Returns true when a Node.js filesystem error indicates the path does not exist. */
+function isNotFoundOsError(err: unknown): boolean {
+  if (err && typeof err === 'object') {
+    const code = (err as Record<string, unknown>).code
+    return code === 'ENOENT'
   }
   return false
 }
@@ -47,6 +57,9 @@ export async function readTextFile(p: string): Promise<string> {
     return await fs.readFile(p, 'utf8')
   } catch (err) {
     if (isPermissionError(err)) throw new ConfigReadError(p, err)
+    // ENOENT after the caller verified existence = TOCTOU race (file deleted
+    // between the existence check and the actual read).
+    if (isNotFoundOsError(err)) throw new ConfigNotFoundError(p, err)
     throw err
   }
 }

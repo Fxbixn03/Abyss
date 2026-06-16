@@ -90,6 +90,15 @@ export function isDiskWriteError(err: unknown): err is IpcError {
 }
 
 /**
+ * A file was expected to exist but could not be found when Abyss tried to read
+ * it — a TOCTOU race where the file was deleted between the existence check and
+ * the actual read (OS-level ENOENT surfaced via {@link IpcErrorCode.NotFound}).
+ */
+export function isNotFoundError(err: unknown): err is IpcError {
+  return err instanceof IpcError && err.code === IpcErrorCode.NotFound
+}
+
+/**
  * Show a targeted 'Disk is full — free up space and try again' toast for a
  * disk-full error, with the affected file path as the description. Marks the
  * error as handled so the global IPC net stays quiet.

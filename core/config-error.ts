@@ -69,3 +69,19 @@ export class ConfigDiskError extends Error {
     this.filePath = filePath
   }
 }
+
+/**
+ * A file that was expected to exist could not be found when Abyss tried to
+ * read it — a TOCTOU race where the file was deleted between the existence
+ * check (`pathExists`) and the actual `readFile` call.
+ */
+export class ConfigNotFoundError extends Error {
+  readonly code = IpcErrorCode.NotFound
+  readonly filePath: string
+
+  constructor(filePath: string, cause?: unknown) {
+    super(`File not found: ${filePath}`, { cause })
+    this.name = 'ConfigNotFoundError'
+    this.filePath = filePath
+  }
+}

@@ -25,6 +25,12 @@ export const IpcErrorCode = {
   ReadPermission: 'READ_PERMISSION_DENIED',
   /** A write failed because the disk is full (ENOSPC) or a cross-device rename was attempted (EXDEV). */
   DiskFull: 'DISK_FULL',
+  /**
+   * A file that was expected to exist (e.g. observed via fs:watch) could not be
+   * found when Abyss attempted to read it — a TOCTOU race where the file was
+   * deleted between the existence check and the actual read.
+   */
+  NotFound: 'NOT_FOUND',
   Unknown: 'UNKNOWN',
 } as const
 
