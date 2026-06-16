@@ -23,6 +23,13 @@ import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
+import {
+  isDiskWriteError,
+  isWritePermissionError,
+  reportDiskWriteError,
+  reportError,
+  reportWritePermissionError,
+} from '@/shared/lib/errors'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 
@@ -102,9 +109,22 @@ export function CodexApprovals() {
     }
   }, [basePath])
 
-  const persist = (next: CodexSettings) => {
+  const persist = async (next: CodexSettings) => {
+    const previous = settings
     setSettings(next)
-    if (basePath) void ipc.setCodexSettings(basePath, next)
+    if (!basePath) return
+    try {
+      await ipc.setCodexSettings(basePath, next)
+    } catch (err) {
+      setSettings(previous)
+      if (isWritePermissionError(err)) {
+        reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+      } else if (isDiskWriteError(err)) {
+        reportDiskWriteError(err)
+      } else {
+        reportError(err, { title: "Couldn't save Codex settings" })
+      }
+    }
   }
 
   const header = (
@@ -169,7 +189,7 @@ export function CodexApprovals() {
             <Select
               value={settings.approvalPolicy}
               onValueChange={(v) =>
-                persist({
+                void persist({
                   ...settings,
                   approvalPolicy: v as CodexApprovalPolicy,
                 })
@@ -208,7 +228,7 @@ export function CodexApprovals() {
             <Select
               value={settings.sandboxMode}
               onValueChange={(v) =>
-                persist({ ...settings, sandboxMode: v as CodexSandboxMode })
+                void persist({ ...settings, sandboxMode: v as CodexSandboxMode })
               }
             >
               <SelectTrigger>
@@ -238,7 +258,7 @@ export function CodexApprovals() {
               <Switch
                 checked={settings.networkAccess}
                 onCheckedChange={(checked) =>
-                  persist({ ...settings, networkAccess: checked })
+                  void persist({ ...settings, networkAccess: checked })
                 }
               />
             </label>
