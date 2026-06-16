@@ -31,6 +31,11 @@ to get a change merged.
 Be kind and constructive. Assume good intent, keep discussion focused on the
 code, and help reviewers help you. Harassment of any kind is not welcome.
 
+This project adheres to the [Contributor Covenant](CODE_OF_CONDUCT.md). By
+participating, you are expected to uphold it. Please report unacceptable
+behavior to the address listed in the
+[Code of Conduct](CODE_OF_CONDUCT.md#enforcement).
+
 ---
 
 ## Ways to contribute
