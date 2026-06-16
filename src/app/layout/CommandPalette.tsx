@@ -347,7 +347,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
                     setAgentTheme(activeAgent.id, id)
                   } else if (kind === 'template') {
                     requestApplyTemplate(id)
-                    navigate('/templates')
+                    void navigate('/templates')
                   }
                 })}
               >
@@ -422,7 +422,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
                 keywords={[t.description, ...t.tags]}
                 onSelect={run(() => {
                   requestApplyTemplate(t.id)
-                  navigate('/templates')
+                  void navigate('/templates')
                   pushRecentAction({
                     label: `Apply template: ${t.title}`,
                     value: `template:${t.id}`,
@@ -456,7 +456,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
                 ]}
                 onSelect={run(() => {
                   requestOpen(item.kind, item.id)
-                  navigate(`/${item.kind}`)
+                  void navigate(`/${item.kind}`)
                 })}
               >
                 <Icon name={KIND_ICON[item.kind]} />
@@ -478,7 +478,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
                 keywords={[search, r.detail]}
                 onSelect={run(() => {
                   if (r.agentId !== activeAgent.id) setActiveAgent(r.agentId)
-                  navigate(r.route)
+                  void navigate(r.route)
                 })}
               >
                 <span className="relative shrink-0">

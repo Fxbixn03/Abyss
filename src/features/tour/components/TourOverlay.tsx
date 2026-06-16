@@ -99,7 +99,7 @@ export function TourOverlay() {
   // Pin to the step's route.
   useEffect(() => {
     if (!step?.route) return
-    if (location.pathname !== step.route) navigate(step.route)
+    if (location.pathname !== step.route) void navigate(step.route)
   }, [step, location.pathname, navigate])
 
   // Measure the spotlight target, polling so it survives navigation, scrolling

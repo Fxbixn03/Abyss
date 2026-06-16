@@ -52,43 +52,43 @@ export function useGlobalShortcuts(): void {
           useThemeStore.getState().toggleAppearance()
           break
         case 'nav.dashboard':
-          navigate('/')
+          void navigate('/')
           break
         case 'nav.config':
-          navigate('/config')
+          void navigate('/config')
           break
         case 'nav.settings':
-          navigate('/settings')
+          void navigate('/settings')
           break
         case 'nav.mcp':
-          navigate('/mcp')
+          void navigate('/mcp')
           break
         case 'nav.hooks':
-          navigate('/hooks')
+          void navigate('/hooks')
           break
         case 'nav.doctor':
-          navigate('/doctor')
+          void navigate('/doctor')
           break
         case 'nav.snapshots':
-          navigate('/history')
+          void navigate('/history')
           break
         case 'nav.sessions':
-          navigate('/sessions')
+          void navigate('/sessions')
           break
         case 'nav.compare':
-          navigate('/compare')
+          void navigate('/compare')
           break
         case 'nav.permissions':
-          navigate('/permissions')
+          void navigate('/permissions')
           break
         case 'nav.workspace':
-          navigate('/workspace')
+          void navigate('/workspace')
           break
         case 'nav.profiles':
-          navigate('/profiles')
+          void navigate('/profiles')
           break
         case 'nav.bundles':
-          navigate('/bundles')
+          void navigate('/bundles')
           break
       }
     }

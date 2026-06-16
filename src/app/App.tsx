@@ -28,10 +28,7 @@ export function App() {
     <ErrorBoundary>
       {ready ? (
         <>
-          <RouterProvider
-            router={router}
-            future={{ v7_startTransition: true }}
-          />
+          <RouterProvider router={router} />
           <FirstRunWizard />
         </>
       ) : (
