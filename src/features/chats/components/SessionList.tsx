@@ -1,5 +1,5 @@
-import type { UIEvent } from 'react'
-import { useMemo, useState } from 'react'
+import type { UIEvent, KeyboardEvent } from 'react'
+import { useMemo, useState, useRef, useCallback } from 'react'
 import { Input } from '@/shared/components/ui/input'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
@@ -65,6 +65,11 @@ export function SessionList({
   const [query, setQuery] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
+  // Raw cursor index — clamped to valid range during render
+  const [cursorIndex, setCursorIndex] = useState<number>(-1)
+
+  // Ref to the scroll container for querying session buttons by data-session-id
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   // Infinite scroll: pull the next page as the list nears the bottom. Disabled
   // while a search is active (search filters only what's already loaded).
@@ -98,6 +103,64 @@ export function SessionList({
     }
     return [...byProject.entries()]
   }, [sessions, query, sortOrder])
+
+  // Flatten all visible sessions in order (skipping group headers) for keyboard nav
+  const flatSessions = useMemo(
+    () => groups.flatMap(([, items]) => items),
+    [groups],
+  )
+
+  // Derive effective cursor: clamp when list shrinks without triggering setState in effect
+  const effectiveCursor =
+    flatSessions.length === 0
+      ? -1
+      : cursorIndex >= flatSessions.length
+        ? flatSessions.length - 1
+        : cursorIndex
+
+  const getButtonEl = useCallback((sessionId: string): HTMLButtonElement | null => {
+    return scrollRef.current?.querySelector<HTMLButtonElement>(
+      `[data-session-id="${CSS.escape(sessionId)}"]`,
+    ) ?? null
+  }, [])
+
+  const moveCursor = useCallback(
+    (nextIndex: number) => {
+      if (flatSessions.length === 0) return
+      const clamped = Math.max(0, Math.min(nextIndex, flatSessions.length - 1))
+      setCursorIndex(clamped)
+      const session = flatSessions[clamped]
+      if (session) {
+        const el = getButtonEl(session.id)
+        if (el) {
+          el.scrollIntoView({ block: 'nearest' })
+          el.focus()
+        }
+      }
+    },
+    [flatSessions, getButtonEl],
+  )
+
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (flatSessions.length === 0) return
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        moveCursor(effectiveCursor < 0 ? 0 : effectiveCursor + 1)
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        moveCursor(effectiveCursor <= 0 ? 0 : effectiveCursor - 1)
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        if (effectiveCursor >= 0 && effectiveCursor < flatSessions.length) {
+          e.preventDefault()
+          const session = flatSessions[effectiveCursor]
+          if (session) void openSession(session.id)
+        }
+      }
+    },
+    [effectiveCursor, flatSessions, moveCursor, openSession],
+  )
 
   return (
     <div className="flex min-h-0 flex-col gap-2">
@@ -148,8 +211,11 @@ export function SessionList({
         })}
       </div>
 
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- session buttons inside are the interactive elements with their own keyboard roles; this div is a scroll container */}
       <div
+        ref={scrollRef}
         onScroll={onScroll}
+        onKeyDown={onKeyDown}
         className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1"
       >
         {loading ? (
@@ -166,14 +232,28 @@ export function SessionList({
               </p>
               {items.map((s) => {
                 const active = s.id === activeSessionId
+                const flatIdx = flatSessions.indexOf(s)
+                const isCursor = flatIdx === effectiveCursor
+                // First session gets tabIndex=0 when no cursor is active so Tab focuses it
+                const isFirstWithNoCursor =
+                  effectiveCursor < 0 && flatIdx === 0
                 return (
                   <ContextMenu key={s.id}>
                     <ContextMenuTrigger asChild>
                       <button
+                        data-session-id={s.id}
                         type="button"
-                        onClick={() => void openSession(s.id)}
+                        role="option"
+                        onClick={() => {
+                          setCursorIndex(flatIdx)
+                          void openSession(s.id)
+                        }}
+                        onFocus={() => {
+                          setCursorIndex(flatIdx)
+                        }}
+                        tabIndex={isCursor || isFirstWithNoCursor ? 0 : -1}
+                        aria-selected={active}
                         aria-label={`${s.title} — ${s.projectLabel}, ${relativeTime(s.updatedAt)}, ${s.messageCount} messages`}
-                        aria-current={active ? 'true' : undefined}
                         className={cn(
                           'flex flex-col gap-0.5 rounded-md border px-2.5 py-2 text-left transition-colors',
                           active
