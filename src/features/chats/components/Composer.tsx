@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { Button } from '@/shared/components/ui/button'
 import { Textarea } from '@/shared/components/ui/textarea'
@@ -22,11 +22,61 @@ export function Composer({
 }: ComposerProps) {
   const [text, setText] = useState('')
 
+  // Session-scoped prompt history stored as refs so they don't cause re-renders.
+  // history[0] is the oldest entry; history[history.length - 1] is the most recent.
+  const history = useRef<string[]>([])
+  // historyIndex === history.length means "no history entry selected" (drafting mode).
+  const historyIndex = useRef<number>(0)
+
   const submit = () => {
     const trimmed = text.trim()
     if (trimmed === '' || disabled) return
+    history.current.push(trimmed)
+    historyIndex.current = history.current.length
     onSend(trimmed)
     setText('')
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      submit()
+      return
+    }
+
+    if (e.key === 'ArrowUp') {
+      const el = e.currentTarget
+      // Only navigate history when the textarea is empty or the cursor is on the first line.
+      const cursorOnFirstLine =
+        el.value === '' || el.selectionStart <= el.value.indexOf('\n') || !el.value.includes('\n')
+      if (cursorOnFirstLine && history.current.length > 0) {
+        const nextIndex = historyIndex.current - 1
+        if (nextIndex >= 0) {
+          e.preventDefault()
+          historyIndex.current = nextIndex
+          setText(history.current[nextIndex])
+        }
+      }
+      return
+    }
+
+    if (e.key === 'ArrowDown') {
+      if (historyIndex.current < history.current.length) {
+        e.preventDefault()
+        const nextIndex = historyIndex.current + 1
+        historyIndex.current = nextIndex
+        if (nextIndex >= history.current.length) {
+          // Restore empty draft at end of history
+          setText('')
+        } else {
+          setText(history.current[nextIndex])
+        }
+      }
+      return
+    }
+
+    // Any other keystroke resets the history cursor to "drafting" position.
+    historyIndex.current = history.current.length
   }
 
   return (
@@ -35,13 +85,12 @@ export function Composer({
       <div className="flex items-end gap-2">
         <Textarea
           value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              submit()
-            }
+          onChange={(e) => {
+            setText(e.target.value)
+            // Typing resets the history cursor.
+            historyIndex.current = history.current.length
           }}
+          onKeyDown={handleKeyDown}
           placeholder={
             disabled ? 'Sign in to start chatting…' : 'Message the agent…'
           }
