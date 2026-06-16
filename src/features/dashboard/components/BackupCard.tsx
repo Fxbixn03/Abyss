@@ -55,7 +55,7 @@ export function BackupCard({ refreshKey = 0 }: { refreshKey?: number }) {
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
-            open()
+            void open()
           }
         }}
         className="flex cursor-pointer items-center gap-3 p-4 transition-colors hover:border-primary/50 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"

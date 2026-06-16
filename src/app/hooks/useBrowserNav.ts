@@ -27,10 +27,10 @@ export function useBrowserNav(): BrowserNav {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey && e.key === 'ArrowLeft') {
         e.preventDefault()
-        navigate(-1)
+        void navigate(-1)
       } else if (e.altKey && e.key === 'ArrowRight') {
         e.preventDefault()
-        navigate(1)
+        void navigate(1)
       }
     }
     window.addEventListener('keydown', onKey)

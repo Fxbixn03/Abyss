@@ -235,7 +235,7 @@ export function HooksPage() {
 
   const testInSandbox = (entry: HookEntry) => {
     requestCommand(buildSandboxSnippet(entry))
-    navigate('/sandbox')
+    void navigate('/sandbox')
   }
 
   const copyToAgent = async (entry: HookEntry, target: AgentAdapter) => {

@@ -42,7 +42,7 @@ export function CommandTryDialog({
   const sendToSandbox = () => {
     requestPrompt({ system: '', user: expanded })
     onOpenChange(false)
-    navigate('/sandbox')
+    void navigate('/sandbox')
   }
 
   return (

@@ -103,7 +103,7 @@ export function HookForm({
   const testInSandbox = () => {
     requestCommand(buildSandboxSnippet(draft))
     onOpenChange(false)
-    navigate('/sandbox')
+    void navigate('/sandbox')
   }
 
   const submit = () => {

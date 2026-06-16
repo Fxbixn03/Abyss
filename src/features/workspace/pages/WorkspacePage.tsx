@@ -155,7 +155,7 @@ export function WorkspacePage() {
     toast.success(`Project set to ${repo.name}`, {
       description: 'Config surfaces now target this repo.',
     })
-    navigate('/config')
+    void navigate('/config')
   }
 
   return (

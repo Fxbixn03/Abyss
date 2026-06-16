@@ -86,7 +86,7 @@ export function CollectionEditor({ cm }: { cm: CollectionController }) {
   const runInSandbox = () => {
     const { body } = parseFrontmatter(cm.draft)
     requestPrompt({ system: body.trim(), user: '' })
-    navigate('/sandbox')
+    void navigate('/sandbox')
   }
 
   if (!selectedItem) {

@@ -364,7 +364,7 @@ export function ValidationPage() {
     if (f.open.collectionKind && f.open.itemId) {
       requestOpen(f.open.collectionKind, f.open.itemId)
     }
-    navigate(f.open.route)
+    void navigate(f.open.route)
   }
 
   return (
