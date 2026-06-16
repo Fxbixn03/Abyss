@@ -85,6 +85,6 @@ export async function writeFlatHooks(
   if (hooks.length === 0) delete data.hooks
   else data.hooks = hooks
 
-  await writeJsonFile(file, data)
+  await writeJsonFile(file, data, flatHooksFileSchema)
   return { success: true, path: file }
 }
