@@ -13,7 +13,15 @@ import type {
 } from '@/shared/types/chat'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { genId } from '@/shared/lib/id'
-import { isNotFoundError, markErrorReported, reportError } from '@/shared/lib/errors'
+import {
+  isDiskWriteError,
+  isNotFoundError,
+  isWritePermissionError,
+  markErrorReported,
+  reportDiskWriteError,
+  reportError,
+  reportWritePermissionError,
+} from '@/shared/lib/errors'
 import { toast } from 'sonner'
 import { appendDelta, appendBlock } from './stream-reducer'
 
@@ -344,6 +352,10 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
       if (isNotFoundError(err)) {
         markErrorReported(err)
         await get().refreshSessions()
+      } else if (isWritePermissionError(err)) {
+        reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+      } else if (isDiskWriteError(err)) {
+        reportDiskWriteError(err)
       } else {
         reportError(err, { title: "Couldn't delete session" })
       }
