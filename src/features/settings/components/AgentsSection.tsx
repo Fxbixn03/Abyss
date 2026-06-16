@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Card,
   CardContent,
@@ -10,7 +10,10 @@ import { Switch } from '@/shared/components/ui/switch'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
+import { Spinner } from '@/shared/components/Spinner'
+import { KeyValueEditor } from '@/shared/components/KeyValueEditor'
 import { cn } from '@/shared/lib/utils'
+import { ipc } from '@/shared/ipc/ipc.client'
 import type { CustomAgentSpec } from '@/shared/agents/custom-agent'
 import { agentRegistry } from '@/features/agents/registry/agent.registry'
 import { useAgentStore } from '@/features/agents/store/agent.store'
@@ -20,8 +23,78 @@ import {
 } from '@/features/agents/store/agent-enabled.store'
 import { useAgentInstalled } from '@/features/agents/store/agent-availability.store'
 import { useCustomAgentStore } from '@/features/agents/store/custom-agent.store'
+import { useBasePath } from '../hooks/useBasePath'
 import { AgentAvatar } from '@/features/agents/components/AgentAvatar'
 import { CustomAgentDialog } from './CustomAgentDialog'
+
+/**
+ * Per-agent environment-variable editor for the Agents tab. Loads the agent's
+ * model+env from its global config base, edits only the env map (model is left
+ * untouched), and saves through the existing model-env IPC path.
+ */
+function AgentEnvEditor({ agentId }: { agentId: string }) {
+  const basePath = useBasePath(agentId)
+  const [model, setModel] = useState<string | undefined>()
+  const [env, setEnv] = useState<Record<string, string>>({})
+  const [loaded, setLoaded] = useState(false)
+  const [dirty, setDirty] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!basePath) return
+    let active = true
+    void ipc.getModelEnv(agentId, basePath).then((config) => {
+      if (!active) return
+      setModel(config.model)
+      setEnv(config.env)
+      setDirty(false)
+      setLoaded(true)
+    })
+    return () => {
+      active = false
+    }
+  }, [agentId, basePath])
+
+  const save = async () => {
+    if (!basePath) return
+    setSaving(true)
+    await ipc.setModelEnv(agentId, basePath, { model, env })
+    setSaving(false)
+    setDirty(false)
+  }
+
+  if (!basePath) {
+    return (
+      <p className="px-1 py-2 text-xs text-muted-foreground">
+        Set a config location for this agent first (Config Paths tab).
+      </p>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-md border border-border bg-muted/20 p-3">
+      {!loaded ? (
+        <Spinner label="Loading…" />
+      ) : (
+        <>
+          <KeyValueEditor
+            value={env}
+            onChange={(next) => {
+              setEnv(next)
+              setDirty(true)
+            }}
+          />
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => void save()} disabled={!dirty || saving}>
+              <Icon name="save" />
+              {saving ? 'Saving…' : 'Save env'}
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 function AgentRow({
   agentId,
@@ -41,6 +114,8 @@ function AgentRow({
   const setActiveAgent = useAgentStore((s) => s.setActiveAgent)
   const installed = useAgentInstalled(agentId)
   const [confirming, setConfirming] = useState(false)
+  const [envOpen, setEnvOpen] = useState(false)
+  const supportsEnv = agent.capabilities.modelEnv
 
   const on = isAgentEnabled(enabledMap, agentId)
   const enabledCount = agentRegistry
@@ -62,7 +137,8 @@ function AgentRow({
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-md border border-border px-3 py-2.5">
+    <div className="flex flex-col gap-2 rounded-md border border-border px-3 py-2.5">
+      <div className="flex items-center gap-3">
       <AgentAvatar agent={agent} className="size-8" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
@@ -105,6 +181,17 @@ function AgentRow({
         </div>
       ) : (
         <>
+          {supportsEnv && (
+            <Button
+              variant={envOpen ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setEnvOpen((o) => !o)}
+              aria-label={`Environment variables for ${agent.displayName}`}
+            >
+              <Icon name="sliders" />
+              Env
+            </Button>
+          )}
           {custom && (
             <>
               <Button
@@ -133,6 +220,8 @@ function AgentRow({
           />
         </>
       )}
+      </div>
+      {supportsEnv && envOpen && <AgentEnvEditor agentId={agentId} />}
     </div>
   )
 }
