@@ -5,6 +5,7 @@ import {
   readSnapshot,
   readSnapshotTarget,
   restoreSnapshot,
+  deleteSnapshot,
 } from '@core/snapshots'
 import { handle } from './handle'
 
@@ -18,4 +19,7 @@ export function registerSnapshotsIpc(): void {
     content: await readSnapshotTarget(id),
   }))
   handle(IpcChannel.SnapshotRestore, ({ id }) => restoreSnapshot(id))
+  handle(IpcChannel.SnapshotDelete, async ({ id }) => ({
+    success: await deleteSnapshot(id),
+  }))
 }

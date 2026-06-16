@@ -292,3 +292,21 @@ export async function restoreSnapshot(
   }
   return { success: true, path: target }
 }
+
+/**
+ * Permanently delete a single snapshot: its `.snap` blob and the matching
+ * `.label.txt` sidecar. Returns true when the snapshot existed and was removed.
+ */
+export async function deleteSnapshot(id: string): Promise<boolean> {
+  const resolved = resolveSnapshot(id)
+  if (!resolved || !config) return false
+  const existed = await pathExists(resolved.file)
+  await fs.rm(resolved.file, { force: true }).catch(() => undefined)
+  const stamp = Number(id.split('/')[1])
+  await fs
+    .rm(labelPathFor(path.join(config.root, resolved.hash), stamp), {
+      force: true,
+    })
+    .catch(() => undefined)
+  return existed
+}

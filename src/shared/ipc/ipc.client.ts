@@ -421,6 +421,7 @@ export const ipc = {
   readSnapshot: (id: string) => invoke(IpcChannel.SnapshotRead, { id }),
   snapshotCurrent: (id: string) => invoke(IpcChannel.SnapshotCurrent, { id }),
   restoreSnapshot: (id: string) => invoke(IpcChannel.SnapshotRestore, { id }),
+  snapshotDelete: (id: string) => invoke(IpcChannel.SnapshotDelete, { id }),
 
   // --- Bundles --------------------------------------------------------------
   bundlePreview: (agentIds?: string[], includeSecrets?: boolean) =>

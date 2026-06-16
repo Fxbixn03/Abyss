@@ -217,6 +217,7 @@ export enum IpcChannel {
   SnapshotRead = 'snapshot:read',
   SnapshotCurrent = 'snapshot:current',
   SnapshotRestore = 'snapshot:restore',
+  SnapshotDelete = 'snapshot:delete',
 
   // Bundles (portable config export / apply)
   BundlePreview = 'bundle:preview',
@@ -742,6 +743,10 @@ export interface IpcMap {
   [IpcChannel.SnapshotRestore]: {
     request: { id: string }
     response: { success: boolean; path: string } | null
+  }
+  [IpcChannel.SnapshotDelete]: {
+    request: { id: string }
+    response: { success: boolean }
   }
 
   [IpcChannel.BundlePreview]: {

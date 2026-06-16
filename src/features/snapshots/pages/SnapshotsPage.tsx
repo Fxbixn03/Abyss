@@ -95,6 +95,7 @@ export function SnapshotsPage() {
   const [current, setCurrent] = useState<string | null>(null)
   const [detailView, setDetailView] = useState<DetailView>('content')
   const [confirmRestore, setConfirmRestore] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [selectedAgent, setSelectedAgent] = useState<string>('all')
 
@@ -186,6 +187,22 @@ export function SnapshotsPage() {
     setConfirmRestore(false)
     if (result?.success) {
       setNotice(`Restored ${result.path}`)
+      void refresh()
+    }
+  }
+
+  /** Delete a single snapshot, clearing the preview if it was selected. */
+  const deleteSnap = async () => {
+    if (!confirmDeleteId) return
+    const id = confirmDeleteId
+    setConfirmDeleteId(null)
+    const result = await ipc.snapshotDelete(id)
+    if (result.success) {
+      if (selectedId === id) {
+        setSelectedId(null)
+        setSelected(null)
+        setCurrent(null)
+      }
       void refresh()
     }
   }
@@ -291,6 +308,7 @@ export function SnapshotsPage() {
                       active={s.id === selectedId}
                       onClick={() => void open(s.id)}
                       onSaveLabel={(value) => saveLabel(s, value)}
+                      onDelete={() => setConfirmDeleteId(s.id)}
                     />
                   ))}
                 </div>
@@ -305,6 +323,7 @@ export function SnapshotsPage() {
                     showFile
                     onClick={() => void open(s.id)}
                     onSaveLabel={(value) => saveLabel(s, value)}
+                    onDelete={() => setConfirmDeleteId(s.id)}
                   />
                 ))}
               </div>
@@ -395,6 +414,18 @@ export function SnapshotsPage() {
         destructive={false}
         onConfirm={() => void restore()}
       />
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmDeleteId(null)
+        }}
+        title="Delete this snapshot?"
+        description="This permanently removes the snapshot and its label. It cannot be undone and does not affect the live file."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => void deleteSnap()}
+      />
     </div>
   )
 }
@@ -405,12 +436,14 @@ function SnapshotButton({
   showFile,
   onClick,
   onSaveLabel,
+  onDelete,
 }: {
   snap: SnapshotMeta
   active: boolean
   showFile?: boolean
   onClick: () => void
   onSaveLabel: (value: string) => Promise<void>
+  onDelete: () => void
 }) {
   return (
     <div
@@ -446,6 +479,14 @@ function SnapshotButton({
       </button>
       <span className="flex shrink-0 items-center gap-1.5">
         <LabelEditor snap={snap} onSave={onSaveLabel} />
+        <button
+          type="button"
+          onClick={onDelete}
+          className="text-muted-foreground transition-colors hover:text-destructive"
+          aria-label="Delete snapshot"
+        >
+          <Icon name="trash" className="size-3" />
+        </button>
         <span className="text-muted-foreground">
           {formatBytes(snap.sizeBytes)}
         </span>
