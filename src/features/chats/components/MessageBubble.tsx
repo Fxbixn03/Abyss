@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode, MouseEvent, KeyboardEvent } from 'react'
 import type { ChatBlock, ChatMessage } from '@/shared/types/chat'
 import { Icon } from '@/shared/components/Icon'
 import { Spinner } from '@/shared/components/Spinner'
@@ -13,36 +13,74 @@ function CollapsibleBlock({
   label,
   defaultOpen = false,
   tone = 'muted',
+  copyText,
   children,
 }: {
   icon: string
   label: string
   defaultOpen?: boolean
   tone?: 'muted' | 'error'
+  copyText?: string
   children: ReactNode
 }) {
   const [open, setOpen] = useState(defaultOpen)
+  const [copiedBlock, setCopiedBlock] = useState(false)
+
+  function handleCopyBlock(e: MouseEvent) {
+    e.stopPropagation()
+    if (!copyText) return
+    void navigator.clipboard.writeText(copyText).then(() => {
+      setCopiedBlock(true)
+      setTimeout(() => setCopiedBlock(false), 1500)
+    })
+  }
+
+  function handleToggleKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setOpen((o) => !o)
+    }
+  }
+
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-md border text-xs',
+        'group/block overflow-hidden rounded-md border text-xs',
         tone === 'error'
           ? 'border-destructive/40 bg-destructive/5'
           : 'border-border bg-muted/40',
       )}
     >
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-1.5 px-2.5 py-1.5 text-left font-medium text-muted-foreground hover:text-foreground"
+        onKeyDown={handleToggleKeyDown}
+        className="flex w-full items-center gap-1.5 px-2.5 py-1.5 text-left font-medium text-muted-foreground hover:text-foreground cursor-pointer"
       >
         <Icon name={icon} className="size-3.5 shrink-0" />
         <span className="truncate">{label}</span>
+        {copyText !== undefined && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="ml-auto size-5 shrink-0 opacity-0 transition-opacity duration-150 group-hover/block:opacity-100"
+            title={copiedBlock ? 'Copied!' : 'Copy'}
+            aria-label={copiedBlock ? 'Copied!' : 'Copy to clipboard'}
+            onClick={handleCopyBlock}
+          >
+            <Icon
+              name={copiedBlock ? 'check' : 'copy'}
+              className="size-3.5"
+            />
+          </Button>
+        )}
         <Icon
           name={open ? 'chevron-down' : 'chevron-right'}
-          className="ml-auto size-3.5 shrink-0"
+          className={cn('size-3.5 shrink-0', copyText === undefined && 'ml-auto')}
         />
-      </button>
+      </div>
       {open && (
         <div className="border-t border-border/60 px-2.5 py-2">{children}</div>
       )}
@@ -64,7 +102,11 @@ function BlockView({ block }: { block: ChatBlock }) {
       )
     case 'tool_use':
       return (
-        <CollapsibleBlock icon="wrench" label={`Tool · ${block.name}`}>
+        <CollapsibleBlock
+          icon="wrench"
+          label={`Tool · ${block.name}`}
+          copyText={JSON.stringify(block.input, null, 2)}
+        >
           <pre className="overflow-x-auto whitespace-pre-wrap break-words font-code">
             {JSON.stringify(block.input, null, 2)}
           </pre>
@@ -76,6 +118,7 @@ function BlockView({ block }: { block: ChatBlock }) {
           icon="terminal"
           label={block.isError ? 'Tool result · error' : 'Tool result'}
           tone={block.isError ? 'error' : 'muted'}
+          copyText={block.output}
         >
           <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words font-code">
             {block.output || '(empty)'}
