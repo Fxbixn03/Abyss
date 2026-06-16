@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
 import type { ReactNode } from 'react'
 import { Button } from '@/shared/components/ui/button'
 import { Textarea } from '@/shared/components/ui/textarea'
@@ -21,6 +21,19 @@ export function Composer({
   settingsBar,
 }: ComposerProps) {
   const [text, setText] = useState('')
+
+  // Ref for the textarea DOM element — used for auto-grow height adjustment.
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Auto-grow: reset to 'auto' then set to scrollHeight so the element expands
+  // row-by-row. The max-h-48 CSS class enforces the ceiling; overflow-y-auto
+  // (from the Textarea base styles) handles the scrollbar beyond that limit.
+  useLayoutEffect(() => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [text])
 
   // Session-scoped prompt history stored as refs so they don't cause re-renders.
   // history[0] is the oldest entry; history[history.length - 1] is the most recent.
@@ -84,6 +97,7 @@ export function Composer({
       {settingsBar}
       <div className="flex items-end gap-2">
         <Textarea
+          ref={textareaRef}
           value={text}
           onChange={(e) => {
             setText(e.target.value)
@@ -95,7 +109,7 @@ export function Composer({
             disabled ? 'Sign in to start chatting…' : 'Message the agent…'
           }
           disabled={disabled}
-          className="max-h-48 min-h-[44px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
+          className="max-h-48 min-h-[44px] resize-none overflow-y-auto border-0 bg-transparent shadow-none focus-visible:ring-0"
           rows={1}
         />
         {busy ? (
