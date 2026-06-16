@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Card,
   CardContent,
@@ -45,6 +46,7 @@ export function PreferencesSection() {
   const settings = useSettingsStore((s) => s.settings)
   const updatePrefs = useSettingsStore((s) => s.updatePrefs)
   const startTour = useTourStore((s) => s.start)
+  const navigate = useNavigate()
 
   const browseProjectDir = async () => {
     const { path } = await ipc.pickDirectory(
@@ -209,8 +211,16 @@ export function PreferencesSection() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
           <CardTitle>Usage limits</CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void navigate('/usage')}
+          >
+            <Icon name="bar-chart-3" />
+            View usage
+          </Button>
         </CardHeader>
         <CardContent className="divide-y divide-border">
           <SettingRow

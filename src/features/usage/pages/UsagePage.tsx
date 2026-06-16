@@ -71,6 +71,43 @@ function Stat({
   )
 }
 
+/**
+ * Weekly token-budget gauge: progress of the past-7-days token total against the
+ * user's configured budget. Color steps success → warning (≥75%) → destructive
+ * (≥100%), with an inline over-budget warning.
+ */
+function WeeklyBudgetGauge({ used, budget }: { used: number; budget: number }) {
+  const ratio = budget > 0 ? used / budget : 0
+  const pct = Math.round(ratio * 100)
+  const barColor =
+    ratio >= 1 ? 'bg-destructive' : ratio >= 0.75 ? 'bg-warning' : 'bg-success'
+  return (
+    <Card className="space-y-2 p-4">
+      <div className="flex items-center justify-between text-sm">
+        <span className="flex items-center gap-2 font-medium">
+          <Icon name="gauge" className="size-4 text-muted-foreground" />
+          Weekly budget
+        </span>
+        <span className="font-code text-xs text-muted-foreground">
+          {compact(used)} / {compact(budget)} tokens ({pct}%)
+        </span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full rounded-full ${barColor}`}
+          style={{ width: `${Math.min(100, pct)}%` }}
+        />
+      </div>
+      {ratio >= 1 && (
+        <p className="flex items-center gap-1.5 text-xs text-destructive">
+          <Icon name="triangle-alert" className="size-3.5" />
+          Weekly token budget exceeded
+        </p>
+      )}
+    </Card>
+  )
+}
+
 /** Horizontal bar used in the per-agent / per-project breakdown tables. */
 function Bar({ value, max }: { value: number; max: number }) {
   const pct = max > 0 ? Math.max(2, (value / max) * 100) : 0
@@ -90,6 +127,7 @@ export function UsagePage() {
   const { scope } = useScope()
   const projectDir = useProjectDir()
   const currency = useSettingsStore((s) => s.settings.currency)
+  const weeklyBudget = useSettingsStore((s) => s.settings.weeklyTokenBudget)
 
   const [days, setDays] = useState(30)
   const [data, setData] = useState<UsageAnalytics | null>(null)
@@ -143,6 +181,10 @@ export function UsagePage() {
   }
 
   const hasData = data && data.totalSessions > 0
+  // Tokens consumed over the most recent 7 calendar days (daily is oldest first).
+  const weeklyTokens = data
+    ? data.daily.slice(-7).reduce((sum, d) => sum + d.tokens, 0)
+    : 0
   const maxAgentTokens = data
     ? Math.max(1, ...data.byAgent.map((a) => a.inputTokens + a.outputTokens))
     : 1
@@ -236,6 +278,10 @@ export function UsagePage() {
                 value={relativeTime(data.lastActivityAt)}
               />
             </div>
+
+            {weeklyBudget !== undefined && weeklyBudget > 0 && (
+              <WeeklyBudgetGauge used={weeklyTokens} budget={weeklyBudget} />
+            )}
 
             <section className="space-y-2">
               <h2 className="text-sm font-medium text-muted-foreground">
