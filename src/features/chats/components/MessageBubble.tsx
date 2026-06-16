@@ -5,6 +5,8 @@ import { Icon } from '@/shared/components/Icon'
 import { Spinner } from '@/shared/components/Spinner'
 import { cn } from '@/shared/lib/utils'
 import { Markdown } from '@/shared/components/Markdown'
+import { relativeTime } from '@/features/chats/lib/format'
+import { Button } from '@/shared/components/ui/button'
 
 function CollapsibleBlock({
   icon,
@@ -108,6 +110,7 @@ export function MessageBubble({
   /** Display name of the agent driving the chat (used for assistant turns). */
   agentName?: string
 }) {
+  const [copied, setCopied] = useState(false)
   const meta = ROLE_META[message.role] ?? ROLE_META.assistant
   // Label assistant turns with the actual agent (Claude, Codex, …) instead of
   // the generic "Assistant".
@@ -116,6 +119,22 @@ export function MessageBubble({
   const onlyToolResults =
     message.blocks.length > 0 &&
     message.blocks.every((b) => b.kind === 'tool_result')
+
+  // Collect plain text from all text blocks for the copy button.
+  const textContent = message.blocks
+    .filter((b): b is Extract<ChatBlock, { kind: 'text' }> => b.kind === 'text')
+    .map((b) => b.text)
+    .join('\n')
+  const hasTextContent = textContent.length > 0
+
+  function handleCopy() {
+    void navigator.clipboard.writeText(textContent).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+
+  const timestamp = relativeTime(message.timestamp)
 
   // Tool-result-only turns render as a standalone block group, not a bubble.
   if (onlyToolResults) {
@@ -131,7 +150,7 @@ export function MessageBubble({
   return (
     <div
       className={cn(
-        'flex gap-3',
+        'group flex gap-3',
         message.isSidechain && 'ml-6 border-l border-border pl-3',
       )}
     >
@@ -146,9 +165,35 @@ export function MessageBubble({
         <Icon name={meta.icon} className="size-3.5" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <span className="text-xs font-medium text-muted-foreground">
-          {label}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            {label}
+          </span>
+          {timestamp && (
+            <span
+              className="text-xs text-muted-foreground/50 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+              aria-label={`Sent ${timestamp}`}
+            >
+              {timestamp}
+            </span>
+          )}
+          {hasTextContent && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="ml-auto size-5 shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+              title={copied ? 'Copied!' : 'Copy message'}
+              aria-label={copied ? 'Copied!' : 'Copy message to clipboard'}
+              onClick={handleCopy}
+            >
+              <Icon
+                name={copied ? 'check' : 'copy'}
+                className="size-3.5"
+              />
+            </Button>
+          )}
+        </div>
         {message.blocks.length === 0 ? (
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
             <Spinner className="size-3" label="Thinking…" />
