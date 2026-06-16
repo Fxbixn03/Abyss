@@ -184,6 +184,14 @@ function plandexMcpPath(basePath: string): string {
   return path.join(basePath, 'mcp.json')
 }
 
+/**
+ * Warp terminal AI stores its `mcpServers` map in `~/.warp/mcp.json`.
+ * The agent base resolves to `~/.warp/agents`, so we step one level up.
+ */
+function warpMcpPath(basePath: string): string {
+  return path.join(basePath, '..', 'mcp.json')
+}
+
 /** Amp (Sourcegraph) keeps its `mcpServers` map inside `<base>/settings.json` (same shape as Gemini). */
 function ampMcpPath(basePath: string): string {
   return path.join(basePath, 'settings.json')
@@ -479,6 +487,7 @@ export function getMcpConfigPath(
   if (agentId === 'amazonq') return amazonqMcpPath(basePath)
   if (agentId === 'plandex') return plandexMcpPath(basePath)
   if (agentId === 'amp') return ampMcpPath(basePath)
+  if (agentId === 'warp') return warpMcpPath(basePath)
   if (agentId === 'continue') return continueConfigPath(basePath)
   if (agentId === 'goose') return gooseConfigPath(basePath)
   if (agentId === 'zed') return zedSettingsPath(basePath)
@@ -507,6 +516,7 @@ export function readMcpServers(
   if (agentId === 'amazonq') return readJsonMcp(amazonqMcpPath(basePath))
   if (agentId === 'plandex') return readJsonMcp(plandexMcpPath(basePath))
   if (agentId === 'amp') return readJsonMcp(ampMcpPath(basePath))
+  if (agentId === 'warp') return readJsonMcp(warpMcpPath(basePath))
   if (agentId === 'continue') return readContinueMcp(basePath)
   if (agentId === 'goose') return readGooseMcp(basePath)
   if (agentId === 'zed') return readZedMcp(basePath)
@@ -538,6 +548,8 @@ export function writeMcpServers(
     return writeJsonMcp(plandexMcpPath(basePath), entries)
   if (agentId === 'amp')
     return writeJsonMcp(ampMcpPath(basePath), entries)
+  if (agentId === 'warp')
+    return writeJsonMcp(warpMcpPath(basePath), entries)
   if (agentId === 'continue')
     return writeContinueMcp(basePath, entries)
   if (agentId === 'goose')

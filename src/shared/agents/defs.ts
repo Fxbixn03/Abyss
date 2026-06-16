@@ -654,7 +654,7 @@ export const warpDefinition: AgentDefinition = {
   docsUrl: 'https://docs.warp.dev/features/warp-ai',
   capabilities: {
     instructions: true,
-    mcp: false,
+    mcp: true,
     permissions: false,
     modelEnv: false,
     agents: false,
