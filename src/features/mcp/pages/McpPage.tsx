@@ -18,6 +18,7 @@ import { useMcpStore } from '../store/mcp.store'
 import { McpServerList } from '../components/McpServerList'
 import { McpServerForm } from '../components/McpServerForm'
 import { McpDiscoverDialog } from '../components/McpDiscoverDialog'
+import { McpImportDialog } from '../components/McpImportDialog'
 import { McpToolTester } from '../components/McpToolTester'
 
 /** How often periodic monitoring re-checks every server while enabled. */
@@ -43,6 +44,7 @@ export function McpPage() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [discoverOpen, setDiscoverOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [editing, setEditing] = useState<McpServerEntry | undefined>()
   const [autoRefresh, setAutoRefresh] = useState(false)
   const [toolTestOpen, setToolTestOpen] = useState(false)
@@ -187,6 +189,14 @@ export function McpPage() {
             >
               <Icon name="globe" />
               Discover
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setImportOpen(true)}
+              disabled={!basePath}
+            >
+              <Icon name="upload" />
+              Import
             </Button>
             <Button
               variant="outline"
@@ -342,6 +352,17 @@ export function McpPage() {
         onPick={(entry) => {
           setEditing(entry)
           setFormOpen(true)
+        }}
+      />
+
+      <McpImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        existingNames={servers.map((s) => s.name)}
+        onImport={(entries) => {
+          void (async () => {
+            for (const entry of entries) await upsert(entry)
+          })()
         }}
       />
 
