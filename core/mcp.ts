@@ -185,6 +185,15 @@ function plandexMcpPath(basePath: string): string {
 }
 
 /**
+ * Cline stores MCP config at `~/Documents/Cline/mcp_settings.json`. Since
+ * `clineDefinition.resolvePaths` returns `~/Documents/Cline/Rules`, we step
+ * one level up to reach `~/Documents/Cline/`.
+ */
+function clineMcpPath(basePath: string): string {
+  return path.join(basePath, '..', 'mcp_settings.json')
+}
+
+/**
  * Warp terminal AI stores its `mcpServers` map in `~/.warp/mcp.json`.
  * The agent base resolves to `~/.warp/agents`, so we step one level up.
  */
@@ -488,6 +497,7 @@ export function getMcpConfigPath(
   if (agentId === 'plandex') return plandexMcpPath(basePath)
   if (agentId === 'amp') return ampMcpPath(basePath)
   if (agentId === 'warp') return warpMcpPath(basePath)
+  if (agentId === 'cline') return clineMcpPath(basePath)
   if (agentId === 'continue') return continueConfigPath(basePath)
   if (agentId === 'goose') return gooseConfigPath(basePath)
   if (agentId === 'zed') return zedSettingsPath(basePath)
@@ -517,6 +527,7 @@ export function readMcpServers(
   if (agentId === 'plandex') return readJsonMcp(plandexMcpPath(basePath))
   if (agentId === 'amp') return readJsonMcp(ampMcpPath(basePath))
   if (agentId === 'warp') return readJsonMcp(warpMcpPath(basePath))
+  if (agentId === 'cline') return readJsonMcp(clineMcpPath(basePath))
   if (agentId === 'continue') return readContinueMcp(basePath)
   if (agentId === 'goose') return readGooseMcp(basePath)
   if (agentId === 'zed') return readZedMcp(basePath)
@@ -550,6 +561,8 @@ export function writeMcpServers(
     return writeJsonMcp(ampMcpPath(basePath), entries)
   if (agentId === 'warp')
     return writeJsonMcp(warpMcpPath(basePath), entries)
+  if (agentId === 'cline')
+    return writeJsonMcp(clineMcpPath(basePath), entries)
   if (agentId === 'continue')
     return writeContinueMcp(basePath, entries)
   if (agentId === 'goose')

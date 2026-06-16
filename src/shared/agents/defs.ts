@@ -378,7 +378,7 @@ export const clineDefinition: AgentDefinition = {
   docsUrl: 'https://docs.cline.bot/cline-overview',
   capabilities: {
     instructions: true,
-    mcp: false,
+    mcp: true,
     permissions: false,
     modelEnv: false,
     agents: false,
