@@ -138,8 +138,10 @@ export interface AppSettings {
   snapshotRetentionPerFile: number
   /** User confirmed (once) that the sandbox runs real shell commands. */
   sandboxAcknowledged: boolean
-  /** Base UI font size; drives `--font-size-base` on :root. Defaults to medium. */
-  uiFontSize?: 'small' | 'medium' | 'large'
+  /** Base UI font size preset; drives `--font-size-base` on :root. Defaults to medium. */
+  uiFontSize?: 'tiny' | 'small' | 'medium' | 'large' | 'huge'
+  /** Custom base font size in px; when set it overrides {@link uiFontSize}. */
+  uiFontScalePx?: number
   /** User-defined agents, persisted so main + renderer can register them. */
   customAgents: CustomAgentSpec[]
   /** Automatically save the open config file after idle for the configured delay. */

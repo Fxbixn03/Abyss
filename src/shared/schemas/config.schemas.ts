@@ -143,9 +143,10 @@ export const appSettingsSchema = z
       .catch(undefined),
     sandboxAcknowledged: z.boolean().optional().catch(undefined),
     uiFontSize: z
-      .enum(['small', 'medium', 'large'])
+      .enum(['tiny', 'small', 'medium', 'large', 'huge'])
       .optional()
       .catch(undefined),
+    uiFontScalePx: z.number().min(9).max(28).optional().catch(undefined),
     customAgents: z.array(customAgentSpecSchema).optional().catch(undefined),
     autosave: z.boolean().optional().catch(undefined),
     autosaveDelaySeconds: z.number().optional().catch(undefined),

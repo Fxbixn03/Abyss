@@ -16,6 +16,7 @@ export function useThemeApplier(): void {
   const customThemes = useThemeStore((s) => s.customThemes)
   const getActiveTheme = useThemeStore((s) => s.getActiveTheme)
   const uiFontSize = useSettingsStore((s) => s.settings.uiFontSize)
+  const uiFontScalePx = useSettingsStore((s) => s.settings.uiFontScalePx)
 
   useEffect(() => {
     applyTheme(getActiveTheme(activeAgentId), appearance)
@@ -23,6 +24,6 @@ export function useThemeApplier(): void {
   }, [activeAgentId, appearance, agentThemeMap, customThemes, getActiveTheme])
 
   useEffect(() => {
-    applyFontSize(uiFontSize)
-  }, [uiFontSize])
+    applyFontSize(uiFontSize, uiFontScalePx)
+  }, [uiFontSize, uiFontScalePx])
 }
