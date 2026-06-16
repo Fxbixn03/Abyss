@@ -387,7 +387,7 @@ export const clineDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: false,
-    chats: false,
+    chats: true,
   },
   configFiles: [clineRules],
   resolvePaths: (env: OsEnv) => [
