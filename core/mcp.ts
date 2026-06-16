@@ -257,6 +257,100 @@ export async function writeZedMcp(
 }
 
 /**
+ * Continue stores its full config (including MCP servers) in `config.yaml`
+ * under `~/.continue`. The `mcpServers` key uses the same shape as the standard
+ * JSON agents (`command`, `args`, `url`, `env`, `disabled`), but serialized as
+ * YAML. All other top-level keys (`models`, `context`, `rules`, …) are
+ * preserved on every write.
+ */
+function continueConfigPath(basePath: string): string {
+  return path.join(basePath, 'config.yaml')
+}
+
+/**
+ * Raw shape of `~/.continue/config.yaml` — we only read `mcpServers`;
+ * all other top-level keys are preserved as unknown pass-through.
+ */
+interface ContinueConfig {
+  mcpServers?: Record<string, RawMcpServer>
+  [key: string]: unknown
+}
+
+async function readContinueYaml(file: string): Promise<ContinueConfig> {
+  if (!(await pathExists(file))) return {}
+  const raw = await readTextFile(file)
+  if (raw.trim() === '') return {}
+  try {
+    const parsed = yaml.load(raw)
+    if (parsed === null || parsed === undefined) return {}
+    if (typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    return parsed as ContinueConfig
+  } catch (err) {
+    throw new ConfigParseError(file, err)
+  }
+}
+
+export async function readContinueMcp(basePath: string): Promise<McpServerEntry[]> {
+  const file = continueConfigPath(basePath)
+  const data = await readContinueYaml(file)
+  const servers = data.mcpServers ?? {}
+  return Object.entries(servers).map(([name, s], index) => {
+    const raw = s as RawMcpServer
+    return {
+      id: `${name}-${index}`,
+      name,
+      type: normalizeType(raw),
+      command: raw.command,
+      args: raw.args,
+      url: raw.url,
+      env: raw.env,
+      enabled: raw.disabled !== true,
+    }
+  })
+}
+
+export async function writeContinueMcp(
+  basePath: string,
+  entries: McpServerEntry[],
+): Promise<{ success: boolean; path: string }> {
+  const file = continueConfigPath(basePath)
+  // Re-read to preserve all other top-level YAML keys (models, context, rules, …).
+  const data = await readContinueYaml(file)
+  const existing = data.mcpServers ?? {}
+  const out: Record<string, RawMcpServer> = {}
+
+  for (const entry of entries) {
+    const raw: RawMcpServer = { ...(existing[entry.name] ?? {}) }
+    raw.type = entry.type === 'stdio' ? 'stdio' : entry.type
+
+    if (entry.type === 'stdio') {
+      if (entry.command) raw.command = entry.command
+      else delete raw.command
+      if (entry.args !== undefined) raw.args = entry.args
+      else delete raw.args
+      delete raw.url
+    } else {
+      if (entry.url) raw.url = entry.url
+      else delete raw.url
+      delete raw.command
+      delete raw.args
+    }
+
+    if (entry.env !== undefined) raw.env = entry.env
+    else delete raw.env
+
+    if (!entry.enabled) raw.disabled = true
+    else delete raw.disabled
+
+    out[entry.name] = raw
+  }
+
+  data.mcpServers = out
+  await writeTextFileAtomic(file, yaml.dump(data, { lineWidth: -1 }))
+  return { success: true, path: file }
+}
+
+/**
  * Goose (Block) keeps MCP-compatible extensions in `config.yaml` under the
  * `extensions` key. The file lives at `<base>/config.yaml` where `base` is
  * `~/.config/goose` on Linux/macOS or `%APPDATA%\goose` on Windows.
@@ -385,6 +479,7 @@ export function getMcpConfigPath(
   if (agentId === 'amazonq') return amazonqMcpPath(basePath)
   if (agentId === 'plandex') return plandexMcpPath(basePath)
   if (agentId === 'amp') return ampMcpPath(basePath)
+  if (agentId === 'continue') return continueConfigPath(basePath)
   if (agentId === 'goose') return gooseConfigPath(basePath)
   if (agentId === 'zed') return zedSettingsPath(basePath)
   return mcpConfigPath(projectDir)
@@ -412,6 +507,7 @@ export function readMcpServers(
   if (agentId === 'amazonq') return readJsonMcp(amazonqMcpPath(basePath))
   if (agentId === 'plandex') return readJsonMcp(plandexMcpPath(basePath))
   if (agentId === 'amp') return readJsonMcp(ampMcpPath(basePath))
+  if (agentId === 'continue') return readContinueMcp(basePath)
   if (agentId === 'goose') return readGooseMcp(basePath)
   if (agentId === 'zed') return readZedMcp(basePath)
   return readJsonMcp(mcpConfigPath(projectDir))
@@ -442,6 +538,8 @@ export function writeMcpServers(
     return writeJsonMcp(plandexMcpPath(basePath), entries)
   if (agentId === 'amp')
     return writeJsonMcp(ampMcpPath(basePath), entries)
+  if (agentId === 'continue')
+    return writeContinueMcp(basePath, entries)
   if (agentId === 'goose')
     return writeGooseMcp(basePath, entries)
   if (agentId === 'zed')
