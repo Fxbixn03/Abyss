@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import type { DiscoveryResult } from '@/shared/discovery/types'
 import type { McpInstallSpec } from '@/shared/mcp/discovery'
 import { installSpecToEntry } from '@/shared/mcp/discovery'
@@ -30,7 +29,6 @@ export function MarketplacePage() {
   const agent = useActiveAgent()
   const basePath = useConfigBase(agent.id)
   const projectDir = useProjectDir()
-  const navigate = useNavigate()
 
   const servers = useMcpStore((s) => s.servers)
   const loadServers = useMcpStore((s) => s.load)
@@ -155,12 +153,6 @@ export function MarketplacePage() {
         title="MCP Marketplace"
         description={`Browse the official registry and install into ${agent.displayName} with one click`}
         icon="store"
-        actions={
-          <Button variant="outline" size="sm" onClick={() => navigate('/mcp')}>
-            <Icon name="plug" />
-            Manage servers
-          </Button>
-        }
       />
 
       <form

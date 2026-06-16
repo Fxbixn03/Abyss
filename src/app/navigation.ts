@@ -114,6 +114,8 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: 'bar-chart-3',
     route: '/usage',
     description: 'Token & cost usage over time',
+    // Derived from chat transcripts — pointless for agents without chat history.
+    requiresCapability: 'chats',
   },
   {
     id: 'sessions',
@@ -121,6 +123,7 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: 'files',
     route: '/sessions',
     description: 'Browse, compare & inspect sessions',
+    requiresCapability: 'chats',
   },
   {
     id: 'insights',
@@ -128,6 +131,7 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: 'gauge',
     route: '/insights',
     description: 'Session friction & quality signals',
+    requiresCapability: 'chats',
   },
   {
     id: 'rule-activation',
@@ -187,13 +191,6 @@ export const PRIMARY_NAV: NavItem[] = [
     description: 'Agent config across your repos',
   },
   {
-    id: 'marketplace',
-    label: 'Marketplace',
-    icon: 'store',
-    route: '/marketplace',
-    description: 'Browse & install MCP servers',
-  },
-  {
     id: 'templates',
     label: 'Templates',
     icon: 'library',
@@ -209,28 +206,23 @@ export const PRIMARY_NAV: NavItem[] = [
   },
 ]
 
-/** Routes whose pages are still beta-quality and show a "Beta" tag. */
+/**
+ * Routes whose pages are still beta-quality and show a "Beta" tag. Mature,
+ * well-tested core features (validation/doctor, bundles, analytics, sessions,
+ * compare, workspace, history) intentionally carry no Beta tag.
+ */
 export const BETA_ROUTES: ReadonlySet<string> = new Set([
   '/relations',
   '/sandbox',
   '/context',
-  '/usage',
-  '/sessions',
   '/insights',
-  '/history',
   '/activity',
-  '/validation',
-  '/doctor',
   '/model-env',
   '/statusline',
   '/spinner',
   '/plugins',
-  '/bundles',
   '/profiles',
-  '/compare',
   '/discover',
-  '/workspace',
-  '/marketplace',
 ])
 
 /** Returns true when the given pathname belongs to a beta page. */

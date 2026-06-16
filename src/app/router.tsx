@@ -2,7 +2,7 @@ import { createHashRouter } from 'react-router-dom'
 import { AppLayout } from './layout/AppLayout'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { ConfigPage } from '@/features/config/pages/ConfigPage'
-import { McpPage } from '@/features/mcp/pages/McpPage'
+import { McpHubPage } from '@/features/mcp/pages/McpHubPage'
 import { PermissionsPage } from '@/features/permissions/pages/PermissionsPage'
 import { ModelEnvPage } from '@/features/model-env/pages/ModelEnvPage'
 import { SettingsPage } from '@/features/settings/pages/SettingsPage'
@@ -26,7 +26,6 @@ import { DiscoverPage } from '@/features/discovery/pages/DiscoverPage'
 import { SandboxPage } from '@/features/sandbox/pages/SandboxPage'
 import { RelationsPage } from '@/features/relations/pages/RelationsPage'
 import { UsagePage } from '@/features/usage/pages/UsagePage'
-import { MarketplacePage } from '@/features/marketplace/pages/MarketplacePage'
 import { StatusLinePage } from '@/features/statusline/pages/StatusLinePage'
 import { SpinnerPage } from '@/features/spinner/pages/SpinnerPage'
 import { PluginsPage } from '@/features/plugins/pages/PluginsPage'
@@ -52,7 +51,10 @@ export const router = createHashRouter([
       { path: 'discover', element: <DiscoverPage /> },
       { path: 'workspace', element: <WorkspacePage /> },
       { path: 'rule-activation', element: <RuleActivationPage /> },
-      { path: 'marketplace', element: <MarketplacePage /> },
+      {
+        path: 'marketplace',
+        element: <McpHubPage defaultTab="marketplace" />,
+      },
       { path: 'sandbox', element: <SandboxPage /> },
       { path: 'history', element: <HistoryActivityPage /> },
       {
@@ -67,7 +69,7 @@ export const router = createHashRouter([
       { path: 'commands', element: <CommandsPage /> },
       { path: 'skills', element: <SkillsPage /> },
       { path: 'rules', element: <RulesPage /> },
-      { path: 'mcp', element: <McpPage /> },
+      { path: 'mcp', element: <McpHubPage /> },
       { path: 'hooks', element: <HooksPage /> },
       { path: 'permissions', element: <PermissionsPage /> },
       { path: 'model-env', element: <ModelEnvPage /> },
