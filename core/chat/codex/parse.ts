@@ -26,6 +26,7 @@ import {
   findCodexSessionFile,
   listCodexSessionFiles,
 } from './paths'
+import { ConfigWriteError } from '../../config-error'
 
 /** Pull `{ role, text }` out of a rollout line, if it is a message item. */
 function extractMessage(
@@ -183,5 +184,13 @@ export async function deleteCodexSession(
 ): Promise<void> {
   const filePath = await findCodexSessionFile(env, sessionId)
   if (!filePath) return
-  await fs.rm(filePath, { force: true })
+  try {
+    await fs.rm(filePath, { force: true })
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code
+    if (code === 'EACCES' || code === 'EPERM') {
+      throw new ConfigWriteError(filePath, err)
+    }
+    throw err
+  }
 }

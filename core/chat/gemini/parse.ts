@@ -27,6 +27,7 @@ import {
   listGeminiSessionFiles,
 } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
+import { ConfigWriteError } from '../../config-error'
 
 /**
  * Attempt to extract a role + content pair from a Gemini JSONL event line.
@@ -310,5 +311,13 @@ export async function deleteGeminiSession(
 ): Promise<void> {
   const filePath = await findGeminiSessionFile(env, sessionId)
   if (!filePath) return
-  await fs.rm(filePath, { force: true })
+  try {
+    await fs.rm(filePath, { force: true })
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code
+    if (code === 'EACCES' || code === 'EPERM') {
+      throw new ConfigWriteError(filePath, err)
+    }
+    throw err
+  }
 }

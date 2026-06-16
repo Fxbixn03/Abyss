@@ -27,6 +27,7 @@ import {
   findClaudeSessionFile,
   listClaudeSessionFiles,
 } from './paths'
+import { ConfigWriteError } from '../../config-error'
 
 const MESSAGE_TYPES = new Set(['user', 'assistant'])
 
@@ -195,5 +196,13 @@ export async function deleteClaudeSession(
 ): Promise<void> {
   const found = await findClaudeSessionFile(env, sessionId)
   if (!found) return
-  await fs.rm(found.filePath, { force: true })
+  try {
+    await fs.rm(found.filePath, { force: true })
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code
+    if (code === 'EACCES' || code === 'EPERM') {
+      throw new ConfigWriteError(found.filePath, err)
+    }
+    throw err
+  }
 }
