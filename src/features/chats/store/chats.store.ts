@@ -13,7 +13,8 @@ import type {
 } from '@/shared/types/chat'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { genId } from '@/shared/lib/id'
-import { reportError } from '@/shared/lib/errors'
+import { isNotFoundError, markErrorReported, reportError } from '@/shared/lib/errors'
+import { toast } from 'sonner'
 import { appendDelta, appendBlock } from './stream-reducer'
 
 /** Sessions fetched per page for infinite scroll. */
@@ -234,7 +235,13 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
       })
     } catch (err) {
       if (get().activeSessionId === sessionId) set({ transcriptLoading: false })
-      reportError(err, { title: "Couldn't open session" })
+      if (isNotFoundError(err)) {
+        markErrorReported(err)
+        toast.error('Session no longer exists — it may have been deleted outside Abyss')
+        await get().refreshSessions()
+      } else {
+        reportError(err, { title: "Couldn't open session" })
+      }
     }
   },
 
@@ -334,7 +341,12 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
       }
       await get().refreshSessions()
     } catch (err) {
-      reportError(err, { title: "Couldn't delete session" })
+      if (isNotFoundError(err)) {
+        markErrorReported(err)
+        await get().refreshSessions()
+      } else {
+        reportError(err, { title: "Couldn't delete session" })
+      }
     }
   },
 
