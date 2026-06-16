@@ -26,9 +26,11 @@ export function PageHeader({
   return (
     <div
       data-tour="page-header"
-      className="flex items-start justify-between gap-4"
+      // Wrap on narrow windows so action buttons drop below the title instead
+      // of being clipped off the right edge.
+      className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2"
     >
-      <div className="flex items-start gap-3">
+      <div className="flex min-w-0 items-start gap-3">
         {iconNode
           ? iconNode
           : icon && (
@@ -36,7 +38,7 @@ export function PageHeader({
                 <Icon name={icon} className="size-5" />
               </div>
             )}
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold leading-tight">{title}</h1>
             {isBeta && (

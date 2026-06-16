@@ -153,4 +153,67 @@ export const PAGE_HELP: Record<string, HelpEntry> = {
       'Abyss’s own settings: config paths, appearance, agent visibility, shortcuts and backups.',
     ],
   },
+  '/relations': {
+    title: 'Relations',
+    body: [
+      'A visual map of how one agent’s pieces connect — subagents, commands, skills, rules, hooks, MCP servers and instructions — with inferred reference edges between them.',
+      'Click a node to inspect or edit it inline; drag to rearrange the board.',
+    ],
+  },
+  '/usage': {
+    title: 'Analytics',
+    body: [
+      'Token and cost usage over time, derived from your agents’ chat transcripts — daily totals, an activity calendar and per-agent / per-project breakdowns.',
+      'Set a weekly token budget in Preferences to see a budget gauge here.',
+    ],
+  },
+  '/sessions': {
+    title: 'Sessions',
+    body: [
+      'Browse, search and inspect past chat sessions — per-message detail, tool usage and token/cost rollups.',
+      'Toggle “Group by project” to fold sessions into collapsible per-project sections.',
+    ],
+  },
+  '/insights': {
+    title: 'Insights',
+    body: [
+      'Surfaces friction and quality signals across your sessions — long tool loops, errors, retries and other patterns worth a second look.',
+    ],
+  },
+  '/rule-activation': {
+    title: 'Rule Activation',
+    body: [
+      'Simulate which instruction rules would apply to a given file path, so you can see why an agent behaves differently across your repo.',
+    ],
+  },
+  '/doctor': {
+    title: 'Config Doctor',
+    body: [
+      'A health check for your agent setup: it scans for broken paths, missing files, risky permissions and misconfigured MCP/hooks, and suggests fixes.',
+    ],
+  },
+  '/workspace': {
+    title: 'Workspace',
+    body: [
+      'Scans your repositories for per-project agent config (.claude, .codex, AGENTS.md, …) so you can see, at a glance, which projects are set up and jump straight into them.',
+    ],
+  },
+  '/marketplace': {
+    title: 'Marketplace',
+    body: [
+      'Browse and install shareable agent extensions — plugins, skills and presets — from known sources.',
+    ],
+  },
+  '/activity': {
+    title: 'Activity',
+    body: [
+      'A timeline of recent changes Abyss has made or detected across your agent config files.',
+    ],
+  },
+  '/plugins': {
+    title: 'Plugins',
+    body: [
+      'Manage installed agent plugins — enable, disable or remove the extra capabilities layered onto the active agent.',
+    ],
+  },
 }
