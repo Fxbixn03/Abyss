@@ -69,11 +69,19 @@ export function ReplayBar({
         onClick={onCycleSpeed}
         className="rounded border border-border px-1.5 py-0.5 font-code text-[11px] text-muted-foreground hover:text-foreground"
         title="Playback speed"
+        aria-label={`Playback speed: ${speed}x`}
       >
         {speed}×
       </button>
 
-      <div className="mx-1 h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+      <div
+        className="mx-1 h-1.5 flex-1 overflow-hidden rounded-full bg-muted"
+        role="progressbar"
+        aria-valuenow={index}
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-label="Replay progress"
+      >
         <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
       </div>
       <span className="shrink-0 font-code text-[11px] text-muted-foreground">
