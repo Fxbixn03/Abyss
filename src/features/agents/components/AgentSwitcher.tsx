@@ -6,6 +6,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/shared/components/ui/tooltip'
 import { useActiveAgentId, useAllAgents } from '../hooks/useActiveAgent'
 import { useAgentStore } from '../store/agent.store'
 import { useAgentAvailability } from '../store/agent-availability.store'
@@ -43,7 +48,7 @@ export function AgentSwitcher() {
     return (
       <div
         role="toolbar"
-        aria-label="Agent switcher"
+        aria-label={`Agent switcher — ${activeAgent?.displayName ?? 'None'} is active`}
         data-tour="agent-switcher"
         className="no-drag flex items-center rounded-lg border border-border bg-card/70 p-1"
       >
@@ -106,7 +111,7 @@ export function AgentSwitcher() {
   return (
     <div
       role="toolbar"
-      aria-label="Agent switcher"
+      aria-label={`Agent switcher — ${activeAgent?.displayName ?? 'None'} is active`}
       data-tour="agent-switcher"
       className="no-drag flex items-center gap-1 rounded-lg border border-border bg-card/70 p-1"
     >
@@ -114,27 +119,33 @@ export function AgentSwitcher() {
         const active = agent.id === activeId
         const installed = availabilityStatus[agent.id]?.installed !== false
         return (
-          <button
-            key={agent.id}
-            type="button"
-            onClick={() => setActiveAgent(agent.id)}
-            aria-pressed={active}
-            title={
-              installed
-                ? undefined
-                : `${agent.displayName} CLI not found — you can still configure it in advance`
-            }
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
-              active
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-              !installed && 'opacity-50',
-            )}
-          >
-            <AgentGlyph agent={agent} className="size-4 rounded-[3px]" />
-            <span>{agent.displayName}</span>
-          </button>
+          <Tooltip key={agent.id}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setActiveAgent(agent.id)}
+                aria-pressed={active}
+                className={cn(
+                  'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                  active
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  !installed && 'opacity-50',
+                )}
+              >
+                <AgentGlyph agent={agent} className="size-4 rounded-[3px]" />
+                <span>{agent.displayName}</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p className="font-medium">{agent.displayName}</p>
+              {!installed && (
+                <p className="text-xs text-muted-foreground">
+                  CLI not installed — configuring in advance is still possible
+                </p>
+              )}
+            </TooltipContent>
+          </Tooltip>
         )
       })}
     </div>
