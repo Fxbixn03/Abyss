@@ -14,12 +14,29 @@ import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { estimateTokens, formatTokens } from '@/features/context/lib/tokens'
 import { useSandboxIntent } from '../store/sandboxIntent.store'
 
+/** Maximum number of past runs kept in the session-local history ring buffer. */
+const MAX_HISTORY = 20
+
+/** One past run, kept in component state only (no IPC, no persistence). */
+interface HistoryEntry {
+  command: string
+  cwd: string
+  exitCode: number | null
+  timedOut: boolean
+  stdout: string
+  stderr: string
+  durationMs: number
+  timestamp: number
+}
+
 function CommandSandbox() {
   const [command, setCommand] = useState('')
   const [cwd, setCwd] = useState('')
   const [running, setRunning] = useState(false)
   const [result, setResult] = useState<SandboxRunResult | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [historyOpen, setHistoryOpen] = useState(false)
 
   const acknowledged = useSettingsStore((s) => s.settings.sandboxAcknowledged)
   const updatePrefs = useSettingsStore((s) => s.updatePrefs)
@@ -49,6 +66,19 @@ function CommandSandbox() {
       .catch(() => null)
     setResult(r)
     setRunning(false)
+    if (r) {
+      const entry: HistoryEntry = {
+        command,
+        cwd,
+        exitCode: r.exitCode ?? null,
+        timedOut: r.timedOut,
+        stdout: r.stdout,
+        stderr: r.stderr,
+        durationMs: r.durationMs,
+        timestamp: Date.now(),
+      }
+      setHistory((prev) => [entry, ...prev].slice(0, MAX_HISTORY))
+    }
   }
 
   // Gate the first-ever run behind an explicit confirmation that these commands
@@ -169,6 +199,71 @@ function CommandSandbox() {
           )}
           {!result.stdout && !result.stderr && (
             <p className="text-xs text-muted-foreground">No output.</p>
+          )}
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div className="border-t border-border pt-2">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setHistoryOpen((o) => !o)}
+              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Icon
+                name={historyOpen ? 'chevron-down' : 'chevron-right'}
+                className="size-3.5"
+              />
+              {historyOpen ? 'Hide history' : `Show history (${history.length})`}
+            </button>
+            {historyOpen && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setHistory([])}
+              >
+                <Icon name="trash" />
+                Clear history
+              </Button>
+            )}
+          </div>
+
+          {historyOpen && (
+            <ul className="mt-2 flex flex-col gap-1">
+              {history.map((h) => (
+                <li key={h.timestamp}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCommand(h.command)
+                      setCwd(h.cwd)
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors hover:bg-accent/60"
+                    title="Click to load this command"
+                  >
+                    <Badge
+                      variant={
+                        h.timedOut
+                          ? 'warning'
+                          : h.exitCode === 0
+                            ? 'success'
+                            : 'danger'
+                      }
+                      className="shrink-0 font-code"
+                    >
+                      {h.timedOut ? 'timeout' : `exit ${h.exitCode ?? '—'}`}
+                    </Badge>
+                    <span className="min-w-0 flex-1 truncate font-code">
+                      {h.command}
+                    </span>
+                    <span className="shrink-0 text-muted-foreground">
+                      {h.durationMs} ms
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       )}
