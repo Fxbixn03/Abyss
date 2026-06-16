@@ -376,6 +376,11 @@ export function ChatsPage() {
                       return { ...r, speed }
                     })
                   }
+                  onSeek={(i) =>
+                    setReplay((r) =>
+                      r ? { ...r, index: i, playing: false } : r,
+                    )
+                  }
                   onClose={() => setReplay(null)}
                 />
               )}
