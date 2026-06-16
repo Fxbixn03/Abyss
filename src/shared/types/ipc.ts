@@ -90,6 +90,7 @@ export enum IpcChannel {
   FsWatch = 'fs:watch',
   FsUnwatch = 'fs:unwatch',
   CreateDirectory = 'fs:create-directory',
+  GetHomeDir = 'fs:home-dir',
   ReadTextFile = 'fs:read-text',
   WriteTextFile = 'fs:write-text',
   SaveTextFile = 'fs:save-text',
@@ -343,6 +344,10 @@ export interface IpcMap {
   [IpcChannel.CreateDirectory]: {
     request: { path: string }
     response: { success: boolean }
+  }
+  [IpcChannel.GetHomeDir]: {
+    request: Record<string, never>
+    response: { home: string }
   }
   [IpcChannel.ReadTextFile]: {
     request: { path: string }

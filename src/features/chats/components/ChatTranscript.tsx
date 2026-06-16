@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChatMessage } from '@/shared/types/chat'
 import { EmptyState } from '@/shared/components/EmptyState'
-import { MessageBubble } from './MessageBubble'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Icon } from '@/shared/components/Icon'
+import { MessageBubble } from './MessageBubble'
 import { cn } from '@/shared/lib/utils'
 import { scrollBehavior } from '@/shared/lib/motion'
 
@@ -65,6 +65,9 @@ function extractText(message: ChatMessage): string {
     .join(' ')
 }
 
+/** How many trailing messages render initially; older ones load on demand. */
+const WINDOW = 40
+
 export function ChatTranscript({
   messages,
   loading,
@@ -75,6 +78,7 @@ export function ChatTranscript({
   density = 'comfortable',
   scrollToBottom: scrollToBottomRef,
   jumpToIndex,
+  pending = false,
 }: {
   messages: ChatMessage[]
   loading: boolean
@@ -100,6 +104,8 @@ export function ChatTranscript({
    * unchanged.
    */
   jumpToIndex?: { index: number; seq: number } | null
+  /** Agent is working but hasn't produced visible output yet → show typing dots. */
+  pending?: boolean
 }) {
   const endRef = useRef<HTMLDivElement>(null)
   const bottomLocked = useRef(true)
@@ -174,6 +180,18 @@ export function ChatTranscript({
     }, [])
   }, [query, messages])
 
+  // Pagination window: how many trailing messages to render; older load on demand.
+  const [visibleCount, setVisibleCount] = useState(WINDOW)
+
+  // Reset the window when the conversation changes (different first message).
+  // Adjusting state during render per the React "derive on prop change" pattern.
+  const firstId = messages[0]?.id
+  const prevFirstId = useRef(firstId)
+  if (prevFirstId.current !== firstId) {
+    prevFirstId.current = firstId
+    setVisibleCount(WINDOW)
+  }
+
   // Track whether the user is pinned near the bottom; only autoscroll if so.
   const onScroll = () => {
     const el = scrollRef.current
@@ -188,7 +206,7 @@ export function ChatTranscript({
     if (bottomLocked.current) {
       endRef.current?.scrollIntoView({ block: 'end', behavior: scrollBehavior() })
     }
-  }, [messages])
+  }, [messages, pending])
 
   // When searchOpen becomes true, focus the input
   useEffect(() => {
@@ -268,7 +286,7 @@ export function ChatTranscript({
     return <TranscriptSkeleton />
   }
 
-  if (messages.length === 0) {
+  if (messages.length === 0 && !pending) {
     return (
       <EmptyState
         icon="messages-square"
@@ -277,6 +295,9 @@ export function ChatTranscript({
       />
     )
   }
+
+  const hiddenCount = Math.max(0, messages.length - visibleCount)
+  const shown = hiddenCount > 0 ? messages.slice(-visibleCount) : messages
 
   return (
     <div
@@ -358,7 +379,23 @@ export function ChatTranscript({
           searchOpen && 'pt-11',
         )}
       >
-        {messages.map((m, i) => {
+        {hiddenCount > 0 && (
+          <div className="flex justify-center pb-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setVisibleCount((c) => c + WINDOW)}
+            >
+              <Icon name="chevron-up" />
+              Load {Math.min(WINDOW, hiddenCount)} older message
+              {Math.min(WINDOW, hiddenCount) === 1 ? '' : 's'}
+            </Button>
+          </div>
+        )}
+        {shown.map((m, j) => {
+          // Map the windowed index back to the full-array index so search
+          // highlighting, message refs and risk-panel jumps stay aligned.
+          const i = j + hiddenCount
           const matchPos = matchIndices.indexOf(i)
           const isMatch = matchPos !== -1
           const isActive = isMatch && matchPos === activeMatch
@@ -384,6 +421,7 @@ export function ChatTranscript({
             </div>
           )
         })}
+        {pending && <TypingIndicator agentName={agentName} />}
         <div ref={endRef} />
       </div>
 
@@ -416,6 +454,20 @@ export function ChatTranscript({
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+/** Animated three-dot "agent is working" indicator. */
+function TypingIndicator({ agentName }: { agentName?: string }) {
+  return (
+    <div
+      className="flex items-center gap-1.5 text-muted-foreground"
+      aria-label={`${agentName ?? 'Agent'} is responding`}
+    >
+      <span className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
+      <span className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
+      <span className="size-1.5 animate-bounce rounded-full bg-current" />
     </div>
   )
 }

@@ -126,6 +126,7 @@ export const ipc = {
   fsUnwatch: (path: string) => invoke(IpcChannel.FsUnwatch, { path }),
   createDirectory: (path: string) =>
     invoke(IpcChannel.CreateDirectory, { path }),
+  getHomeDir: () => invoke(IpcChannel.GetHomeDir, {}),
   readTextFile: (path: string) => invoke(IpcChannel.ReadTextFile, { path }),
   writeTextFile: (path: string, content: string, executable?: boolean) =>
     invoke(IpcChannel.WriteTextFile, { path, content, executable }),

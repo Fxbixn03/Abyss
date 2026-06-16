@@ -159,7 +159,12 @@ export function ChatsPage() {
   }
 
   const handleNewChat = async () => {
-    const { path } = await ipc.pickDirectory('Choose a working directory')
+    // Default to the active project in project scope, else the user's home dir.
+    const defaultPath = projectDir ?? (await ipc.getHomeDir()).home
+    const { path } = await ipc.pickDirectory(
+      'Choose a working directory',
+      defaultPath,
+    )
     if (path) newChat(path)
   }
 
@@ -499,6 +504,7 @@ export function ChatsPage() {
                     scrollToBottomRef.current = fn
                   }}
                   jumpToIndex={riskJumpTarget}
+                  pending={status === 'starting'}
                 />
               </div>
 

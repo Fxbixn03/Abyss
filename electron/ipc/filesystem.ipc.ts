@@ -1,4 +1,5 @@
 import { promises as fs } from 'node:fs'
+import os from 'node:os'
 import { dialog, shell } from 'electron'
 import { IpcChannel } from '@/shared/types/ipc'
 import { detectAgentPaths } from '@core/agent-paths'
@@ -120,6 +121,8 @@ export function registerFilesystemIpc(ctx: IpcContext): void {
     await ensureDir(safe)
     return { success: true }
   })
+
+  handle(IpcChannel.GetHomeDir, () => ({ home: os.homedir() }))
 
   // Read any text file under the allowed roots (hook scripts, config files the
   // history diff needs, …). A missing file yields empty content + exists:false.
