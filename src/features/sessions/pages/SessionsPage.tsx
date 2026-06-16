@@ -41,6 +41,7 @@ export function SessionsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [exportFormat, setExportFormat] = useState<ChatExportFormat>('markdown')
   const [exporting, setExporting] = useState(false)
+  const [groupByProject, setGroupByProject] = useState(false)
 
   useEffect(() => {
     if (supported) void load(agent.id, projectDir)
@@ -200,6 +201,15 @@ export function SessionsPage() {
             <span className="text-xs text-muted-foreground">
               {filtered.length} of {sessions.length}
             </span>
+            <Button
+              variant={groupByProject ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setGroupByProject((v) => !v)}
+              title="Group sessions by project"
+            >
+              <Icon name="layers" />
+              Group by project
+            </Button>
             {selectedIds.size > 0 && (
               <>
                 <div className="flex items-center rounded-md border border-border">
@@ -249,6 +259,7 @@ export function SessionsPage() {
               selectedIds={selectedIds}
               onToggle={onToggle}
               onToggleRange={onToggleRange}
+              groupByProject={groupByProject}
             />
           </div>
         </div>
