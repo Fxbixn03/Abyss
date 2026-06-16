@@ -20,6 +20,7 @@ import {
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useTourStore } from '@/features/tour/store/tour.store'
+import { useAllAgents } from '@/features/agents/hooks/useActiveAgent'
 import { useSettingsStore } from '../store/settings.store'
 
 function SettingRow({
@@ -47,6 +48,7 @@ export function PreferencesSection() {
   const updatePrefs = useSettingsStore((s) => s.updatePrefs)
   const startTour = useTourStore((s) => s.start)
   const navigate = useNavigate()
+  const agents = useAllAgents()
 
   const browseProjectDir = async () => {
     const { path } = await ipc.pickDirectory(
@@ -136,6 +138,57 @@ export function PreferencesSection() {
                 <Icon name="graduation-cap" />
                 Replay tour
               </Button>
+            }
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Startup &amp; language</CardTitle>
+        </CardHeader>
+        <CardContent className="divide-y divide-border">
+          <SettingRow
+            title="Agent on startup"
+            description="Which agent Abyss opens with. “Last used” restores your most recent agent."
+            control={
+              <Select
+                value={settings.startupAgentId ?? '__last__'}
+                onValueChange={(v) =>
+                  void updatePrefs({
+                    startupAgentId: v === '__last__' ? undefined : v,
+                  })
+                }
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__last__">Last used agent</SelectItem>
+                  {agents.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.displayName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            }
+          />
+          <SettingRow
+            title="Language"
+            description="Interface language. More languages are coming; English is the default for now."
+            control={
+              <Select
+                value={settings.language}
+                onValueChange={(v) => void updatePrefs({ language: v })}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                </SelectContent>
+              </Select>
             }
           />
         </CardContent>
@@ -263,6 +316,32 @@ export function PreferencesSection() {
                 }
                 className="w-[160px] text-right font-code"
               />
+            }
+          />
+          <SettingRow
+            title="Budget alert threshold"
+            description="Warn on the usage gauge once consumption reaches this percentage (0 = off)."
+            control={
+              <div className="flex items-center gap-1.5">
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={settings.budgetAlertPercent ?? ''}
+                  placeholder="80"
+                  onChange={(e) => {
+                    const raw = Number(e.target.value)
+                    void updatePrefs({
+                      budgetAlertPercent: e.target.value
+                        ? Math.min(100, Math.max(0, raw))
+                        : undefined,
+                    })
+                  }}
+                  className="w-[80px] text-right font-code"
+                />
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
             }
           />
         </CardContent>

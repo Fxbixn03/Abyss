@@ -124,6 +124,10 @@ export interface AppSettings {
   weeklyTokenBudget?: number
   /** Optional rolling 5-hour session token budget for the quota gauge. */
   sessionTokenBudget?: number
+  /** Warn when budget consumption reaches this percentage (0/undefined = off). */
+  budgetAlertPercent?: number
+  /** UI language (BCP-47-ish). English ('en') is the only built-in for now. */
+  language: string
   /** Daily auto-backup of all configs on first launch of the day. */
   autoBackup: boolean
   /** Backup directory; undefined → default under userData. */
@@ -164,6 +168,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   autosave: false,
   autosaveDelaySeconds: 3,
   editorLineWrap: true,
+  language: 'en',
 }
 
 /** Auto-update lifecycle, pushed to the renderer as it progresses. */

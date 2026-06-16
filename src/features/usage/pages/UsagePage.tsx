@@ -76,11 +76,25 @@ function Stat({
  * user's configured budget. Color steps success → warning (≥75%) → destructive
  * (≥100%), with an inline over-budget warning.
  */
-function WeeklyBudgetGauge({ used, budget }: { used: number; budget: number }) {
+function WeeklyBudgetGauge({
+  used,
+  budget,
+  alertPercent,
+}: {
+  used: number
+  budget: number
+  alertPercent?: number
+}) {
   const ratio = budget > 0 ? used / budget : 0
   const pct = Math.round(ratio * 100)
   const barColor =
     ratio >= 1 ? 'bg-destructive' : ratio >= 0.75 ? 'bg-warning' : 'bg-success'
+  // Custom alert threshold fires below 100% (the over-budget message covers ≥100%).
+  const alertHit =
+    alertPercent !== undefined &&
+    alertPercent > 0 &&
+    pct >= alertPercent &&
+    ratio < 1
   return (
     <Card className="space-y-2 p-4">
       <div className="flex items-center justify-between text-sm">
@@ -98,11 +112,18 @@ function WeeklyBudgetGauge({ used, budget }: { used: number; budget: number }) {
           style={{ width: `${Math.min(100, pct)}%` }}
         />
       </div>
-      {ratio >= 1 && (
+      {ratio >= 1 ? (
         <p className="flex items-center gap-1.5 text-xs text-destructive">
           <Icon name="triangle-alert" className="size-3.5" />
           Weekly token budget exceeded
         </p>
+      ) : (
+        alertHit && (
+          <p className="flex items-center gap-1.5 text-xs text-warning">
+            <Icon name="triangle-alert" className="size-3.5" />
+            Past your {alertPercent}% budget alert
+          </p>
+        )
       )}
     </Card>
   )
@@ -128,6 +149,9 @@ export function UsagePage() {
   const projectDir = useProjectDir()
   const currency = useSettingsStore((s) => s.settings.currency)
   const weeklyBudget = useSettingsStore((s) => s.settings.weeklyTokenBudget)
+  const budgetAlertPercent = useSettingsStore(
+    (s) => s.settings.budgetAlertPercent,
+  )
 
   const [days, setDays] = useState(30)
   const [data, setData] = useState<UsageAnalytics | null>(null)
@@ -280,7 +304,11 @@ export function UsagePage() {
             </div>
 
             {weeklyBudget !== undefined && weeklyBudget > 0 && (
-              <WeeklyBudgetGauge used={weeklyTokens} budget={weeklyBudget} />
+              <WeeklyBudgetGauge
+                used={weeklyTokens}
+                budget={weeklyBudget}
+                alertPercent={budgetAlertPercent}
+              />
             )}
 
             <section className="space-y-2">

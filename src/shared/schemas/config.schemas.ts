@@ -130,6 +130,8 @@ export const appSettingsSchema = z
       .catch(undefined),
     weeklyTokenBudget: z.number().optional().catch(undefined),
     sessionTokenBudget: z.number().optional().catch(undefined),
+    budgetAlertPercent: z.number().optional().catch(undefined),
+    language: z.string().optional().catch(undefined),
     autoBackup: z.boolean().optional().catch(undefined),
     backupDir: z.string().optional().catch(undefined),
     backupKeep: z.number().optional().catch(undefined),

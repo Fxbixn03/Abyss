@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { useThemeApplier } from '@/features/themes/hooks/useThemeApplier'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
+import { useAgentStore } from '@/features/agents/store/agent.store'
 import { useAgentAvailability } from '@/features/agents/store/agent-availability.store'
 import { FirstRunWizard } from '@/features/settings/components/FirstRunWizard'
 import { Toaster } from '@/shared/components/ui/sonner'
@@ -23,6 +24,16 @@ export function App() {
     void load()
     void refreshAvailability()
   }, [load, refreshAvailability])
+
+  // Once settings are loaded, honour a configured startup agent (a fixed agent
+  // overrides the persisted "last used" one). Runs at most once per launch.
+  const startupApplied = useRef(false)
+  useEffect(() => {
+    if (!settingsLoaded || startupApplied.current) return
+    startupApplied.current = true
+    const startupAgentId = useSettingsStore.getState().settings.startupAgentId
+    if (startupAgentId) useAgentStore.getState().setActiveAgent(startupAgentId)
+  }, [settingsLoaded])
 
   return (
     <ErrorBoundary>
