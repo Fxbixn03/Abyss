@@ -128,8 +128,12 @@ export interface AppSettings {
   budgetAlertPercent?: number
   /** UI language (BCP-47-ish). English ('en') is the only built-in for now. */
   language: string
-  /** Daily auto-backup of all configs on first launch of the day. */
+  /** Auto-backup of all configs on first launch within the chosen interval. */
   autoBackup: boolean
+  /** Auto-backup cadence unit. */
+  backupInterval: 'hourly' | 'daily' | 'weekly' | 'monthly'
+  /** Multiplier for the cadence (e.g. every 3 hours → interval=hourly, every=3). */
+  backupEvery: number
   /** Backup directory; undefined → default under userData. */
   backupDir?: string
   /** How many most-recent backups to keep. */
@@ -166,6 +170,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   showCosts: false,
   currency: 'usd',
   autoBackup: true,
+  backupInterval: 'daily',
+  backupEvery: 1,
   backupKeep: 3,
   snapshotRetentionPerFile: 30,
   sandboxAcknowledged: false,

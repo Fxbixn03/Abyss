@@ -10,6 +10,13 @@ import { Switch } from '@/shared/components/ui/switch'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Input } from '@/shared/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
 import { Icon } from '@/shared/components/Icon'
 import { Spinner } from '@/shared/components/Spinner'
 import { ipc } from '@/shared/ipc/ipc.client'
@@ -72,9 +79,9 @@ export function BackupsSection() {
         <CardContent className="divide-y divide-border">
           <div className="flex items-center justify-between gap-4 py-2">
             <div className="space-y-0.5">
-              <p className="text-sm font-medium">Daily auto-backup</p>
+              <p className="text-sm font-medium">Automatic backups</p>
               <p className="text-xs text-muted-foreground">
-                Export all configs once per day, on the first launch of the day.
+                Export all configs on launch once the chosen interval elapses.
               </p>
             </div>
             <Switch
@@ -82,6 +89,62 @@ export function BackupsSection() {
               onCheckedChange={(v) => void updatePrefs({ autoBackup: v })}
             />
           </div>
+
+          {settings.autoBackup && (
+            <div className="flex items-center justify-between gap-4 py-2">
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">Backup interval</p>
+                <p className="text-xs text-muted-foreground">
+                  Run a backup every N hours, days, weeks or months.
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-sm text-muted-foreground">every</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={settings.backupEvery}
+                  onChange={(e) =>
+                    void updatePrefs({
+                      backupEvery: Math.min(
+                        99,
+                        Math.max(1, Number(e.target.value) || 1),
+                      ),
+                    })
+                  }
+                  className="w-[70px] text-right font-code"
+                />
+                <Select
+                  value={settings.backupInterval}
+                  onValueChange={(v) =>
+                    void updatePrefs({
+                      backupInterval:
+                        v as 'hourly' | 'daily' | 'weekly' | 'monthly',
+                    })
+                  }
+                >
+                  <SelectTrigger className="w-[130px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hourly">
+                      hour{settings.backupEvery === 1 ? '' : 's'}
+                    </SelectItem>
+                    <SelectItem value="daily">
+                      day{settings.backupEvery === 1 ? '' : 's'}
+                    </SelectItem>
+                    <SelectItem value="weekly">
+                      week{settings.backupEvery === 1 ? '' : 's'}
+                    </SelectItem>
+                    <SelectItem value="monthly">
+                      month{settings.backupEvery === 1 ? '' : 's'}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-between gap-4 py-2">
             <div className="space-y-0.5">

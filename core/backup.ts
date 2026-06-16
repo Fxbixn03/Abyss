@@ -108,3 +108,33 @@ export async function runDailyBackup(
   if (madeToday) return null
   return createBackup(env, dir, keep)
 }
+
+export type BackupInterval = 'hourly' | 'daily' | 'weekly' | 'monthly'
+
+const INTERVAL_MS: Record<BackupInterval, number> = {
+  hourly: 60 * 60 * 1000,
+  daily: 24 * 60 * 60 * 1000,
+  weekly: 7 * 24 * 60 * 60 * 1000,
+  monthly: 30 * 24 * 60 * 60 * 1000,
+}
+
+/**
+ * Create a backup when the most-recent one is older than `interval × every`.
+ * Returns the new backup, or null when the window hasn't elapsed yet.
+ */
+export async function runScheduledBackup(
+  env: OsEnv,
+  dir: string,
+  keep: number,
+  interval: BackupInterval,
+  every: number,
+): Promise<BackupInfo | null> {
+  const windowMs = INTERVAL_MS[interval] * Math.max(1, every)
+  const existing = await listBackups(dir)
+  const last = existing[0]
+  if (last) {
+    const age = Date.now() - new Date(last.createdAt).getTime()
+    if (age < windowMs) return null
+  }
+  return createBackup(env, dir, keep)
+}

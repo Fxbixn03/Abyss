@@ -133,6 +133,11 @@ export const appSettingsSchema = z
     budgetAlertPercent: z.number().optional().catch(undefined),
     language: z.string().optional().catch(undefined),
     autoBackup: z.boolean().optional().catch(undefined),
+    backupInterval: z
+      .enum(['hourly', 'daily', 'weekly', 'monthly'])
+      .optional()
+      .catch(undefined),
+    backupEvery: z.number().min(1).max(99).optional().catch(undefined),
     backupDir: z.string().optional().catch(undefined),
     backupKeep: z.number().optional().catch(undefined),
     snapshotRetentionPerFile: z

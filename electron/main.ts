@@ -7,7 +7,7 @@ import { disposeAllChats } from '@core/chat/session-manager'
 import { configureSnapshots } from '@core/snapshots'
 import { allowedRoots } from '@core/path-scope'
 import { configureProfiles } from '@core/profiles'
-import { runDailyBackup, defaultBackupDir } from '@core/backup'
+import { runScheduledBackup, defaultBackupDir } from '@core/backup'
 import { setCustomAgentDefinitions } from '@/shared/agents/defs'
 import type { IpcContext } from './ipc/context'
 import { registerIpcHandlers } from './ipc'
@@ -170,13 +170,19 @@ async function maybeReconfigureSnapshotRetention(
   }
 }
 
-/** Daily auto-backup: runs once per day on first launch, honouring settings. */
+/** Auto-backup: runs on launch when the configured interval has elapsed. */
 async function maybeRunDailyBackup(ctx: IpcContext): Promise<void> {
   try {
     const settings = await ctx.settings.read()
     if (settings.autoBackup === false) return
     const dir = settings.backupDir || defaultBackupDir(ctx.userData)
-    await runDailyBackup(ctx.env, dir, settings.backupKeep ?? 3)
+    await runScheduledBackup(
+      ctx.env,
+      dir,
+      settings.backupKeep ?? 3,
+      settings.backupInterval ?? 'daily',
+      settings.backupEvery ?? 1,
+    )
   } catch {
     // Backups are best-effort; never block startup on a failure.
   }
