@@ -15,6 +15,13 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { KeyValueEditor } from '@/shared/components/KeyValueEditor'
 import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
+import {
+  isDiskWriteError,
+  isWritePermissionError,
+  reportDiskWriteError,
+  reportError,
+  reportWritePermissionError,
+} from '@/shared/lib/errors'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 
@@ -46,9 +53,20 @@ export function ModelEnvPage() {
   const save = async () => {
     if (!basePath) return
     setSaving(true)
-    await ipc.setModelEnv(agent.id, basePath, { model, env })
-    setSaving(false)
-    setDirty(false)
+    try {
+      await ipc.setModelEnv(agent.id, basePath, { model, env })
+      setDirty(false)
+    } catch (err) {
+      if (isWritePermissionError(err)) {
+        reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+      } else if (isDiskWriteError(err)) {
+        reportDiskWriteError(err)
+      } else {
+        reportError(err, { title: "Couldn't save model & env settings" })
+      }
+    } finally {
+      setSaving(false)
+    }
   }
 
   // Ctrl/Cmd+S to save model & env settings.
