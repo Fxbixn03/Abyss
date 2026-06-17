@@ -141,16 +141,18 @@ export function ConfigEditor({
   // switches themes (which updates CSS vars on :root via useThemeApplier).
   const agentThemeMap = useThemeStore((s) => s.agentThemeMap)
 
-  const extensions = useMemo(
-    () => [
+  const extensions = useMemo(() => {
+    // Referencing agentThemeMap here forces the memo to recompute whenever
+    // the user switches themes, so buildCmTheme reads fresh CSS custom
+    // properties from :root (set by useThemeApplier on each theme change).
+    void agentThemeMap
+    return [
       ...languageExtensions(language),
       ...(lineWrap ? [EditorView.lineWrapping] : []),
       buildCmTheme(appearance === 'dark'),
       buildHighlightStyle(appearance === 'dark'),
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [language, lineWrap, appearance, agentThemeMap],
-  )
+    ]
+  }, [language, lineWrap, appearance, agentThemeMap])
 
   return (
     <div className="h-full overflow-hidden rounded-md border border-border bg-card">
