@@ -275,7 +275,7 @@ export const windsurfDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: false,
-    chats: false,
+    chats: true,
   },
   configFiles: [windsurfRules],
   resolvePaths: (env: OsEnv) => [
