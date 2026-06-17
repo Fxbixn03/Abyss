@@ -14,7 +14,7 @@ import path from 'node:path'
 import { readAgentConfigFile } from './config-io'
 import { getMcpConfigPath, readMcpServers } from './mcp'
 import { readHooks, getHooksFilePath } from './hooks'
-import { ConfigParseError } from './config-error'
+import { ConfigParseError, ConfigReadError } from './config-error'
 import { pathExists, readTextFile } from './json-file'
 import type { AgentDefinition } from '@/shared/types/agent'
 
@@ -77,22 +77,26 @@ async function checkSettingsJson(
   const settingsPath = path.join(basePath, 'settings.json')
   if (!(await pathExists(settingsPath))) return []
 
-  const raw = await readTextFile(settingsPath)
-  if (raw.trim() === '') return []
-
   try {
+    const raw = await readTextFile(settingsPath)
+    if (raw.trim() === '') return []
+
     JSON.parse(raw)
     return []
   } catch (err) {
+    const message =
+      err instanceof ConfigReadError
+        ? `settings.json could not be read: ${err.message}`
+        : 'settings.json contains invalid JSON: ' +
+          (err instanceof Error ? err.message : String(err))
+
     return [
       {
         severity: 'error',
         agentId: def.id,
         agentName: def.displayName,
         file: settingsPath,
-        message:
-          'settings.json contains invalid JSON: ' +
-          (err instanceof Error ? err.message : String(err)),
+        message,
         route: '/raw-settings',
         suggestedAction: 'repair-settings',
       },
