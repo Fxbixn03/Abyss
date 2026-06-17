@@ -25,7 +25,12 @@ import {
   reportWritePermissionError,
 } from '@/shared/lib/errors'
 import { toast } from 'sonner'
-import { appendDelta, appendBlock, applyUsage } from './stream-reducer'
+import {
+  appendDelta,
+  appendBlock,
+  applyUsage,
+  finalizeStreaming,
+} from './stream-reducer'
 
 /** Sessions fetched per page for infinite scroll. */
 const SESSIONS_PAGE_SIZE = 20
@@ -417,6 +422,7 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
           role: event.role,
           blocks: [],
           timestamp: new Date().toISOString(),
+          streaming: true,
         }
         set((s) => ({
           messages: [...s.messages, msg],
@@ -463,15 +469,18 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
         break
       }
       case 'turn_end': {
-        set((s) => ({
-          status: 'idle',
-          usage: event.usage,
-          currentMessageId: null,
-          messages:
+        set((s) => {
+          const withUsage =
             event.usage && s.currentMessageId
               ? applyUsage(s.messages, s.currentMessageId, event.usage)
-              : s.messages,
-        }))
+              : s.messages
+          return {
+            status: 'idle',
+            usage: event.usage,
+            currentMessageId: null,
+            messages: finalizeStreaming(withUsage, s.currentMessageId),
+          }
+        })
         void get().refreshSessions()
         break
       }
@@ -484,7 +493,11 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
         break
       }
       case 'done': {
-        set({ status: 'idle', currentMessageId: null })
+        set((s) => ({
+          status: 'idle',
+          currentMessageId: null,
+          messages: finalizeStreaming(s.messages, s.currentMessageId),
+        }))
         break
       }
     }

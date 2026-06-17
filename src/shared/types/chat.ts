@@ -41,6 +41,12 @@ export interface ChatMessage {
   /** Per-message token counts when the agent records them. */
   inputTokens?: number
   outputTokens?: number
+  /**
+   * `true` while the message is actively being streamed; `false` (or absent)
+   * once the turn has completed. Set by the stream-reducer and cleared on
+   * `turn_end` / `done`. MessageBubble reads this to show a live cursor.
+   */
+  streaming?: boolean
 }
 
 /** Lightweight metadata for the session list (cheap to compute, no full parse). */

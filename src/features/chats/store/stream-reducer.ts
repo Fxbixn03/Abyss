@@ -70,3 +70,18 @@ export function applyUsage(
     }
   })
 }
+
+/**
+ * Mark the current message as no longer streaming once a `turn_end` or `done`
+ * event is received. Sets `streaming: false` on the matching message. A null
+ * `currentId` is a no-op.
+ */
+export function finalizeStreaming(
+  messages: ChatMessage[],
+  currentId: string | null,
+): ChatMessage[] {
+  if (!currentId) return messages
+  return messages.map((m) =>
+    m.id === currentId ? { ...m, streaming: false } : m,
+  )
+}
