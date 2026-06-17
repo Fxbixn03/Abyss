@@ -118,8 +118,10 @@ function ComposerInner({
     historyIndex.current = history.current.length
   }
 
+  const textareaLabel = disabled ? 'Sign in to start chatting…' : 'Message the agent…'
+
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-card/40 p-2.5">
+    <div aria-busy={busy} className="flex flex-col gap-2 rounded-lg border border-border bg-card/40 p-2.5">
       {settingsBar}
       <div className="flex items-end gap-2">
         <Textarea
@@ -133,9 +135,8 @@ function ComposerInner({
             historyIndex.current = history.current.length
           }}
           onKeyDown={handleKeyDown}
-          placeholder={
-            disabled ? 'Sign in to start chatting…' : 'Message the agent…'
-          }
+          placeholder={textareaLabel}
+          aria-label={textareaLabel}
           disabled={disabled}
           className="max-h-48 min-h-[44px] resize-none overflow-y-auto border-0 bg-transparent shadow-none focus-visible:ring-0"
           rows={1}
