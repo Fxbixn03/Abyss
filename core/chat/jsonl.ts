@@ -6,6 +6,15 @@
 
 import { createReadStream } from 'node:fs'
 import { createInterface } from 'node:readline'
+import { ConfigReadError } from '../config-error'
+
+function isPermissionError(err: unknown): boolean {
+  if (err && typeof err === 'object' && 'code' in err) {
+    const code = (err as { code: unknown }).code
+    return code === 'EACCES' || code === 'EPERM'
+  }
+  return false
+}
 
 export async function* readJsonlLines(
   filePath: string,
@@ -25,6 +34,11 @@ export async function* readJsonlLines(
         // skip malformed lines
       }
     }
+  } catch (err) {
+    if (isPermissionError(err)) {
+      throw new ConfigReadError(filePath, err)
+    }
+    throw err
   } finally {
     rl.close()
     stream.close()
@@ -35,7 +49,17 @@ export async function readJsonl(
   filePath: string,
 ): Promise<Record<string, unknown>[]> {
   const out: Record<string, unknown>[] = []
-  for await (const obj of readJsonlLines(filePath)) out.push(obj)
+  try {
+    for await (const obj of readJsonlLines(filePath)) out.push(obj)
+  } catch (err) {
+    // readJsonlLines already converts EACCES/EPERM to ConfigReadError, but
+    // guard here as well so readJsonl is independently safe if called directly
+    // with a future code path that bypasses readJsonlLines.
+    if (isPermissionError(err)) {
+      throw new ConfigReadError(filePath, err)
+    }
+    throw err
+  }
   return out
 }
 
