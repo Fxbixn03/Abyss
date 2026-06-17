@@ -16,5 +16,12 @@ export const gooseAdapter: AgentAdapter = createAdapter(gooseDefinition, {
       route: '/mcp',
       description: 'Model Context Protocol extensions',
     },
+    {
+      id: 'settings-file',
+      label: 'Settings (raw)',
+      icon: 'braces',
+      route: '/settings-file',
+      description: 'Raw config.yaml',
+    },
   ],
 })
