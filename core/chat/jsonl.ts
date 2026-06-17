@@ -6,8 +6,8 @@
 
 import { createReadStream } from 'node:fs'
 import { createInterface } from 'node:readline'
-import { ConfigReadError } from '../config-error'
-import { isPermissionError } from '../os-errors'
+import { ConfigNotFoundError, ConfigReadError } from '../config-error'
+import { isNotFoundOsError, isPermissionError } from '../os-errors'
 
 export async function* readJsonlLines(
   filePath: string,
@@ -30,6 +30,13 @@ export async function* readJsonlLines(
   } catch (err) {
     if (isPermissionError(err)) {
       throw new ConfigReadError(filePath, err)
+    }
+    // A session file deleted between the session-list stat and the transcript
+    // read (TOCTOU race) surfaces as ENOENT here. Wrap it so the renderer's
+    // isNotFoundError predicate can trigger the graceful 'session no longer
+    // exists' recovery path instead of falling through to a generic toast.
+    if (isNotFoundOsError(err)) {
+      throw new ConfigNotFoundError(filePath, err)
     }
     throw err
   } finally {

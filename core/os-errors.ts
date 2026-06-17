@@ -20,3 +20,12 @@ export function isDiskError(err: unknown): boolean {
   }
   return false
 }
+
+/** Returns true when a Node.js filesystem error indicates the path does not exist. */
+export function isNotFoundOsError(err: unknown): boolean {
+  if (err && typeof err === 'object' && 'code' in err) {
+    const code = (err as { code: unknown }).code
+    return code === 'ENOENT'
+  }
+  return false
+}

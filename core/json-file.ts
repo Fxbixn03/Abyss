@@ -15,16 +15,7 @@ import {
   ConfigValidationError,
   ConfigWriteError,
 } from './config-error'
-import { isDiskError, isPermissionError } from './os-errors'
-
-/** Returns true when a Node.js filesystem error indicates the path does not exist. */
-function isNotFoundOsError(err: unknown): boolean {
-  if (err && typeof err === 'object' && 'code' in err) {
-    const code = (err as { code: unknown }).code
-    return code === 'ENOENT'
-  }
-  return false
-}
+import { isDiskError, isNotFoundOsError, isPermissionError } from './os-errors'
 
 export async function pathExists(p: string): Promise<boolean> {
   try {
