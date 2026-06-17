@@ -16,10 +16,12 @@ import { genId } from '@/shared/lib/id'
 import {
   isDiskWriteError,
   isNotFoundError,
+  isReadPermissionError,
   isWritePermissionError,
   markErrorReported,
   reportDiskWriteError,
   reportError,
+  reportReadPermissionError,
   reportWritePermissionError,
 } from '@/shared/lib/errors'
 import { toast } from 'sonner'
@@ -247,6 +249,8 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
         markErrorReported(err)
         toast.error('Session no longer exists — it may have been deleted outside Abyss')
         await get().refreshSessions()
+      } else if (isReadPermissionError(err)) {
+        reportReadPermissionError(err, (path) => void ipc.revealPath(path))
       } else {
         reportError(err, { title: "Couldn't open session" })
       }
