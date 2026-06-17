@@ -265,6 +265,7 @@ export function ChatTranscript({
                 messageRefs.current[i] = el
               }}
               className={cn(
+                'motion-safe:animate-bubble-in',
                 isMatch && 'rounded-lg ring-1 ring-primary/50',
                 isActive && 'ring-primary',
               )}
