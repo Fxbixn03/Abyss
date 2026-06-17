@@ -513,6 +513,14 @@ const kiroInstructions: ConfigFileSpec = {
   description: 'Kiro steering instructions (product.md).',
 }
 
+const kiroSettings: ConfigFileSpec = {
+  id: 'settings',
+  filename: 'settings.json',
+  scope: 'global',
+  language: 'json',
+  description: 'Kiro user settings (model, API key, preferences)',
+}
+
 /**
  * Kiro (AWS) — AWS's AI coding agent (launched 2025) storing its config under
  * `~/.kiro/`. Abyss edits the global steering file at `.kiro/steering/product.md`.
@@ -534,10 +542,10 @@ export const kiroDefinition: AgentDefinition = {
     skills: false,
     hooks: false,
     rules: false,
-    rawSettings: false,
+    rawSettings: true,
     chats: false,
   },
-  configFiles: [kiroInstructions],
+  configFiles: [kiroInstructions, kiroSettings],
   resolvePaths: (env: OsEnv) => [
     env.platform === 'win32'
       ? joinPath(env.platform, env.home, '.kiro')

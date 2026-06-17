@@ -15,5 +15,12 @@ export const kiroAdapter: AgentAdapter = createAdapter(kiroDefinition, {
       route: '/mcp',
       description: 'Model Context Protocol servers',
     },
+    {
+      id: 'settings-file',
+      label: 'Settings (raw)',
+      icon: 'braces',
+      route: '/settings-file',
+      description: 'Raw settings.json',
+    },
   ],
 })
