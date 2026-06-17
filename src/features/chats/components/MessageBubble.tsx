@@ -93,10 +93,26 @@ function CollapsibleBlock({
   )
 }
 
-function BlockView({ block }: { block: ChatBlock }) {
+function BlockView({
+  block,
+  showCursor,
+}: {
+  block: ChatBlock
+  showCursor?: boolean
+}) {
   switch (block.kind) {
     case 'text':
-      return <Markdown content={block.text} />
+      return (
+        <>
+          <Markdown content={block.text} />
+          {showCursor && (
+            <span
+              aria-hidden="true"
+              className="motion-safe:animate-blink inline-block h-[1em] w-px bg-current align-middle ml-0.5"
+            />
+          )}
+        </>
+      )
     case 'thinking':
       return (
         <CollapsibleBlock icon="brain" label="Thinking">
@@ -153,10 +169,13 @@ const ROLE_META: Record<string, { icon: string; label: string }> = {
 export function MessageBubble({
   message,
   agentName,
+  isStreaming,
 }: {
   message: ChatMessage
   /** Display name of the agent driving the chat (used for assistant turns). */
   agentName?: string
+  /** When true, renders a blinking cursor after the last text block. */
+  isStreaming?: boolean
 }) {
   const [copied, setCopied] = useState(false)
   const meta = ROLE_META[message.role] ?? ROLE_META.assistant
@@ -247,9 +266,22 @@ export function MessageBubble({
             <Spinner className="size-3" label="Thinking…" />
             thinking…
           </span>
-        ) : (
-          message.blocks.map((block, i) => <BlockView key={i} block={block} />)
-        )}
+        ) : (() => {
+          // Find the index of the last text block so the cursor appears there.
+          const lastTextIdx = isStreaming
+            ? [...message.blocks].reduce<number>(
+                (acc, b, i) => (b.kind === 'text' ? i : acc),
+                -1,
+              )
+            : -1
+          return message.blocks.map((block, i) => (
+            <BlockView
+              key={i}
+              block={block}
+              showCursor={i === lastTextIdx}
+            />
+          ))
+        })()}
       </div>
     </div>
   )

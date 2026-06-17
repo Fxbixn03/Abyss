@@ -68,12 +68,15 @@ export function ChatTranscript({
   messages,
   loading,
   agentName,
+  streaming,
   searchOpen: searchOpenProp,
   onSearchOpenChange,
 }: {
   messages: ChatMessage[]
   loading: boolean
   agentName?: string
+  /** When true, the last message renders with a blinking typing cursor. */
+  streaming?: boolean
   /** Controlled open state from the parent (optional). */
   searchOpen?: boolean
   /** Callback when the search bar is opened/closed internally. */
@@ -315,7 +318,11 @@ export function ChatTranscript({
                 isActive && 'ring-primary',
               )}
             >
-              <MessageBubble message={m} agentName={agentName} />
+              <MessageBubble
+                message={m}
+                agentName={agentName}
+                isStreaming={streaming === true && i === messages.length - 1}
+              />
             </div>
           )
         })}

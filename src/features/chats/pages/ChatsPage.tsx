@@ -440,6 +440,7 @@ export function ChatsPage() {
                   messages={shownMessages}
                   loading={transcriptLoading}
                   agentName={agent.displayName}
+                  streaming={status === 'streaming'}
                   searchOpen={transcriptSearchOpen}
                   onSearchOpenChange={setTranscriptSearchOpen}
                 />

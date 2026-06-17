@@ -218,3 +218,24 @@
 @utility animate-bubble-in {
   animation: abyss-bubble-in 200ms ease-out both;
 }
+
+@keyframes abyss-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@utility animate-blink {
+  animation: abyss-blink 900ms step-start infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-blink {
+    animation: none;
+    opacity: 1;
+  }
+}
