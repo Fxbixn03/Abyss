@@ -6,6 +6,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
+import { scrollBehavior } from '@/shared/lib/motion'
 
 /** Skeleton placeholder for a single bubble row while the transcript loads. */
 function SkeletonBubbleRow({
@@ -152,7 +153,7 @@ export function ChatTranscript({
     if (idx === undefined) return
     const el = messageRefs.current[idx]
     if (el) {
-      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      el.scrollIntoView({ block: 'nearest', behavior: scrollBehavior() })
     }
   }, [activeMatch, matchIndices])
 
@@ -169,7 +170,7 @@ export function ChatTranscript({
   const jumpToTop = () => {
     const el = scrollRef.current
     if (!el) return
-    el.scrollTo({ top: 0, behavior: 'smooth' })
+    el.scrollTo({ top: 0, behavior: scrollBehavior() })
     bottomLocked.current = false
     setShowJumpBottom(true)
     setShowJumpTop(false)
@@ -178,7 +179,7 @@ export function ChatTranscript({
   const jumpToBottom = () => {
     const el = scrollRef.current
     if (!el) return
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+    el.scrollTo({ top: el.scrollHeight, behavior: scrollBehavior() })
     bottomLocked.current = true
     setShowJumpBottom(false)
   }

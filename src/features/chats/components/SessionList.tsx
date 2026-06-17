@@ -13,6 +13,7 @@ import {
   ContextMenuTrigger,
 } from '@/shared/components/ui/context-menu'
 import { cn } from '@/shared/lib/utils'
+import { scrollBehavior } from '@/shared/lib/motion'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useChatsStore } from '../store/chats.store'
 import { relativeTime } from '../lib/format'
@@ -133,7 +134,7 @@ export function SessionList({
       if (session) {
         const el = getButtonEl(session.id)
         if (el) {
-          el.scrollIntoView({ block: 'nearest' })
+          el.scrollIntoView({ block: 'nearest', behavior: scrollBehavior() })
           el.focus()
         }
       }
