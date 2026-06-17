@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -115,6 +115,13 @@ export function TemplateApplyDialog({
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   const agentsKey = agents.map((a) => a.id).join(',')
+  // Keep a ref so the effect body can read the current agent list without
+  // listing the (referentially-unstable) agents array in its dep array.
+  const agentsRef = useRef(agents)
+  useEffect(() => {
+    agentsRef.current = agents
+  })
+
   const variables = useMemo(
     () => (source ? extractVariables(source.content) : []),
     [source],
@@ -126,11 +133,14 @@ export function TemplateApplyDialog({
 
   // Read each enabled agent's instruction file so diffs/dedup are accurate.
   // setState only runs inside the async callback, never synchronously.
+  // agentsRef.current is used instead of agents directly so the dep array can
+  // list the stable agentsKey string rather than the referentially-unstable
+  // agents array returned by useAllAgents() on every render.
   useEffect(() => {
     if (!open || !source) return
     let cancelled = false
     void Promise.all(
-      agents.map(async (agent) => {
+      agentsRef.current.map(async (agent) => {
         const base = resolveBase(agent.id)
         if (!base) return [agent.id, { path: '', before: '' }] as const
         try {
@@ -152,7 +162,6 @@ export function TemplateApplyDialog({
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, source, agentsKey, resolveBase])
 
   const rows = useMemo(
