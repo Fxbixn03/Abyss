@@ -451,6 +451,7 @@ export function ChatsPage() {
                   <Composer
                     busy={busy}
                     disabled={!canChat}
+                    draftKey={activeSessionId ?? 'new'}
                     onSend={(text) =>
                       void send(text, {
                         cwd,

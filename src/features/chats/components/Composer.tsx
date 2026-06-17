@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Button } from '@/shared/components/ui/button'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { Icon } from '@/shared/components/Icon'
+import { useComposerDraft } from '../hooks/useComposerDraft'
 
 export interface ComposerProps {
   onSend: (text: string) => void
@@ -11,16 +12,34 @@ export interface ComposerProps {
   busy: boolean
   disabled?: boolean
   settingsBar?: ReactNode
+  /**
+   * When provided, drafts are persisted across session switches.
+   * Use the session id or `'new'` for the compose-new-chat state.
+   */
+  draftKey?: string
 }
 
-export function Composer({
+interface ComposerInnerProps extends Omit<ComposerProps, 'draftKey'> {
+  initialText: string
+  onTextChange: (text: string) => void
+  onSubmitClear: () => void
+}
+
+/**
+ * Inner implementation — always rendered once `draftKey` is resolved.
+ * Accepts the initial text so the draft store can seed the textarea on mount.
+ */
+function ComposerInner({
   onSend,
   onStop,
   busy,
   disabled,
   settingsBar,
-}: ComposerProps) {
-  const [text, setText] = useState('')
+  initialText,
+  onTextChange,
+  onSubmitClear,
+}: ComposerInnerProps) {
+  const [text, setText] = useState(initialText)
 
   // Ref for the textarea DOM element — used for auto-grow height adjustment.
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -47,6 +66,7 @@ export function Composer({
     history.current.push(trimmed)
     historyIndex.current = history.current.length
     onSend(trimmed)
+    onSubmitClear()
     setText('')
   }
 
@@ -100,7 +120,9 @@ export function Composer({
           ref={textareaRef}
           value={text}
           onChange={(e) => {
-            setText(e.target.value)
+            const next = e.target.value
+            setText(next)
+            onTextChange(next)
             // Typing resets the history cursor.
             historyIndex.current = history.current.length
           }}
@@ -135,5 +157,41 @@ export function Composer({
         )}
       </div>
     </div>
+  )
+}
+
+/**
+ * Draft-aware wrapper that reads/writes the per-session draft store when
+ * `draftKey` is provided. When `draftKey` is omitted the component behaves
+ * exactly as before (no persistence).
+ */
+function ComposerWithDraft({
+  draftKey,
+  ...rest
+}: ComposerProps & { draftKey: string }) {
+  const { initialText, saveDraft, clearDraft } = useComposerDraft(draftKey)
+
+  return (
+    <ComposerInner
+      {...rest}
+      initialText={initialText}
+      onTextChange={saveDraft}
+      onSubmitClear={clearDraft}
+    />
+  )
+}
+
+/** Public export — `draftKey` is optional; omitting it disables persistence. */
+export function Composer({ draftKey, ...rest }: ComposerProps) {
+  if (draftKey !== undefined) {
+    return <ComposerWithDraft draftKey={draftKey} {...rest} />
+  }
+  return (
+    <ComposerInner
+      {...rest}
+      initialText=""
+      onTextChange={() => undefined}
+      onSubmitClear={() => undefined}
+    />
   )
 }
