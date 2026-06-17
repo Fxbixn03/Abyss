@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useCtrlS } from '@/shared/hooks/useCtrlS'
 import { useNavigate } from 'react-router-dom'
 import type { GeminiCommandSummary } from '@/shared/types/gemini-command'
 import { Button } from '@/shared/components/ui/button'
@@ -117,18 +118,10 @@ export function GeminiCommandsPage() {
   }
 
   // Ctrl/Cmd+S to save the selected command.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-        e.preventDefault()
-        if (raw === savedRaw || !!parseToml(raw).error) return
-        void save()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [raw, savedRaw, basePath, selectedId])
+  useCtrlS(() => {
+    if (raw === savedRaw || !!parseToml(raw).error) return
+    void save()
+  })
 
   const createNew = async (id: string) => {
     setNewOpen(false)

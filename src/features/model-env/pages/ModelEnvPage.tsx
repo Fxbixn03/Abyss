@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useCtrlS } from '@/shared/hooks/useCtrlS'
 import { useNavigate } from 'react-router-dom'
 import {
   Card,
@@ -70,18 +71,10 @@ export function ModelEnvPage() {
   }
 
   // Ctrl/Cmd+S to save model & env settings.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-        e.preventDefault()
-        if (!dirty || saving) return
-        void save()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dirty, saving, basePath, model, env])
+  useCtrlS(() => {
+    if (!dirty || saving) return
+    void save()
+  })
 
   if (!supported) {
     return (

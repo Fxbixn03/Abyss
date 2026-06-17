@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useCtrlS } from '@/shared/hooks/useCtrlS'
 import { useNavigate } from 'react-router-dom'
 import type { RawSettingsFile } from '@/shared/types/ipc'
 import type { ValidationIssue } from '@/shared/types/agent'
@@ -147,17 +148,7 @@ export function SettingsFilePage() {
   }
 
   // Ctrl/Cmd+S to save the open file.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-        e.preventDefault()
-        requestSave()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dirty, hasErrors, confirmDiff, draft, basePath, file])
+  useCtrlS(requestSave)
 
   if (!supported) {
     return (
