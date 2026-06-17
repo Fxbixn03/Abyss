@@ -425,7 +425,7 @@ export const rooDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: false,
-    chats: false,
+    chats: true,
   },
   configFiles: [rooRules],
   resolvePaths: (env: OsEnv) => [
