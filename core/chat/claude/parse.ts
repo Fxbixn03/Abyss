@@ -162,6 +162,15 @@ export async function readClaudeSession(
 
     const role = (asString(message.role) ?? type) as ChatRole
     if (!title && role === 'user') title = firstTextSnippet(message.content)
+    const usage = asRecord(message.usage)
+    const inputTokens =
+      usage && typeof usage.input_tokens === 'number'
+        ? usage.input_tokens
+        : undefined
+    const outputTokens =
+      usage && typeof usage.output_tokens === 'number'
+        ? usage.output_tokens
+        : undefined
     messages.push({
       id: asString(line.uuid) ?? `${messages.length}`,
       role,
@@ -169,6 +178,8 @@ export async function readClaudeSession(
       timestamp: ts,
       model: asString(message.model),
       isSidechain: line.isSidechain === true,
+      inputTokens,
+      outputTokens,
     })
   }
 

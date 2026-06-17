@@ -38,6 +38,9 @@ export interface ChatMessage {
   model?: string
   /** Sub-agent / sidechain turn (Claude). Rendered subtly indented. */
   isSidechain?: boolean
+  /** Per-message token counts when the agent records them. */
+  inputTokens?: number
+  outputTokens?: number
 }
 
 /** Lightweight metadata for the session list (cheap to compute, no full parse). */

@@ -5,7 +5,7 @@
  * bridge. Each function returns a new `ChatMessage[]` (never mutates its input).
  */
 
-import type { ChatBlock, ChatMessage } from '@/shared/types/chat'
+import type { ChatBlock, ChatMessage, ChatUsage } from '@/shared/types/chat'
 
 /**
  * Merge a streaming `text`/`thinking` delta into the current message. Consecutive
@@ -49,4 +49,24 @@ export function appendBlock(
   return messages.map((m) =>
     m.id === currentId ? { ...m, blocks: [...m.blocks, block] } : m,
   )
+}
+
+/**
+ * Attach per-message token usage to the current message when a `turn_end`
+ * event carries usage data. A null `currentId` is a no-op.
+ */
+export function applyUsage(
+  messages: ChatMessage[],
+  currentId: string | null,
+  usage: ChatUsage,
+): ChatMessage[] {
+  if (!currentId) return messages
+  return messages.map((m) => {
+    if (m.id !== currentId) return m
+    return {
+      ...m,
+      inputTokens: usage.inputTokens ?? m.inputTokens,
+      outputTokens: usage.outputTokens ?? m.outputTokens,
+    }
+  })
 }

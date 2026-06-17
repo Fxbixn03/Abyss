@@ -7,6 +7,8 @@ import { cn } from '@/shared/lib/utils'
 import { Markdown } from '@/shared/components/Markdown'
 import { relativeTime } from '@/features/chats/lib/format'
 import { Button } from '@/shared/components/ui/button'
+import { estimateCostUsd, formatMoney } from '@/shared/lib/cost'
+import { useSettingsStore } from '@/features/settings/store/settings.store'
 
 function CollapsibleBlock({
   icon,
@@ -179,6 +181,8 @@ function areEqual(prev: MessageBubbleProps, next: MessageBubbleProps): boolean {
     prev.message.id === next.message.id &&
     prev.message.blocks === next.message.blocks &&
     prev.message.blocks.length === next.message.blocks.length &&
+    prev.message.inputTokens === next.message.inputTokens &&
+    prev.message.outputTokens === next.message.outputTokens &&
     prev.isStreaming === next.isStreaming &&
     prev.agentName === next.agentName
   )
@@ -190,6 +194,7 @@ function MessageBubbleInner({
   isStreaming,
 }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false)
+  const currency = useSettingsStore((s) => s.settings.currency)
   const meta = ROLE_META[message.role] ?? ROLE_META.assistant
   // Label assistant turns with the actual agent (Claude, Codex, …) instead of
   // the generic "Assistant".
@@ -253,6 +258,21 @@ function MessageBubbleInner({
               {message.model}
             </span>
           )}
+          {message.role === 'assistant' &&
+            (message.inputTokens != null || message.outputTokens != null) && (
+              <span className="font-code text-xs text-muted-foreground/50 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                {(() => {
+                  const inTok = message.inputTokens ?? 0
+                  const outTok = message.outputTokens ?? 0
+                  const totalTok = inTok + outTok
+                  const cost = estimateCostUsd(inTok, outTok)
+                  const parts: string[] = []
+                  if (cost >= 0.0001) parts.push(`~${formatMoney(cost, currency)}`)
+                  if (totalTok > 0) parts.push(`${totalTok.toLocaleString()} tok`)
+                  return parts.join(' · ')
+                })()}
+              </span>
+            )}
           {timestamp && (
             <span
               className="text-xs text-muted-foreground/50 opacity-0 transition-opacity duration-150 group-hover:opacity-100"

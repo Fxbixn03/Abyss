@@ -25,7 +25,7 @@ import {
   reportWritePermissionError,
 } from '@/shared/lib/errors'
 import { toast } from 'sonner'
-import { appendDelta, appendBlock } from './stream-reducer'
+import { appendDelta, appendBlock, applyUsage } from './stream-reducer'
 
 /** Sessions fetched per page for infinite scroll. */
 const SESSIONS_PAGE_SIZE = 20
@@ -462,7 +462,15 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
         break
       }
       case 'turn_end': {
-        set({ status: 'idle', usage: event.usage, currentMessageId: null })
+        set((s) => ({
+          status: 'idle',
+          usage: event.usage,
+          currentMessageId: null,
+          messages:
+            event.usage && s.currentMessageId
+              ? applyUsage(s.messages, s.currentMessageId, event.usage)
+              : s.messages,
+        }))
         void get().refreshSessions()
         break
       }
