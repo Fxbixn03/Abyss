@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Badge } from '@/shared/components/ui/badge'
@@ -95,6 +96,7 @@ function RuleRow({ rule }: { rule: RuleActivation }) {
 }
 
 export function RuleActivationPage() {
+  const { t } = useTranslation('ruleActivation')
   const agent = useActiveAgent()
   const basePath = useConfigBase(agent.id)
   const supported = agent.capabilities.rules
@@ -158,22 +160,22 @@ export function RuleActivationPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Rule Activation"
-        description="See which rules fire for a given file, and what they cost"
+        title={t('title')}
+        description={t('description')}
         icon="crosshair"
       />
 
       {!supported ? (
         <EmptyState
           icon="book-open"
-          title={`${agent.displayName} has no scoped rules`}
-          description="This simulator is for agents with glob-scoped rules (like Cursor’s .mdc files). Switch to a rules-capable agent to use it."
+          title={t('noScopedRulesTitle', { agent: agent.displayName })}
+          description={t('unsupportedDesc')}
         />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
           <Card className="space-y-3 p-3">
             <label className="text-sm font-medium" htmlFor="rule-sim-path">
-              Test file path
+              {t('testFileLabel')}
             </label>
             <div className="flex items-center gap-2">
               <Icon
@@ -184,7 +186,7 @@ export function RuleActivationPage() {
                 id="rule-sim-path"
                 value={path}
                 onChange={(e) => setPath(e.target.value)}
-                placeholder="src/components/Button.tsx"
+                placeholder={t('testFilePlaceholder')}
                 className="font-code"
               />
             </div>
@@ -208,26 +210,30 @@ export function RuleActivationPage() {
           </Card>
 
           {loading ? (
-            <p className="text-sm text-muted-foreground">Loading rules…</p>
+            <p className="text-sm text-muted-foreground">
+              {t('loadingRules')}
+            </p>
           ) : rules.length === 0 ? (
             <EmptyState
               icon="book-open"
-              title="No rules to simulate"
-              description={`No rules found for ${agent.displayName} in the current scope. Add some on the Rules page first.`}
+              title={t('noRules.title')}
+              description={t('noRules.desc', { agent: agent.displayName })}
             />
           ) : (
             <>
               <div className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2 text-sm">
                 <Icon name="layers" className="size-4 text-muted-foreground" />
                 <span>
-                  <span className="font-medium text-foreground">
-                    {sim.activeCount}
-                  </span>{' '}
-                  of {rules.length} rules load for{' '}
-                  <code className="font-code text-xs">{sim.path || '—'}</code>
+                  {t('summary', {
+                    active: sim.activeCount,
+                    total: rules.length,
+                    path: sim.path || '—',
+                  })}
                 </span>
                 <span className="ml-auto font-code text-xs text-muted-foreground">
-                  ~{formatTokens(sim.activeTokens)} tokens in context
+                  {t('tokensInContext', {
+                    tokens: formatTokens(sim.activeTokens),
+                  })}
                 </span>
               </div>
               {ordered.map((rule) => (

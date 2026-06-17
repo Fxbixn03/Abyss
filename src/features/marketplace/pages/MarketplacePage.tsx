@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { DiscoveryResult } from '@/shared/discovery/types'
 import type { McpInstallSpec } from '@/shared/mcp/discovery'
 import { installSpecToEntry } from '@/shared/mcp/discovery'
@@ -26,6 +27,7 @@ const WEBSITE_SOURCES = sourcesForKind('mcp').filter(
 )
 
 export function MarketplacePage() {
+  const { t } = useTranslation('marketplace')
   const agent = useActiveAgent()
   const basePath = useConfigBase(agent.id)
   const projectDir = useProjectDir()
@@ -108,7 +110,7 @@ export function MarketplacePage() {
       setResults((prev) => (more ? [...prev, ...res.results] : res.results))
       setCursor(res.nextCursor)
     } catch {
-      setError('Could not reach the registry. Check your connection.')
+      setError(t('errorUnreachable'))
     } finally {
       setLoading(false)
       setLoadingMore(false)
@@ -137,11 +139,11 @@ export function MarketplacePage() {
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="MCP Marketplace" icon="store" />
+        <PageHeader title={t('title')} icon="store" />
         <EmptyState
           icon="plug"
-          title={`${agent.displayName} has no MCP support`}
-          description="Switch to an agent that supports the Model Context Protocol to browse and install servers."
+          title={t('noSupportTitle', { agent: agent.displayName })}
+          description={t('unsupportedDesc')}
         />
       </div>
     )
@@ -150,8 +152,8 @@ export function MarketplacePage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="MCP Marketplace"
-        description={`Browse the official registry and install into ${agent.displayName} with one click`}
+        title={t('title')}
+        description={t('headerDescription', { agent: agent.displayName })}
         icon="store"
       />
 
@@ -170,20 +172,19 @@ export function MarketplacePage() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search MCP servers — e.g. github, postgres, slack…"
+            placeholder={t('search')}
             className="pl-9"
           />
         </div>
         <Button type="submit" disabled={loading}>
-          {loading ? <Spinner label="Searching…" /> : <Icon name="search" />}
-          Search
+          {loading ? <Spinner label={t('searching')} /> : <Icon name="search" />}
+          {t('searchButton')}
         </Button>
       </form>
 
       {!basePath && (
         <p className="text-xs text-warning">
-          No config location set for {agent.displayName} — installs are
-          disabled. Set a path in Settings first.
+          {t('installsDisabled', { agent: agent.displayName })}
         </p>
       )}
 
@@ -213,19 +214,19 @@ export function MarketplacePage() {
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
         {loading && results.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Searching the registry…
+            {t('searchingRegistry')}
           </p>
         ) : error && results.length === 0 ? (
           <EmptyState
             icon="cloud-off"
-            title="Registry unavailable"
+            title={t('registryUnavailable')}
             description={error}
           />
         ) : ran && results.length === 0 ? (
           <EmptyState
             icon="search-x"
-            title="No servers found"
-            description="Try a different search term, or browse one of the community directories below."
+            title={t('noServers.title')}
+            description={t('noServers.desc')}
           />
         ) : (
           <>
@@ -256,7 +257,7 @@ export function MarketplacePage() {
                       {result.url && (
                         <button
                           type="button"
-                          title="Open repository"
+                          title={t('openRepo')}
                           onClick={() => void ipc.openExternal(result.url!)}
                           className="text-muted-foreground hover:text-foreground"
                         >
@@ -273,7 +274,7 @@ export function MarketplacePage() {
                   {installed ? (
                     <Badge variant="success" className="mt-1 shrink-0">
                       <Icon name="check" className="size-3.5" />
-                      Installed
+                      {t('installed')}
                     </Badge>
                   ) : (
                     <Button
@@ -282,13 +283,11 @@ export function MarketplacePage() {
                       onClick={() => void install(result)}
                       disabled={!result.installable || !basePath}
                       title={
-                        result.installable
-                          ? undefined
-                          : 'No installable package found'
+                        result.installable ? undefined : t('noInstallable')
                       }
                     >
                       <Icon name="download" />
-                      Install
+                      {t('install')}
                     </Button>
                   )}
                 </Card>
@@ -303,17 +302,17 @@ export function MarketplacePage() {
                 disabled={loadingMore}
               >
                 {loadingMore ? (
-                  <Spinner label="Loading more…" />
+                  <Spinner label={t('loadingMore')} />
                 ) : (
                   <Icon name="chevron-down" />
                 )}
-                Load more
+                {t('loadMore')}
               </Button>
             )}
 
             {WEBSITE_SOURCES.length > 0 && (
               <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
-                <span>More directories:</span>
+                <span>{t('moreDirectories')}</span>
                 {WEBSITE_SOURCES.map((s) => (
                   <button
                     key={s.id}

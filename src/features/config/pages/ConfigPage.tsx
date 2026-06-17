@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import { PageHeader } from '@/shared/components/PageHeader'
@@ -22,6 +23,7 @@ function basename(p: string): string {
 }
 
 export function ConfigPage() {
+  const { t } = useTranslation('config')
   const agent = useActiveAgent()
   const basePath = useInstructionsBase(agent.id)
   const { scope, projectDir } = useScope()
@@ -63,18 +65,18 @@ export function ConfigPage() {
     return (
       <div className="flex h-full flex-col gap-4">
         <PageHeader
-          title="Instructions"
-          description={`Configuration files for ${agent.displayName}`}
+          title={t('title')}
+          description={t('headerDescription', { agent: agent.displayName })}
           icon="file-text"
         />
         <EmptyState
           icon="folder"
-          title="No config location set"
-          description={`Abyss could not find a config directory for ${agent.displayName}. Set one in Settings to start editing.`}
+          title={t('noPath.title')}
+          description={t('noPath.desc', { agent: agent.displayName })}
           action={
             <Button onClick={() => navigate('/settings')}>
               <Icon name="settings" />
-              Open Settings
+              {t('actions.openSettings')}
             </Button>
           }
         />
@@ -85,8 +87,8 @@ export function ConfigPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Instructions"
-        description={`Configuration files for ${agent.displayName}`}
+        title={t('title')}
+        description={t('headerDescription', { agent: agent.displayName })}
         icon="file-text"
         actions={
           <div className="flex items-center gap-2">
@@ -102,7 +104,7 @@ export function ConfigPage() {
                 onClick={() => setCompareOpen(true)}
               >
                 <Icon name="git-compare" />
-                Compare
+                {t('actions.compare')}
               </Button>
             )}
             <Button
@@ -111,7 +113,7 @@ export function ConfigPage() {
               onClick={() => setEffectiveOpen(true)}
             >
               <Icon name="layers" />
-              Effective view
+              {t('actions.effectiveView')}
             </Button>
           </div>
         }
@@ -143,15 +145,15 @@ export function ConfigPage() {
                   {hasErrors && (
                     <span
                       className="size-2 shrink-0 rounded-full bg-destructive"
-                      title="Validation errors"
-                      aria-label="Validation errors"
+                      title={t('validationErrors')}
+                      aria-label={t('validationErrors')}
                     />
                   )}
                   {!hasErrors && isDirty && (
                     <span
                       className="size-2 shrink-0 rounded-full bg-amber-500"
-                      title="Unsaved changes"
-                      aria-label="Unsaved changes"
+                      title={t('unsavedChanges')}
+                      aria-label={t('unsavedChanges')}
                     />
                   )}
                 </span>

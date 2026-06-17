@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
@@ -39,6 +40,7 @@ const SECTION_RENDER: Record<string, ReactNode> = {
 }
 
 export function SettingsPage() {
+  const { t } = useTranslation('settings')
   const agent = useActiveAgent()
 
   // Hide capability-gated sections (Status Line, Spinner) for agents that don't
@@ -65,8 +67,8 @@ export function SettingsPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Settings"
-        description="Paths, appearance and app preferences"
+        title={t('page.title')}
+        description={t('page.description')}
         icon="settings"
       />
       <div className="grid min-h-0 flex-1 grid-cols-[200px_1fr] gap-4">

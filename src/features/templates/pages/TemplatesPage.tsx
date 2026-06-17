@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Card } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
@@ -47,6 +48,7 @@ function TemplatePreviewDialog({
   onApply: (t: PromptTemplate) => void
   onCopy: (t: PromptTemplate) => void
 }) {
+  const { t } = useTranslation('templates')
   return (
     <Dialog open={template !== null} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col">
@@ -54,7 +56,7 @@ function TemplatePreviewDialog({
           <DialogTitle className="flex items-center gap-2">
             {template?.title}
             {template && !template.builtin && (
-              <Badge variant="muted">custom</Badge>
+              <Badge variant="muted">{t('badges.custom')}</Badge>
             )}
           </DialogTitle>
         </DialogHeader>
@@ -84,11 +86,11 @@ function TemplatePreviewDialog({
             <DialogFooter>
               <Button variant="outline" onClick={() => onCopy(template)}>
                 <Icon name="copy" />
-                Copy
+                {t('actions.copy')}
               </Button>
               <Button onClick={() => onApply(template)}>
                 <Icon name="file-text" />
-                Apply
+                {t('actions.apply')}
               </Button>
             </DialogFooter>
           </>
@@ -99,6 +101,8 @@ function TemplatePreviewDialog({
 }
 
 export function TemplatesPage() {
+  // Aliased to `tr` because `t` is used throughout as the PromptTemplate var.
+  const { t: tr } = useTranslation('templates')
   const customTemplates = useTemplatesStore((s) => s.customTemplates)
   const builtinOverrides = useTemplatesStore((s) => s.builtinOverrides)
   const hiddenBuiltins = useTemplatesStore((s) => s.hiddenBuiltins)
@@ -206,7 +210,7 @@ export function TemplatesPage() {
     }
     void navigator.clipboard.writeText(t.content)
     recordUse(t.id)
-    setNotice(`Copied “${t.title}”.`)
+    setNotice(tr('notices.copied', { title: t.title }))
   }
 
   const toggleCompose = (id: string) =>
@@ -222,7 +226,7 @@ export function TemplatesPage() {
     if (chosen.length === 0) return
     setApply({
       source: {
-        title: `Combined (${chosen.length} templates)`,
+        title: tr('combinedTitle', { count: chosen.length }),
         content: composeTemplates(chosen.map((c) => c.content)),
       },
       ids: chosen.map((c) => c.id),
@@ -243,7 +247,8 @@ export function TemplatesPage() {
       })),
     }
     const { path } = await ipc.templatesExport(pack, 'abyss')
-    if (path) setNotice(`Exported ${pack.templates.length} templates.`)
+    if (path)
+      setNotice(tr('notices.exported', { count: pack.templates.length }))
   }
 
   const importPack = async () => {
@@ -263,7 +268,7 @@ export function TemplatesPage() {
         agentIds: t.agentIds,
       })),
     )
-    setNotice(`Imported ${n} template${n === 1 ? '' : 's'}.`)
+    setNotice(tr('notices.imported', { count: n }))
   }
 
   const openNew = () => {
@@ -279,8 +284,8 @@ export function TemplatesPage() {
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto pr-1">
       <PageHeader
-        title="Prompt Templates"
-        description="Reusable system prompts and rule sets. Apply one to add it to an agent's instructions."
+        title={tr('title')}
+        description={tr('description')}
         icon="library"
         actions={
           <div className="flex items-center gap-2">
@@ -290,7 +295,7 @@ export function TemplatesPage() {
               onClick={() => void importPack()}
             >
               <Icon name="upload" />
-              Import
+              {tr('actions.import')}
             </Button>
             <Button
               variant="outline"
@@ -298,7 +303,7 @@ export function TemplatesPage() {
               onClick={() => void exportPack()}
             >
               <Icon name="download" />
-              Export
+              {tr('actions.export')}
             </Button>
             {canRestore && (
               <Button
@@ -307,12 +312,12 @@ export function TemplatesPage() {
                 onClick={() => setRestoreOpen(true)}
               >
                 <Icon name="rotate-ccw" />
-                Restore defaults
+                {tr('actions.restoreDefaults')}
               </Button>
             )}
             <Button size="sm" onClick={openNew}>
               <Icon name="plus" />
-              New template
+              {tr('actions.new')}
             </Button>
           </div>
         }
@@ -327,7 +332,7 @@ export function TemplatesPage() {
           <button
             type="button"
             onClick={() => setNotice(null)}
-            aria-label="Dismiss"
+            aria-label={tr('dismiss')}
             className="text-muted-foreground hover:text-foreground"
           >
             <Icon name="x" className="size-4" />
@@ -344,7 +349,7 @@ export function TemplatesPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search templates…"
+            placeholder={tr('search')}
             className="pl-8"
           />
         </div>
@@ -357,7 +362,7 @@ export function TemplatesPage() {
             name="star"
             className={cn('size-4', favoritesOnly && 'fill-current')}
           />
-          Favorites
+          {tr('filters.favorites')}
         </Button>
         <Button
           variant={composeMode ? 'default' : 'outline'}
@@ -368,7 +373,7 @@ export function TemplatesPage() {
           }}
         >
           <Icon name="layers" />
-          Combine
+          {tr('actions.combine')}
         </Button>
       </div>
 
@@ -384,7 +389,7 @@ export function TemplatesPage() {
                 : 'border-border text-muted-foreground hover:bg-accent/60',
             )}
           >
-            All
+            {tr('filters.all')}
           </button>
           {allTags.map((tag) => (
             <button
@@ -408,7 +413,7 @@ export function TemplatesPage() {
         <div className="flex items-center justify-between gap-3 rounded-md border border-primary/40 bg-accent px-3 py-2 text-sm">
           <span className="flex items-center gap-2">
             <Icon name="layers" className="size-4 shrink-0" />
-            {selectedForCompose.size} selected to combine
+            {tr('selected', { count: selectedForCompose.size })}
           </span>
           <div className="flex items-center gap-2">
             <Button
@@ -416,10 +421,10 @@ export function TemplatesPage() {
               size="sm"
               onClick={() => setSelectedForCompose(new Set())}
             >
-              Clear
+              {tr('actions.clear')}
             </Button>
             <Button size="sm" onClick={applyCompose}>
-              Combine &amp; apply
+              {tr('actions.combineApply')}
             </Button>
           </div>
         </div>
@@ -427,7 +432,7 @@ export function TemplatesPage() {
 
       {visible.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted-foreground">
-          No templates match your filters.
+          {tr('noMatch')}
         </p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -447,13 +452,17 @@ export function TemplatesPage() {
                   <span className="font-medium">{t.title}</span>
                   <div className="flex shrink-0 items-center gap-1">
                     {t.builtin
-                      ? edited && <Badge variant="secondary">edited</Badge>
-                      : !composeMode && <Badge variant="muted">custom</Badge>}
+                      ? edited && (
+                          <Badge variant="secondary">{tr('badges.edited')}</Badge>
+                        )
+                      : !composeMode && (
+                          <Badge variant="muted">{tr('badges.custom')}</Badge>
+                        )}
                     {composeMode ? (
                       <button
                         type="button"
                         onClick={() => toggleCompose(t.id)}
-                        aria-label="Select to combine"
+                        aria-label={tr('selectToCombine')}
                         className={cn(
                           'flex size-5 items-center justify-center rounded border',
                           isSelected
@@ -467,8 +476,8 @@ export function TemplatesPage() {
                       <button
                         type="button"
                         onClick={() => toggleFavorite(t.id)}
-                        aria-label={isFav ? 'Unpin' : 'Pin'}
-                        title={isFav ? 'Unpin' : 'Pin to top'}
+                        aria-label={isFav ? tr('pin.unpin') : tr('pin.pin')}
+                        title={isFav ? tr('pin.unpin') : tr('pin.pinTop')}
                         className={cn(
                           'transition-colors',
                           isFav
@@ -503,7 +512,9 @@ export function TemplatesPage() {
                   onClick={() =>
                     composeMode ? toggleCompose(t.id) : setPreviewId(t.id)
                   }
-                  title={composeMode ? 'Select to combine' : 'Open preview'}
+                  title={
+                    composeMode ? tr('selectToCombine') : tr('pin.openPreview')
+                  }
                   className="group block w-full text-left"
                 >
                   <pre className="line-clamp-3 whitespace-pre-wrap rounded-md bg-muted/50 p-2 font-code text-[11px] text-muted-foreground transition-colors group-hover:bg-muted">
@@ -518,14 +529,14 @@ export function TemplatesPage() {
                       onClick={() => openApply(t)}
                     >
                       <Icon name="file-text" />
-                      Apply
+                      {tr('actions.apply')}
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => setPreviewId(t.id)}
-                      aria-label="Preview"
-                      title="Preview"
+                      aria-label={tr('row.preview')}
+                      title={tr('row.preview')}
                     >
                       <Icon name="eye" />
                     </Button>
@@ -533,8 +544,8 @@ export function TemplatesPage() {
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => copy(t)}
-                      aria-label="Copy"
-                      title="Copy"
+                      aria-label={tr('row.copy')}
+                      title={tr('row.copy')}
                     >
                       <Icon name="copy" />
                     </Button>
@@ -543,11 +554,11 @@ export function TemplatesPage() {
                       size="icon-sm"
                       onClick={() => {
                         const id = duplicateTemplate(t)
-                        setNotice(`Duplicated “${t.title}”.`)
+                        setNotice(tr('notices.duplicated', { title: t.title }))
                         void id
                       }}
-                      aria-label="Duplicate"
-                      title="Duplicate"
+                      aria-label={tr('row.duplicate')}
+                      title={tr('row.duplicate')}
                     >
                       <Icon name="files" />
                     </Button>
@@ -555,8 +566,8 @@ export function TemplatesPage() {
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => openEdit(t)}
-                      aria-label="Edit"
-                      title="Edit"
+                      aria-label={tr('row.edit')}
+                      title={tr('row.edit')}
                     >
                       <Icon name="pencil" />
                     </Button>
@@ -564,8 +575,8 @@ export function TemplatesPage() {
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => setPendingDelete(t)}
-                      aria-label="Delete"
-                      title="Delete"
+                      aria-label={tr('row.delete')}
+                      title={tr('row.delete')}
                     >
                       <Icon name="trash" />
                     </Button>
@@ -610,9 +621,7 @@ export function TemplatesPage() {
           apply?.ids.forEach((id) => recordUse(id))
           setComposeMode(false)
           setSelectedForCompose(new Set())
-          setNotice(
-            `Applied “${title}” to ${count} agent${count === 1 ? '' : 's'}.`,
-          )
+          setNotice(tr('notices.applied', { title, count }))
         }}
       />
 
@@ -624,11 +633,11 @@ export function TemplatesPage() {
         }}
         title={copyTemplate?.title ?? ''}
         content={copyTemplate?.content ?? ''}
-        submitLabel="Copy"
+        submitLabel={tr('actions.copy')}
         onSubmit={(substituted) => {
           void navigator.clipboard.writeText(substituted)
           if (copyTemplate) recordUse(copyTemplate.id)
-          setNotice(`Copied “${copyTemplate?.title ?? ''}”.`)
+          setNotice(tr('notices.copied', { title: copyTemplate?.title ?? '' }))
         }}
       />
 
@@ -637,13 +646,13 @@ export function TemplatesPage() {
         onOpenChange={(open) => {
           if (!open) setPendingDelete(null)
         }}
-        title={`Delete “${pendingDelete?.title ?? ''}”?`}
+        title={tr('confirmDelete.title', { name: pendingDelete?.title ?? '' })}
         description={
           pendingDelete?.builtin
-            ? 'This hides the built-in template. Restore defaults brings it back.'
-            : 'This permanently removes the custom template.'
+            ? tr('confirmDelete.builtin')
+            : tr('confirmDelete.custom')
         }
-        confirmLabel="Delete"
+        confirmLabel={tr('row.delete')}
         onConfirm={() => {
           const t = pendingDelete
           setPendingDelete(null)
@@ -654,9 +663,9 @@ export function TemplatesPage() {
       <ConfirmDialog
         open={restoreOpen}
         onOpenChange={setRestoreOpen}
-        title="Restore default templates?"
-        description="This undoes edits and deletions of the built-in templates. Your custom templates are kept."
-        confirmLabel="Restore"
+        title={tr('confirmRestore.title')}
+        description={tr('confirmRestore.desc')}
+        confirmLabel={tr('restore')}
         destructive={false}
         onConfirm={() => {
           restoreDefaults()

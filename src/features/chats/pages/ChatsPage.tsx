@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ChatPermissionMode } from '@/shared/types/chat'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
@@ -29,21 +30,17 @@ import { analyzeTranscript, extractReferencedPaths } from '../lib/suspicion'
 import { ReplayBar } from '../components/ReplayBar'
 import { REPLAY_SPEEDS } from '../lib/replay'
 
-const CLAUDE_MODELS = [
-  { value: 'default', label: 'Default model' },
-  { value: 'opus', label: 'Opus' },
-  { value: 'sonnet', label: 'Sonnet' },
-  { value: 'haiku', label: 'Haiku' },
-]
+const CLAUDE_MODELS = ['default', 'opus', 'sonnet', 'haiku'] as const
 
-const PERMISSION_MODES: { value: ChatPermissionMode; label: string }[] = [
-  { value: 'default', label: 'Ask (default)' },
-  { value: 'acceptEdits', label: 'Accept edits' },
-  { value: 'plan', label: 'Plan only' },
-  { value: 'bypassPermissions', label: 'Bypass all' },
+const PERMISSION_MODES: ChatPermissionMode[] = [
+  'default',
+  'acceptEdits',
+  'plan',
+  'bypassPermissions',
 ]
 
 export function ChatsPage() {
+  const { t } = useTranslation('chats')
   const agent = useActiveAgent()
   const supported = agent.capabilities.chats
 
@@ -137,11 +134,11 @@ export function ChatsPage() {
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Chats" icon="messages-square" />
+        <PageHeader title={t('title')} icon="messages-square" />
         <EmptyState
           icon="messages-square"
-          title={`${agent.displayName} has no chats`}
-          description="Switch to an agent that supports chat history and live chat."
+          title={t('noChatsTitle', { agent: agent.displayName })}
+          description={t('unsupportedDesc')}
         />
       </div>
     )
@@ -161,10 +158,7 @@ export function ChatsPage() {
   const handleNewChat = async () => {
     // Default to the active project in project scope, else the user's home dir.
     const defaultPath = projectDir ?? (await ipc.getHomeDir()).home
-    const { path } = await ipc.pickDirectory(
-      'Choose a working directory',
-      defaultPath,
-    )
+    const { path } = await ipc.pickDirectory(t('pickDirTitle'), defaultPath)
     if (path) newChat(path)
   }
 
@@ -195,8 +189,8 @@ export function ChatsPage() {
         markers.push({
           kind: 'missing-file',
           severity: 'warning',
-          title: 'Referenced file not found',
-          detail: `“${ref}” doesn't exist under the session directory.`,
+          title: t('missingFile.title'),
+          detail: t('missingFile.detail', { ref }),
           snippet: ref,
         })
       }
@@ -208,8 +202,8 @@ export function ChatsPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Chats"
-        description={`History & live chat for ${agent.displayName}`}
+        title={t('title')}
+        description={t('headerDescription', { agent: agent.displayName })}
         icon="messages-square"
         actions={
           authed && availability?.account ? (
@@ -237,7 +231,7 @@ export function ChatsPage() {
           aria-orientation="vertical"
           onPointerDown={startDrag}
           onDoubleClick={resetWidth}
-          title="Drag to resize · double-click to reset"
+          title={t('resize')}
           className="group relative mx-1 flex w-1.5 shrink-0 cursor-col-resize items-stretch"
         >
           <span
@@ -261,17 +255,17 @@ export function ChatsPage() {
           ) : !canChat ? (
             <EmptyState
               icon="messages-square"
-              title="Pick up a conversation"
+              title={t('pickUp.title')}
               description={
                 availability?.readOnly
-                  ? 'Select a past chat on the left to view its transcript.'
-                  : 'Select a past chat on the left, or start a new one.'
+                  ? t('pickUp.descReadOnly')
+                  : t('pickUp.desc')
               }
               action={
                 !availability?.readOnly ? (
                   <Button onClick={() => void handleNewChat()}>
                     <Icon name="plus" />
-                    New chat
+                    {t('newChat')}
                   </Button>
                 ) : undefined
               }
@@ -281,7 +275,7 @@ export function ChatsPage() {
               <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">
-                    {title || 'New chat'}
+                    {title || t('newChat')}
                   </p>
                   <button
                     type="button"
@@ -290,7 +284,7 @@ export function ChatsPage() {
                     title={cwd}
                   >
                     <Icon name="folder-open" className="size-3 shrink-0" />
-                    <span className="truncate">{cwd || 'no directory'}</span>
+                    <span className="truncate">{cwd || t('noDirectory')}</span>
                   </button>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
@@ -350,10 +344,10 @@ export function ChatsPage() {
                               },
                         )
                       }
-                      title="Replay this conversation step by step"
+                      title={t('replayTooltip')}
                     >
                       <Icon name={activeReplay ? 'x' : 'play'} />
-                      {activeReplay ? 'Exit replay' : 'Replay'}
+                      {activeReplay ? t('exitReplay') : t('replay')}
                     </Button>
                   )}
                   {messages.length > 0 && (
@@ -362,14 +356,14 @@ export function ChatsPage() {
                       size="sm"
                       onClick={() => void scanRisks()}
                       disabled={scanning}
-                      title="Scan this transcript for risk indicators"
+                      title={t('riskScan.tooltip')}
                     >
                       {scanning ? (
-                        <Spinner label="Scanning…" />
+                        <Spinner label={t('riskScan.scanning')} />
                       ) : (
                         <Icon name="flag" />
                       )}
-                      Scan risks
+                      {t('riskScan.scan')}
                     </Button>
                   )}
                 </div>
@@ -429,14 +423,14 @@ export function ChatsPage() {
                     <span className="flex items-center gap-1.5 text-xs font-medium">
                       <Icon name="flag" className="size-3.5" />
                       {shownRisks.length === 0
-                        ? 'No risk indicators found'
-                        : `${shownRisks.length} risk indicator(s)`}
+                        ? t('risks.none')
+                        : t('risks.count', { count: shownRisks.length })}
                     </span>
                     <button
                       type="button"
                       onClick={() => setRisks(null)}
                       className="text-muted-foreground hover:text-foreground"
-                      aria-label="Dismiss risk scan"
+                      aria-label={t('riskScan.dismiss')}
                     >
                       <Icon name="x" className="size-3.5" />
                     </button>
@@ -537,8 +531,8 @@ export function ChatsPage() {
                           </SelectTrigger>
                           <SelectContent>
                             {PERMISSION_MODES.map((m) => (
-                              <SelectItem key={m.value} value={m.value}>
-                                {m.label}
+                              <SelectItem key={m} value={m}>
+                                {t(`permissionModes.${m}`)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -552,8 +546,8 @@ export function ChatsPage() {
                             </SelectTrigger>
                             <SelectContent>
                               {CLAUDE_MODELS.map((m) => (
-                                <SelectItem key={m.value} value={m.value}>
-                                  {m.label}
+                                <SelectItem key={m} value={m}>
+                                  {t(`models.${m}`)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -562,8 +556,8 @@ export function ChatsPage() {
 
                         {status === 'starting' && (
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Spinner className="size-3" label="Starting…" />
-                            starting…
+                            <Spinner className="size-3" label={t('starting')} />
+                            {t('startingText')}
                           </span>
                         )}
                       </div>

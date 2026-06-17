@@ -126,7 +126,7 @@ export interface AppSettings {
   sessionTokenBudget?: number
   /** Warn when budget consumption reaches this percentage (0/undefined = off). */
   budgetAlertPercent?: number
-  /** UI language (BCP-47-ish). English ('en') is the only built-in for now. */
+  /** UI language code. See SUPPORTED_LANGUAGES in shared/i18n; defaults to 'en'. */
   language: string
   /** Auto-backup of all configs on first launch within the chosen interval. */
   autoBackup: boolean

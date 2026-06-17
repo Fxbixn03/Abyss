@@ -1,0 +1,47 @@
+{
+  "title": "Chats",
+  "headerDescription": "Verlauf & Live-Chat für {{agent}}",
+  "unsupportedDesc": "Wechsle zu einem Agent, der Chat-Verlauf und Live-Chat unterstützt.",
+  "noChatsTitle": "{{agent}} hat keine Chats",
+  "resize": "Zum Ändern der Größe ziehen · Doppelklick zum Zurücksetzen",
+  "pickUp": {
+    "title": "Unterhaltung fortsetzen",
+    "desc": "Wähle links einen früheren Chat aus oder starte einen neuen.",
+    "descReadOnly": "Wähle links einen früheren Chat aus, um sein Transkript anzusehen."
+  },
+  "replayTooltip": "Diese Unterhaltung Schritt für Schritt wiedergeben",
+  "replay": "Wiedergabe",
+  "exitReplay": "Wiedergabe beenden",
+  "riskScan": {
+    "tooltip": "Dieses Transkript auf Risikoindikatoren prüfen",
+    "scan": "Risiken prüfen",
+    "scanning": "Wird geprüft…",
+    "dismiss": "Risiko-Prüfung schließen"
+  },
+  "risks": {
+    "none": "Keine Risikoindikatoren gefunden",
+    "count_one": "{{count}} Risikoindikator",
+    "count_other": "{{count}} Risikoindikatoren"
+  },
+  "missingFile": {
+    "title": "Referenzierte Datei nicht gefunden",
+    "detail": "„{{ref}}“ existiert nicht im Sitzungsverzeichnis."
+  },
+  "starting": "Wird gestartet…",
+  "startingText": "wird gestartet…",
+  "newChat": "Neuer Chat",
+  "noDirectory": "kein Verzeichnis",
+  "pickDirTitle": "Arbeitsverzeichnis wählen",
+  "permissionModes": {
+    "default": "Fragen (Standard)",
+    "acceptEdits": "Edits akzeptieren",
+    "plan": "Nur Plan",
+    "bypassPermissions": "Alle umgehen"
+  },
+  "models": {
+    "default": "Standardmodell",
+    "opus": "Opus",
+    "sonnet": "Sonnet",
+    "haiku": "Haiku"
+  }
+}

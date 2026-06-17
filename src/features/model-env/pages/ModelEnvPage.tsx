@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useCtrlS } from '@/shared/hooks/useCtrlS'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Card,
   CardContent,
@@ -27,6 +28,7 @@ import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 
 export function ModelEnvPage() {
+  const { t } = useTranslation(['modelEnv', 'common'])
   const agent = useActiveAgent()
   const basePath = useConfigBase(agent.id)
   const navigate = useNavigate()
@@ -79,11 +81,11 @@ export function ModelEnvPage() {
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Model & Env" icon="sliders" />
+        <PageHeader title={t('title')} icon="sliders" />
         <EmptyState
           icon="sliders"
-          title={`${agent.displayName} has no model settings`}
-          description="Switch to an agent that supports model and environment configuration."
+          title={t('noSupportTitle', { agent: agent.displayName })}
+          description={t('unsupportedDesc')}
         />
       </div>
     )
@@ -92,15 +94,15 @@ export function ModelEnvPage() {
   if (!basePath) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Model & Env" icon="sliders" />
+        <PageHeader title={t('title')} icon="sliders" />
         <EmptyState
           icon="folder"
-          title="No config location set"
-          description="Set a config directory in Settings first."
+          title={t('noPath.title')}
+          description={t('noPath.desc')}
           action={
             <Button onClick={() => navigate('/settings')}>
               <Icon name="settings" />
-              Open Settings
+              {t('openSettings')}
             </Button>
           }
         />
@@ -111,13 +113,13 @@ export function ModelEnvPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Model & Env"
-        description={`Default model and environment for ${agent.displayName}`}
+        title={t('title')}
+        description={t('headerDescription', { agent: agent.displayName })}
         icon="sliders"
         actions={
           <Button onClick={() => void save()} disabled={!dirty || saving}>
             <Icon name="save" />
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('common:actions.saving') : t('common:actions.save')}
           </Button>
         }
       />
@@ -127,15 +129,13 @@ export function ModelEnvPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Icon name="cpu" className="size-4" />
-              Model
+              {t('model.label')}
             </CardTitle>
-            <CardDescription>
-              Default model identifier the agent should use.
-            </CardDescription>
+            <CardDescription>{t('model.desc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-1.5">
-              <Label htmlFor="model">Model</Label>
+              <Label htmlFor="model">{t('model.label')}</Label>
               <Input
                 id="model"
                 value={model}
@@ -143,7 +143,7 @@ export function ModelEnvPage() {
                   setModel(e.target.value)
                   setDirty(true)
                 }}
-                placeholder="claude-sonnet-4-6"
+                placeholder={t('modelPlaceholder')}
                 className="font-code"
               />
             </div>
@@ -154,11 +154,9 @@ export function ModelEnvPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Icon name="sliders" className="size-4" />
-              Environment variables
+              {t('env.label')}
             </CardTitle>
-            <CardDescription>
-              Injected into the agent's environment.
-            </CardDescription>
+            <CardDescription>{t('env.desc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <KeyValueEditor

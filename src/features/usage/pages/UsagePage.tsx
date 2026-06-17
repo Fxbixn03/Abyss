@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { UsageAnalytics } from '@/shared/types/chat'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
@@ -28,14 +29,21 @@ function compact(n: number): string {
   return String(n)
 }
 
-function relativeTime(iso?: string): string {
-  if (!iso) return 'never'
+type RelKey =
+  | 'relative.never'
+  | 'relative.now'
+  | 'relative.minutes'
+  | 'relative.hours'
+  | 'relative.days'
+
+function relativeTime(iso?: string): { key: RelKey; count: number } {
+  if (!iso) return { key: 'relative.never', count: 0 }
   const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
-  if (min < 1) return 'just now'
-  if (min < 60) return `${min}m ago`
+  if (min < 1) return { key: 'relative.now', count: 0 }
+  if (min < 60) return { key: 'relative.minutes', count: min }
   const h = Math.round(min / 60)
-  if (h < 24) return `${h}h ago`
-  return `${Math.round(h / 24)}d ago`
+  if (h < 24) return { key: 'relative.hours', count: h }
+  return { key: 'relative.days', count: Math.round(h / 24) }
 }
 
 function basename(p: string): string {
@@ -85,6 +93,7 @@ function WeeklyBudgetGauge({
   budget: number
   alertPercent?: number
 }) {
+  const { t } = useTranslation('usage')
   const ratio = budget > 0 ? used / budget : 0
   const pct = Math.round(ratio * 100)
   const barColor =
@@ -100,10 +109,14 @@ function WeeklyBudgetGauge({
       <div className="flex items-center justify-between text-sm">
         <span className="flex items-center gap-2 font-medium">
           <Icon name="gauge" className="size-4 text-muted-foreground" />
-          Weekly budget
+          {t('weeklyBudget')}
         </span>
         <span className="font-code text-xs text-muted-foreground">
-          {compact(used)} / {compact(budget)} tokens ({pct}%)
+          {t('budget.usage', {
+            used: compact(used),
+            budget: compact(budget),
+            pct,
+          })}
         </span>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -115,13 +128,13 @@ function WeeklyBudgetGauge({
       {ratio >= 1 ? (
         <p className="flex items-center gap-1.5 text-xs text-destructive">
           <Icon name="triangle-alert" className="size-3.5" />
-          Weekly token budget exceeded
+          {t('budgetExceeded')}
         </p>
       ) : (
         alertHit && (
           <p className="flex items-center gap-1.5 text-xs text-warning">
             <Icon name="triangle-alert" className="size-3.5" />
-            Past your {alertPercent}% budget alert
+            {t('budget.alert', { percent: alertPercent })}
           </p>
         )
       )}
@@ -140,6 +153,7 @@ function Bar({ value, max }: { value: number; max: number }) {
 }
 
 export function UsagePage() {
+  const { t } = useTranslation('usage')
   const agents = useAllAgents()
   const chatAgents = useMemo(
     () => agents.filter((a) => a.capabilities.chats),
@@ -215,15 +229,16 @@ export function UsagePage() {
   const maxProjectTokens = data
     ? Math.max(1, ...data.projects.map((p) => p.inputTokens + p.outputTokens))
     : 1
+  const rel = relativeTime(data?.lastActivityAt)
 
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Analytics"
+        title={t('title')}
         description={
           scope === 'project' && projectDir
-            ? `Token & cost usage in ${basename(projectDir)}`
-            : 'Token & cost usage across your agents'
+            ? t('description.project', { project: basename(projectDir) })
+            : t('description.all')
         }
         icon="bar-chart-3"
         actions={
@@ -251,7 +266,7 @@ export function UsagePage() {
               disabled={!hasData}
             >
               <Icon name="download" />
-              CSV
+              {t('csv')}
             </Button>
             <Button
               variant="outline"
@@ -259,8 +274,12 @@ export function UsagePage() {
               onClick={() => setReload((n) => n + 1)}
               disabled={loading}
             >
-              {loading ? <Spinner label="Refreshing…" /> : <Icon name="refresh-cw" />}
-              Refresh
+              {loading ? (
+                <Spinner label={t('refreshing')} />
+              ) : (
+                <Icon name="refresh-cw" />
+              )}
+              {t('refresh')}
             </Button>
           </div>
         }
@@ -268,38 +287,43 @@ export function UsagePage() {
 
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-1">
         {loading && !data ? (
-          <p className="text-sm text-muted-foreground">Crunching usage…</p>
+          <p className="text-sm text-muted-foreground">{t('crunching')}</p>
         ) : !hasData ? (
           <EmptyState
             icon="bar-chart-3"
-            title="No usage recorded yet"
-            description="Once your agents have chat history, token use, cost estimates and an activity calendar show up here."
+            title={t('empty.title')}
+            description={t('empty.desc')}
           />
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <Stat
                 icon="circle-dollar-sign"
-                label="estimated cost"
+                label={t('stats.estimatedCost')}
                 value={`~${formatMoney(data.estCostUsd, currency)}`}
-                hint="Sonnet-class estimate"
+                hint={t('statHints.sonnet')}
               />
               <Stat
                 icon="cpu"
-                label="total tokens"
+                label={t('stats.totalTokens')}
                 value={compact(data.inputTokens + data.outputTokens)}
-                hint={`${compact(data.inputTokens)} in · ${compact(data.outputTokens)} out`}
+                hint={t('statHints.inOut', {
+                  in: compact(data.inputTokens),
+                  out: compact(data.outputTokens),
+                })}
               />
               <Stat
                 icon="messages-square"
-                label="sessions"
+                label={t('stats.sessions')}
                 value={compact(data.totalSessions)}
-                hint={`${compact(data.totalMessages)} messages`}
+                hint={t('statHints.messages', {
+                  value: compact(data.totalMessages),
+                })}
               />
               <Stat
                 icon="clock"
-                label="last activity"
-                value={relativeTime(data.lastActivityAt)}
+                label={t('stats.lastActivity')}
+                value={t(rel.key, { count: rel.count })}
               />
             </div>
 
@@ -313,7 +337,7 @@ export function UsagePage() {
 
             <section className="space-y-2">
               <h2 className="text-sm font-medium text-muted-foreground">
-                Tokens per day · last {data.days} days
+                {t('tokensPerDay', { count: data.days })}
               </h2>
               <Card className="p-4">
                 <UsageTimeline daily={data.daily} />
@@ -322,7 +346,7 @@ export function UsagePage() {
 
             <section className="space-y-2">
               <h2 className="text-sm font-medium text-muted-foreground">
-                Activity calendar
+                {t('sections.calendar')}
               </h2>
               <Card className="p-4">
                 <UsageHeatmap daily={data.daily} />
@@ -332,7 +356,7 @@ export function UsagePage() {
             {data.byAgent.length > 1 && (
               <section className="space-y-2">
                 <h2 className="text-sm font-medium text-muted-foreground">
-                  By agent
+                  {t('sections.byAgent')}
                 </h2>
                 <Card className="divide-y divide-border">
                   {data.byAgent.map((a) => {
@@ -367,7 +391,7 @@ export function UsagePage() {
 
             <section className="space-y-2">
               <h2 className="text-sm font-medium text-muted-foreground">
-                Top projects
+                {t('sections.topProjects')}
               </h2>
               <Card className="divide-y divide-border">
                 {data.projects.map((p) => {
@@ -399,10 +423,7 @@ export function UsagePage() {
               </Card>
             </section>
 
-            <p className="pb-2 text-xs text-muted-foreground">
-              Costs are rough estimates from token counts at a single
-              Sonnet-class rate — treat them as ballpark, not billing.
-            </p>
+            <p className="pb-2 text-xs text-muted-foreground">{t('costNote')}</p>
           </>
         )}
       </div>

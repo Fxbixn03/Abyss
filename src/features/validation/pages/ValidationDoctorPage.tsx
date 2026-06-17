@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Tabs,
   TabsContent,
@@ -21,16 +22,17 @@ interface ValidationDoctorPageProps {
 export function ValidationDoctorPage({
   defaultTab = 'validation',
 }: ValidationDoctorPageProps) {
+  const { t } = useTranslation('validation')
   return (
     <Tabs defaultValue={defaultTab} className="flex h-full flex-col gap-4">
       <TabsList className="self-start">
         <TabsTrigger value="validation">
           <Icon name="clipboard-check" className="size-4" />
-          Validation
+          {t('tabs.validation')}
         </TabsTrigger>
         <TabsTrigger value="doctor">
           <Icon name="stethoscope" className="size-4" />
-          Doctor
+          {t('tabs.doctor')}
         </TabsTrigger>
       </TabsList>
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { InsightsReport, SessionFriction } from '@/shared/types/chat'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
@@ -10,10 +11,13 @@ import { reportError } from '@/shared/lib/errors'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useProjectDir } from '@/features/scope/hooks/useScopedBase'
 
-function scoreTone(score: number): { label: string; variant: 'success' | 'warning' | 'danger' } {
-  if (score < 20) return { label: 'smooth', variant: 'success' }
-  if (score < 50) return { label: 'some friction', variant: 'warning' }
-  return { label: 'rough', variant: 'danger' }
+function scoreTone(score: number): {
+  toneKey: 'smooth' | 'some' | 'rough'
+  variant: 'success' | 'warning' | 'danger'
+} {
+  if (score < 20) return { toneKey: 'smooth', variant: 'success' }
+  if (score < 50) return { toneKey: 'some', variant: 'warning' }
+  return { toneKey: 'rough', variant: 'danger' }
 }
 
 function Stat({ icon, label, value }: { icon: string; label: string; value: string }) {
@@ -31,24 +35,28 @@ function Stat({ icon, label, value }: { icon: string; label: string; value: stri
 }
 
 function DistributionBar({ buckets }: { buckets: InsightsReport['buckets'] }) {
+  const { t } = useTranslation('insights')
   const total = Math.max(1, buckets.smooth + buckets.some + buckets.high)
   const seg = (n: number) => `${(n / total) * 100}%`
   return (
     <div className="space-y-2">
       <div className="flex h-3 w-full overflow-hidden rounded-full">
-        <div className="bg-success" style={{ width: seg(buckets.smooth) }} title={`${buckets.smooth} smooth`} />
-        <div className="bg-warning" style={{ width: seg(buckets.some) }} title={`${buckets.some} some friction`} />
-        <div className="bg-destructive" style={{ width: seg(buckets.high) }} title={`${buckets.high} rough`} />
+        <div className="bg-success" style={{ width: seg(buckets.smooth) }} title={t('buckets.smooth', { count: buckets.smooth })} />
+        <div className="bg-warning" style={{ width: seg(buckets.some) }} title={t('buckets.some', { count: buckets.some })} />
+        <div className="bg-destructive" style={{ width: seg(buckets.high) }} title={t('buckets.rough', { count: buckets.high })} />
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-success" /> {buckets.smooth} smooth
+          <span className="size-2 rounded-full bg-success" />{' '}
+          {t('buckets.smooth', { count: buckets.smooth })}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-warning" /> {buckets.some} some friction
+          <span className="size-2 rounded-full bg-warning" />{' '}
+          {t('buckets.some', { count: buckets.some })}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-destructive" /> {buckets.high} rough
+          <span className="size-2 rounded-full bg-destructive" />{' '}
+          {t('buckets.rough', { count: buckets.high })}
         </span>
       </div>
     </div>
@@ -85,6 +93,7 @@ function TrendChart({ daily }: { daily: InsightsReport['daily'] }) {
 }
 
 function FrictionRow({ f }: { f: SessionFriction }) {
+  const { t } = useTranslation('insights')
   const tone = scoreTone(f.score)
   return (
     <li className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
@@ -93,7 +102,7 @@ function FrictionRow({ f }: { f: SessionFriction }) {
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium" title={f.title}>
-          {f.title || 'Untitled session'}
+          {f.title || t('untitled')}
         </p>
         <p className="truncate font-code text-xs text-muted-foreground">
           {f.projectLabel}
@@ -101,30 +110,31 @@ function FrictionRow({ f }: { f: SessionFriction }) {
       </div>
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
         {f.corrections > 0 && (
-          <Badge variant="muted" title="User corrections">
+          <Badge variant="muted" title={t('cards.corrections')}>
             <Icon name="rotate-ccw" className="size-3" />
             {f.corrections}
           </Badge>
         )}
         {f.toolErrors > 0 && (
-          <Badge variant="danger" title="Tool errors">
+          <Badge variant="danger" title={t('cards.toolErrors')}>
             <Icon name="circle-alert" className="size-3" />
             {f.toolErrors}
           </Badge>
         )}
         {f.redundantCalls > 0 && (
-          <Badge variant="muted" title="Repeated tool calls">
+          <Badge variant="muted" title={t('cards.repeated')}>
             <Icon name="copy" className="size-3" />
             {f.redundantCalls}
           </Badge>
         )}
-        <Badge variant={tone.variant}>{tone.label}</Badge>
+        <Badge variant={tone.variant}>{t(`tone.${tone.toneKey}`)}</Badge>
       </div>
     </li>
   )
 }
 
 export function InsightsPage() {
+  const { t } = useTranslation('insights')
   const agent = useActiveAgent()
   const supported = agent.capabilities.chats
   const projectDir = useProjectDir()
@@ -155,11 +165,11 @@ export function InsightsPage() {
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Insights" icon="gauge" />
+        <PageHeader title={t('title')} icon="gauge" />
         <EmptyState
           icon="gauge"
-          title={`${agent.displayName} has no session history`}
-          description="Switch to an agent that records chat sessions to see friction insights."
+          title={t('noHistoryTitle', { agent: agent.displayName })}
+          description={t('unsupportedDesc')}
         />
       </div>
     )
@@ -170,62 +180,60 @@ export function InsightsPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Insights"
-        description={`Friction signals across recent ${agent.displayName} sessions`}
+        title={t('title')}
+        description={t('headerDescription', { agent: agent.displayName })}
         icon="gauge"
       />
 
       {loading && !report ? (
-        <p className="text-sm text-muted-foreground">Analyzing transcripts…</p>
+        <p className="text-sm text-muted-foreground">{t('analyzing')}</p>
       ) : !hasData ? (
         <EmptyState
           icon="gauge"
-          title="Nothing to analyze yet"
-          description="Once this agent has a few sessions, friction signals (tool errors, corrections, repeated calls) show up here."
+          title={t('empty.title')}
+          description={t('empty.desc')}
         />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Stat
               icon="gauge"
-              label="avg friction (0–100)"
+              label={t('stats.avgFriction')}
               value={String(report.avgScore)}
             />
             <Stat
               icon="scroll-text"
-              label="sessions analyzed"
+              label={t('stats.sessionsAnalyzed')}
               value={String(report.sessionsAnalyzed)}
             />
             <Stat
               icon="rotate-ccw"
-              label="user corrections"
+              label={t('stats.userCorrections')}
               value={String(report.totalCorrections)}
             />
             <Stat
               icon="circle-alert"
-              label="tool errors"
+              label={t('stats.toolErrors')}
               value={String(report.totalToolErrors)}
             />
           </div>
 
           <Card className="space-y-3 p-4">
-            <p className="text-sm font-medium">Friction distribution</p>
+            <p className="text-sm font-medium">{t('sections.distribution')}</p>
             <DistributionBar buckets={report.buckets} />
           </Card>
 
           {report.daily.length > 1 && (
             <Card className="space-y-3 p-4">
-              <p className="text-sm font-medium">Friction trend</p>
+              <p className="text-sm font-medium">{t('sections.trend')}</p>
               <TrendChart daily={report.daily} />
             </Card>
           )}
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">Roughest sessions</p>
+            <p className="text-sm font-medium">{t('sections.roughest')}</p>
             {report.topFriction.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No notable friction — all analyzed sessions ran smoothly.
-              </p>
+              <p className="text-sm text-muted-foreground">{t('noFriction')}</p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {report.topFriction.map((f) => (
@@ -236,9 +244,7 @@ export function InsightsPage() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Friction is a heuristic from measurable signals (tool errors, user
-            corrections, repeated tool calls) over the {report.sessionsAnalyzed}{' '}
-            most recent sessions — not a judgement of answer quality.
+            {t('footer', { count: report.sessionsAnalyzed })}
           </p>
         </div>
       )}

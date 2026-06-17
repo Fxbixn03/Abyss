@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ApplyChange } from '@/shared/types/bundle'
 import type { ProfileMeta } from '@/shared/types/profiles'
 import { Button } from '@/shared/components/ui/button'
@@ -51,6 +52,7 @@ function NameDialog({
   onOpenChange: (open: boolean) => void
   onConfirm: (name: string) => void
 }) {
+  const { t } = useTranslation('profiles')
   // Seeded once per mount; the parent remounts (via `key`) when it opens, so the
   // field always reflects the current `initial` without a set-state effect.
   const [name, setName] = useState(initial)
@@ -65,14 +67,14 @@ function NameDialog({
           autoFocus
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Profile name"
+          placeholder={t('namePlaceholder')}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && name.trim()) onConfirm(name.trim())
           }}
         />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('actions.cancel')}
           </Button>
           <Button
             disabled={!name.trim()}
@@ -96,6 +98,7 @@ function ProfileDialog({
   onOpenChange: (open: boolean) => void
   onConfirm: (draft: ProfileDraft) => void
 }) {
+  const { t } = useTranslation('profiles')
   const [name, setName] = useState(draft?.name ?? '')
   const [description, setDescription] = useState(draft?.description ?? '')
   const icon = draft?.icon ?? DEFAULT_PROFILE_ICON
@@ -105,7 +108,7 @@ function ProfileDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon name={icon} className="size-4" />
-            Save current config as profile
+            {t('actions.saveCurrent')}
           </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-2">
@@ -114,17 +117,17 @@ function ProfileDialog({
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Profile name"
+            placeholder={t('namePlaceholder')}
           />
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description (optional)"
+            placeholder={t('descPlaceholder')}
           />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('actions.cancel')}
           </Button>
           <Button
             disabled={!name.trim()}
@@ -132,7 +135,7 @@ function ProfileDialog({
               onConfirm({ name: name.trim(), description: description.trim(), icon })
             }
           >
-            Save
+            {t('actions.save')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -141,6 +144,7 @@ function ProfileDialog({
 }
 
 export function ProfilesPage() {
+  const { t } = useTranslation('profiles')
   const [profiles, setProfiles] = useState<ProfileMeta[]>([])
   const [loaded, setLoaded] = useState(false)
   const [changes, setChanges] = useState<Record<string, ApplyChange[]>>({})
@@ -176,7 +180,7 @@ export function ProfilesPage() {
       description: draft.description || undefined,
       icon: draft.icon,
     })
-    setNotice(`Saved current config as “${draft.name}”`)
+    setNotice(t('notices.saved', { name: draft.name }))
     void refresh()
   }
 
@@ -205,7 +209,7 @@ export function ProfilesPage() {
     setApplyTarget(null)
     const result = await ipc.profileApply(target.id, false)
     const n = result.filter((c) => c.changed).length
-    setNotice(`Applied “${target.name}” — ${n} file(s) changed.`)
+    setNotice(t('notices.applied', { name: target.name, count: n }))
     setChanges((c) => ({ ...c, [target.id]: result }))
   }
 
@@ -238,8 +242,8 @@ export function ProfilesPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Profiles"
-        description="Named environments — capture your setup and switch between them"
+        title={t('title')}
+        description={t('description')}
         icon="layers"
         actions={
           <div className="flex items-center gap-2">
@@ -255,25 +259,25 @@ export function ProfilesPage() {
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') setFilter('')
                   }}
-                  placeholder="Filter profiles…"
+                  placeholder={t('filter')}
                   className="h-9 w-48 pl-8"
                 />
               </div>
             )}
             <Button onClick={() => setCreateDraft(blankDraft)}>
               <Icon name="plus" />
-              New profile
+              {t('actions.new')}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                   <Icon name="layers" />
-                  From template
+                  {t('actions.fromTemplate')}
                   <Icon name="chevron-down" className="size-3.5 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="max-w-[280px]">
-                <DropdownMenuLabel>Environment templates</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('templates.heading')}</DropdownMenuLabel>
                 {ENVIRONMENT_TEMPLATES.map((t) => (
                   <DropdownMenuItem
                     key={t.id}
@@ -297,8 +301,7 @@ export function ProfilesPage() {
                 ))}
                 <DropdownMenuSeparator />
                 <p className="px-2 py-1 text-[11px] text-muted-foreground">
-                  Templates capture your current config under a named
-                  environment.
+                  {t('templates.desc')}
                 </p>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -316,7 +319,7 @@ export function ProfilesPage() {
             type="button"
             onClick={() => setNotice(null)}
             className="text-muted-foreground hover:text-foreground"
-            aria-label="Dismiss"
+            aria-label={t('dismiss')}
           >
             <Icon name="x" className="size-4" />
           </button>
@@ -326,18 +329,18 @@ export function ProfilesPage() {
       {loaded && profiles.length === 0 ? (
         <EmptyState
           icon="layers"
-          title="No profiles yet"
-          description="Capture your current agent config as a named environment, then apply it any time (e.g. on another machine or to switch setups)."
+          title={t('empty.title')}
+          description={t('empty.desc')}
           action={
             <Button onClick={() => setCreateDraft(blankDraft)}>
               <Icon name="plus" />
-              New profile
+              {t('actions.new')}
             </Button>
           }
         />
       ) : visibleProfiles.length === 0 ? (
         <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
-          No profiles match your filter.
+          {t('noMatch')}
         </div>
       ) : (
         <div className="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
@@ -375,7 +378,7 @@ export function ProfilesPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <Button size="sm" onClick={() => setApplyTarget(p)}>
                     <Icon name="check" />
-                    Apply
+                    {t('actions.apply')}
                   </Button>
                   <Button
                     variant="outline"
@@ -383,7 +386,7 @@ export function ProfilesPage() {
                     onClick={() => void dryRun(p)}
                   >
                     <Icon name="eye" />
-                    Dry run
+                    {t('actions.dryRun')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -391,7 +394,7 @@ export function ProfilesPage() {
                     onClick={() => setRenameTarget(p)}
                   >
                     <Icon name="pencil" />
-                    Rename
+                    {t('actions.rename')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -399,7 +402,7 @@ export function ProfilesPage() {
                     onClick={() => setDeleteTarget(p)}
                   >
                     <Icon name="trash" />
-                    Delete
+                    {t('actions.delete')}
                   </Button>
                 </div>
 
@@ -422,9 +425,9 @@ export function ProfilesPage() {
       <NameDialog
         key={`rename-${renameTarget?.id ?? 'none'}`}
         open={renameTarget !== null}
-        title="Rename profile"
+        title={t('renameProfile')}
         initial={renameTarget?.name ?? ''}
-        confirmLabel="Rename"
+        confirmLabel={t('actions.rename')}
         onOpenChange={(open) => {
           if (!open) setRenameTarget(null)
         }}
@@ -436,9 +439,9 @@ export function ProfilesPage() {
         onOpenChange={(open) => {
           if (!open) setApplyTarget(null)
         }}
-        title={`Apply “${applyTarget?.name ?? ''}”?`}
-        description="This overwrites your current agent config with the profile's. A snapshot of each file is taken first (see History), so it can be undone."
-        confirmLabel="Apply"
+        title={t('confirmApply.title', { name: applyTarget?.name ?? '' })}
+        description={t('confirmApply.desc')}
+        confirmLabel={t('actions.apply')}
         destructive={false}
         onConfirm={() => void apply()}
       />
@@ -448,9 +451,9 @@ export function ProfilesPage() {
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null)
         }}
-        title={`Delete “${deleteTarget?.name ?? ''}”?`}
-        description="This removes the saved profile. Your live config is untouched."
-        confirmLabel="Delete"
+        title={t('confirmDelete.title', { name: deleteTarget?.name ?? '' })}
+        description={t('confirmDelete.desc')}
+        confirmLabel={t('actions.delete')}
         onConfirm={() => void remove()}
       />
     </div>
@@ -468,6 +471,7 @@ function DryRunPreview({
   diff: ApplyChange[]
   onClose: () => void
 }) {
+  const { t } = useTranslation('profiles')
   const changedCount = diff.filter((c) => c.changed).length
   const byAgent = new Map<string, ApplyChange[]>()
   for (const c of diff) {
@@ -481,13 +485,13 @@ function DryRunPreview({
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 font-medium">
           <Icon name="eye" className="size-3.5 text-muted-foreground" />
-          Dry run — {changedCount} of {diff.length} target(s) differ
+          {t('dryRun.summary', { changed: changedCount, total: diff.length })}
         </p>
         <button
           type="button"
           onClick={onClose}
           className="text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Close dry run preview"
+          aria-label={t('closeDryRun')}
         >
           <Icon name="x" className="size-3.5" />
         </button>
@@ -497,7 +501,9 @@ function DryRunPreview({
           <div key={agentId} className="flex flex-col gap-0.5">
             <p className="flex items-center gap-1.5 font-code text-[11px] uppercase tracking-wide text-muted-foreground">
               <Badge variant="muted">{agentId}</Badge>
-              {items.filter((c) => c.changed).length} changed
+              {t('dryRun.changedCount', {
+                count: items.filter((c) => c.changed).length,
+              })}
             </p>
             {items.map((c, i) => (
               <div
@@ -522,7 +528,7 @@ function DryRunPreview({
                     c.changed ? 'text-warning' : 'text-muted-foreground',
                   )}
                 >
-                  {c.changed ? 'changes' : 'same'}
+                  {c.changed ? t('dryRun.changes') : t('dryRun.same')}
                 </span>
               </div>
             ))}

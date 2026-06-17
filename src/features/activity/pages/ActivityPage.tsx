@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { SnapshotMeta } from '@/shared/types/snapshots'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
@@ -20,18 +21,25 @@ import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { agentRegistry } from '@/features/agents/registry/agent.registry'
 import { cn } from '@/shared/lib/utils'
 
-function relativeTime(iso: string): string {
+type RelTime =
+  | { kind: 'key'; key: 'relative.now' | 'relative.minutes' | 'relative.hours'; count: number }
+  | { kind: 'literal'; text: string }
+
+function relativeTime(iso: string): RelTime {
   const then = new Date(iso).getTime()
-  if (Number.isNaN(then)) return ''
+  if (Number.isNaN(then)) return { kind: 'literal', text: '' }
   const min = Math.round((Date.now() - then) / 60000)
-  if (min < 1) return 'just now'
-  if (min < 60) return `${min}m ago`
+  if (min < 1) return { kind: 'key', key: 'relative.now', count: 0 }
+  if (min < 60) return { kind: 'key', key: 'relative.minutes', count: min }
   const hours = Math.round(min / 60)
-  if (hours < 24) return `${hours}h ago`
-  return new Date(iso).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  if (hours < 24) return { kind: 'key', key: 'relative.hours', count: hours }
+  return {
+    kind: 'literal',
+    text: new Date(iso).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  }
 }
 
 function formatBytes(bytes: number): string {
@@ -40,7 +48,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-/** Human day bucket for grouping: Today / Yesterday / a locale date. */
+/** Stable day-bucket token for grouping: '@today' / '@yesterday' / a locale date. */
 function dayLabel(iso: string): string {
   const d = new Date(iso)
   const today = new Date()
@@ -50,8 +58,8 @@ function dayLabel(iso: string): string {
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
-  if (same(d, today)) return 'Today'
-  if (same(d, yesterday)) return 'Yesterday'
+  if (same(d, today)) return '@today'
+  if (same(d, yesterday)) return '@yesterday'
   return d.toLocaleDateString(undefined, {
     weekday: 'short',
     month: 'short',
@@ -94,6 +102,7 @@ interface DiffState {
 }
 
 export function ActivityPage() {
+  const { t } = useTranslation('activity')
   const [snapshots, setSnapshots] = useState<SnapshotMeta[]>([])
   const [loaded, setLoaded] = useState(false)
   const [filter, setFilter] = useState('')
@@ -218,6 +227,17 @@ export function ActivityPage() {
     }
   }
 
+  const renderRel = (iso: string) => {
+    const r = relativeTime(iso)
+    return r.kind === 'literal' ? r.text : t(r.key, { count: r.count })
+  }
+  const renderDay = (label: string) =>
+    label === '@today'
+      ? t('day.today')
+      : label === '@yesterday'
+        ? t('day.yesterday')
+        : label
+
   const undo = async (snap: SnapshotMeta) => {
     setConfirmUndo(null)
     try {
@@ -238,13 +258,13 @@ export function ActivityPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Activity"
-        description="Every file Abyss changed — newest first, with one-click undo"
+        title={t('title')}
+        description={t('description')}
         icon="scroll-text"
         actions={
           <Button variant="outline" size="sm" onClick={() => void refresh()}>
             <Icon name="refresh-cw" />
-            Refresh
+            {t('actions.refresh')}
           </Button>
         }
       />
@@ -275,10 +295,10 @@ export function ActivityPage() {
             {presentAgentIds.length > 1 && (
               <Select value={selectedAgent} onValueChange={setSelectedAgent}>
                 <SelectTrigger className="h-8 w-44 text-xs">
-                  <SelectValue placeholder="All agents" />
+                  <SelectValue placeholder={t('filters.allAgents')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All agents</SelectItem>
+                  <SelectItem value="all">{t('filters.allAgents')}</SelectItem>
                   {presentAgentIds.map((id) => {
                     const adapter = agentRegistry.has(id)
                       ? agentRegistry.get(id)
@@ -302,7 +322,7 @@ export function ActivityPage() {
             <Input
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              placeholder="Filter by file name or path…"
+              placeholder={t('filters.file')}
               className="pl-9"
             />
           </div>
@@ -313,22 +333,22 @@ export function ActivityPage() {
         {loaded && snapshots.length === 0 ? (
           <EmptyState
             icon="scroll-text"
-            title="No activity yet"
-            description="Abyss logs every config file it overwrites here, so you can review and undo any change it made."
+            title={t('empty.title')}
+            description={t('empty.desc')}
           />
         ) : loaded && filtered.length === 0 ? (
           <EmptyState
             icon="search-x"
-            title="No matching changes"
-            description="No changed files match your filter."
+            title={t('noMatch.title')}
+            description={t('noMatch.desc')}
           />
         ) : !loaded ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-muted-foreground">{t('actions.loading')}</p>
         ) : (
           groups.map((group) => (
             <section key={group.label} className="space-y-1.5">
               <h2 className="sticky top-0 bg-background/80 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
-                {group.label}
+                {renderDay(group.label)}
               </h2>
               {group.items.map((snap) => {
                 const diff = expanded[snap.id]
@@ -356,7 +376,7 @@ export function ActivityPage() {
                         {formatBytes(snap.sizeBytes)}
                       </span>
                       <span className="w-20 shrink-0 text-right text-xs text-muted-foreground">
-                        {relativeTime(snap.timestamp)}
+                        {renderRel(snap.timestamp)}
                       </span>
                       <div className="flex shrink-0 items-center gap-1">
                         <Button
@@ -365,13 +385,13 @@ export function ActivityPage() {
                           onClick={() => void toggleDiff(snap)}
                         >
                           <Icon name={diff ? 'chevron-up' : 'git-compare'} />
-                          Diff
+                          {t('actions.diff')}
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => void ipc.revealPath(snap.originalPath)}
-                          title="Reveal in file manager"
+                          title={t('actions.reveal')}
                         >
                           <Icon name="folder-open" />
                         </Button>
@@ -381,7 +401,7 @@ export function ActivityPage() {
                           onClick={() => setConfirmUndo(snap)}
                         >
                           <Icon name="rotate-ccw" />
-                          Undo
+                          {t('actions.undo')}
                         </Button>
                       </div>
                     </div>
@@ -389,20 +409,19 @@ export function ActivityPage() {
                       <div className="border-t border-border p-3">
                         {diff.loading ? (
                           <p className="text-xs text-muted-foreground">
-                            Loading diff…
+                            {t('actions.loadingDiff')}
                           </p>
                         ) : unchanged ? (
                           <p className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Icon name="check" className="size-3.5" />
-                            This change still matches the file on disk — nothing
-                            to undo.
+                            {t('noUndo')}
                           </p>
                         ) : (
                           <LineDiffView
                             a={diff.current ?? ''}
                             b={diff.previous}
-                            leftLabel="Current (on disk)"
-                            rightLabel="Before this change"
+                            leftLabel={t('diffLabels.current')}
+                            rightLabel={t('diffLabels.before')}
                           />
                         )}
                       </div>
@@ -418,11 +437,11 @@ export function ActivityPage() {
       <ConfirmDialog
         open={confirmUndo != null}
         onOpenChange={(open) => !open && setConfirmUndo(null)}
-        title="Undo this change?"
-        description={`This restores ${
-          confirmUndo?.originalPath ?? 'the file'
-        } to its content from before this change. The current content is snapshotted first, so the undo itself can be undone.`}
-        confirmLabel="Undo change"
+        title={t('confirmUndo.title')}
+        description={t('confirmUndo.desc', {
+          file: confirmUndo?.originalPath ?? t('theFile'),
+        })}
+        confirmLabel={t('undoChange')}
         destructive={false}
         onConfirm={() => confirmUndo && void undo(confirmUndo)}
       />

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { PermissionRules } from '@/shared/types/config'
 import type { CollectionKind } from '@/shared/types/collections'
 import { COLLECTION_LABELS } from '@/shared/types/collections'
@@ -160,6 +161,7 @@ async function readCodexSubagents(
 }
 
 export function ValidationPage() {
+  const { t } = useTranslation('validation')
   const agent = useActiveAgent()
   const allAgents = useAllAgents()
   const { projectDir } = useScope()
@@ -370,8 +372,8 @@ export function ValidationPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Validation"
-        description={`Lint ${agent.displayName}'s config for risks and rot`}
+        title={t('title')}
+        description={t('headerDescription', { agent: agent.displayName })}
         icon="clipboard-check"
         actions={
           <Button
@@ -380,8 +382,12 @@ export function ValidationPage() {
             onClick={() => setRanAt(Date.now())}
             disabled={loading}
           >
-            {loading ? <Spinner label="Re-running…" /> : <Icon name="refresh-cw" />}
-            Re-run
+            {loading ? (
+              <Spinner label={t('rerunning')} />
+            ) : (
+              <Icon name="refresh-cw" />
+            )}
+            {t('rerun')}
           </Button>
         }
       />
@@ -396,26 +402,26 @@ export function ValidationPage() {
             )}
           >
             <Icon name={SEVERITY_META[sev].icon} className="size-4" />
-            {counts[sev]} {SEVERITY_META[sev].label.toLowerCase()}
+            {t(`counts.${sev}`, { count: counts[sev] })}
           </span>
         ))}
         {projectDir && (
           <Badge variant="muted" className="ml-1">
-            merged: global + project
+            {t('merged')}
           </Badge>
         )}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
         {loading ? (
-          <p className="text-sm text-muted-foreground">Running checks…</p>
+          <p className="text-sm text-muted-foreground">{t('running')}</p>
         ) : findings.length === 0 ? (
           <Card className="flex items-center gap-3 border-l-4 border-l-success p-4">
             <Icon name="circle-check" className="size-5 text-success" />
             <div>
-              <p className="font-medium">All clear</p>
+              <p className="font-medium">{t('allClear')}</p>
               <p className="text-sm text-muted-foreground">
-                No issues found in {agent.displayName}'s current config.
+                {t('allClearDesc', { agent: agent.displayName })}
               </p>
             </div>
           </Card>
@@ -456,8 +462,8 @@ export function ValidationPage() {
                       >
                         <Icon name="arrow-right" />
                         {f.suggestedAction === 'repair-settings'
-                          ? 'Open settings editor'
-                          : 'Open'}
+                          ? t('openSettings')
+                          : t('open')}
                       </Button>
                     )}
                     {f.path && (
@@ -465,8 +471,8 @@ export function ValidationPage() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => void ipc.revealPath(f.path as string)}
-                        aria-label="Reveal in folder"
-                        title="Reveal in folder"
+                        aria-label={t('reveal')}
+                        title={t('reveal')}
                       >
                         <Icon name="folder-open" />
                       </Button>

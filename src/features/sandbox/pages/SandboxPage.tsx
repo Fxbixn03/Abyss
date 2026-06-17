@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { SandboxRunResult } from '@/shared/types/sandbox'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Badge } from '@/shared/components/ui/badge'
@@ -30,6 +31,7 @@ interface HistoryEntry {
 }
 
 function CommandSandbox() {
+  const { t } = useTranslation('sandbox')
   const [command, setCommand] = useState('')
   const [cwd, setCwd] = useState('')
   const [running, setRunning] = useState(false)
@@ -94,12 +96,9 @@ function CommandSandbox() {
       <div>
         <h2 className="flex items-center gap-2 text-sm font-medium">
           <Icon name="terminal" className="size-4" />
-          Hook / command runner
+          {t('hookRunner.title')}
         </h2>
-        <p className="text-xs text-muted-foreground">
-          Try a hook or command shell snippet in a one-off run and see its
-          output.
-        </p>
+        <p className="text-xs text-muted-foreground">{t('hookRunner.desc')}</p>
       </div>
 
       <div className="flex items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-2.5 py-1.5 text-xs">
@@ -107,8 +106,7 @@ function CommandSandbox() {
           name="alert-triangle"
           className="size-3.5 shrink-0 text-warning"
         />
-        Commands run on your real machine. Use a throwaway directory and avoid
-        destructive commands.
+        {t('warnCommands')}
       </div>
 
       <Textarea
@@ -123,34 +121,32 @@ function CommandSandbox() {
         <Input
           value={cwd}
           onChange={(e) => setCwd(e.target.value)}
-          placeholder="Working directory (optional)"
+          placeholder={t('workingDirPlaceholder')}
           className="font-code text-xs"
         />
         <Button
           variant="outline"
           size="sm"
           onClick={async () => {
-            const { path } = await ipc.pickDirectory(
-              'Sandbox working directory',
-            )
+            const { path } = await ipc.pickDirectory(t('pickTitle'))
             if (path) setCwd(path)
           }}
         >
           <Icon name="folder-open" />
-          Pick
+          {t('pick')}
         </Button>
         <Button onClick={requestRun} disabled={running || !command.trim()}>
-          {running ? <Spinner label="Running…" /> : <Icon name="play" />}
-          Run
+          {running ? <Spinner label={t('running')} /> : <Icon name="play" />}
+          {t('run')}
         </Button>
       </div>
 
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="Run shell commands on this machine?"
-        description="The sandbox executes the command you enter directly on your computer with your account's permissions. Only run commands you trust, and prefer a throwaway working directory. You won't be asked again."
-        confirmLabel="I understand, run it"
+        title={t('confirmRun.title')}
+        description={t('confirmRun.desc')}
+        confirmLabel={t('ack')}
         onConfirm={() => {
           setConfirmOpen(false)
           void updatePrefs({ sandboxAcknowledged: true })
@@ -171,7 +167,9 @@ function CommandSandbox() {
               }
               className="font-code"
             >
-              {result.timedOut ? 'timed out' : `exit ${result.exitCode ?? '—'}`}
+              {result.timedOut
+                ? t('result.timedOut')
+                : t('result.exit', { code: result.exitCode ?? '—' })}
             </Badge>
             <span className="text-muted-foreground">
               {result.durationMs} ms
@@ -180,7 +178,7 @@ function CommandSandbox() {
           {result.stdout && (
             <div>
               <p className="mb-0.5 text-[11px] font-medium text-muted-foreground">
-                stdout
+                {t('result.stdout')}
               </p>
               <pre className="max-h-48 overflow-auto rounded-md bg-muted/40 px-2.5 py-2 font-code text-[11px] leading-relaxed">
                 {result.stdout}
@@ -190,7 +188,7 @@ function CommandSandbox() {
           {result.stderr && (
             <div>
               <p className="mb-0.5 text-[11px] font-medium text-destructive">
-                stderr
+                {t('result.stderr')}
               </p>
               <pre className="max-h-48 overflow-auto rounded-md bg-destructive/10 px-2.5 py-2 font-code text-[11px] leading-relaxed">
                 {result.stderr}
@@ -198,7 +196,7 @@ function CommandSandbox() {
             </div>
           )}
           {!result.stdout && !result.stderr && (
-            <p className="text-xs text-muted-foreground">No output.</p>
+            <p className="text-xs text-muted-foreground">{t('noOutput')}</p>
           )}
         </div>
       )}
@@ -215,7 +213,9 @@ function CommandSandbox() {
                 name={historyOpen ? 'chevron-down' : 'chevron-right'}
                 className="size-3.5"
               />
-              {historyOpen ? 'Hide history' : `Show history (${history.length})`}
+              {historyOpen
+                ? t('history.hide')
+                : t('history.show', { count: history.length })}
             </button>
             {historyOpen && (
               <Button
@@ -224,7 +224,7 @@ function CommandSandbox() {
                 onClick={() => setHistory([])}
               >
                 <Icon name="trash" />
-                Clear history
+                {t('clearHistory')}
               </Button>
             )}
           </div>
@@ -240,7 +240,7 @@ function CommandSandbox() {
                       setCwd(h.cwd)
                     }}
                     className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors hover:bg-accent/60"
-                    title="Click to load this command"
+                    title={t('loadCommand')}
                   >
                     <Badge
                       variant={
@@ -252,7 +252,9 @@ function CommandSandbox() {
                       }
                       className="shrink-0 font-code"
                     >
-                      {h.timedOut ? 'timeout' : `exit ${h.exitCode ?? '—'}`}
+                      {h.timedOut
+                        ? t('history.timeout')
+                        : t('history.exit', { code: h.exitCode ?? '—' })}
                     </Badge>
                     <span className="min-w-0 flex-1 truncate font-code">
                       {h.command}
@@ -272,6 +274,7 @@ function CommandSandbox() {
 }
 
 function PromptSandbox() {
+  const { t } = useTranslation('sandbox')
   const [system, setSystem] = useState('')
   const [user, setUser] = useState('')
   const [copied, setCopied] = useState(false)
@@ -316,36 +319,35 @@ function PromptSandbox() {
       <div>
         <h2 className="flex items-center gap-2 text-sm font-medium">
           <Icon name="flask-conical" className="size-4" />
-          Prompt scratchpad
+          {t('promptScratchpad.title')}
         </h2>
         <p className="text-xs text-muted-foreground">
-          Draft a system + user prompt and see its size before spending it on a
-          real run.
+          {t('promptScratchpad.desc')}
         </p>
       </div>
 
       <Textarea
         value={system}
         onChange={(e) => setSystem(e.target.value)}
-        placeholder="System prompt…"
+        placeholder={t('systemPromptPlaceholder')}
         rows={4}
       />
       <Textarea
         value={user}
         onChange={(e) => setUser(e.target.value)}
-        placeholder="User prompt…"
+        placeholder={t('userPromptPlaceholder')}
         rows={4}
       />
 
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="muted" className="font-code">
-          system ~{formatTokens(tokens.system)}
+          {t('tokens.system', { n: formatTokens(tokens.system) })}
         </Badge>
         <Badge variant="muted" className="font-code">
-          user ~{formatTokens(tokens.user)}
+          {t('tokens.user', { n: formatTokens(tokens.user) })}
         </Badge>
         <Badge variant="secondary" className="font-code">
-          total ~{formatTokens(tokens.total)} tokens
+          {t('tokens.total', { n: formatTokens(tokens.total) })}
         </Badge>
         <Button
           variant="outline"
@@ -355,7 +357,7 @@ function PromptSandbox() {
           disabled={!system && !user}
         >
           <Icon name={copied ? 'check' : 'copy'} />
-          {copied ? 'Copied' : 'Copy'}
+          {copied ? t('copied') : t('copy')}
         </Button>
       </div>
     </Card>
@@ -363,11 +365,12 @@ function PromptSandbox() {
 }
 
 export function SandboxPage() {
+  const { t } = useTranslation('sandbox')
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Sandbox"
-        description="Try out commands, hooks and prompts without touching your config"
+        title={t('title')}
+        description={t('description')}
         icon="flask-conical"
       />
       <div className="grid min-h-0 flex-1 content-start gap-4 overflow-y-auto pr-1 lg:grid-cols-2">

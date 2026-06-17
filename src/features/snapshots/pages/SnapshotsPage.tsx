@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { SnapshotContent, SnapshotMeta } from '@/shared/types/snapshots'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
@@ -37,15 +38,28 @@ function agentIdForPath(
 type ViewMode = 'file' | 'timeline'
 type DetailView = 'content' | 'diff'
 
-function relativeTime(iso: string): string {
+type RelTime =
+  | { kind: 'key'; key: 'relative.now' | 'relative.minutes' | 'relative.hours'; count: number }
+  | { kind: 'literal'; text: string }
+
+function relativeTime(iso: string): RelTime {
   const then = new Date(iso).getTime()
-  if (Number.isNaN(then)) return ''
+  if (Number.isNaN(then)) return { kind: 'literal', text: '' }
   const min = Math.round((Date.now() - then) / 60000)
-  if (min < 1) return 'just now'
-  if (min < 60) return `${min}m ago`
+  if (min < 1) return { kind: 'key', key: 'relative.now', count: 0 }
+  if (min < 60) return { kind: 'key', key: 'relative.minutes', count: min }
   const hours = Math.round(min / 60)
-  if (hours < 24) return `${hours}h ago`
-  return new Date(iso).toLocaleString()
+  if (hours < 24) return { kind: 'key', key: 'relative.hours', count: hours }
+  return { kind: 'literal', text: new Date(iso).toLocaleString() }
+}
+
+/** Resolve a relative-time descriptor to a localized string. */
+function useRelTime() {
+  const { t } = useTranslation('snapshots')
+  return (iso: string) => {
+    const r = relativeTime(iso)
+    return r.kind === 'literal' ? r.text : t(r.key, { count: r.count })
+  }
 }
 
 function formatBytes(bytes: number): string {
@@ -87,6 +101,8 @@ function Segmented<T extends string>({
 }
 
 export function SnapshotsPage() {
+  const { t } = useTranslation('snapshots')
+  const renderRel = useRelTime()
   const [snapshots, setSnapshots] = useState<SnapshotMeta[]>([])
   const [loaded, setLoaded] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('file')
@@ -186,7 +202,7 @@ export function SnapshotsPage() {
     const result = await ipc.restoreSnapshot(selectedId)
     setConfirmRestore(false)
     if (result?.success) {
-      setNotice(`Restored ${result.path}`)
+      setNotice(t('restored', { path: result.path }))
       void refresh()
     }
   }
@@ -213,18 +229,18 @@ export function SnapshotsPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="History"
-        description="Automatic snapshots taken before every config save"
+        title={t('title')}
+        description={t('description')}
         icon="history"
         actions={
           <div className="flex items-center gap-2">
             {presentAgentIds.length > 1 && (
               <Select value={selectedAgent} onValueChange={setSelectedAgent}>
                 <SelectTrigger className="h-8 w-44 text-xs">
-                  <SelectValue placeholder="All agents" />
+                  <SelectValue placeholder={t('allAgents')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All agents</SelectItem>
+                  <SelectItem value="all">{t('allAgents')}</SelectItem>
                   {presentAgentIds.map((id) => (
                     <SelectItem key={id} value={id}>
                       {agentRegistry.has(id)
@@ -239,13 +255,17 @@ export function SnapshotsPage() {
               value={viewMode}
               onChange={setViewMode}
               options={[
-                { value: 'file', label: 'By file', icon: 'file-text' },
-                { value: 'timeline', label: 'Timeline', icon: 'clock' },
+                { value: 'file', label: t('viewMode.byFile'), icon: 'file-text' },
+                {
+                  value: 'timeline',
+                  label: t('viewMode.timeline'),
+                  icon: 'clock',
+                },
               ]}
             />
             <Button variant="outline" onClick={() => void refresh()}>
               <Icon name="refresh-cw" />
-              Refresh
+              {t('actions.refresh')}
             </Button>
           </div>
         }
@@ -261,7 +281,7 @@ export function SnapshotsPage() {
             type="button"
             onClick={() => setNotice(null)}
             className="text-muted-foreground hover:text-foreground"
-            aria-label="Dismiss"
+            aria-label={t('dismiss')}
           >
             <Icon name="x" className="size-4" />
           </button>
@@ -271,20 +291,22 @@ export function SnapshotsPage() {
       {loaded && snapshots.length === 0 ? (
         <EmptyState
           icon="history"
-          title="No snapshots yet"
-          description="Abyss saves a snapshot automatically each time it overwrites a config file. They will appear here."
+          title={t('empty.title')}
+          description={t('empty.desc')}
         />
       ) : loaded && filteredSnapshots.length === 0 ? (
         <EmptyState
           icon="search-x"
-          title="No snapshots for this agent"
-          description="No snapshots match the selected agent filter."
+          title={t('noneForAgent.title')}
+          description={t('noneForAgent.desc')}
         />
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-[320px_1fr] gap-4">
           <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
             {!loaded ? (
-              <p className="px-1 text-sm text-muted-foreground">Loading…</p>
+              <p className="px-1 text-sm text-muted-foreground">
+                {t('actions.loading')}
+              </p>
             ) : viewMode === 'file' ? (
               groups.map(([path, items]) => (
                 <div key={path} className="flex flex-col gap-1">
@@ -334,8 +356,8 @@ export function SnapshotsPage() {
             {!selected ? (
               <EmptyState
                 icon="history"
-                title="No snapshot selected"
-                description="Pick a snapshot to preview its contents, diff it against the live file, and restore it."
+                title={t('noSelection.title')}
+                description={t('noSelection.desc')}
               />
             ) : (
               <div className="flex min-h-0 flex-1 flex-col">
@@ -345,11 +367,9 @@ export function SnapshotsPage() {
                       {selected.meta.fileName}
                     </p>
                     <p className="truncate font-code text-xs text-muted-foreground">
-                      {relativeTime(selected.meta.timestamp)} ·{' '}
+                      {renderRel(selected.meta.timestamp)} ·{' '}
                       {formatBytes(selected.meta.sizeBytes)} ·{' '}
-                      {unchanged
-                        ? 'matches the live file'
-                        : 'differs from live'}
+                      {unchanged ? t('status.matches') : t('status.differs')}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
@@ -359,10 +379,14 @@ export function SnapshotsPage() {
                       options={[
                         {
                           value: 'content',
-                          label: 'Content',
+                          label: t('detail.content'),
                           icon: 'file-text',
                         },
-                        { value: 'diff', label: 'Diff', icon: 'git-compare' },
+                        {
+                          value: 'diff',
+                          label: t('detail.diff'),
+                          icon: 'git-compare',
+                        },
                       ]}
                     />
                     <Button
@@ -373,7 +397,7 @@ export function SnapshotsPage() {
                       }
                     >
                       <Icon name="folder-open" />
-                      Reveal
+                      {t('actions.reveal')}
                     </Button>
                     <Button
                       size="sm"
@@ -381,7 +405,7 @@ export function SnapshotsPage() {
                       onClick={() => setConfirmRestore(true)}
                     >
                       <Icon name="rotate-ccw" />
-                      Restore
+                      {t('actions.restore')}
                     </Button>
                   </div>
                 </div>
@@ -390,13 +414,13 @@ export function SnapshotsPage() {
                     <LineDiffView
                       a={current ?? ''}
                       b={selected.content}
-                      leftLabel="Current (on disk)"
-                      rightLabel="This snapshot"
+                      leftLabel={t('diffLabels.current')}
+                      rightLabel={t('diffLabels.snapshot')}
                     />
                   </div>
                 ) : (
                   <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words p-4 font-code text-xs leading-relaxed">
-                    {selected.content || '(empty file)'}
+                    {selected.content || t('emptyFile')}
                   </pre>
                 )}
               </div>
@@ -408,9 +432,11 @@ export function SnapshotsPage() {
       <ConfirmDialog
         open={confirmRestore}
         onOpenChange={setConfirmRestore}
-        title="Restore this snapshot?"
-        description={`This overwrites ${selected?.meta.originalPath ?? 'the file'} with the snapshot's content. The current content is snapshotted first, so this can be undone.`}
-        confirmLabel="Restore"
+        title={t('confirmRestore.title')}
+        description={t('confirmRestore.desc', {
+          file: selected?.meta.originalPath ?? t('theFile'),
+        })}
+        confirmLabel={t('actions.restore')}
         destructive={false}
         onConfirm={() => void restore()}
       />
@@ -420,9 +446,9 @@ export function SnapshotsPage() {
         onOpenChange={(open) => {
           if (!open) setConfirmDeleteId(null)
         }}
-        title="Delete this snapshot?"
-        description="This permanently removes the snapshot and its label. It cannot be undone and does not affect the live file."
-        confirmLabel="Delete"
+        title={t('confirmDelete.title')}
+        description={t('confirmDelete.desc')}
+        confirmLabel={t('actions.delete')}
         destructive
         onConfirm={() => void deleteSnap()}
       />
@@ -445,6 +471,8 @@ function SnapshotButton({
   onSaveLabel: (value: string) => Promise<void>
   onDelete: () => void
 }) {
+  const { t } = useTranslation('snapshots')
+  const renderRel = useRelTime()
   return (
     <div
       className={cn(
@@ -467,7 +495,7 @@ function SnapshotButton({
           {showFile && <span className="truncate">{snap.fileName}</span>}
           <span className="flex min-w-0 items-center gap-1.5">
             <span className={cn(showFile && 'text-muted-foreground')}>
-              {relativeTime(snap.timestamp)}
+              {renderRel(snap.timestamp)}
             </span>
             {snap.label && (
               <span className="truncate font-medium text-foreground">
@@ -483,7 +511,7 @@ function SnapshotButton({
           type="button"
           onClick={onDelete}
           className="text-muted-foreground transition-colors hover:text-destructive"
-          aria-label="Delete snapshot"
+          aria-label={t('deleteSnapshot')}
         >
           <Icon name="trash" className="size-3" />
         </button>
@@ -507,6 +535,7 @@ function LabelEditor({
   snap: SnapshotMeta
   onSave: (value: string) => Promise<void>
 }) {
+  const { t } = useTranslation('snapshots')
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState(snap.label ?? '')
   const [saving, setSaving] = useState(false)
@@ -542,7 +571,7 @@ function LabelEditor({
         type="button"
         onClick={toggle}
         className="text-muted-foreground transition-colors hover:text-foreground"
-        aria-label={snap.label ? 'Edit label' : 'Add label'}
+        aria-label={snap.label ? t('label.edit') : t('label.add')}
       >
         <Icon name="pencil" className="size-3" />
       </button>
@@ -552,7 +581,7 @@ function LabelEditor({
             // eslint-disable-next-line jsx-a11y/no-autofocus -- popover: focus input on open per WCAG 2.1
             autoFocus
             value={value}
-            placeholder="Add a label…"
+            placeholder={t('labelPlaceholder')}
             className="h-8 text-xs"
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => {
@@ -567,10 +596,10 @@ function LabelEditor({
               onClick={() => setOpen(false)}
               disabled={saving}
             >
-              Cancel
+              {t('actions.cancel')}
             </Button>
             <Button size="sm" onClick={() => void save()} disabled={saving}>
-              Save
+              {t('actions.save')}
             </Button>
           </div>
         </div>

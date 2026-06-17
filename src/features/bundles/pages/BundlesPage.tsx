@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ApplyChange, ExportBundle } from '@/shared/types/bundle'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
@@ -78,6 +79,7 @@ function IncludedAgentsSection({
   selected: Set<string>
   onToggle: (id: string) => void
 }) {
+  const { t } = useTranslation('bundles')
   const [open, setOpen] = useState(true)
   return (
     <div className="rounded-lg border border-border">
@@ -87,7 +89,7 @@ function IncludedAgentsSection({
         className="flex w-full items-center justify-between px-3 py-2 text-sm font-medium hover:bg-accent/50"
       >
         <span className="flex items-center gap-2">
-          Included agents
+          {t('includedAgents')}
           <Badge variant="muted" className="tabular-nums">
             {selected.size}/{ids.length}
           </Badge>
@@ -124,6 +126,7 @@ function bundleSummary(bundle: ExportBundle): string {
 }
 
 export function BundlesPage() {
+  const { t } = useTranslation('bundles')
   const allAgents = useAllAgents()
   const allIds = allAgents.map((a) => a.id)
 
@@ -163,11 +166,12 @@ export function BundlesPage() {
     setNotice(null)
     try {
       const { path } = await ipc.bundleExportFile([...exportSel], includeSecrets)
-      if (path) setNotice({ type: 'success', message: `Exported to ${path}` })
+      if (path)
+        setNotice({ type: 'success', message: t('notices.exported', { path }) })
     } catch (err) {
       setNotice({
         type: 'error',
-        message: err instanceof Error ? err.message : 'Export failed',
+        message: err instanceof Error ? err.message : t('notices.exportFailed'),
       })
     } finally {
       setBusy(false)
@@ -180,7 +184,7 @@ export function BundlesPage() {
     const { bundle, path } = await ipc.bundleLoadFile()
     if (!bundle || !path) {
       if (path) {
-        setNotice({ type: 'error', message: 'Not a valid Abyss bundle file.' })
+        setNotice({ type: 'error', message: t('notices.invalidFile') })
       }
       return
     }
@@ -199,7 +203,7 @@ export function BundlesPage() {
         const n = result.filter((c) => c.changed).length
         setNotice({
           type: 'success',
-          message: `Applied — ${n} file(s) changed.`,
+          message: t('notices.applied', { count: n }),
         })
       }
     } finally {
@@ -210,8 +214,8 @@ export function BundlesPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Bundles"
-        description="Export your config and apply it on another machine"
+        title={t('title')}
+        description={t('description')}
         icon="package"
       />
 
@@ -235,7 +239,7 @@ export function BundlesPage() {
             type="button"
             onClick={() => setNotice(null)}
             className="text-muted-foreground hover:text-foreground"
-            aria-label="Dismiss"
+            aria-label={t('actions.dismiss')}
           >
             <Icon name="x" className="size-4" />
           </button>
@@ -249,11 +253,11 @@ export function BundlesPage() {
         <TabsList className="self-start">
           <TabsTrigger value="export">
             <Icon name="upload" className="size-4" />
-            Export
+            {t('actions.export')}
           </TabsTrigger>
           <TabsTrigger value="apply">
             <Icon name="download" className="size-4" />
-            Apply
+            {t('actions.apply')}
           </TabsTrigger>
         </TabsList>
 
@@ -283,7 +287,7 @@ export function BundlesPage() {
                   checked={includeSecrets}
                   onChange={(e) => setIncludeSecrets(e.target.checked)}
                 />
-                Include secrets (MCP API tokens)
+                {t('secrets.label')}
               </label>
               <p
                 className={cn(
@@ -297,9 +301,7 @@ export function BundlesPage() {
                   name={includeSecrets ? 'alert-triangle' : 'shield-check'}
                   className="size-3.5 shrink-0"
                 />
-                {includeSecrets
-                  ? 'The bundle will contain real API tokens — share with care.'
-                  : 'Tokens in MCP server env are replaced with a placeholder, so the bundle is safe to share.'}
+                {includeSecrets ? t('secrets.warn') : t('secrets.safe')}
               </p>
             </div>
 
@@ -310,7 +312,7 @@ export function BundlesPage() {
                 disabled={busy || exportSel.size === 0}
               >
                 <Icon name="eye" />
-                Preview
+                {t('actions.preview')}
               </Button>
               <TooltipProvider>
                 <Tooltip>
@@ -321,14 +323,12 @@ export function BundlesPage() {
                         disabled={busy || exportSel.size === 0}
                       >
                         <Icon name="upload" />
-                        Export to file…
+                        {t('actions.exportToFile')}
                       </Button>
                     </span>
                   </TooltipTrigger>
                   {exportSel.size === 0 && (
-                    <TooltipContent>
-                      Select at least one agent to export
-                    </TooltipContent>
+                    <TooltipContent>{t('selectAtLeastOne')}</TooltipContent>
                   )}
                 </Tooltip>
               </TooltipProvider>
@@ -337,9 +337,9 @@ export function BundlesPage() {
             {preview && (
               <div className="rounded-lg border border-border bg-card/40 p-4 text-sm">
                 <p className="mb-2 font-medium">
-                  Bundle preview
+                  {t('preview')}
                   <Badge variant="muted" className="ml-2">
-                    {preview.agents.length} agent(s)
+                    {t('agentCount', { count: preview.agents.length })}
                   </Badge>
                 </p>
                 <p className="font-code text-xs text-muted-foreground">
@@ -358,7 +358,7 @@ export function BundlesPage() {
               onClick={() => void doLoad()}
             >
               <Icon name="folder-open" />
-              Load bundle file…
+              {t('actions.loadFile')}
             </Button>
 
             {loaded && (
@@ -373,7 +373,7 @@ export function BundlesPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Agents to apply</p>
+                  <p className="text-sm font-medium">{t('agentsToApply')}</p>
                   <AgentToggles
                     ids={loaded.bundle.agents.map((a) => a.agentId)}
                     selected={applySel}
@@ -388,22 +388,24 @@ export function BundlesPage() {
                     disabled={busy || applySel.size === 0}
                   >
                     <Icon name="eye" />
-                    Dry run
+                    {t('actions.dryRun')}
                   </Button>
                   <Button
                     onClick={() => setConfirmApply(true)}
                     disabled={busy || applySel.size === 0}
                   >
                     <Icon name="download" />
-                    Apply
+                    {t('actions.apply')}
                   </Button>
                 </div>
 
                 {changes && (
                   <div className="rounded-lg border border-border bg-card/40 p-3">
                     <p className="mb-2 text-sm font-medium">
-                      {changes.filter((c) => c.changed).length} of{' '}
-                      {changes.length} target(s) differ
+                      {t('diff.summary', {
+                        changed: changes.filter((c) => c.changed).length,
+                        total: changes.length,
+                      })}
                     </p>
                     <div className="flex flex-col gap-1">
                       {changes.map((c, i) => (
@@ -421,7 +423,7 @@ export function BundlesPage() {
                             variant={c.changed ? 'warning' : 'success'}
                             className="shrink-0"
                           >
-                            {c.changed ? 'changes' : 'same'}
+                            {c.changed ? t('diff.changes') : t('diff.same')}
                           </Badge>
                         </div>
                       ))}
@@ -437,9 +439,9 @@ export function BundlesPage() {
       <ConfirmDialog
         open={confirmApply}
         onOpenChange={setConfirmApply}
-        title="Apply this bundle?"
-        description="This overwrites the selected agents' real config files. A snapshot of each file is taken first (see History), so changes can be undone."
-        confirmLabel="Apply"
+        title={t('confirmApply.title')}
+        description={t('confirmApply.desc')}
+        confirmLabel={t('actions.apply')}
         onConfirm={() => void doApply(false)}
       />
     </div>

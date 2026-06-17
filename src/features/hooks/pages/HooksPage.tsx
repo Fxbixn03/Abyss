@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { AgentAdapter } from '@/shared/types/agent'
 import type { HookEntry, HookEvent } from '@/shared/types/hooks'
@@ -67,6 +68,7 @@ interface ScriptRef {
 }
 
 export function HooksPage() {
+  const { t } = useTranslation('hooks')
   const agent = useActiveAgent()
   const basePath = useConfigBase(agent.id)
   const navigate = useNavigate()
@@ -253,7 +255,7 @@ export function HooksPage() {
   const copyToAgent = async (entry: HookEntry, target: AgentAdapter) => {
     const base = configBaseFor(target.id)
     if (!base) {
-      toast.error(`No config location for ${target.displayName}`)
+      toast.error(t('toasts.noConfigFor', { agent: target.displayName }))
       return
     }
     try {
@@ -265,9 +267,9 @@ export function HooksPage() {
         timeout: supportsHookTimeout(target.id) ? entry.timeout : undefined,
       }
       await ipc.setHooks(target.id, base, [...existing, copy])
-      toast.success(`Copied hook to ${target.displayName}`)
+      toast.success(t('toasts.copiedTo', { agent: target.displayName }))
     } catch (err) {
-      reportError(err, { title: "Couldn't copy hook" })
+      reportError(err, { title: t('toasts.copyFailed') })
     }
   }
 
@@ -283,17 +285,17 @@ export function HooksPage() {
     const res = await ipc
       .saveTextFile(JSON.stringify(bundle, null, 2), {
         defaultName: `${agent.id}-hooks.json`,
-        title: 'Export hooks',
+        title: t('dialogTitles.export'),
         filters: [{ name: 'JSON', extensions: ['json'] }],
       })
       .catch(() => null)
-    if (res?.path) toast.success('Hooks exported')
+    if (res?.path) toast.success(t('toasts.exported'))
   }
 
   const importHooks = async () => {
     const picked = await ipc
       .pickFile({
-        title: 'Import hooks',
+        title: t('dialogTitles.import'),
         filters: [{ name: 'JSON', extensions: ['json'] }],
       })
       .catch(() => null)
@@ -305,24 +307,24 @@ export function HooksPage() {
       imported = parseHooksBundle(r.content)
     } catch (err) {
       toast.error(
-        `Import failed: ${err instanceof Error ? err.message : String(err)}`,
+        t('toasts.importFailed', {
+          error: err instanceof Error ? err.message : String(err),
+        }),
       )
       return
     }
     for (const entry of imported) await upsert(entry)
-    toast.success(
-      `Imported ${imported.length} hook${imported.length === 1 ? '' : 's'}`,
-    )
+    toast.success(t('toasts.imported', { count: imported.length }))
   }
 
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Hooks" icon="webhook" />
+        <PageHeader title={t('title')} icon="webhook" />
         <EmptyState
           icon="webhook"
-          title={`${agent.displayName} has no hooks`}
-          description="Switch to an agent that supports lifecycle hooks."
+          title={t('noHooksTitle', { agent: agent.displayName })}
+          description={t('unsupportedDesc')}
         />
       </div>
     )
@@ -331,15 +333,15 @@ export function HooksPage() {
   if (!basePath) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Hooks" icon="webhook" />
+        <PageHeader title={t('title')} icon="webhook" />
         <EmptyState
           icon="folder"
-          title="No config location set"
-          description="Set a config directory in Settings to manage hooks."
+          title={t('noPath.title')}
+          description={t('noPath.desc')}
           action={
             <Button onClick={() => navigate('/settings')}>
               <Icon name="settings" />
-              Open Settings
+              {t('actions.openSettings')}
             </Button>
           }
         />
@@ -350,8 +352,11 @@ export function HooksPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Hooks"
-        description={`Lifecycle hooks for ${agent.displayName} (${hooksFile})`}
+        title={t('title')}
+        description={t('headerDescription', {
+          agent: agent.displayName,
+          file: hooksFile,
+        })}
         icon="webhook"
         actions={
           <div className="flex items-center gap-2">
@@ -359,29 +364,29 @@ export function HooksPage() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                   <Icon name="sliders" />
-                  More
+                  {t('actions.more')}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setOverviewOpen(true)}>
                   <Icon name="layout-dashboard" />
-                  What runs automatically
+                  {t('labels.whatRuns')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => void openHistory()}>
                   <Icon name="history" />
-                  File history
+                  {t('labels.fileHistory')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => void importHooks()}>
                   <Icon name="upload" />
-                  Import hooks…
+                  {t('actions.import')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => void exportHooks()}
                   disabled={entries.length === 0}
                 >
                   <Icon name="download" />
-                  Export hooks…
+                  {t('actions.export')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -392,7 +397,7 @@ export function HooksPage() {
               }}
             >
               <Icon name="plus" />
-              Add hook
+              {t('actions.add')}
             </Button>
           </div>
         }
@@ -404,12 +409,12 @@ export function HooksPage() {
           onRetry={() => void load(agent.id, basePath)}
         />
       ) : loading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t('actions.loading')}</p>
       ) : entries.length === 0 ? (
         <EmptyState
           icon="webhook"
-          title="No hooks configured"
-          description="Run a command on events like PreToolUse, PostToolUse or Stop."
+          title={t('empty.title')}
+          description={t('empty.desc')}
           action={
             <Button
               onClick={() => {
@@ -418,7 +423,7 @@ export function HooksPage() {
               }}
             >
               <Icon name="plus" />
-              Add hook
+              {t('actions.add')}
             </Button>
           }
         />
@@ -486,7 +491,7 @@ export function HooksPage() {
                             className="h-4"
                             disabled={posInGroup === 0}
                             onClick={() => void move(entry.id, 'up')}
-                            aria-label="Move up"
+                            aria-label={t('aria.moveUp')}
                           >
                             <Icon name="chevron-up" />
                           </Button>
@@ -496,7 +501,7 @@ export function HooksPage() {
                             className="h-4"
                             disabled={posInGroup === sameMatcher.length - 1}
                             onClick={() => void move(entry.id, 'down')}
-                            aria-label="Move down"
+                            aria-label={t('aria.moveDown')}
                           >
                             <Icon name="chevron-down" />
                           </Button>
@@ -522,7 +527,7 @@ export function HooksPage() {
 
                       {entry.disabled && (
                         <Badge variant="muted" className="shrink-0">
-                          disabled
+                          {t('badges.disabled')}
                         </Badge>
                       )}
 
@@ -567,7 +572,7 @@ export function HooksPage() {
                             </span>
                           </TooltipTrigger>
                           <TooltipContent>
-                            Script file not found — create it from the menu.
+                            {t('labels.scriptNotFound')}
                           </TooltipContent>
                         </Tooltip>
                       )}
@@ -577,7 +582,7 @@ export function HooksPage() {
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            aria-label="Hook actions"
+                            aria-label={t('aria.actions')}
                           >
                             <Icon name="sliders" />
                           </Button>
@@ -587,20 +592,24 @@ export function HooksPage() {
                             onClick={() => testInSandbox(entry)}
                           >
                             <Icon name="flask-conical" />
-                            Test in Sandbox
+                            {t('actions.test')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => void toggle(entry.id)}
                           >
                             <Icon name={entry.disabled ? 'play' : 'pause'} />
-                            {entry.disabled ? 'Enable' : 'Disable'}
+                            {entry.disabled
+                              ? t('toggle.enable')
+                              : t('toggle.disable')}
                           </DropdownMenuItem>
                           {script && (
                             <DropdownMenuItem
                               onClick={() => setScriptEdit(script)}
                             >
                               <Icon name={exists ? 'pencil' : 'file-plus'} />
-                              {exists ? 'Edit script' : 'Create script'}
+                              {exists
+                                ? t('script.edit')
+                                : t('script.create')}
                             </DropdownMenuItem>
                           )}
                           {script && exists && (
@@ -608,20 +617,24 @@ export function HooksPage() {
                               onClick={() => void ipc.revealPath(script.path)}
                             >
                               <Icon name="external-link" />
-                              Reveal script
+                              {t('actions.revealScript')}
                             </DropdownMenuItem>
                           )}
                           {copyTargets.length > 0 && (
                             <>
                               <DropdownMenuSeparator />
-                              <DropdownMenuLabel>Copy to</DropdownMenuLabel>
-                              {copyTargets.map((t) => (
+                              <DropdownMenuLabel>
+                                {t('actions.copyTo')}
+                              </DropdownMenuLabel>
+                              {copyTargets.map((target) => (
                                 <DropdownMenuItem
-                                  key={t.id}
-                                  onClick={() => void copyToAgent(entry, t)}
+                                  key={target.id}
+                                  onClick={() =>
+                                    void copyToAgent(entry, target)
+                                  }
                                 >
-                                  <Icon name={t.icon} />
-                                  {t.displayName}
+                                  <Icon name={target.icon} />
+                                  {target.displayName}
                                 </DropdownMenuItem>
                               ))}
                             </>
@@ -636,7 +649,7 @@ export function HooksPage() {
                           setEditing(entry)
                           setFormOpen(true)
                         }}
-                        aria-label="Edit hook"
+                        aria-label={t('aria.edit')}
                       >
                         <Icon name="pencil" />
                       </Button>
@@ -644,7 +657,7 @@ export function HooksPage() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => duplicate(entry)}
-                        aria-label="Duplicate hook"
+                        aria-label={t('aria.duplicate')}
                       >
                         <Icon name="copy" />
                       </Button>
@@ -652,7 +665,7 @@ export function HooksPage() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => setDeleting(entry)}
-                        aria-label="Delete hook"
+                        aria-label={t('aria.delete')}
                       >
                         <Icon name="trash" />
                       </Button>
@@ -720,8 +733,8 @@ export function HooksPage() {
         onOpenChange={(o) => {
           if (!o) setDeleting(undefined)
         }}
-        title="Delete hook?"
-        description={`This removes the hook from ${hooksFile}.`}
+        title={t('confirmDelete.title')}
+        description={t('confirmDelete.desc', { file: hooksFile })}
         onConfirm={() => {
           if (deleting) void remove(deleting.id)
           setDeleting(undefined)
@@ -739,11 +752,12 @@ function CoverageOverview({
   events: readonly HookEvent[]
   covered: Set<HookEvent>
 }) {
+  const { t } = useTranslation('hooks')
   return (
     <Card className="space-y-2 p-3">
       <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
         <Icon name="layout-dashboard" className="size-3.5" />
-        Event coverage
+        {t('labels.eventCoverage')}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {events.map((event) => {
@@ -770,6 +784,7 @@ function CoverageOverview({
 
 /** Enter a tool name and see which Pre/PostToolUse hooks would match it. */
 function MatcherDryRun({ entries }: { entries: HookEntry[] }) {
+  const { t } = useTranslation('hooks')
   const [tool, setTool] = useState('')
   const toolEntries = useMemo(
     () =>
@@ -791,23 +806,23 @@ function MatcherDryRun({ entries }: { entries: HookEntry[] }) {
     <Card className="space-y-2 p-3">
       <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
         <Icon name="scan-search" className="size-3.5" />
-        Matcher dry-run
+        {t('labels.matcherDryRun')}
       </div>
       <Input
         value={tool}
         onChange={(e) => setTool(e.target.value)}
-        placeholder="Tool name, e.g. Bash or Edit"
+        placeholder={t('matcherPlaceholder')}
         className="font-code text-xs"
       />
       {tool.trim() !== '' && (
         <p className="text-xs text-muted-foreground">
           {matches.length === 0 ? (
             <>
-              No hook matches <span className="font-code">{tool}</span>.
+              {t('labels.noMatch')} <span className="font-code">{tool}</span>.
             </>
           ) : (
             <>
-              {matches.length} hook{matches.length === 1 ? '' : 's'} match{' '}
+              {t('dryRun.match', { count: matches.length })}{' '}
               <span className="font-code">{tool}</span>:
             </>
           )}
@@ -847,6 +862,7 @@ function OtherScopeView({
   otherScope: 'global' | 'project'
   hooks: HookEntry[]
 }) {
+  const { t } = useTranslation('hooks')
   return (
     <Card className="space-y-2 p-3">
       <button
@@ -859,7 +875,9 @@ function OtherScopeView({
           className="size-3.5"
         />
         <Icon name="git-compare" className="size-3.5" />
-        {show ? 'Hide' : 'Show'} {otherScope} scope hooks
+        {show
+          ? t('otherScope.hide', { scope: otherScope })
+          : t('otherScope.show', { scope: otherScope })}
         {show && (
           <Badge variant="muted" className="ml-1 font-code">
             {hooks.length}
@@ -869,7 +887,7 @@ function OtherScopeView({
       {show &&
         (hooks.length === 0 ? (
           <p className="pl-6 text-xs text-muted-foreground">
-            No hooks in the {otherScope} scope.
+            {t('otherScope.empty', { scope: otherScope })}
           </p>
         ) : (
           <ul className="flex flex-col gap-1 pl-6">

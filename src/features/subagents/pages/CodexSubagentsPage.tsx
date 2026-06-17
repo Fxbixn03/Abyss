@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useCtrlS } from '@/shared/hooks/useCtrlS'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { CodexSubagentSummary } from '@/shared/types/codex-subagent'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
@@ -26,6 +27,7 @@ import { SubagentEditor } from '../components/SubagentEditor'
 import { defaultTemplate, parseToml } from '../lib/toml'
 
 export function CodexSubagentsPage() {
+  const { t } = useTranslation('subagents')
   const agent = useActiveAgent()
   const basePath = useConfigBase(agent.id)
   const navigate = useNavigate()
@@ -160,14 +162,14 @@ export function CodexSubagentsPage() {
 
   const header = (
     <PageHeader
-      title="Subagents"
-      description={`Custom subagents for ${agent.displayName}`}
+      title={t('title')}
+      description={t('headerDescription', { agent: agent.displayName })}
       icon="bot"
       actions={
         basePath ? (
           <Button onClick={() => setNewOpen(true)}>
             <Icon name="file-plus" />
-            New Subagent
+            {t('actions.new')}
           </Button>
         ) : undefined
       }
@@ -180,12 +182,12 @@ export function CodexSubagentsPage() {
         {header}
         <EmptyState
           icon="folder"
-          title="No config location set"
-          description="Set a Codex config directory in Settings to manage subagents."
+          title={t('noPath.title')}
+          description={t('noPath.desc')}
           action={
             <Button onClick={() => navigate('/settings')}>
               <Icon name="settings" />
-              Open Settings
+              {t('actions.openSettings')}
             </Button>
           }
         />
@@ -213,18 +215,22 @@ export function CodexSubagentsPage() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filter subagents…"
+              placeholder={t('filter')}
             />
           )}
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-1">
             {!loaded ? (
-              <p className="px-1 text-sm text-muted-foreground">Loading…</p>
+              <p className="px-1 text-sm text-muted-foreground">
+                {t('actions.loading')}
+              </p>
             ) : items.length === 0 ? (
               <p className="px-1 text-sm text-muted-foreground">
-                No subagents yet.
+                {t('empty')}
               </p>
             ) : filtered.length === 0 ? (
-              <p className="px-1 text-sm text-muted-foreground">No matches.</p>
+              <p className="px-1 text-sm text-muted-foreground">
+                {t('noMatches')}
+              </p>
             ) : (
               filtered.map((item) => {
                 const active = item.id === selectedId
@@ -266,13 +272,13 @@ export function CodexSubagentsPage() {
                     <ContextMenuContent>
                       <ContextMenuItem onSelect={() => setRenameItem(item)}>
                         <Icon name="pencil" />
-                        Rename
+                        {t('actions.rename')}
                       </ContextMenuItem>
                       <ContextMenuItem
                         onSelect={() => void ipc.revealPath(item.path)}
                       >
                         <Icon name="folder-open" />
-                        Reveal in folder
+                        {t('actions.reveal')}
                       </ContextMenuItem>
                       <ContextMenuSeparator />
                       <ContextMenuItem
@@ -280,7 +286,7 @@ export function CodexSubagentsPage() {
                         onSelect={() => setDeleteId(item.id)}
                       >
                         <Icon name="trash" />
-                        Delete
+                        {t('actions.delete')}
                       </ContextMenuItem>
                     </ContextMenuContent>
                   </ContextMenu>
@@ -294,8 +300,8 @@ export function CodexSubagentsPage() {
           {!selectedId ? (
             <EmptyState
               icon="bot"
-              title="No subagent selected"
-              description="Pick a subagent to edit, or create a new one."
+              title={t('noSelection.title')}
+              description={t('noSelection.desc')}
             />
           ) : (
             <SubagentEditor
@@ -312,9 +318,9 @@ export function CodexSubagentsPage() {
       {newOpen && (
         <NameDialog
           open
-          title="New subagent"
-          confirmLabel="Create"
-          placeholder="reviewer"
+          title={t('newSubagent.title')}
+          confirmLabel={t('actions.create')}
+          placeholder={t('newSubagent.placeholder')}
           onOpenChange={setNewOpen}
           onConfirm={(name) => void createNew(name)}
         />
@@ -324,9 +330,9 @@ export function CodexSubagentsPage() {
         <NameDialog
           key={renameItem.id}
           open
-          title="Rename subagent"
+          title={t('renameSubagent')}
           initial={renameItem.id}
-          confirmLabel="Rename"
+          confirmLabel={t('actions.rename')}
           onOpenChange={(open) => !open && setRenameItem(null)}
           onConfirm={(name) => void rename(name)}
         />
@@ -335,9 +341,9 @@ export function CodexSubagentsPage() {
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete subagent?"
-        description={`This permanently deletes "${deleteId}.toml".`}
-        confirmLabel="Delete"
+        title={t('confirmDelete.title')}
+        description={t('confirmDelete.desc', { name: deleteId })}
+        confirmLabel={t('actions.delete')}
         destructive
         onConfirm={() => void confirmDelete()}
       />

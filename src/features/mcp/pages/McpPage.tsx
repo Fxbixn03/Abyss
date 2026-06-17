@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { McpServerEntry } from '@/shared/types/config'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
@@ -25,6 +26,7 @@ import { McpToolTester } from '../components/McpToolTester'
 const MONITOR_INTERVAL_MS = 30_000
 
 export function McpPage() {
+  const { t } = useTranslation('mcp')
   const agent = useActiveAgent()
   const basePath = useConfigBase(agent.id)
   const projectDir = useProjectDir()
@@ -146,11 +148,11 @@ export function McpPage() {
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="MCP Servers" icon="plug" />
+        <PageHeader title={t('title')} icon="plug" />
         <EmptyState
           icon="plug"
-          title={`${agent.displayName} has no MCP support`}
-          description="Switch to an agent that supports the Model Context Protocol to manage servers."
+          title={t('noSupportTitle', { agent: agent.displayName })}
+          description={t('unsupportedDesc')}
         />
       </div>
     )
@@ -159,8 +161,8 @@ export function McpPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="MCP Servers"
-        description="User-scoped servers, auto-detected from ~/.claude.json"
+        title={t('title')}
+        description={t('userScopedDesc')}
         icon="plug"
         actions={
           <div className="flex items-center gap-2">
@@ -168,19 +170,19 @@ export function McpPage() {
               variant="outline"
               onClick={() => void testAll()}
               disabled={!basePath || servers.length === 0}
-              title="Re-check every server now"
+              title={t('recheckTitle')}
             >
               <Icon name="refresh-cw" />
-              Recheck
+              {t('actions.recheck')}
             </Button>
             <Button
               variant={autoRefresh ? 'default' : 'outline'}
               onClick={() => setAutoRefresh((v) => !v)}
               disabled={!basePath || servers.length === 0}
-              title={`Automatically re-check every ${MONITOR_INTERVAL_MS / 1000}s`}
+              title={t('autoRecheck', { seconds: MONITOR_INTERVAL_MS / 1000 })}
             >
               <Icon name={autoRefresh ? 'circle-check' : 'clock'} />
-              Auto {autoRefresh ? 'on' : 'off'}
+              {autoRefresh ? t('autoOn') : t('autoOff')}
             </Button>
             <Button
               variant="outline"
@@ -188,7 +190,7 @@ export function McpPage() {
               disabled={!basePath}
             >
               <Icon name="globe" />
-              Discover
+              {t('actions.discover')}
             </Button>
             <Button
               variant="outline"
@@ -196,7 +198,7 @@ export function McpPage() {
               disabled={!basePath}
             >
               <Icon name="upload" />
-              Import
+              {t('actions.import')}
             </Button>
             <Button
               variant="outline"
@@ -204,7 +206,7 @@ export function McpPage() {
               disabled={servers.length === 0}
             >
               <Icon name={copied ? 'check' : 'copy'} />
-              {copied ? 'Copied!' : 'Copy JSON'}
+              {copied ? t('actions.copied') : t('actions.copyJson')}
             </Button>
             <Button
               onClick={() => {
@@ -214,32 +216,33 @@ export function McpPage() {
               disabled={!basePath}
             >
               <Icon name="plus" />
-              Add server
+              {t('actions.add')}
             </Button>
           </div>
         }
       />
 
       <div className="-mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-        <span>
-          claude.ai connectors (Google Drive, etc.) are managed in your Claude
-          account and aren&apos;t editable here.
-        </span>
+        <span>{t('connectorsNote')}</span>
         {servers.length > 0 &&
           (summary.online > 0 ||
             summary.offline > 0 ||
             summary.checking > 0) && (
             <span className="flex items-center gap-2">
               {summary.online > 0 && (
-                <Badge variant="success">{summary.online} online</Badge>
+                <Badge variant="success">
+                  {t('summary.online', { count: summary.online })}
+                </Badge>
               )}
               {summary.offline > 0 && (
-                <Badge variant="danger">{summary.offline} offline</Badge>
+                <Badge variant="danger">
+                  {t('summary.offline', { count: summary.offline })}
+                </Badge>
               )}
               {summary.checking > 0 && (
                 <Badge variant="muted">
-                  <Spinner className="size-3" label="Checking…" />
-                  {summary.checking} checking
+                  <Spinner className="size-3" label={t('checking')} />
+                  {t('summary.checking', { count: summary.checking })}
                 </Badge>
               )}
             </span>
@@ -249,12 +252,12 @@ export function McpPage() {
       {!basePath ? (
         <EmptyState
           icon="folder"
-          title="No config location set"
-          description="Set a config directory in Settings to manage MCP servers."
+          title={t('noPath.title')}
+          description={t('noPath.desc')}
           action={
             <Button onClick={() => navigate('/settings')}>
               <Icon name="settings" />
-              Open Settings
+              {t('actions.openSettings')}
             </Button>
           }
         />
@@ -264,12 +267,12 @@ export function McpPage() {
           onRetry={() => void load(agent.id, basePath, projectDir)}
         />
       ) : loading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t('actions.loading')}</p>
       ) : servers.length === 0 ? (
         <EmptyState
           icon="plug"
-          title="No MCP servers yet"
-          description="Add a server to expose tools and resources to the agent."
+          title={t('empty.title')}
+          description={t('empty.desc')}
           action={
             <Button
               onClick={() => {
@@ -278,7 +281,7 @@ export function McpPage() {
               }}
             >
               <Icon name="plus" />
-              Add server
+              {t('actions.add')}
             </Button>
           }
         />
@@ -295,13 +298,13 @@ export function McpPage() {
               onKeyDown={(e) => {
                 if (e.key === 'Escape') setFilterQuery('')
               }}
-              placeholder="Filter by name or command…"
+              placeholder={t('filter')}
               className="pl-9 pr-8"
             />
             {filterQuery && (
               <button
                 type="button"
-                aria-label="Clear filter"
+                aria-label={t('clearFilter')}
                 onClick={() => setFilterQuery('')}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >

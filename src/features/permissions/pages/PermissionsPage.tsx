@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { PermissionColumn, PermissionRules } from '@/shared/types/config'
 import {
   Card,
@@ -50,11 +51,7 @@ import { buildConflictMap, findConflicts } from '../lib/conflicts'
 import { mergeEffective } from '../lib/effective'
 import { SECURITY_PRESETS } from '../lib/presets'
 
-const SORT_OPTIONS: { value: RuleSort; label: string }[] = [
-  { value: 'order', label: 'Order' },
-  { value: 'az', label: 'A–Z' },
-  { value: 'tool', label: 'By tool' },
-]
+const SORT_OPTIONS: RuleSort[] = ['order', 'az', 'tool']
 
 const EMPTY: PermissionRules = {
   allow: [],
@@ -65,6 +62,7 @@ const EMPTY: PermissionRules = {
 }
 
 export function PermissionsPage() {
+  const { t } = useTranslation('permissions')
   const agent = useActiveAgent()
   const basePath = useConfigBase(agent.id)
   const globalBase = useBasePath(agent.id)
@@ -72,6 +70,11 @@ export function PermissionsPage() {
   const projectDir = useProjectDir()
   const navigate = useNavigate()
   const supported = agent.capabilities.permissions
+  const sortLabels: Record<RuleSort, string> = {
+    order: t('sort.order'),
+    az: t('sort.az'),
+    tool: t('sort.tool'),
+  }
 
   const [rules, setRules] = useState<PermissionRules>(EMPTY)
   // Rules from the global profile, surfaced read-only when editing a project.
@@ -204,11 +207,11 @@ export function PermissionsPage() {
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Permissions" icon="shield" />
+        <PageHeader title={t('title')} icon="shield" />
         <EmptyState
           icon="shield"
-          title={`${agent.displayName} has no permission rules`}
-          description="Switch to an agent that exposes tool permissions to edit them here."
+          title={t('noSupportTitle', { agent: agent.displayName })}
+          description={t('unsupportedDesc')}
         />
       </div>
     )
@@ -217,15 +220,15 @@ export function PermissionsPage() {
   if (!basePath) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Permissions" icon="shield" />
+        <PageHeader title={t('title')} icon="shield" />
         <EmptyState
           icon="folder"
-          title="No config location set"
-          description="Set a config directory in Settings to manage permissions."
+          title={t('noPath.title')}
+          description={t('noPath.desc')}
           action={
             <Button onClick={() => navigate('/settings')}>
               <Icon name="settings" />
-              Open Settings
+              {t('openSettings')}
             </Button>
           }
         />
@@ -246,8 +249,8 @@ export function PermissionsPage() {
   }[] = [
     {
       key: 'allow',
-      title: 'Allow',
-      description: 'Tools the agent may run without asking.',
+      title: t('columns.allow.title'),
+      description: t('columns.allow.desc'),
       placeholder: 'Bash(npm run test:*)',
       icon: 'circle-check',
       accent: 'border-t-2 border-t-success/60',
@@ -256,8 +259,8 @@ export function PermissionsPage() {
     },
     {
       key: 'ask',
-      title: 'Ask',
-      description: 'Tools that require confirmation first.',
+      title: t('columns.ask.title'),
+      description: t('columns.ask.desc'),
       placeholder: 'Bash(git push:*)',
       icon: 'circle-help',
       accent: 'border-t-2 border-t-warning/60',
@@ -266,9 +269,8 @@ export function PermissionsPage() {
     },
     {
       key: 'deny',
-      title: 'Deny',
-      description:
-        'Tools that are always blocked — your wall against accidents.',
+      title: t('columns.deny.title'),
+      description: t('columns.deny.desc'),
       placeholder: 'Read(./.env)',
       icon: 'shield-x',
       accent: 'border-t-2 border-t-destructive/70',
@@ -299,8 +301,8 @@ export function PermissionsPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Permissions"
-        description={`Tool permission rules for ${agent.displayName}`}
+        title={t('title')}
+        description={t('headerDescription', { agent: agent.displayName })}
         icon="shield"
         actions={
           <>
@@ -312,7 +314,7 @@ export function PermissionsPage() {
               onClick={handleCopyAsJson}
             >
               <Icon name={copied ? 'check' : 'copy'} />
-              {copied ? 'Copied!' : 'Copy as JSON'}
+              {copied ? t('copied') : t('copyJson')}
             </Button>
           </>
         }
@@ -333,7 +335,7 @@ export function PermissionsPage() {
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
-                {v === 'own' ? 'Own' : 'Effective'}
+                {v === 'own' ? t('view.own') : t('view.effective')}
               </button>
             ))}
           </div>
@@ -347,7 +349,7 @@ export function PermissionsPage() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Filter rules…"
+            placeholder={t('filter')}
             className="h-9 w-[180px] pl-8"
           />
         </div>
@@ -356,18 +358,18 @@ export function PermissionsPage() {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
               <Icon name="arrow-up-down" />
-              Sort: {SORT_OPTIONS.find((o) => o.value === sort)?.label}
+              {t('sort.label', { label: sortLabels[sort] })}
               <Icon name="chevron-down" className="size-3.5 opacity-60" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            {SORT_OPTIONS.map((o) => (
-              <DropdownMenuItem key={o.value} onSelect={() => setSort(o.value)}>
+            {SORT_OPTIONS.map((value) => (
+              <DropdownMenuItem key={value} onSelect={() => setSort(value)}>
                 <Icon
                   name="check"
-                  className={cn('size-3.5', sort !== o.value && 'opacity-0')}
+                  className={cn('size-3.5', sort !== value && 'opacity-0')}
                 />
-                {o.label}
+                {sortLabels[value]}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -381,18 +383,14 @@ export function PermissionsPage() {
           onClick={() => navigate('/settings-file')}
         >
           <Icon name="braces" />
-          View as JSON
+          {t('viewJson')}
         </Button>
       </div>
 
       {conflictCount > 0 && !showEffective && (
         <div className="flex items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
           <Icon name="circle-alert" className="size-4 shrink-0" />
-          <span>
-            {conflictCount} rule{conflictCount === 1 ? '' : 's'} appear in more
-            than one column. Claude Code applies deny &gt; ask &gt; allow, so
-            the stricter column wins.
-          </span>
+          <span>{t('conflict', { count: conflictCount })}</span>
         </div>
       )}
 
@@ -401,10 +399,8 @@ export function PermissionsPage() {
           <div className="flex items-center gap-3 rounded-md border border-dashed border-border bg-muted/40 px-4 py-3">
             <Icon name="sparkles" className="size-5 shrink-0 text-primary" />
             <div className="flex-1">
-              <p className="text-sm font-medium">No rules yet</p>
-              <p className="text-xs text-muted-foreground">
-                Start from a security preset, then fine-tune it below.
-              </p>
+              <p className="text-sm font-medium">{t('empty.title')}</p>
+              <p className="text-xs text-muted-foreground">{t('empty.desc')}</p>
             </div>
             <Button
               size="sm"
@@ -421,7 +417,7 @@ export function PermissionsPage() {
               }}
             >
               <Icon name="shield-check" />
-              Apply Standard preset
+              {t('applyPreset')}
             </Button>
           </div>
         )}
@@ -459,14 +455,14 @@ export function PermissionsPage() {
                         {visibleCount}
                       </Badge>
                       {!showEffective && globalCount > 0 && (
-                        <Badge variant="muted">+{globalCount} global</Badge>
+                        <Badge variant="muted">
+                          {t('globalCount', { count: globalCount })}
+                        </Badge>
                       )}
                     </span>
                   </CardTitle>
                   <CardDescription>
-                    {showEffective
-                      ? 'Effective rules — global merged with this project.'
-                      : section.description}
+                    {showEffective ? t('effectiveDesc') : section.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { DoctorAgentInput, DoctorSeverity } from '@/shared/types/doctor'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
@@ -34,6 +35,7 @@ const CATEGORY_ICON: Record<string, string> = {
 }
 
 export function DoctorPage() {
+  const { t } = useTranslation('doctor')
   const navigate = useNavigate()
   const agents = useAllAgents()
   const getBasePath = useSettingsStore((s) => s.getBasePath)
@@ -75,8 +77,8 @@ export function DoctorPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Doctor"
-        description="One-click health check across every enabled agent"
+        title={t('title')}
+        description={t('description')}
         icon="stethoscope"
         actions={
           <Button
@@ -85,8 +87,12 @@ export function DoctorPage() {
             onClick={() => void scan(inputs)}
             disabled={scanning}
           >
-            {scanning ? <Spinner label="Scanning…" /> : <Icon name="refresh-cw" />}
-            Rescan
+            {scanning ? (
+              <Spinner label={t('scanning')} />
+            ) : (
+              <Icon name="refresh-cw" />
+            )}
+            {t('rescan')}
           </Button>
         }
       />
@@ -95,31 +101,30 @@ export function DoctorPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={counts.error ? 'danger' : 'muted'}>
             <Icon name="circle-x" className="size-3.5" />
-            {counts.error} error{counts.error === 1 ? '' : 's'}
+            {t('counts.error', { count: counts.error })}
           </Badge>
           <Badge variant={counts.warning ? 'warning' : 'muted'}>
             <Icon name="triangle-alert" className="size-3.5" />
-            {counts.warning} warning{counts.warning === 1 ? '' : 's'}
+            {t('counts.warning', { count: counts.warning })}
           </Badge>
           <Badge variant="muted">
             <Icon name="info" className="size-3.5" />
-            {counts.info} info
+            {t('counts.info', { count: counts.info })}
           </Badge>
           <span className="text-xs text-muted-foreground">
-            {report?.agentCount} agent
-            {report?.agentCount === 1 ? '' : 's'} scanned
+            {t('counts.agentsScanned', { count: report?.agentCount ?? 0 })}
           </span>
         </div>
       )}
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
         {scanning && !report ? (
-          <p className="text-sm text-muted-foreground">Running checks…</p>
+          <p className="text-sm text-muted-foreground">{t('running')}</p>
         ) : healthy ? (
           <EmptyState
             icon="shield-check"
-            title="Everything looks healthy"
-            description="No problems found in your agents' MCP servers, hooks or permissions. Nice and tidy."
+            title={t('healthy.title')}
+            description={t('healthy.desc')}
           />
         ) : (
           report?.findings.map((f) => {
@@ -152,7 +157,7 @@ export function DoctorPage() {
                       onClick={() => navigate(f.route!)}
                     >
                       <Icon name="arrow-right" />
-                      Open
+                      {t('open')}
                     </Button>
                   )}
                   {f.fix && (
@@ -163,11 +168,11 @@ export function DoctorPage() {
                       disabled={busy}
                     >
                       {busy ? (
-                        <Spinner label="Fixing…" />
+                        <Spinner label={t('fixing')} />
                       ) : (
                         <Icon name="wand-sparkles" />
                       )}
-                      Fix
+                      {t('fix')}
                     </Button>
                   )}
                 </div>

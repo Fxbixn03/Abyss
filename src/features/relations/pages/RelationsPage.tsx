@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/components/ui/button'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
@@ -18,6 +19,7 @@ const MAX_PREVIEW = 680
  * inferred reference edges between them, and inline `.md` editing.
  */
 export function RelationsPage() {
+  const { t } = useTranslation('relations')
   const navigate = useNavigate()
   const ctrl = useRelations()
   const [previewWidth, setPreviewWidth] = useState(360)
@@ -43,15 +45,15 @@ export function RelationsPage() {
   if (!ctrl.basePath) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Relations" icon="waypoints" />
+        <PageHeader title={t('title')} icon="waypoints" />
         <EmptyState
           icon="folder"
-          title="No config location set"
-          description="Set a config directory in Settings to map this agent's components."
+          title={t('noPath.title')}
+          description={t('noPath.desc')}
           action={
             <Button onClick={() => navigate('/settings')}>
               <Icon name="settings" />
-              Open Settings
+              {t('openSettings')}
             </Button>
           }
         />
@@ -62,9 +64,9 @@ export function RelationsPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Relations"
+        title={t('title')}
         icon="waypoints"
-        description="How this agent's commands, subagents, skills, MCP servers and hooks connect"
+        description={t('headerDescription')}
       />
       <RelationsToolbar ctrl={ctrl} />
       <div className="flex min-h-0 flex-1 gap-0">
@@ -82,7 +84,7 @@ export function RelationsPage() {
         <div
           role="separator"
           aria-orientation="vertical"
-          aria-label="Resize preview"
+          aria-label={t('resizePreview')}
           onPointerDown={onHandleDown}
           onPointerMove={onHandleMove}
           onPointerUp={onHandleUp}

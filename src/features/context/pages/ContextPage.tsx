@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Badge } from '@/shared/components/ui/badge'
@@ -57,6 +58,7 @@ const BASE_PROMPT_TOKENS = 2500
 const MCP_SCHEMA_TOKENS = 250
 
 export function ContextPage() {
+  const { t } = useTranslation('context')
   const agent = useActiveAgent()
   const instructionsBase = useInstructionsBase(agent.id)
   const configBase = useConfigBase(agent.id)
@@ -275,11 +277,11 @@ export function ContextPage() {
   if (!agent.capabilities.instructions) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Context" icon="list-tree" />
+        <PageHeader title={t('title')} icon="list-tree" />
         <EmptyState
           icon="list-tree"
-          title={`${agent.displayName} has no compiled context`}
-          description="Switch to an agent with instruction files to inspect what the model sees."
+          title={t('noContextTitle', { agent: agent.displayName })}
+          description={t('unsupportedDesc')}
         />
       </div>
     )
@@ -288,8 +290,8 @@ export function ContextPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Context"
-        description={`What ${agent.displayName} actually sees — layered, with token estimates`}
+        title={t('title')}
+        description={t('headerDescription', { agent: agent.displayName })}
         icon="list-tree"
         actions={
           <Badge
@@ -316,7 +318,7 @@ export function ContextPage() {
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
         {loading ? (
-          <p className="text-sm text-muted-foreground">Compiling context…</p>
+          <p className="text-sm text-muted-foreground">{t('compiling')}</p>
         ) : (
           <section className="space-y-2">
             {layers.map((layer, i) => {
@@ -410,15 +412,14 @@ export function ContextPage() {
           <section className="space-y-2">
             <h2 className="flex items-center gap-2 text-sm font-medium">
               <Icon name="shield-alert" className="size-4" />
-              Conflicts
+              {t('conflicts.title')}
               <Badge variant={conflicts.length ? 'warning' : 'success'}>
                 {conflicts.length}
               </Badge>
             </h2>
             {conflicts.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No conflicting rules, duplicate instructions or MCP clashes
-                detected.
+                {t('conflicts.none')}
               </p>
             ) : (
               <div className="space-y-2">

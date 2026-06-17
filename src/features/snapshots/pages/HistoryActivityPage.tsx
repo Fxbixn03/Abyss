@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Tabs,
   TabsContent,
@@ -21,16 +22,17 @@ interface HistoryActivityPageProps {
 export function HistoryActivityPage({
   defaultTab = 'history',
 }: HistoryActivityPageProps) {
+  const { t } = useTranslation('snapshots')
   return (
     <Tabs defaultValue={defaultTab} className="flex h-full flex-col gap-4">
       <TabsList className="self-start">
         <TabsTrigger value="history">
           <Icon name="history" className="size-4" />
-          History
+          {t('tabs.history')}
         </TabsTrigger>
         <TabsTrigger value="activity">
           <Icon name="scroll-text" className="size-4" />
-          Activity
+          {t('tabs.activity')}
         </TabsTrigger>
       </TabsList>
 

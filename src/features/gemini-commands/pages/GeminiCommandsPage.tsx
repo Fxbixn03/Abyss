@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useCtrlS } from '@/shared/hooks/useCtrlS'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { GeminiCommandSummary } from '@/shared/types/gemini-command'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
@@ -25,6 +26,7 @@ import { CommandEditor } from '../components/CommandEditor'
 import { defaultTemplate, parseToml } from '../lib/toml'
 
 export function GeminiCommandsPage() {
+  const { t } = useTranslation('geminiCommands')
   const agent = useActiveAgent()
   const basePath = useConfigBase(agent.id)
   const navigate = useNavigate()
@@ -134,7 +136,7 @@ export function GeminiCommandsPage() {
       setSelectedId(id)
       applyLoaded(content, path)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create command.')
+      setError(err instanceof Error ? err.message : t('errors.create'))
     }
   }
 
@@ -148,7 +150,7 @@ export function GeminiCommandsPage() {
       await reloadList()
       if (selectedId === item.id) setSelectedId(toId)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to rename command.')
+      setError(err instanceof Error ? err.message : t('errors.rename'))
     }
   }
 
@@ -169,14 +171,14 @@ export function GeminiCommandsPage() {
 
   const header = (
     <PageHeader
-      title="Commands"
-      description={`Custom slash commands for ${agent.displayName}`}
+      title={t('title')}
+      description={t('headerDescription', { agent: agent.displayName })}
       icon="square-slash"
       actions={
         basePath ? (
           <Button onClick={() => setNewOpen(true)}>
             <Icon name="file-plus" />
-            New Command
+            {t('actions.new')}
           </Button>
         ) : undefined
       }
@@ -189,12 +191,12 @@ export function GeminiCommandsPage() {
         {header}
         <EmptyState
           icon="folder"
-          title="No config location set"
-          description="Set a Gemini config directory in Settings to manage commands."
+          title={t('noPath.title')}
+          description={t('noPath.desc')}
           action={
             <Button onClick={() => navigate('/settings')}>
               <Icon name="settings" />
-              Open Settings
+              {t('actions.openSettings')}
             </Button>
           }
         />
@@ -226,7 +228,7 @@ export function GeminiCommandsPage() {
             type="button"
             onClick={() => setError(null)}
             className="text-muted-foreground hover:text-foreground"
-            aria-label="Dismiss"
+            aria-label={t('actions.dismiss')}
           >
             <Icon name="x" className="size-4" />
           </button>
@@ -239,18 +241,22 @@ export function GeminiCommandsPage() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filter commands…"
+              placeholder={t('filter')}
             />
           )}
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-1">
             {!loaded ? (
-              <p className="px-1 text-sm text-muted-foreground">Loading…</p>
+              <p className="px-1 text-sm text-muted-foreground">
+                {t('actions.loading')}
+              </p>
             ) : items.length === 0 ? (
               <p className="px-1 text-sm text-muted-foreground">
-                No commands yet.
+                {t('empty')}
               </p>
             ) : filtered.length === 0 ? (
-              <p className="px-1 text-sm text-muted-foreground">No matches.</p>
+              <p className="px-1 text-sm text-muted-foreground">
+                {t('noMatches')}
+              </p>
             ) : (
               filtered.map((item) => {
                 const active = item.id === selectedId
@@ -284,13 +290,13 @@ export function GeminiCommandsPage() {
                     <ContextMenuContent>
                       <ContextMenuItem onSelect={() => setRenameItem(item)}>
                         <Icon name="pencil" />
-                        Rename
+                        {t('actions.rename')}
                       </ContextMenuItem>
                       <ContextMenuItem
                         onSelect={() => void ipc.revealPath(item.path)}
                       >
                         <Icon name="folder-open" />
-                        Reveal in folder
+                        {t('actions.reveal')}
                       </ContextMenuItem>
                       <ContextMenuSeparator />
                       <ContextMenuItem
@@ -298,7 +304,7 @@ export function GeminiCommandsPage() {
                         onSelect={() => setDeleteId(item.id)}
                       >
                         <Icon name="trash" />
-                        Delete
+                        {t('actions.delete')}
                       </ContextMenuItem>
                     </ContextMenuContent>
                   </ContextMenu>
@@ -312,8 +318,8 @@ export function GeminiCommandsPage() {
           {!selectedId ? (
             <EmptyState
               icon="square-slash"
-              title="No command selected"
-              description="Pick a command to edit, or create a new one."
+              title={t('noSelection.title')}
+              description={t('noSelection.desc')}
             />
           ) : (
             <CommandEditor
@@ -330,9 +336,9 @@ export function GeminiCommandsPage() {
       {newOpen && (
         <NameDialog
           open
-          title="New command"
-          confirmLabel="Create"
-          placeholder="git/commit"
+          title={t('newCommand.title')}
+          confirmLabel={t('actions.create')}
+          placeholder={t('newCommand.placeholder')}
           onOpenChange={setNewOpen}
           onConfirm={(id) => void createNew(id)}
         />
@@ -342,10 +348,10 @@ export function GeminiCommandsPage() {
         <NameDialog
           key={renameItem.id}
           open
-          title="Rename command"
+          title={t('renameCommand')}
           initial={renameItem.id}
-          confirmLabel="Rename"
-          placeholder="git/commit"
+          confirmLabel={t('actions.rename')}
+          placeholder={t('newCommand.placeholder')}
           onOpenChange={(open) => !open && setRenameItem(null)}
           onConfirm={(id) => void rename(id)}
         />
@@ -354,9 +360,9 @@ export function GeminiCommandsPage() {
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete command?"
-        description={`This permanently deletes "${deleteId}.toml".`}
-        confirmLabel="Delete"
+        title={t('confirmDelete.title')}
+        description={t('confirmDelete.desc', { name: deleteId })}
+        confirmLabel={t('actions.delete')}
         destructive
         onConfirm={() => void confirmDelete()}
       />

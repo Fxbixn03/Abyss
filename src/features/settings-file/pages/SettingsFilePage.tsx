@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useCtrlS } from '@/shared/hooks/useCtrlS'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { RawSettingsFile } from '@/shared/types/ipc'
 import type { ValidationIssue } from '@/shared/types/agent'
 import { Button } from '@/shared/components/ui/button'
@@ -32,19 +33,14 @@ import { DiffPreviewDialog } from '@/features/config/components/DiffPreviewDialo
 const FILES: RawSettingsFile[] = ['settings.json', 'settings.local.json']
 
 // Color-coded so the two distinct files are easy to tell apart at a glance.
-const FILE_META: Record<
-  RawSettingsFile,
-  { dot: string; active: string; hint: string }
-> = {
+const FILE_META: Record<RawSettingsFile, { dot: string; active: string }> = {
   'settings.json': {
     dot: 'bg-primary',
     active: 'bg-primary/10 text-primary ring-1 ring-primary/30',
-    hint: 'Shared settings — typically committed to source control.',
   },
   'settings.local.json': {
     dot: 'bg-warning',
     active: 'bg-warning/10 text-warning ring-1 ring-warning/30',
-    hint: 'Local overrides — personal and usually git-ignored.',
   },
 }
 
@@ -64,6 +60,7 @@ function validateJson(content: string): ValidationIssue[] {
 }
 
 export function SettingsFilePage() {
+  const { t } = useTranslation(['settingsFile', 'common'])
   const agent = useActiveAgent()
   const basePath = useConfigBase(agent.id)
   const navigate = useNavigate()
@@ -153,11 +150,11 @@ export function SettingsFilePage() {
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Settings (raw)" icon="braces" />
+        <PageHeader title={t('title')} icon="braces" />
         <EmptyState
           icon="braces"
-          title={`${agent.displayName} has no raw settings`}
-          description="Switch to an agent that exposes settings.json."
+          title={t('noRawTitle', { agent: agent.displayName })}
+          description={t('unsupportedDesc')}
         />
       </div>
     )
@@ -166,15 +163,15 @@ export function SettingsFilePage() {
   if (!basePath) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Settings (raw)" icon="braces" />
+        <PageHeader title={t('title')} icon="braces" />
         <EmptyState
           icon="folder"
-          title="No config location set"
-          description="Set a config directory in Settings first."
+          title={t('noPath.title')}
+          description={t('noPath.desc')}
           action={
             <Button onClick={() => navigate('/settings')}>
               <Icon name="settings" />
-              Open Settings
+              {t('openSettings')}
             </Button>
           }
         />
@@ -185,8 +182,8 @@ export function SettingsFilePage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Settings (raw)"
-        description={`Direct JSON for ${agent.displayName}`}
+        title={t('title')}
+        description={t('headerDescription', { agent: agent.displayName })}
         icon="braces"
         actions={
           <Button
@@ -195,7 +192,7 @@ export function SettingsFilePage() {
             disabled={!dirty || saving || hasErrors}
           >
             <Icon name="save" />
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('common:actions.saving') : t('common:actions.save')}
           </Button>
         }
       />
@@ -224,14 +221,14 @@ export function SettingsFilePage() {
           </button>
         ))}
         <div className="ml-auto flex items-center gap-2 pr-1">
-          {!exists && <Badge variant="warning">new</Badge>}
-          {dirty && <Badge variant="default">unsaved</Badge>}
+          {!exists && <Badge variant="warning">{t('badges.new')}</Badge>}
+          {dirty && <Badge variant="default">{t('badges.unsaved')}</Badge>}
         </div>
       </div>
 
       <p className="-mt-1 flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
         <Icon name="info" className="size-3.5 shrink-0" />
-        {FILE_META[file].hint}
+        {t(file === 'settings.json' ? 'hints.shared' : 'hints.local')}
       </p>
 
       <div className="min-h-0 flex-1">
@@ -253,7 +250,7 @@ export function SettingsFilePage() {
           />
           <div className="min-w-0 space-y-0.5">
             <p className="text-sm font-medium text-foreground">
-              Save failed — invalid JSON
+              {t('saveFailed')}
             </p>
             <p className="text-xs text-muted-foreground">{saveError}</p>
           </div>
@@ -286,9 +283,9 @@ export function SettingsFilePage() {
         onOpenChange={(open) => {
           if (!open) setPendingFile(null)
         }}
-        title="Discard unsaved changes?"
-        description={`You have unsaved edits in ${file}. Switching files will discard them.`}
-        confirmLabel="Discard"
+        title={t('confirmDiscard.title')}
+        description={t('confirmDiscard.desc', { file })}
+        confirmLabel={t('discard')}
         onConfirm={() => {
           const next = pendingFile
           setPendingFile(null)

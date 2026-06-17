@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Tabs,
   TabsContent,
@@ -19,16 +20,17 @@ interface McpHubPageProps {
  * and Radix unmounts the inactive tab so only one PageHeader is in the DOM.
  */
 export function McpHubPage({ defaultTab = 'servers' }: McpHubPageProps) {
+  const { t } = useTranslation('mcp')
   return (
     <Tabs defaultValue={defaultTab} className="flex h-full flex-col gap-4">
       <TabsList className="self-start">
         <TabsTrigger value="servers">
           <Icon name="plug" className="size-4" />
-          Servers
+          {t('hub.servers')}
         </TabsTrigger>
         <TabsTrigger value="marketplace">
           <Icon name="store" className="size-4" />
-          Marketplace
+          {t('hub.marketplace')}
         </TabsTrigger>
       </TabsList>
 

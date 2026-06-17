@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Badge } from '@/shared/components/ui/badge'
@@ -33,6 +34,7 @@ interface McpFind {
 }
 
 export function DiscoverPage() {
+  const { t } = useTranslation('discovery')
   const navigate = useNavigate()
   const activeAgent = useActiveAgent()
   const enabledMap = useAgentEnabled((s) => s.enabled)
@@ -121,8 +123,8 @@ export function DiscoverPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Discover"
-        description="Agents, CLIs and MCP servers found on this machine"
+        title={t('title')}
+        description={t('description')}
         icon="scan-search"
         actions={
           <Button
@@ -134,27 +136,31 @@ export function DiscoverPage() {
             }}
             disabled={loading}
           >
-            {loading ? <Spinner label="Rescanning…" /> : <Icon name="refresh-cw" />}
-            Rescan
+            {loading ? (
+              <Spinner label={t('rescanning')} />
+            ) : (
+              <Icon name="refresh-cw" />
+            )}
+            {t('rescan')}
           </Button>
         }
       />
 
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-1">
         {loading ? (
-          <p className="text-sm text-muted-foreground">Scanning…</p>
+          <p className="text-sm text-muted-foreground">{t('scanning')}</p>
         ) : nothing ? (
           <EmptyState
             icon="scan-search"
-            title="Nothing new to discover"
-            description="Every agent found on your system is already set up, and no extra MCP servers were found."
+            title={t('empty.title')}
+            description={t('empty.desc')}
           />
         ) : (
           <>
             {toEnable.length > 0 && (
               <section className="space-y-2">
                 <h2 className="text-sm font-medium text-muted-foreground">
-                  Found on your system, not yet enabled
+                  {t('agents.heading')}
                 </h2>
                 {toEnable.map((f) => (
                   <Card
@@ -170,16 +176,18 @@ export function DiscoverPage() {
                           </Badge>
                         )}
                         {f.configFound && (
-                          <Badge variant="muted">config found</Badge>
+                          <Badge variant="muted">
+                            {t('agents.configFound')}
+                          </Badge>
                         )}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Enable it to manage its config in Abyss.
+                        {t('agents.hint')}
                       </p>
                     </div>
                     <Button size="sm" onClick={() => setEnabled(f.id, true)}>
                       <Icon name="plus" />
-                      Enable
+                      {t('agents.enable')}
                     </Button>
                   </Card>
                 ))}
@@ -189,7 +197,7 @@ export function DiscoverPage() {
             {toInstall.length > 0 && (
               <section className="space-y-2">
                 <h2 className="text-sm font-medium text-muted-foreground">
-                  Enabled but not installed
+                  {t('notInstalled.heading')}
                 </h2>
                 {toInstall.map((f) => {
                   const hint = INSTALL_HINTS[f.id]
@@ -209,7 +217,9 @@ export function DiscoverPage() {
                             <Icon
                               name={copied === hint.command ? 'check' : 'copy'}
                             />
-                            {copied === hint.command ? 'Copied' : 'Copy'}
+                            {copied === hint.command
+                              ? t('notInstalled.copied')
+                              : t('notInstalled.copy')}
                           </Button>
                         </div>
                       ) : hint?.url ? (
@@ -219,11 +229,11 @@ export function DiscoverPage() {
                           onClick={() => void ipc.openExternal(hint.url as string)}
                         >
                           <Icon name="external-link" />
-                          Download
+                          {t('notInstalled.download')}
                         </Button>
                       ) : (
                         <p className="text-xs text-muted-foreground">
-                          No install hint available.
+                          {t('notInstalled.noHint')}
                         </p>
                       )}
                     </Card>
@@ -235,7 +245,7 @@ export function DiscoverPage() {
             {mcpFinds.length > 0 && (
               <section className="space-y-2">
                 <h2 className="text-sm font-medium text-muted-foreground">
-                  MCP servers in other agents
+                  {t('mcp.heading')}
                 </h2>
                 {mcpFinds.map((m) => (
                   <Card
@@ -248,8 +258,10 @@ export function DiscoverPage() {
                         {m.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Configured in {m.foundIn.join(', ')}, not in{' '}
-                        {activeAgent.displayName}.
+                        {t('mcp.configuredIn', {
+                          in: m.foundIn.join(', '),
+                          agent: activeAgent.displayName,
+                        })}
                       </p>
                     </div>
                     <Button
@@ -258,7 +270,7 @@ export function DiscoverPage() {
                       onClick={() => navigate('/compare')}
                     >
                       <Icon name="git-compare" />
-                      Compare
+                      {t('mcp.compare')}
                     </Button>
                   </Card>
                 ))}

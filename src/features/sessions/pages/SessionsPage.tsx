@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Button } from '@/shared/components/ui/button'
@@ -20,6 +21,7 @@ import { rollupByProject, sortSessions, type SessionSortKey } from '../lib/aggre
 import { bulkExportContent } from '../lib/export-format'
 
 export function SessionsPage() {
+  const { t } = useTranslation('sessions')
   const agent = useActiveAgent()
   const supported = agent.capabilities.chats
   const projectDir = useProjectDir()
@@ -127,11 +129,11 @@ export function SessionsPage() {
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Sessions" icon="files" />
+        <PageHeader title={t('title')} icon="files" />
         <EmptyState
           icon="files"
-          title={`${agent.displayName} has no session history`}
-          description="Switch to an agent that records chat sessions to explore them here."
+          title={t('noHistoryTitle', { agent: agent.displayName })}
+          description={t('unsupportedDesc')}
         />
       </div>
     )
@@ -141,7 +143,7 @@ export function SessionsPage() {
   if (selected) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Session Explorer" icon="files" />
+        <PageHeader title={t('explorerTitle')} icon="files" />
         <div className="min-h-0 flex-1 rounded-lg border border-border bg-card/40 p-4">
           <SessionDetail
             session={selected}
@@ -158,8 +160,8 @@ export function SessionsPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Session Explorer"
-        description={`Browse, compare and inspect ${agent.displayName} sessions`}
+        title={t('explorerTitle')}
+        description={t('headerDescription', { agent: agent.displayName })}
         icon="files"
         actions={
           <Button
@@ -167,19 +169,23 @@ export function SessionsPage() {
             onClick={() => void load(agent.id, projectDir)}
             disabled={loading}
           >
-            {loading ? <Spinner label="Refreshing…" /> : <Icon name="refresh-cw" />}
-            Refresh
+            {loading ? (
+              <Spinner label={t('refreshing')} />
+            ) : (
+              <Icon name="refresh-cw" />
+            )}
+            {t('refresh')}
           </Button>
         }
       />
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading sessions…</p>
+        <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : sessions.length === 0 ? (
         <EmptyState
           icon="files"
-          title="No sessions yet"
-          description="Once you've chatted with this agent, its sessions show up here to explore."
+          title={t('empty.title')}
+          description={t('empty.desc')}
         />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
@@ -194,21 +200,21 @@ export function SessionsPage() {
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Filter by title or project…"
+                placeholder={t('filter')}
                 className="pl-8"
               />
             </div>
             <span className="text-xs text-muted-foreground">
-              {filtered.length} of {sessions.length}
+              {t('count', { shown: filtered.length, total: sessions.length })}
             </span>
             <Button
               variant={groupByProject ? 'default' : 'outline'}
               size="sm"
               onClick={() => setGroupByProject((v) => !v)}
-              title="Group sessions by project"
+              title={t('groupByTitle')}
             >
               <Icon name="layers" />
-              Group by project
+              {t('groupBy')}
             </Button>
             {selectedIds.size > 0 && (
               <>
@@ -222,7 +228,7 @@ export function SessionsPage() {
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    MD
+                    {t('md')}
                   </button>
                   <button
                     type="button"
@@ -233,7 +239,7 @@ export function SessionsPage() {
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    JSON
+                    {t('json')}
                   </button>
                 </div>
                 <Button
@@ -241,8 +247,12 @@ export function SessionsPage() {
                   onClick={() => void handleBulkExport()}
                   disabled={exporting}
                 >
-                  {exporting ? <Spinner label="Exporting…" /> : <Icon name="download" />}
-                  Export {selectedIds.size} session{selectedIds.size !== 1 ? 's' : ''}
+                  {exporting ? (
+                    <Spinner label={t('exporting')} />
+                  ) : (
+                    <Icon name="download" />
+                  )}
+                  {t('exportN', { count: selectedIds.size })}
                 </Button>
               </>
             )}

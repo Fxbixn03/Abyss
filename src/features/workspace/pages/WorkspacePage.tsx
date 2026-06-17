@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
@@ -39,6 +40,7 @@ function agentIcon(id: string): string {
 }
 
 function FindRow({ find }: { find: WorkspaceConfigFind }) {
+  const { t } = useTranslation('workspace')
   return (
     <div className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/50">
       <Icon name={agentIcon(find.agentId)} className="size-4 shrink-0" />
@@ -47,14 +49,14 @@ function FindRow({ find }: { find: WorkspaceConfigFind }) {
         {find.relPath}
       </code>
       <Badge variant="muted" className="font-code">
-        {find.isDir ? 'dir' : formatBytes(find.bytes)}
+        {find.isDir ? t('dir') : formatBytes(find.bytes)}
       </Badge>
       <Button
         variant="ghost"
         size="icon"
         className="size-7"
-        title="Reveal in file manager"
-        aria-label="Reveal in file manager"
+        title={t('revealInFileManager')}
+        aria-label={t('revealInFileManager')}
         onClick={() => void ipc.revealPath(find.absPath)}
       >
         <Icon name="folder-open" className="size-3.5" />
@@ -70,6 +72,7 @@ function RepoCard({
   repo: WorkspaceRepo
   onSetProject: (repo: WorkspaceRepo) => void
 }) {
+  const { t } = useTranslation('workspace')
   const agents = new Set(repo.finds.map((f) => f.agentId))
   return (
     <Card className="space-y-2 p-3">
@@ -80,9 +83,7 @@ function RepoCard({
         />
         <span className="font-medium">{repo.name}</span>
         {repo.isGitRepo && <Badge variant="success">git</Badge>}
-        <Badge variant="muted">
-          {agents.size} {agents.size === 1 ? 'agent' : 'agents'}
-        </Badge>
+        <Badge variant="muted">{t('agentsCount', { count: agents.size })}</Badge>
         <code className="min-w-0 flex-1 truncate text-right font-code text-xs text-muted-foreground">
           {repo.path}
         </code>
@@ -93,7 +94,7 @@ function RepoCard({
           onClick={() => onSetProject(repo)}
         >
           <Icon name="folder-cog" />
-          Set as project
+          {t('setAsProject')}
         </Button>
       </div>
       <div className="space-y-0.5">
@@ -106,6 +107,7 @@ function RepoCard({
 }
 
 export function WorkspacePage() {
+  const { t } = useTranslation('workspace')
   const navigate = useNavigate()
   const lastRoot = useWorkspaceStore((s) => s.lastRoot)
   const setLastRoot = useWorkspaceStore((s) => s.setLastRoot)
@@ -140,10 +142,7 @@ export function WorkspacePage() {
   }, [root, rescan, setLastRoot])
 
   const choose = async () => {
-    const { path } = await ipc.pickDirectory(
-      'Choose a folder to scan for agent config',
-      root ?? undefined,
-    )
+    const { path } = await ipc.pickDirectory(t('pickTitle'), root ?? undefined)
     if (path) {
       if (path === root) setRescan((n) => n + 1)
       else setRoot(path)
@@ -152,8 +151,8 @@ export function WorkspacePage() {
 
   const setAsProject = (repo: WorkspaceRepo) => {
     setProject(repo.path)
-    toast.success(`Project set to ${repo.name}`, {
-      description: 'Config surfaces now target this repo.',
+    toast.success(t('toast.setProject', { name: repo.name }), {
+      description: t('toast.setProjectDesc'),
     })
     void navigate('/config')
   }
@@ -161,8 +160,8 @@ export function WorkspacePage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Workspace"
-        description="Agent config across all your repos, in one place"
+        title={t('title')}
+        description={t('description')}
         icon="folder-tree"
         actions={
           <>
@@ -175,8 +174,8 @@ export function WorkspacePage() {
                   variant="ghost"
                   size="icon"
                   className="size-6 shrink-0"
-                  title="Clear saved folder"
-                  aria-label="Clear saved folder"
+                  title={t('clearSavedFolder')}
+                  aria-label={t('clearSavedFolder')}
                   onClick={() => {
                     setLastRoot(null)
                     setRoot(null)
@@ -189,7 +188,7 @@ export function WorkspacePage() {
             )}
             <Button variant="outline" size="sm" onClick={() => void choose()}>
               <Icon name="folder-search" />
-              Choose folder
+              {t('chooseFolder')}
             </Button>
             <Button
               variant="outline"
@@ -197,8 +196,12 @@ export function WorkspacePage() {
               disabled={!root || loading}
               onClick={() => setRescan((n) => n + 1)}
             >
-              {loading ? <Spinner label="Rescanning…" /> : <Icon name="refresh-cw" />}
-              Rescan
+              {loading ? (
+                <Spinner label={t('rescanning')} />
+              ) : (
+                <Icon name="refresh-cw" />
+              )}
+              {t('rescan')}
             </Button>
           </>
         }
@@ -206,52 +209,54 @@ export function WorkspacePage() {
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
         {loading && !result ? (
-          <p className="text-sm text-muted-foreground">Scanning…</p>
+          <p className="text-sm text-muted-foreground">{t('scanning')}</p>
         ) : !result ? (
           <EmptyState
             icon="folder-tree"
-            title="Discover agent config across your repos"
-            description="Pick a folder that holds your projects. Abyss scans one level down and lists every repo with CLAUDE.md, .cursor/rules, copilot-instructions.md and more."
+            title={t('intro.title')}
+            description={t('intro.desc')}
             action={
               <Button onClick={() => void choose()}>
                 <Icon name="folder-search" />
-                Choose folder
+                {t('chooseFolder')}
               </Button>
             }
           />
         ) : result.outOfScope ? (
           <EmptyState
             icon="shield-alert"
-            title="Folder is out of scope"
-            description="Abyss only scans inside your home directory and its own data folders. Pick a folder under your home directory."
+            title={t('outOfScope.title')}
+            description={t('outOfScope.desc')}
             action={
               <Button onClick={() => void choose()}>
                 <Icon name="folder-search" />
-                Choose another folder
+                {t('chooseAnother')}
               </Button>
             }
           />
         ) : result.repos.length === 0 ? (
           <EmptyState
             icon="folder-x"
-            title="No agent config found"
-            description={`Scanned ${result.scannedCount} folder${result.scannedCount === 1 ? '' : 's'} under ${result.root}. None of them have a known agent config file.`}
+            title={t('noConfig.title')}
+            description={t('noConfig.desc', {
+              count: result.scannedCount,
+              root: result.root,
+            })}
             action={
               <Button onClick={() => void choose()}>
                 <Icon name="folder-search" />
-                Choose another folder
+                {t('chooseAnother')}
               </Button>
             }
           />
         ) : (
           <>
             <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">
-                {result.repos.length}
-              </span>{' '}
-              {result.repos.length === 1 ? 'repo' : 'repos'} with agent config ·{' '}
-              {result.scannedCount} scanned in{' '}
-              <code className="font-code text-xs">{result.root}</code>
+              {t('summary', {
+                count: result.repos.length,
+                scanned: result.scannedCount,
+                root: result.root,
+              })}
             </p>
             {result.repos.map((repo) => (
               <RepoCard

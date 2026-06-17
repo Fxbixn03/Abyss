@@ -1,0 +1,47 @@
+{
+  "title": "Chats",
+  "headerDescription": "History & live chat for {{agent}}",
+  "unsupportedDesc": "Switch to an agent that supports chat history and live chat.",
+  "noChatsTitle": "{{agent}} has no chats",
+  "resize": "Drag to resize · double-click to reset",
+  "pickUp": {
+    "title": "Pick up a conversation",
+    "desc": "Select a past chat on the left, or start a new one.",
+    "descReadOnly": "Select a past chat on the left to view its transcript."
+  },
+  "replayTooltip": "Replay this conversation step by step",
+  "replay": "Replay",
+  "exitReplay": "Exit replay",
+  "riskScan": {
+    "tooltip": "Scan this transcript for risk indicators",
+    "scan": "Scan risks",
+    "scanning": "Scanning…",
+    "dismiss": "Dismiss risk scan"
+  },
+  "risks": {
+    "none": "No risk indicators found",
+    "count_one": "{{count}} risk indicator",
+    "count_other": "{{count}} risk indicators"
+  },
+  "missingFile": {
+    "title": "Referenced file not found",
+    "detail": "“{{ref}}” doesn't exist under the session directory."
+  },
+  "starting": "Starting…",
+  "startingText": "starting…",
+  "newChat": "New chat",
+  "noDirectory": "no directory",
+  "pickDirTitle": "Choose a working directory",
+  "permissionModes": {
+    "default": "Ask (default)",
+    "acceptEdits": "Accept edits",
+    "plan": "Plan only",
+    "bypassPermissions": "Bypass all"
+  },
+  "models": {
+    "default": "Default model",
+    "opus": "Opus",
+    "sonnet": "Sonnet",
+    "haiku": "Haiku"
+  }
+}

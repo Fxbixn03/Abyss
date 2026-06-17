@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Card,
   CardContent,
@@ -21,6 +22,7 @@ import { Icon } from '@/shared/components/Icon'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { useTourStore } from '@/features/tour/store/tour.store'
 import { useAllAgents } from '@/features/agents/hooks/useActiveAgent'
+import { SUPPORTED_LANGUAGES } from '@/shared/i18n/languages'
 import { useSettingsStore } from '../store/settings.store'
 
 function SettingRow({
@@ -44,6 +46,7 @@ function SettingRow({
 }
 
 export function PreferencesSection() {
+  const { t } = useTranslation(['settings', 'common'])
   const settings = useSettingsStore((s) => s.settings)
   const updatePrefs = useSettingsStore((s) => s.updatePrefs)
   const startTour = useTourStore((s) => s.start)
@@ -52,7 +55,7 @@ export function PreferencesSection() {
 
   const browseProjectDir = async () => {
     const { path } = await ipc.pickDirectory(
-      'Default project directory',
+      t('preferences.projectDir.pickerTitle'),
       settings.defaultProjectDir,
     )
     if (path) await updatePrefs({ defaultProjectDir: path })
@@ -62,12 +65,12 @@ export function PreferencesSection() {
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader>
-          <CardTitle>Behaviour</CardTitle>
+          <CardTitle>{t('preferences.behaviour.title')}</CardTitle>
         </CardHeader>
         <CardContent className="divide-y divide-border">
           <SettingRow
-            title="Confirm with a diff before saving"
-            description="Review changes against the on-disk file before writing."
+            title={t('preferences.confirmDiff.title')}
+            description={t('preferences.confirmDiff.desc')}
             control={
               <Switch
                 checked={settings.confirmDiffBeforeSave}
@@ -78,8 +81,8 @@ export function PreferencesSection() {
             }
           />
           <SettingRow
-            title="Launch on startup"
-            description="Start Abyss when you log in (applied on next launch)."
+            title={t('preferences.launchOnStartup.title')}
+            description={t('preferences.launchOnStartup.desc')}
             control={
               <Switch
                 checked={settings.launchOnStartup}
@@ -90,8 +93,8 @@ export function PreferencesSection() {
             }
           />
           <SettingRow
-            title="Autosave"
-            description="Automatically save the open config file after the configured idle period."
+            title={t('preferences.autosave.title')}
+            description={t('preferences.autosave.desc')}
             control={
               <Switch
                 checked={settings.autosave}
@@ -101,8 +104,8 @@ export function PreferencesSection() {
           />
           {settings.autosave && (
             <SettingRow
-              title="Autosave delay"
-              description="Idle time (in seconds) before the file is saved automatically (1–30)."
+              title={t('preferences.autosaveDelay.title')}
+              description={t('preferences.autosaveDelay.desc')}
               control={
                 <Input
                   type="number"
@@ -121,8 +124,8 @@ export function PreferencesSection() {
             />
           )}
           <SettingRow
-            title="Editor line wrap"
-            description="Wrap long lines in the config editor instead of scrolling horizontally."
+            title={t('preferences.editorLineWrap.title')}
+            description={t('preferences.editorLineWrap.desc')}
             control={
               <Switch
                 checked={settings.editorLineWrap}
@@ -131,12 +134,12 @@ export function PreferencesSection() {
             }
           />
           <SettingRow
-            title="Guided tour"
-            description="Replay the short walkthrough of the main areas of Abyss."
+            title={t('preferences.guidedTour.title')}
+            description={t('preferences.guidedTour.desc')}
             control={
               <Button variant="secondary" size="sm" onClick={startTour}>
                 <Icon name="graduation-cap" />
-                Replay tour
+                {t('preferences.guidedTour.replay')}
               </Button>
             }
           />
@@ -145,12 +148,12 @@ export function PreferencesSection() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Startup &amp; language</CardTitle>
+          <CardTitle>{t('preferences.startupLanguage.title')}</CardTitle>
         </CardHeader>
         <CardContent className="divide-y divide-border">
           <SettingRow
-            title="Agent on startup"
-            description="Which agent Abyss opens with. “Last used” restores your most recent agent."
+            title={t('preferences.startupAgent.title')}
+            description={t('preferences.startupAgent.desc')}
             control={
               <Select
                 value={settings.startupAgentId ?? '__last__'}
@@ -164,7 +167,9 @@ export function PreferencesSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__last__">Last used agent</SelectItem>
+                  <SelectItem value="__last__">
+                    {t('preferences.startupAgent.lastUsed')}
+                  </SelectItem>
                   {agents.map((a) => (
                     <SelectItem key={a.id} value={a.id}>
                       {a.displayName}
@@ -175,8 +180,8 @@ export function PreferencesSection() {
             }
           />
           <SettingRow
-            title="Language"
-            description="Interface language. More languages are coming; English is the default for now."
+            title={t('preferences.language.title')}
+            description={t('preferences.language.desc')}
             control={
               <Select
                 value={settings.language}
@@ -186,7 +191,11 @@ export function PreferencesSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
+                  {SUPPORTED_LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      {lang.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             }
@@ -196,12 +205,12 @@ export function PreferencesSection() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Billing &amp; cost</CardTitle>
+          <CardTitle>{t('preferences.billing.title')}</CardTitle>
         </CardHeader>
         <CardContent className="divide-y divide-border">
           <SettingRow
-            title="Billing mode"
-            description="Subscription has no per-token cost; API is pay-as-you-go."
+            title={t('preferences.billingMode.title')}
+            description={t('preferences.billingMode.desc')}
             control={
               <Select
                 value={settings.billingMode}
@@ -215,8 +224,12 @@ export function PreferencesSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="subscription">Subscription</SelectItem>
-                  <SelectItem value="api">API (pay-as-you-go)</SelectItem>
+                  <SelectItem value="subscription">
+                    {t('preferences.billingMode.subscription')}
+                  </SelectItem>
+                  <SelectItem value="api">
+                    {t('preferences.billingMode.api')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             }
@@ -224,8 +237,8 @@ export function PreferencesSection() {
           {settings.billingMode === 'api' && (
             <>
               <SettingRow
-                title="Show estimated costs"
-                description="Display an approximate token cost on the dashboard."
+                title={t('preferences.showCosts.title')}
+                description={t('preferences.showCosts.desc')}
                 control={
                   <Switch
                     checked={settings.showCosts}
@@ -234,8 +247,8 @@ export function PreferencesSection() {
                 }
               />
               <SettingRow
-                title="Currency"
-                description="Currency used for the cost estimate."
+                title={t('preferences.currency.title')}
+                description={t('preferences.currency.desc')}
                 control={
                   <Select
                     value={settings.currency}
@@ -265,27 +278,27 @@ export function PreferencesSection() {
 
       <Card>
         <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
-          <CardTitle>Usage limits</CardTitle>
+          <CardTitle>{t('preferences.usageLimits.title')}</CardTitle>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => void navigate('/usage')}
           >
             <Icon name="bar-chart-3" />
-            View usage
+            {t('preferences.usageLimits.view')}
           </Button>
         </CardHeader>
         <CardContent className="divide-y divide-border">
           <SettingRow
-            title="Weekly token budget"
-            description="Your plan's weekly allowance — drives the % quota gauge on the dashboard."
+            title={t('preferences.weeklyBudget.title')}
+            description={t('preferences.weeklyBudget.desc')}
             control={
               <Input
                 type="number"
                 min={0}
                 step={100000}
                 value={settings.weeklyTokenBudget ?? ''}
-                placeholder="e.g. 5000000"
+                placeholder={t('preferences.weeklyBudget.placeholder')}
                 onChange={(e) =>
                   void updatePrefs({
                     weeklyTokenBudget: e.target.value
@@ -298,15 +311,15 @@ export function PreferencesSection() {
             }
           />
           <SettingRow
-            title="Session (5h) token budget"
-            description="Rolling 5-hour allowance, shown as a percentage consumed."
+            title={t('preferences.sessionBudget.title')}
+            description={t('preferences.sessionBudget.desc')}
             control={
               <Input
                 type="number"
                 min={0}
                 step={50000}
                 value={settings.sessionTokenBudget ?? ''}
-                placeholder="e.g. 1000000"
+                placeholder={t('preferences.sessionBudget.placeholder')}
                 onChange={(e) =>
                   void updatePrefs({
                     sessionTokenBudget: e.target.value
@@ -319,8 +332,8 @@ export function PreferencesSection() {
             }
           />
           <SettingRow
-            title="Budget alert threshold"
-            description="Warn on the usage gauge once consumption reaches this percentage (0 = off)."
+            title={t('preferences.budgetAlert.title')}
+            description={t('preferences.budgetAlert.desc')}
             control={
               <div className="flex items-center gap-1.5">
                 <Input
@@ -349,7 +362,7 @@ export function PreferencesSection() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Default project directory</CardTitle>
+          <CardTitle>{t('preferences.projectDir.title')}</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center gap-3">
           {settings.defaultProjectDir ? (
@@ -363,7 +376,7 @@ export function PreferencesSection() {
             </button>
           ) : (
             <span className="flex-1">
-              <Badge variant="muted">not set</Badge>
+              <Badge variant="muted">{t('preferences.projectDir.notSet')}</Badge>
             </span>
           )}
           <Button
@@ -372,7 +385,7 @@ export function PreferencesSection() {
             onClick={() => void browseProjectDir()}
           >
             <Icon name="folder-open" />
-            Browse…
+            {t('common:actions.browse')}
           </Button>
           {settings.defaultProjectDir && (
             <Button
@@ -380,7 +393,7 @@ export function PreferencesSection() {
               size="sm"
               onClick={() => void updatePrefs({ defaultProjectDir: undefined })}
             >
-              Clear
+              {t('common:actions.clear')}
             </Button>
           )}
         </CardContent>

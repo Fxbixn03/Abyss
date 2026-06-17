@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Card,
   CardContent,
@@ -30,11 +31,11 @@ import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useConfigBase } from '@/features/scope/hooks/useScopedBase'
 import { usePluginsStore } from '../store/plugins.store'
 
-const SOURCE_TYPES: { value: MarketplaceSourceType; label: string }[] = [
-  { value: 'github', label: 'GitHub' },
-  { value: 'git', label: 'Git URL' },
-  { value: 'directory', label: 'Directory' },
-  { value: 'file', label: 'File' },
+const SOURCE_TYPES: MarketplaceSourceType[] = [
+  'github',
+  'git',
+  'directory',
+  'file',
 ]
 
 const SOURCE_PLACEHOLDER: Record<MarketplaceSourceType, string> = {
@@ -59,6 +60,7 @@ function sourceSummary(src: MarketplaceSource): string {
 }
 
 export function PluginsPage() {
+  const { t } = useTranslation(['plugins', 'common'])
   const agent = useActiveAgent()
   const basePath = useConfigBase(agent.id)
   const navigate = useNavigate()
@@ -144,11 +146,11 @@ export function PluginsPage() {
   if (!supported) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Plugins" icon="plug" />
+        <PageHeader title={t('title')} icon="plug" />
         <EmptyState
           icon="plug"
-          title={`${agent.displayName} has no plugins`}
-          description="Plugin & marketplace management is specific to Claude Code. Switch to Claude to configure it."
+          title={t('noSupportTitle', { agent: agent.displayName })}
+          description={t('unsupportedDesc')}
         />
       </div>
     )
@@ -157,15 +159,15 @@ export function PluginsPage() {
   if (!basePath) {
     return (
       <div className="flex h-full flex-col gap-4">
-        <PageHeader title="Plugins" icon="plug" />
+        <PageHeader title={t('title')} icon="plug" />
         <EmptyState
           icon="folder"
-          title="No config location set"
-          description="Set a config directory in Settings first."
+          title={t('noPath.title')}
+          description={t('noPath.desc')}
           action={
             <Button onClick={() => navigate('/settings')}>
               <Icon name="settings" />
-              Open Settings
+              {t('openSettings')}
             </Button>
           }
         />
@@ -176,13 +178,13 @@ export function PluginsPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Plugins"
-        description={`Marketplaces & enabled plugins for ${agent.displayName}`}
+        title={t('title')}
+        description={t('headerDescription', { agent: agent.displayName })}
         icon="plug"
         actions={
           <Button onClick={() => void save(basePath)} disabled={!dirty || saving}>
             <Icon name="save" />
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('common:actions.saving') : t('common:actions.save')}
           </Button>
         }
       />
@@ -192,17 +194,14 @@ export function PluginsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Icon name="store" className="size-4" />
-              Marketplaces
+              {t('marketplaces.heading')}
             </CardTitle>
-            <CardDescription>
-              Catalogs Claude Code trusts. Declared as{' '}
-              <code className="font-code text-xs">extraKnownMarketplaces</code>.
-            </CardDescription>
+            <CardDescription>{t('marketplaces.desc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {config.marketplaces.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No marketplaces declared yet.
+                {t('marketplaces.empty')}
               </p>
             ) : (
               <ul className="space-y-2">
@@ -221,7 +220,7 @@ export function PluginsPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => removeMarketplace(m.name)}
-                      aria-label="Remove marketplace"
+                      aria-label={t('marketplaces.remove')}
                     >
                       <Icon name="trash" className="size-4" />
                     </Button>
@@ -232,16 +231,16 @@ export function PluginsPage() {
 
             <div className="grid gap-2 rounded-md border border-dashed border-border p-3 sm:grid-cols-[1fr_140px]">
               <div className="space-y-1.5">
-                <Label htmlFor="mp-name">Name</Label>
+                <Label htmlFor="mp-name">{t('marketplaces.name')}</Label>
                 <Input
                   id="mp-name"
                   value={mpName}
                   onChange={(e) => setMpName(e.target.value)}
-                  placeholder="company-tools"
+                  placeholder={t('marketplaces.namePlaceholder')}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="mp-type">Source</Label>
+                <Label htmlFor="mp-type">{t('marketplaces.source')}</Label>
                 <Select
                   value={mpType}
                   onValueChange={(v) => setMpType(v as MarketplaceSourceType)}
@@ -250,9 +249,9 @@ export function PluginsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SOURCE_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
+                    {SOURCE_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {t(`sourceTypes.${type}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -260,7 +259,9 @@ export function PluginsPage() {
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="mp-value">
-                  {SOURCE_TYPES.find((t) => t.value === mpType)?.label} location
+                  {t('marketplaces.locationLabel', {
+                    type: t(`sourceTypes.${mpType}`),
+                  })}
                 </Label>
                 <Input
                   id="mp-value"
@@ -272,7 +273,7 @@ export function PluginsPage() {
               </div>
               {(mpType === 'github' || mpType === 'git') && (
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="mp-ref">Branch / tag (optional)</Label>
+                  <Label htmlFor="mp-ref">{t('marketplaces.branchTag')}</Label>
                   <Input
                     id="mp-ref"
                     value={mpRef}
@@ -289,7 +290,7 @@ export function PluginsPage() {
                   disabled={!mpName.trim() || !mpValue.trim()}
                 >
                   <Icon name="plus" />
-                  Add marketplace
+                  {t('marketplaces.add')}
                 </Button>
               </div>
             </div>
@@ -300,17 +301,14 @@ export function PluginsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Icon name="plug" className="size-4" />
-              Plugins
+              {t('plugins.heading')}
             </CardTitle>
-            <CardDescription>
-              Plugins to enable by default. Declared as{' '}
-              <code className="font-code text-xs">enabledPlugins</code>.
-            </CardDescription>
+            <CardDescription>{t('plugins.desc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {config.plugins.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No plugins declared yet.
+                {t('plugins.empty')}
               </p>
             ) : (
               <ul className="space-y-2">
@@ -323,7 +321,7 @@ export function PluginsPage() {
                       {p.key}
                     </code>
                     <Badge variant={p.enabled ? 'default' : 'outline'}>
-                      {p.enabled ? 'enabled' : 'disabled'}
+                      {p.enabled ? t('plugins.enabled') : t('plugins.disabled')}
                     </Badge>
                     <Switch
                       checked={p.enabled}
@@ -333,7 +331,7 @@ export function PluginsPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => removePlugin(p.key)}
-                      aria-label="Remove plugin"
+                      aria-label={t('plugins.remove')}
                     >
                       <Icon name="trash" className="size-4" />
                     </Button>
@@ -344,26 +342,25 @@ export function PluginsPage() {
 
             {config.marketplaces.length === 0 ? (
               <p className="rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground">
-                Add a marketplace first — plugins are referenced as{' '}
-                <code className="font-code text-xs">plugin@marketplace</code>.
+                {t('plugins.addFirst')}
               </p>
             ) : (
               <div className="grid gap-2 rounded-md border border-dashed border-border p-3 sm:grid-cols-[1fr_180px_auto]">
                 <div className="space-y-1.5">
-                  <Label htmlFor="pl-name">Plugin name</Label>
+                  <Label htmlFor="pl-name">{t('plugins.name')}</Label>
                   <Input
                     id="pl-name"
                     value={pluginName}
                     onChange={(e) => setPluginName(e.target.value)}
-                    placeholder="code-formatter"
+                    placeholder={t('plugins.namePlaceholder')}
                     className="font-code"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="pl-market">Marketplace</Label>
+                  <Label htmlFor="pl-market">{t('plugins.marketplace')}</Label>
                   <Select value={pluginMarket} onValueChange={setPluginMarket}>
                     <SelectTrigger id="pl-market">
-                      <SelectValue placeholder="Choose…" />
+                      <SelectValue placeholder={t('plugins.choose')} />
                     </SelectTrigger>
                     <SelectContent>
                       {config.marketplaces.map((m) => (
@@ -381,7 +378,7 @@ export function PluginsPage() {
                     disabled={!pluginName.trim() || !pluginMarket.trim()}
                   >
                     <Icon name="plus" />
-                    Add
+                    {t('plugins.add')}
                   </Button>
                 </div>
               </div>
@@ -392,12 +389,7 @@ export function PluginsPage() {
         <Card className="border-border/60">
           <CardContent className="flex gap-3 py-4 text-sm text-muted-foreground">
             <Icon name="info" className="mt-0.5 size-4 shrink-0" />
-            <p>
-              These declarations live in <code className="font-code">settings.json</code>{' '}
-              for the current scope. Claude Code clones and caches the actual
-              plugin content under <code className="font-code">~/.claude/plugins</code>{' '}
-              when it next starts and you trust the source.
-            </p>
+            <p>{t('note')}</p>
           </CardContent>
         </Card>
       </div>

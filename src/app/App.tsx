@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { useThemeApplier } from '@/features/themes/hooks/useThemeApplier'
+import { useLocaleApplier } from '@/features/settings/hooks/useLocaleApplier'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { useAgentStore } from '@/features/agents/store/agent.store'
 import { useAgentAvailability } from '@/features/agents/store/agent-availability.store'
@@ -12,6 +13,7 @@ import { router } from './router'
 
 export function App() {
   useThemeApplier()
+  useLocaleApplier()
   const load = useSettingsStore((s) => s.load)
   const refreshAvailability = useAgentAvailability((s) => s.refresh)
   // Gate the app on first-load checks so the user boots straight into a ready
