@@ -12,7 +12,26 @@ import { promises as fs } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { uniqueTempPath } from './tmp-path'
 import { isInsideRoot } from './path-scope'
+import { ConfigDiskError, ConfigWriteError } from './config-error'
 import type { SnapshotContent, SnapshotMeta } from '@/shared/types/snapshots'
+
+/** Returns true when a Node.js filesystem error is a permission denial. */
+function isPermissionError(err: unknown): boolean {
+  if (err && typeof err === 'object') {
+    const code = (err as Record<string, unknown>).code
+    return code === 'EACCES' || code === 'EPERM'
+  }
+  return false
+}
+
+/** Returns true when a Node.js filesystem error is a disk-space or cross-device issue. */
+function isDiskError(err: unknown): boolean {
+  if (err && typeof err === 'object') {
+    const code = (err as Record<string, unknown>).code
+    return code === 'ENOSPC' || code === 'EXDEV'
+  }
+  return false
+}
 
 interface SnapshotConfig {
   root: string
@@ -268,7 +287,25 @@ export async function restoreSnapshot(
 
   await fs.mkdir(path.dirname(target), { recursive: true })
   const tmp = uniqueTempPath(target)
-  await fs.writeFile(tmp, snap.content, 'utf8')
-  await fs.rename(tmp, target)
+  try {
+    await fs.writeFile(tmp, snap.content, 'utf8')
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(target, err)
+    if (isDiskError(err)) throw new ConfigDiskError(target, err)
+    throw err
+  }
+  let renamed = false
+  try {
+    await fs.rename(tmp, target)
+    renamed = true
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(target, err)
+    if (isDiskError(err)) throw new ConfigDiskError(target, err)
+    throw err
+  } finally {
+    // If the rename did not complete, the temp file was orphaned — remove it so
+    // .abyss-tmp-* sidecars never accumulate next to live config files.
+    if (!renamed) await fs.rm(tmp, { force: true })
+  }
   return { success: true, path: target }
 }
