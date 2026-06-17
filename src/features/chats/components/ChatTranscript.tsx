@@ -106,6 +106,9 @@ export function ChatTranscript({
   const scrollRef = useRef<HTMLDivElement>(null)
   const messageRefs = useRef<(HTMLDivElement | null)[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+  // Capture the prop in a ref so the registration effect can safely list it in
+  // its dep array without re-running whenever the parent re-renders.
+  const scrollToBottomRefCallback = useRef(scrollToBottomRef)
 
   // Whether the user has scrolled more than one viewport height from the top.
   const [showJumpTop, setShowJumpTop] = useState(false)
@@ -124,12 +127,11 @@ export function ChatTranscript({
   }, [])
 
   // Publish the stable handle to the parent on first render (and never again).
+  // scrollToBottomRefCallback.current holds the prop captured at mount;
+  // scrollToBottomFn is stable (useCallback with []), so deps are accurate.
   useEffect(() => {
-    scrollToBottomRef?.(scrollToBottomFn)
-    // We intentionally run this only once — scrollToBottomFn is stable via
-    // useCallback with no deps, and scrollToBottomRef is an external prop ref.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    scrollToBottomRefCallback.current?.(scrollToBottomFn)
+  }, [scrollToBottomFn])
 
   // Scroll to the risk-panel jump target and briefly highlight it.
   useEffect(() => {
