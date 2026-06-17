@@ -394,7 +394,9 @@ export function ChatTranscript({
         // data-selectable opts this surface out of the app-wide user-select:none
         // so conversation text can be highlighted and copied.
         data-selectable
-        aria-label="Messages"
+        role="log"
+        aria-label="Chat messages"
+        aria-live="polite"
         className={cn(
           'flex h-full flex-col overflow-y-auto px-1',
           density === 'compact' ? 'gap-2 py-0.5' : 'gap-5 py-2',

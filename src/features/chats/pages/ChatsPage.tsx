@@ -28,6 +28,7 @@ import { formatCost } from '../lib/format'
 import type { SuspicionMarker } from '../lib/suspicion'
 import { analyzeTranscript, extractReferencedPaths } from '../lib/suspicion'
 import { ReplayBar } from '../components/ReplayBar'
+import { ChatStreamAnnouncer } from '../components/ChatStreamAnnouncer'
 import { REPLAY_SPEEDS } from '../lib/replay'
 
 const CLAUDE_MODELS = ['default', 'opus', 'sonnet', 'haiku'] as const
@@ -201,6 +202,7 @@ export function ChatsPage() {
 
   return (
     <div className="flex h-full flex-col gap-4">
+      <ChatStreamAnnouncer />
       <PageHeader
         title={t('title')}
         description={t('headerDescription', { agent: agent.displayName })}
