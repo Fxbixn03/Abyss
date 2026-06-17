@@ -16,6 +16,7 @@ import { plandexChatRuntime } from './plandex/runtime'
 import { amazonqChatRuntime } from './amazonq/runtime'
 import { windsurfChatRuntime } from './windsurf/runtime'
 import { warpChatRuntime } from './warp/runtime'
+import { continueChatRuntime } from './continue/runtime'
 
 const runtimes = new Map<string, ChatRuntime>()
 
@@ -51,3 +52,4 @@ register(plandexChatRuntime)
 register(amazonqChatRuntime)
 register(windsurfChatRuntime)
 register(warpChatRuntime)
+register(continueChatRuntime)

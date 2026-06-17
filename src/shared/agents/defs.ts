@@ -310,7 +310,7 @@ export const continueDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: false,
-    chats: false,
+    chats: true,
   },
   configFiles: [continueConfig],
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.continue')],
