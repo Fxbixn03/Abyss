@@ -20,6 +20,8 @@ export interface SuspicionMarker {
   detail: string
   /** Short excerpt of the offending message. */
   snippet: string
+  /** Index of the originating message in the transcript (absent for post-hoc markers). */
+  messageIndex?: number
 }
 
 function messageText(m: ChatMessage): string {
@@ -77,7 +79,8 @@ export function analyzeTranscript(messages: ChatMessage[]): SuspicionMarker[] {
   const markers: SuspicionMarker[] = []
   const sessionUsedTools = messages.some((m) => hasToolUse(m.blocks))
 
-  for (const m of messages) {
+  for (let msgIdx = 0; msgIdx < messages.length; msgIdx++) {
+    const m = messages[msgIdx]
     if (m.role !== 'assistant') continue
     const text = messageText(m)
     if (!text) continue
@@ -91,8 +94,9 @@ export function analyzeTranscript(messages: ChatMessage[]): SuspicionMarker[] {
         kind: 'overconfident',
         severity: 'warning',
         title: 'High-confidence claim without evidence',
-        detail: `“${phrase}” asserted without a tool call, test or reproduction in this message.`,
+        detail: `”${phrase}” asserted without a tool call, test or reproduction in this message.`,
         snippet: snippetAround(text, phrase),
+        messageIndex: msgIdx,
       })
     }
 
@@ -105,6 +109,7 @@ export function analyzeTranscript(messages: ChatMessage[]): SuspicionMarker[] {
         title: 'Claim made without verification',
         detail: `States “${quant[0]}” but no tool, query or file read happened in this conversation.`,
         snippet: snippetAround(text, quant[0]),
+        messageIndex: msgIdx,
       })
     }
 
@@ -117,6 +122,7 @@ export function analyzeTranscript(messages: ChatMessage[]): SuspicionMarker[] {
           title: 'Possible self-contradiction',
           detail: `This message contains both sides of “${label}”.`,
           snippet: text.slice(0, 140),
+          messageIndex: msgIdx,
         })
         break
       }

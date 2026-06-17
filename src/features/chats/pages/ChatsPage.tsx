@@ -74,6 +74,13 @@ export function ChatsPage() {
     markers: SuspicionMarker[]
   } | null>(null)
   const [scanning, setScanning] = useState(false)
+  // Index of the message to jump to when a risk-panel Jump button is clicked.
+  // Stored as { index, seq } so that clicking the same marker twice re-triggers the scroll.
+  const [riskJumpTarget, setRiskJumpTarget] = useState<{
+    index: number
+    seq: number
+  } | null>(null)
+  const riskJumpSeqRef = useRef(0)
   // Whether the in-transcript search bar is open.
   const [transcriptSearchOpen, setTranscriptSearchOpen] = useState(false)
   // Imperative handle published by ChatTranscript so onSend can re-lock scroll.
@@ -448,13 +455,31 @@ export function ChatsPage() {
                               : 'text-muted-foreground',
                           )}
                         />
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium">{marker.title}</p>
                           <p className="text-muted-foreground">{marker.detail}</p>
                           <p className="mt-0.5 truncate font-code text-[11px] text-muted-foreground/70">
                             {marker.snippet}
                           </p>
                         </div>
+                        {marker.messageIndex !== undefined && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-5 shrink-0 self-start"
+                            aria-label="Jump to message"
+                            title="Jump to message"
+                            onClick={() => {
+                              riskJumpSeqRef.current += 1
+                              setRiskJumpTarget({
+                                index: marker.messageIndex!,
+                                seq: riskJumpSeqRef.current,
+                              })
+                            }}
+                          >
+                            <Icon name="arrow-right" className="size-3" />
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -473,6 +498,7 @@ export function ChatsPage() {
                   scrollToBottom={(fn) => {
                     scrollToBottomRef.current = fn
                   }}
+                  jumpToIndex={riskJumpTarget}
                 />
               </div>
 

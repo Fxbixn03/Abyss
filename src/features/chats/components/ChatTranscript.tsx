@@ -74,6 +74,7 @@ export function ChatTranscript({
   onSearchOpenChange,
   density = 'comfortable',
   scrollToBottom: scrollToBottomRef,
+  jumpToIndex,
 }: {
   messages: ChatMessage[]
   loading: boolean
@@ -92,6 +93,13 @@ export function ChatTranscript({
    * Call it from the parent's onSend handler to ensure the new turn is visible.
    */
   scrollToBottom?: (fn: () => void) => void
+  /**
+   * When set to a non-null value, the component scrolls `index` into view and
+   * briefly applies a highlight ring. The `seq` field ensures repeated clicks
+   * on the same message always re-trigger the scroll even if the index is
+   * unchanged.
+   */
+  jumpToIndex?: { index: number; seq: number } | null
 }) {
   const endRef = useRef<HTMLDivElement>(null)
   const bottomLocked = useRef(true)
@@ -103,6 +111,8 @@ export function ChatTranscript({
   const [showJumpTop, setShowJumpTop] = useState(false)
   // Whether the user is NOT at the bottom (bottomLocked === false).
   const [showJumpBottom, setShowJumpBottom] = useState(false)
+  // Index of the message currently highlighted via a risk-panel jump (cleared after 1s).
+  const [jumpHighlight, setJumpHighlight] = useState<number | null>(null)
 
   // Stable imperative handle: re-locks to bottom and scrolls immediately.
   // Registered with the parent via the scrollToBottom prop so ChatsPage can
@@ -120,6 +130,18 @@ export function ChatTranscript({
     // useCallback with no deps, and scrollToBottomRef is an external prop ref.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Scroll to the risk-panel jump target and briefly highlight it.
+  useEffect(() => {
+    if (jumpToIndex == null) return
+    const el = messageRefs.current[jumpToIndex.index]
+    if (el) {
+      el.scrollIntoView({ block: 'nearest', behavior: scrollBehavior() })
+      setJumpHighlight(jumpToIndex.index)
+      const timer = window.setTimeout(() => setJumpHighlight(null), 1000)
+      return () => window.clearTimeout(timer)
+    }
+  }, [jumpToIndex])
 
   // Search state — all local
   const [searchOpenInternal, setSearchOpenInternal] = useState(false)
@@ -338,6 +360,7 @@ export function ChatTranscript({
           const matchPos = matchIndices.indexOf(i)
           const isMatch = matchPos !== -1
           const isActive = isMatch && matchPos === activeMatch
+          const isJumpTarget = jumpHighlight != null && jumpHighlight === i
           return (
             <div
               key={m.id}
@@ -348,6 +371,7 @@ export function ChatTranscript({
                 'motion-safe:animate-bubble-in',
                 isMatch && 'rounded-lg ring-1 ring-primary/50',
                 isActive && 'ring-primary',
+                isJumpTarget && 'rounded-lg ring-2 ring-primary',
               )}
             >
               <MessageBubble
