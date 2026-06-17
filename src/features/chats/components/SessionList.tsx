@@ -17,6 +17,7 @@ import { scrollBehavior } from '@/shared/lib/motion'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { estimateCostUsd, formatMoney } from '@/shared/lib/cost'
 import { useChatsStore } from '../store/chats.store'
+import { usePinnedSessionsStore } from '../store/pinnedSessions.store'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { relativeTime } from '../lib/format'
 import type { ChatSessionMeta } from '@/shared/types/chat'
@@ -99,7 +100,16 @@ const DATE_BUCKET_ORDER = [
 function groupSessions(
   sessions: ChatSessionMeta[],
   groupBy: GroupBy,
+  pinnedIds: Set<string>,
 ): [string, ChatSessionMeta[]][] {
+  /** Sort pinned sessions to the top within a group, preserving relative order. */
+  const sortGroupItems = (items: ChatSessionMeta[]): ChatSessionMeta[] => {
+    if (pinnedIds.size === 0) return items
+    const pinned = items.filter((s) => pinnedIds.has(s.id))
+    const unpinned = items.filter((s) => !pinnedIds.has(s.id))
+    return [...pinned, ...unpinned]
+  }
+
   if (groupBy === 'project') {
     const byProject = new Map<string, ChatSessionMeta[]>()
     for (const s of sessions) {
@@ -107,7 +117,10 @@ function groupSessions(
       list.push(s)
       byProject.set(s.projectLabel, list)
     }
-    return [...byProject.entries()]
+    return [...byProject.entries()].map(([label, items]) => [
+      label,
+      sortGroupItems(items),
+    ])
   }
 
   // date grouping
@@ -120,7 +133,7 @@ function groupSessions(
   }
   // Return in canonical order, omitting empty buckets
   return DATE_BUCKET_ORDER.filter((label) => byDate.has(label)).map(
-    (label) => [label, byDate.get(label) ?? []],
+    (label) => [label, sortGroupItems(byDate.get(label) ?? [])],
   )
 }
 
@@ -142,6 +155,8 @@ export function SessionList({
   const exportSession = useChatsStore((s) => s.exportSession)
   const loadMoreSessions = useChatsStore((s) => s.loadMoreSessions)
   const currency = useSettingsStore((s) => s.settings.currency)
+  const pinnedSessionIds = usePinnedSessionsStore((s) => s.pinnedSessionIds)
+  const togglePin = usePinnedSessionsStore((s) => s.togglePin)
 
   const [query, setQuery] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
@@ -214,8 +229,8 @@ export function SessionList({
     // When a search is active, skip sorting (filtering order is fine); otherwise
     // apply the user-selected sort before grouping so groups and items both reflect it.
     const sorted = q ? filtered : sortSessions(filtered, sortOrder)
-    return groupSessions(sorted, groupBy)
-  }, [sessions, query, sortOrder, groupBy])
+    return groupSessions(sorted, groupBy, pinnedSessionIds)
+  }, [sessions, query, sortOrder, groupBy, pinnedSessionIds])
 
   // Flatten all visible sessions in order (skipping group headers) for keyboard nav
   const flatSessions = useMemo(
@@ -380,6 +395,7 @@ export function SessionList({
                 // First session gets tabIndex=0 when no cursor is active so Tab focuses it
                 const isFirstWithNoCursor =
                   effectiveCursor < 0 && flatIdx === 0
+                const pinned = pinnedSessionIds.has(s.id)
                 return (
                   <ContextMenu key={s.id}>
                     <ContextMenuTrigger asChild>
@@ -401,7 +417,7 @@ export function SessionList({
                         }}
                         tabIndex={isCursor || isFirstWithNoCursor ? 0 : -1}
                         aria-selected={active}
-                        aria-label={`${s.title} — ${s.projectLabel}, ${relativeTime(s.updatedAt)}, ${s.messageCount} messages`}
+                        aria-label={`${pinned ? 'Pinned: ' : ''}${s.title} — ${s.projectLabel}, ${relativeTime(s.updatedAt)}, ${s.messageCount} messages`}
                         className={cn(
                           'flex flex-col gap-0.5 rounded-md border px-2.5 py-2 text-left transition-colors',
                           active
@@ -424,8 +440,17 @@ export function SessionList({
                             aria-label="Rename session"
                           />
                         ) : (
-                          <span className="truncate text-sm font-medium">
-                            {s.title}
+                          <span className="flex items-center gap-1 truncate">
+                            {pinned && (
+                              <Icon
+                                name="pin"
+                                className="size-3 shrink-0 text-primary"
+                                aria-hidden="true"
+                              />
+                            )}
+                            <span className="truncate text-sm font-medium">
+                              {s.title}
+                            </span>
                           </span>
                         )}
                         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -452,6 +477,11 @@ export function SessionList({
                       </button>
                     </ContextMenuTrigger>
                     <ContextMenuContent>
+                      <ContextMenuItem onSelect={() => togglePin(s.id)}>
+                        <Icon name="pin" />
+                        {pinned ? 'Unpin' : 'Pin'}
+                      </ContextMenuItem>
+                      <ContextMenuSeparator />
                       <ContextMenuItem onSelect={() => startRename(s)}>
                         <Icon name="pencil" />
                         Rename
