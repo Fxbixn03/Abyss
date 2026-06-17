@@ -236,6 +236,11 @@ export function MessageBubble({
           <span className="text-xs font-medium text-muted-foreground">
             {label}
           </span>
+          {message.role === 'assistant' && message.model && (
+            <span className="text-xs text-muted-foreground/50 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+              {message.model}
+            </span>
+          )}
           {timestamp && (
             <span
               className="text-xs text-muted-foreground/50 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
