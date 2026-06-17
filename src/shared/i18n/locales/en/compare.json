@@ -1,0 +1,32 @@
+{
+  "title": "Compare & Sync",
+  "description": "Diff two agents across one or more surfaces and copy config between them",
+  "swap": "Swap",
+  "dismiss": "Dismiss",
+  "notSupported": "Not supported by both agents",
+  "comparing": "Comparing…",
+  "noServers": "No MCP servers.",
+  "noHooks": "No hooks.",
+  "none": "none",
+  "emptySurface": "{{agent}} has no {{surface}}.",
+  "syncToAll": "Sync {{agent}} → all",
+  "copy": "Copy",
+  "status": {
+    "na": "n/a",
+    "inSync": "in sync",
+    "differs": "differs"
+  },
+  "syncAll": {
+    "updated": "updated",
+    "same": "same"
+  },
+  "notices": {
+    "copied": "Copied {{surface}} from {{from}} to {{to}}.",
+    "alreadyMatched": "{{to}} already matched {{from}}.",
+    "copyFailed": "Copy failed."
+  },
+  "confirmSync": {
+    "title": "Copy {{surface}} {{from}} → {{to}}?",
+    "desc": "This overwrites the target agent's config. A snapshot is taken first (see History), so it can be undone."
+  }
+}

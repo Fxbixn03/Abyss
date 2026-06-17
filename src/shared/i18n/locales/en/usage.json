@@ -1,0 +1,46 @@
+{
+  "title": "Analytics",
+  "description": {
+    "project": "Token & cost usage in {{project}}",
+    "all": "Token & cost usage across your agents"
+  },
+  "refreshing": "Refreshing…",
+  "refresh": "Refresh",
+  "crunching": "Crunching usage…",
+  "csv": "CSV",
+  "tokensPerDay": "Tokens per day · last {{count}} days",
+  "weeklyBudget": "Weekly budget",
+  "budgetExceeded": "Weekly token budget exceeded",
+  "budget": {
+    "usage": "{{used}} / {{budget}} tokens ({{pct}}%)",
+    "alert": "Past your {{percent}}% budget alert"
+  },
+  "statHints": {
+    "sonnet": "Sonnet-class estimate",
+    "inOut": "{{in}} in · {{out}} out",
+    "messages": "{{value}} messages"
+  },
+  "relative": {
+    "never": "never",
+    "now": "just now",
+    "minutes": "{{count}}m ago",
+    "hours": "{{count}}h ago",
+    "days": "{{count}}d ago"
+  },
+  "empty": {
+    "title": "No usage recorded yet",
+    "desc": "Once your agents have chat history, token use, cost estimates and an activity calendar show up here."
+  },
+  "stats": {
+    "estimatedCost": "estimated cost",
+    "totalTokens": "total tokens",
+    "sessions": "sessions",
+    "lastActivity": "last activity"
+  },
+  "sections": {
+    "calendar": "Activity calendar",
+    "byAgent": "By agent",
+    "topProjects": "Top projects"
+  },
+  "costNote": "Costs are rough estimates from token counts at a single Sonnet-class rate — treat them as ballpark, not billing."
+}

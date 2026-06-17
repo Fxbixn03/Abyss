@@ -1,0 +1,15 @@
+{
+  "title": "Rule Activation",
+  "description": "See which rules fire for a given file, and what they cost",
+  "unsupportedDesc": "This simulator is for agents with glob-scoped rules (like Cursor’s .mdc files). Switch to a rules-capable agent to use it.",
+  "noScopedRulesTitle": "{{agent}} has no scoped rules",
+  "testFileLabel": "Test file path",
+  "testFilePlaceholder": "src/components/Button.tsx",
+  "noRules": {
+    "title": "No rules to simulate",
+    "desc": "No rules found for {{agent}} in the current scope. Add some on the Rules page first."
+  },
+  "loadingRules": "Loading rules…",
+  "summary": "{{active}} of {{total}} rules load for {{path}}",
+  "tokensInContext": "~{{tokens}} tokens in context"
+}

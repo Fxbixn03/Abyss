@@ -1,0 +1,10 @@
+{
+  "title": "Configure {{agent}}",
+  "description": "One place to manage every AI coding agent on your machine.",
+  "refresh": "Refresh dashboard",
+  "revealConfig": "Reveal config directory",
+  "noConfigPath": "no config path",
+  "cliNotFound": "The {{agent}} CLI was not found on your system. Install it, or point Abyss at an existing config folder.",
+  "setConfigPath": "Set config path",
+  "agents": "Agents"
+}

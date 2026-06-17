@@ -1,0 +1,40 @@
+{
+  "title": "Insights",
+  "headerDescription": "Friction signals across recent {{agent}} sessions",
+  "unsupportedDesc": "Switch to an agent that records chat sessions to see friction insights.",
+  "noHistoryTitle": "{{agent}} has no session history",
+  "empty": {
+    "title": "Nothing to analyze yet",
+    "desc": "Once this agent has a few sessions, friction signals (tool errors, corrections, repeated calls) show up here."
+  },
+  "analyzing": "Analyzing transcripts…",
+  "cards": {
+    "corrections": "User corrections",
+    "toolErrors": "Tool errors",
+    "repeated": "Repeated tool calls"
+  },
+  "stats": {
+    "avgFriction": "avg friction (0–100)",
+    "sessionsAnalyzed": "sessions analyzed",
+    "userCorrections": "user corrections",
+    "toolErrors": "tool errors"
+  },
+  "sections": {
+    "distribution": "Friction distribution",
+    "trend": "Friction trend",
+    "roughest": "Roughest sessions"
+  },
+  "buckets": {
+    "smooth": "{{count}} smooth",
+    "some": "{{count}} some friction",
+    "rough": "{{count}} rough"
+  },
+  "tone": {
+    "smooth": "smooth",
+    "some": "some friction",
+    "rough": "rough"
+  },
+  "untitled": "Untitled session",
+  "footer": "Friction is a heuristic from measurable signals (tool errors, user corrections, repeated tool calls) over the {{count}} most recent sessions — not a judgement of answer quality.",
+  "noFriction": "No notable friction — all analyzed sessions ran smoothly."
+}

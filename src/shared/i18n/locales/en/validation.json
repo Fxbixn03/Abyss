@@ -1,0 +1,22 @@
+{
+  "tabs": {
+    "validation": "Validation",
+    "doctor": "Doctor"
+  },
+  "title": "Validation",
+  "headerDescription": "Lint {{agent}}'s config for risks and rot",
+  "rerunning": "Re-running…",
+  "rerun": "Re-run",
+  "reveal": "Reveal in folder",
+  "running": "Running checks…",
+  "allClear": "All clear",
+  "allClearDesc": "No issues found in {{agent}}'s current config.",
+  "merged": "merged: global + project",
+  "open": "Open",
+  "openSettings": "Open settings editor",
+  "counts": {
+    "error": "{{count}} errors",
+    "warning": "{{count}} warnings",
+    "info": "{{count}} hints"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "title": "Regelaktivierung",
+  "description": "Sieh, welche Regeln für eine bestimmte Datei greifen und was sie kosten",
+  "unsupportedDesc": "Dieser Simulator ist für Agents mit glob-basierten Regeln (wie Cursors .mdc-Dateien). Wechsle zu einem Agent mit Regelunterstützung, um ihn zu nutzen.",
+  "noScopedRulesTitle": "{{agent}} hat keine geltungsbereichsbezogenen Regeln",
+  "testFileLabel": "Testdateipfad",
+  "testFilePlaceholder": "src/components/Button.tsx",
+  "noRules": {
+    "title": "Keine Regeln zum Simulieren",
+    "desc": "Keine Regeln für {{agent}} im aktuellen Geltungsbereich gefunden. Füge zuerst welche auf der Seite „Regeln“ hinzu."
+  },
+  "loadingRules": "Regeln werden geladen…",
+  "summary": "{{active}} von {{total}} Regeln werden für {{path}} geladen",
+  "tokensInContext": "~{{tokens}} Tokens im Kontext"
+}

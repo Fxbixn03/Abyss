@@ -1,0 +1,38 @@
+{
+  "title": "Commands",
+  "headerDescription": "Custom slash commands for {{agent}}",
+  "noPath": {
+    "title": "No config location set",
+    "desc": "Set a Gemini config directory in Settings to manage commands."
+  },
+  "filter": "Filter commands…",
+  "noSelection": {
+    "title": "No command selected",
+    "desc": "Pick a command to edit, or create a new one."
+  },
+  "newCommand": {
+    "title": "New command",
+    "placeholder": "git/commit"
+  },
+  "renameCommand": "Rename command",
+  "confirmDelete": {
+    "title": "Delete command?",
+    "desc": "This permanently deletes \"{{name}}.toml\"."
+  },
+  "actions": {
+    "new": "New Command",
+    "openSettings": "Open Settings",
+    "loading": "Loading…",
+    "rename": "Rename",
+    "reveal": "Reveal in folder",
+    "delete": "Delete",
+    "dismiss": "Dismiss",
+    "create": "Create"
+  },
+  "empty": "No commands yet.",
+  "noMatches": "No matches.",
+  "errors": {
+    "create": "Failed to create command.",
+    "rename": "Failed to rename command."
+  }
+}

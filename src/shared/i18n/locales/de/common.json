@@ -1,0 +1,13 @@
+{
+  "actions": {
+    "browse": "Durchsuchen…",
+    "clear": "Leeren",
+    "save": "Speichern",
+    "saving": "Wird gespeichert…",
+    "cancel": "Abbrechen"
+  },
+  "language": {
+    "en": "English",
+    "de": "Deutsch"
+  }
+}

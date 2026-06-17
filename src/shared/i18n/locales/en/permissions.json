@@ -1,0 +1,48 @@
+{
+  "title": "Permissions",
+  "headerDescription": "Tool permission rules for {{agent}}",
+  "unsupportedDesc": "Switch to an agent that exposes tool permissions to edit them here.",
+  "noSupportTitle": "{{agent}} has no permission rules",
+  "noPath": {
+    "title": "No config location set",
+    "desc": "Set a config directory in Settings to manage permissions."
+  },
+  "filter": "Filter rules…",
+  "openSettings": "Open Settings",
+  "viewJson": "View as JSON",
+  "empty": {
+    "title": "No rules yet",
+    "desc": "Start from a security preset, then fine-tune it below."
+  },
+  "applyPreset": "Apply Standard preset",
+  "copyJson": "Copy as JSON",
+  "copied": "Copied!",
+  "view": {
+    "own": "Own",
+    "effective": "Effective"
+  },
+  "sort": {
+    "label": "Sort: {{label}}",
+    "order": "Order",
+    "az": "A–Z",
+    "tool": "By tool"
+  },
+  "conflict_one": "{{count}} rule appears in more than one column. Claude Code applies deny > ask > allow, so the stricter column wins.",
+  "conflict_other": "{{count}} rules appear in more than one column. Claude Code applies deny > ask > allow, so the stricter column wins.",
+  "globalCount": "+{{count}} global",
+  "effectiveDesc": "Effective rules — global merged with this project.",
+  "columns": {
+    "allow": {
+      "title": "Allow",
+      "desc": "Tools the agent may run without asking."
+    },
+    "ask": {
+      "title": "Ask",
+      "desc": "Tools that require confirmation first."
+    },
+    "deny": {
+      "title": "Deny",
+      "desc": "Tools that are always blocked — your wall against accidents."
+    }
+  }
+}

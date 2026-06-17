@@ -1,0 +1,23 @@
+{
+  "title": "Doctor",
+  "description": "One-click health check across every enabled agent",
+  "scanning": "Scanning…",
+  "running": "Running checks…",
+  "fixing": "Fixing…",
+  "open": "Open",
+  "rescan": "Rescan",
+  "fix": "Fix",
+  "counts": {
+    "error_one": "{{count}} error",
+    "error_other": "{{count}} errors",
+    "warning_one": "{{count}} warning",
+    "warning_other": "{{count}} warnings",
+    "info": "{{count}} info",
+    "agentsScanned_one": "{{count}} agent scanned",
+    "agentsScanned_other": "{{count}} agents scanned"
+  },
+  "healthy": {
+    "title": "Everything looks healthy",
+    "desc": "No problems found in your agents' MCP servers, hooks or permissions. Nice and tidy."
+  }
+}

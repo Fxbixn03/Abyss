@@ -1,0 +1,61 @@
+{
+  "title": "Prompt Templates",
+  "description": "Reusable system prompts and rule sets. Apply one to add it to an agent's instructions.",
+  "dismiss": "Dismiss",
+  "search": "Search templates…",
+  "noMatch": "No templates match your filters.",
+  "selectToCombine": "Select to combine",
+  "selected": "{{count}} selected to combine",
+  "combinedTitle": "Combined ({{count}} templates)",
+  "restore": "Restore",
+  "badges": {
+    "custom": "custom",
+    "edited": "edited"
+  },
+  "pin": {
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "pinTop": "Pin to top",
+    "openPreview": "Open preview"
+  },
+  "row": {
+    "preview": "Preview",
+    "copy": "Copy",
+    "duplicate": "Duplicate",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "confirmRestore": {
+    "title": "Restore default templates?",
+    "desc": "This undoes edits and deletions of the built-in templates. Your custom templates are kept."
+  },
+  "confirmDelete": {
+    "title": "Delete “{{name}}”?",
+    "builtin": "This hides the built-in template. Restore defaults brings it back.",
+    "custom": "This permanently removes the custom template."
+  },
+  "filters": {
+    "favorites": "Favorites",
+    "all": "All"
+  },
+  "actions": {
+    "copy": "Copy",
+    "apply": "Apply",
+    "import": "Import",
+    "export": "Export",
+    "restoreDefaults": "Restore defaults",
+    "new": "New template",
+    "combine": "Combine",
+    "clear": "Clear",
+    "combineApply": "Combine & apply"
+  },
+  "notices": {
+    "copied": "Copied “{{title}}”.",
+    "exported": "Exported {{count}} templates.",
+    "imported_one": "Imported {{count}} template.",
+    "imported_other": "Imported {{count}} templates.",
+    "duplicated": "Duplicated “{{title}}”.",
+    "applied_one": "Applied “{{title}}” to {{count}} agent.",
+    "applied_other": "Applied “{{title}}” to {{count}} agents."
+  }
+}

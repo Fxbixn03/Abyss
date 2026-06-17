@@ -1,0 +1,23 @@
+{
+  "title": "Sessions",
+  "explorerTitle": "Session Explorer",
+  "headerDescription": "Browse, compare and inspect {{agent}} sessions",
+  "unsupportedDesc": "Switch to an agent that records chat sessions to explore them here.",
+  "noHistoryTitle": "{{agent}} has no session history",
+  "refreshing": "Refreshing…",
+  "refresh": "Refresh",
+  "exporting": "Exporting…",
+  "loading": "Loading sessions…",
+  "empty": {
+    "title": "No sessions yet",
+    "desc": "Once you've chatted with this agent, its sessions show up here to explore."
+  },
+  "filter": "Filter by title or project…",
+  "groupByTitle": "Group sessions by project",
+  "groupBy": "Group by project",
+  "md": "MD",
+  "json": "JSON",
+  "count": "{{shown}} of {{total}}",
+  "exportN_one": "Export {{count}} session",
+  "exportN_other": "Export {{count}} sessions"
+}

@@ -1,0 +1,11 @@
+{
+  "title": "Kontext",
+  "headerDescription": "Was {{agent}} tatsächlich sieht — geschichtet, mit Token-Schätzungen",
+  "unsupportedDesc": "Wechsle zu einem Agent mit Anweisungsdateien, um zu prüfen, was das Modell sieht.",
+  "noContextTitle": "{{agent}} hat keinen kompilierten Kontext",
+  "compiling": "Kontext wird kompiliert…",
+  "conflicts": {
+    "title": "Konflikte",
+    "none": "Keine widersprüchlichen Regeln, doppelten Anweisungen oder MCP-Konflikte erkannt."
+  }
+}

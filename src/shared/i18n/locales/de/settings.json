@@ -1,0 +1,88 @@
+{
+  "page": {
+    "title": "Einstellungen",
+    "description": "Pfade, Erscheinungsbild und App-Einstellungen"
+  },
+  "preferences": {
+    "behaviour": {
+      "title": "Verhalten"
+    },
+    "confirmDiff": {
+      "title": "Vor dem Speichern Diff bestätigen",
+      "desc": "Änderungen vor dem Schreiben gegen die Datei auf der Festplatte prüfen."
+    },
+    "launchOnStartup": {
+      "title": "Beim Systemstart starten",
+      "desc": "Abyss beim Anmelden starten (wird beim nächsten Start angewendet)."
+    },
+    "autosave": {
+      "title": "Automatisch speichern",
+      "desc": "Die geöffnete Konfigurationsdatei nach der eingestellten Leerlaufzeit automatisch speichern."
+    },
+    "autosaveDelay": {
+      "title": "Verzögerung für Autospeichern",
+      "desc": "Leerlaufzeit (in Sekunden), bevor die Datei automatisch gespeichert wird (1–30)."
+    },
+    "editorLineWrap": {
+      "title": "Zeilenumbruch im Editor",
+      "desc": "Lange Zeilen im Konfigurations-Editor umbrechen statt horizontal zu scrollen."
+    },
+    "guidedTour": {
+      "title": "Geführte Tour",
+      "desc": "Die kurze Einführung in die wichtigsten Bereiche von Abyss erneut abspielen.",
+      "replay": "Tour erneut abspielen"
+    },
+    "startupLanguage": {
+      "title": "Start & Sprache"
+    },
+    "startupAgent": {
+      "title": "Agent beim Start",
+      "desc": "Mit welchem Agent Abyss öffnet. „Zuletzt verwendet“ stellt deinen letzten Agent wieder her.",
+      "lastUsed": "Zuletzt verwendeter Agent"
+    },
+    "language": {
+      "title": "Sprache",
+      "desc": "Sprache der Oberfläche. Wird sofort angewendet — kein Neustart nötig."
+    },
+    "billing": {
+      "title": "Abrechnung & Kosten"
+    },
+    "billingMode": {
+      "title": "Abrechnungsmodus",
+      "desc": "Abo hat keine Kosten pro Token; API wird nutzungsbasiert abgerechnet.",
+      "subscription": "Abo",
+      "api": "API (nutzungsbasiert)"
+    },
+    "showCosts": {
+      "title": "Geschätzte Kosten anzeigen",
+      "desc": "Eine ungefähre Token-Kostenschätzung im Dashboard anzeigen."
+    },
+    "currency": {
+      "title": "Währung",
+      "desc": "Für die Kostenschätzung verwendete Währung."
+    },
+    "usageLimits": {
+      "title": "Nutzungslimits",
+      "view": "Nutzung anzeigen"
+    },
+    "weeklyBudget": {
+      "title": "Wöchentliches Token-Budget",
+      "desc": "Das wöchentliche Kontingent deines Tarifs — steuert die %-Anzeige im Dashboard.",
+      "placeholder": "z. B. 5000000"
+    },
+    "sessionBudget": {
+      "title": "Sitzungs-Token-Budget (5 Std.)",
+      "desc": "Rollierendes 5-Stunden-Kontingent, angezeigt als verbrauchter Prozentsatz.",
+      "placeholder": "z. B. 1000000"
+    },
+    "budgetAlert": {
+      "title": "Schwellenwert für Budget-Warnung",
+      "desc": "Auf der Nutzungsanzeige warnen, sobald der Verbrauch diesen Prozentsatz erreicht (0 = aus)."
+    },
+    "projectDir": {
+      "title": "Standard-Projektverzeichnis",
+      "pickerTitle": "Standard-Projektverzeichnis",
+      "notSet": "nicht gesetzt"
+    }
+  }
+}

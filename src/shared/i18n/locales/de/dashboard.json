@@ -1,0 +1,10 @@
+{
+  "title": "{{agent}} konfigurieren",
+  "description": "Ein Ort, um jeden KI-Coding-Agent auf deinem Rechner zu verwalten.",
+  "refresh": "Dashboard aktualisieren",
+  "revealConfig": "Konfigurationsverzeichnis anzeigen",
+  "noConfigPath": "kein Konfigurationspfad",
+  "cliNotFound": "Das {{agent}}-CLI wurde auf deinem System nicht gefunden. Installiere es oder verweise Abyss auf einen vorhandenen Konfigurationsordner.",
+  "setConfigPath": "Konfigurationspfad festlegen",
+  "agents": "Agents"
+}

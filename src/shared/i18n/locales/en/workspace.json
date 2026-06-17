@@ -1,0 +1,35 @@
+{
+  "title": "Workspace",
+  "description": "Agent config across all your repos, in one place",
+  "revealInFileManager": "Reveal in file manager",
+  "clearSavedFolder": "Clear saved folder",
+  "rescanning": "Rescanning…",
+  "scanning": "Scanning…",
+  "setAsProject": "Set as project",
+  "chooseFolder": "Choose folder",
+  "chooseAnother": "Choose another folder",
+  "rescan": "Rescan",
+  "dir": "dir",
+  "pickTitle": "Choose a folder to scan for agent config",
+  "agentsCount_one": "{{count}} agent",
+  "agentsCount_other": "{{count}} agents",
+  "summary_one": "{{count}} repo with agent config · {{scanned}} scanned in {{root}}",
+  "summary_other": "{{count}} repos with agent config · {{scanned}} scanned in {{root}}",
+  "toast": {
+    "setProject": "Project set to {{name}}",
+    "setProjectDesc": "Config surfaces now target this repo."
+  },
+  "intro": {
+    "title": "Discover agent config across your repos",
+    "desc": "Pick a folder that holds your projects. Abyss scans one level down and lists every repo with CLAUDE.md, .cursor/rules, copilot-instructions.md and more."
+  },
+  "outOfScope": {
+    "title": "Folder is out of scope",
+    "desc": "Abyss only scans inside your home directory and its own data folders. Pick a folder under your home directory."
+  },
+  "noConfig": {
+    "title": "No agent config found",
+    "desc_one": "Scanned {{count}} folder under {{root}}. None of them have a known agent config file.",
+    "desc_other": "Scanned {{count}} folders under {{root}}. None of them have a known agent config file."
+  }
+}

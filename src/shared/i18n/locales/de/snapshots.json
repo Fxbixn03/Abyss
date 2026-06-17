@@ -1,0 +1,69 @@
+{
+  "tabs": {
+    "history": "Verlauf",
+    "activity": "Aktivität"
+  },
+  "title": "Verlauf",
+  "description": "Automatische Snapshots, die vor jedem Speichern der Konfiguration erstellt werden",
+  "allAgents": "Alle Agents",
+  "dismiss": "Schließen",
+  "labelPlaceholder": "Label hinzufügen…",
+  "deleteSnapshot": "Snapshot löschen",
+  "empty": {
+    "title": "Noch keine Snapshots",
+    "desc": "Abyss speichert jedes Mal automatisch einen Snapshot, wenn es eine Konfigurationsdatei überschreibt. Sie erscheinen hier."
+  },
+  "noneForAgent": {
+    "title": "Keine Snapshots für diesen Agent",
+    "desc": "Keine Snapshots passen zum ausgewählten Agent-Filter."
+  },
+  "noSelection": {
+    "title": "Kein Snapshot ausgewählt",
+    "desc": "Wähle einen Snapshot, um seinen Inhalt anzuzeigen, ihn gegen die aktive Datei zu vergleichen und ihn wiederherzustellen."
+  },
+  "confirmRestore": {
+    "title": "Diesen Snapshot wiederherstellen?",
+    "desc": "Dadurch wird {{file}} mit dem Inhalt des Snapshots überschrieben. Der aktuelle Inhalt wird zuvor als Snapshot gesichert, sodass dies rückgängig gemacht werden kann."
+  },
+  "confirmDelete": {
+    "title": "Diesen Snapshot löschen?",
+    "desc": "Dadurch werden der Snapshot und sein Label dauerhaft entfernt. Dies kann nicht rückgängig gemacht werden und betrifft die aktive Datei nicht."
+  },
+  "actions": {
+    "refresh": "Aktualisieren",
+    "loading": "Lädt…",
+    "reveal": "Anzeigen",
+    "restore": "Wiederherstellen",
+    "delete": "Löschen",
+    "cancel": "Abbrechen",
+    "save": "Speichern"
+  },
+  "viewMode": {
+    "byFile": "Nach Datei",
+    "timeline": "Zeitleiste"
+  },
+  "detail": {
+    "content": "Inhalt",
+    "diff": "Diff"
+  },
+  "diffLabels": {
+    "current": "Aktuell (auf der Festplatte)",
+    "snapshot": "Dieser Snapshot"
+  },
+  "status": {
+    "matches": "stimmt mit der aktiven Datei überein",
+    "differs": "weicht von der aktiven ab"
+  },
+  "relative": {
+    "now": "gerade eben",
+    "minutes": "vor {{count}} Min.",
+    "hours": "vor {{count}} Std."
+  },
+  "emptyFile": "(leere Datei)",
+  "restored": "Wiederhergestellt: {{path}}",
+  "theFile": "die Datei",
+  "label": {
+    "edit": "Label bearbeiten",
+    "add": "Label hinzufügen"
+  }
+}

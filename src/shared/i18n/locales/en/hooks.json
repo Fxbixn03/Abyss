@@ -1,0 +1,79 @@
+{
+  "title": "Hooks",
+  "headerDescription": "Lifecycle hooks for {{agent}} ({{file}})",
+  "unsupportedDesc": "Switch to an agent that supports lifecycle hooks.",
+  "noHooksTitle": "{{agent}} has no hooks",
+  "noPath": {
+    "title": "No config location set",
+    "desc": "Set a config directory in Settings to manage hooks."
+  },
+  "empty": {
+    "title": "No hooks configured",
+    "desc": "Run a command on events like PreToolUse, PostToolUse or Stop."
+  },
+  "aria": {
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "actions": "Hook actions",
+    "edit": "Edit hook",
+    "duplicate": "Duplicate hook",
+    "delete": "Delete hook"
+  },
+  "confirmDelete": {
+    "title": "Delete hook?",
+    "desc": "This removes the hook from {{file}}."
+  },
+  "matcherPlaceholder": "Tool name, e.g. Bash or Edit",
+  "actions": {
+    "openSettings": "Open Settings",
+    "more": "More",
+    "import": "Import hooks…",
+    "export": "Export hooks…",
+    "add": "Add hook",
+    "loading": "Loading…",
+    "test": "Test in Sandbox",
+    "revealScript": "Reveal script",
+    "copyTo": "Copy to"
+  },
+  "labels": {
+    "whatRuns": "What runs automatically",
+    "fileHistory": "File history",
+    "eventCoverage": "Event coverage",
+    "matcherDryRun": "Matcher dry-run",
+    "noMatch": "No hook matches",
+    "scriptNotFound": "Script file not found — create it from the menu."
+  },
+  "badges": {
+    "disabled": "disabled"
+  },
+  "toggle": {
+    "enable": "Enable",
+    "disable": "Disable"
+  },
+  "script": {
+    "edit": "Edit script",
+    "create": "Create script"
+  },
+  "dryRun": {
+    "match_one": "{{count}} hook matches",
+    "match_other": "{{count}} hooks match"
+  },
+  "otherScope": {
+    "show": "Show {{scope}} scope hooks",
+    "hide": "Hide {{scope}} scope hooks",
+    "empty": "No hooks in the {{scope}} scope."
+  },
+  "dialogTitles": {
+    "export": "Export hooks",
+    "import": "Import hooks"
+  },
+  "toasts": {
+    "noConfigFor": "No config location for {{agent}}",
+    "copiedTo": "Copied hook to {{agent}}",
+    "copyFailed": "Couldn't copy hook",
+    "exported": "Hooks exported",
+    "importFailed": "Import failed: {{error}}",
+    "imported_one": "Imported {{count}} hook",
+    "imported_other": "Imported {{count}} hooks"
+  }
+}

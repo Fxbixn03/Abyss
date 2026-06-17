@@ -1,0 +1,44 @@
+{
+  "title": "Aktivität",
+  "description": "Jede von Abyss geänderte Datei — neueste zuerst, mit Rückgängig per Klick",
+  "filters": {
+    "allAgents": "Alle Agents",
+    "file": "Nach Dateiname oder Pfad filtern…"
+  },
+  "empty": {
+    "title": "Noch keine Aktivität",
+    "desc": "Abyss protokolliert hier jede überschriebene Konfigurationsdatei, damit du jede Änderung prüfen und rückgängig machen kannst."
+  },
+  "noMatch": {
+    "title": "Keine passenden Änderungen",
+    "desc": "Keine geänderten Dateien passen zu deinem Filter."
+  },
+  "actions": {
+    "refresh": "Aktualisieren",
+    "reveal": "Im Dateimanager anzeigen",
+    "diff": "Diff",
+    "undo": "Rückgängig",
+    "loading": "Lädt…",
+    "loadingDiff": "Diff wird geladen…"
+  },
+  "confirmUndo": {
+    "title": "Diese Änderung rückgängig machen?",
+    "desc": "Dadurch wird {{file}} auf den Inhalt vor dieser Änderung zurückgesetzt. Der aktuelle Inhalt wird zuvor als Snapshot gesichert, sodass das Rückgängigmachen selbst rückgängig gemacht werden kann."
+  },
+  "noUndo": "Diese Änderung stimmt noch mit der Datei auf der Festplatte überein — nichts rückgängig zu machen.",
+  "undoChange": "Änderung rückgängig machen",
+  "theFile": "die Datei",
+  "relative": {
+    "now": "gerade eben",
+    "minutes": "vor {{count}} Min.",
+    "hours": "vor {{count}} Std."
+  },
+  "day": {
+    "today": "Heute",
+    "yesterday": "Gestern"
+  },
+  "diffLabels": {
+    "current": "Aktuell (auf der Festplatte)",
+    "before": "Vor dieser Änderung"
+  }
+}

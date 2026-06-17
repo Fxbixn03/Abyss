@@ -1,0 +1,22 @@
+{
+  "tabs": {
+    "validation": "Validierung",
+    "doctor": "Doctor"
+  },
+  "title": "Validierung",
+  "headerDescription": "Prüfe die Konfiguration von {{agent}} auf Risiken und Verfall",
+  "rerunning": "Wird erneut ausgeführt…",
+  "rerun": "Erneut ausführen",
+  "reveal": "Im Ordner anzeigen",
+  "running": "Prüfungen laufen…",
+  "allClear": "Alles in Ordnung",
+  "allClearDesc": "Keine Probleme in der aktuellen Konfiguration von {{agent}} gefunden.",
+  "merged": "zusammengeführt: global + Projekt",
+  "open": "Öffnen",
+  "openSettings": "Einstellungs-Editor öffnen",
+  "counts": {
+    "error": "{{count}} Fehler",
+    "warning": "{{count}} Warnungen",
+    "info": "{{count}} Hinweise"
+  }
+}

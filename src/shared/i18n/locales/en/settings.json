@@ -1,0 +1,88 @@
+{
+  "page": {
+    "title": "Settings",
+    "description": "Paths, appearance and app preferences"
+  },
+  "preferences": {
+    "behaviour": {
+      "title": "Behaviour"
+    },
+    "confirmDiff": {
+      "title": "Confirm with a diff before saving",
+      "desc": "Review changes against the on-disk file before writing."
+    },
+    "launchOnStartup": {
+      "title": "Launch on startup",
+      "desc": "Start Abyss when you log in (applied on next launch)."
+    },
+    "autosave": {
+      "title": "Autosave",
+      "desc": "Automatically save the open config file after the configured idle period."
+    },
+    "autosaveDelay": {
+      "title": "Autosave delay",
+      "desc": "Idle time (in seconds) before the file is saved automatically (1–30)."
+    },
+    "editorLineWrap": {
+      "title": "Editor line wrap",
+      "desc": "Wrap long lines in the config editor instead of scrolling horizontally."
+    },
+    "guidedTour": {
+      "title": "Guided tour",
+      "desc": "Replay the short walkthrough of the main areas of Abyss.",
+      "replay": "Replay tour"
+    },
+    "startupLanguage": {
+      "title": "Startup & language"
+    },
+    "startupAgent": {
+      "title": "Agent on startup",
+      "desc": "Which agent Abyss opens with. “Last used” restores your most recent agent.",
+      "lastUsed": "Last used agent"
+    },
+    "language": {
+      "title": "Language",
+      "desc": "Interface language. Applies instantly — no restart needed."
+    },
+    "billing": {
+      "title": "Billing & cost"
+    },
+    "billingMode": {
+      "title": "Billing mode",
+      "desc": "Subscription has no per-token cost; API is pay-as-you-go.",
+      "subscription": "Subscription",
+      "api": "API (pay-as-you-go)"
+    },
+    "showCosts": {
+      "title": "Show estimated costs",
+      "desc": "Display an approximate token cost on the dashboard."
+    },
+    "currency": {
+      "title": "Currency",
+      "desc": "Currency used for the cost estimate."
+    },
+    "usageLimits": {
+      "title": "Usage limits",
+      "view": "View usage"
+    },
+    "weeklyBudget": {
+      "title": "Weekly token budget",
+      "desc": "Your plan's weekly allowance — drives the % quota gauge on the dashboard.",
+      "placeholder": "e.g. 5000000"
+    },
+    "sessionBudget": {
+      "title": "Session (5h) token budget",
+      "desc": "Rolling 5-hour allowance, shown as a percentage consumed.",
+      "placeholder": "e.g. 1000000"
+    },
+    "budgetAlert": {
+      "title": "Budget alert threshold",
+      "desc": "Warn on the usage gauge once consumption reaches this percentage (0 = off)."
+    },
+    "projectDir": {
+      "title": "Default project directory",
+      "pickerTitle": "Default project directory",
+      "notSet": "not set"
+    }
+  }
+}

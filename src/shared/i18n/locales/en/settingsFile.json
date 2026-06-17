@@ -1,0 +1,25 @@
+{
+  "title": "Settings (raw)",
+  "headerDescription": "Direct JSON for {{agent}}",
+  "unsupportedDesc": "Switch to an agent that exposes settings.json.",
+  "noRawTitle": "{{agent}} has no raw settings",
+  "noPath": {
+    "title": "No config location set",
+    "desc": "Set a config directory in Settings first."
+  },
+  "confirmDiscard": {
+    "title": "Discard unsaved changes?",
+    "desc": "You have unsaved edits in {{file}}. Switching files will discard them."
+  },
+  "openSettings": "Open Settings",
+  "saveFailed": "Save failed — invalid JSON",
+  "discard": "Discard",
+  "badges": {
+    "new": "new",
+    "unsaved": "unsaved"
+  },
+  "hints": {
+    "shared": "Shared settings — typically committed to source control.",
+    "local": "Local overrides — personal and usually git-ignored."
+  }
+}

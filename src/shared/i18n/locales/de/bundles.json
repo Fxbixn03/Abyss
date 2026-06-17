@@ -1,0 +1,40 @@
+{
+  "title": "Bundles",
+  "description": "Exportiere deine Konfiguration und wende sie auf einem anderen Rechner an",
+  "includedAgents": "Enthaltene Agents",
+  "agentsToApply": "Anzuwendende Agents",
+  "preview": "Bundle-Vorschau",
+  "selectAtLeastOne": "Wähle mindestens einen Agent zum Exportieren aus",
+  "actions": {
+    "export": "Exportieren",
+    "apply": "Anwenden",
+    "preview": "Vorschau",
+    "exportToFile": "In Datei exportieren…",
+    "loadFile": "Bundle-Datei laden…",
+    "dryRun": "Testlauf",
+    "dismiss": "Schließen"
+  },
+  "confirmApply": {
+    "title": "Dieses Bundle anwenden?",
+    "desc": "Dadurch werden die echten Konfigurationsdateien der ausgewählten Agents überschrieben. Von jeder Datei wird zuvor ein Snapshot erstellt (siehe Verlauf), sodass Änderungen rückgängig gemacht werden können."
+  },
+  "secrets": {
+    "label": "Secrets einschließen (MCP-API-Tokens)",
+    "warn": "Das Bundle enthält echte API-Tokens — teile es mit Vorsicht.",
+    "safe": "Tokens in der MCP-Server-Umgebung werden durch einen Platzhalter ersetzt, sodass das Bundle sicher geteilt werden kann."
+  },
+  "notices": {
+    "exported": "Exportiert nach {{path}}",
+    "exportFailed": "Export fehlgeschlagen",
+    "invalidFile": "Keine gültige Abyss-Bundle-Datei.",
+    "applied_one": "Angewendet — {{count}} Datei geändert.",
+    "applied_other": "Angewendet — {{count}} Dateien geändert."
+  },
+  "agentCount_one": "{{count}} Agent",
+  "agentCount_other": "{{count}} Agents",
+  "diff": {
+    "summary": "{{changed}} von {{total}} Ziel(en) unterschiedlich",
+    "changes": "Änderungen",
+    "same": "gleich"
+  }
+}

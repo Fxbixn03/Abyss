@@ -1,0 +1,32 @@
+{
+  "title": "Vergleichen & Synchronisieren",
+  "description": "Vergleiche zwei Agents über eine oder mehrere Flächen hinweg und kopiere Konfiguration zwischen ihnen",
+  "swap": "Tauschen",
+  "dismiss": "Schließen",
+  "notSupported": "Wird nicht von beiden Agents unterstützt",
+  "comparing": "Wird verglichen…",
+  "noServers": "Keine MCP-Server.",
+  "noHooks": "Keine Hooks.",
+  "none": "keine",
+  "emptySurface": "{{agent}} hat keine {{surface}}.",
+  "syncToAll": "{{agent}} → alle synchronisieren",
+  "copy": "Kopieren",
+  "status": {
+    "na": "n/v",
+    "inSync": "synchron",
+    "differs": "unterschiedlich"
+  },
+  "syncAll": {
+    "updated": "aktualisiert",
+    "same": "gleich"
+  },
+  "notices": {
+    "copied": "{{surface}} von {{from}} nach {{to}} kopiert.",
+    "alreadyMatched": "{{to}} stimmte bereits mit {{from}} überein.",
+    "copyFailed": "Kopieren fehlgeschlagen."
+  },
+  "confirmSync": {
+    "title": "{{surface}} kopieren: {{from}} → {{to}}?",
+    "desc": "Dadurch wird die Konfiguration des Ziel-Agents überschrieben. Zuvor wird ein Snapshot erstellt (siehe Verlauf), sodass dies rückgängig gemacht werden kann."
+  }
+}

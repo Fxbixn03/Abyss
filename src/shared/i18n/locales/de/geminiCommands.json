@@ -1,0 +1,38 @@
+{
+  "title": "Befehle",
+  "headerDescription": "Eigene Slash-Befehle für {{agent}}",
+  "noPath": {
+    "title": "Kein Konfigurationsort festgelegt",
+    "desc": "Lege ein Gemini-Konfigurationsverzeichnis in den Einstellungen fest, um Befehle zu verwalten."
+  },
+  "filter": "Befehle filtern…",
+  "noSelection": {
+    "title": "Kein Befehl ausgewählt",
+    "desc": "Wähle einen Befehl zum Bearbeiten aus oder erstelle einen neuen."
+  },
+  "newCommand": {
+    "title": "Neuer Befehl",
+    "placeholder": "git/commit"
+  },
+  "renameCommand": "Befehl umbenennen",
+  "confirmDelete": {
+    "title": "Befehl löschen?",
+    "desc": "Dadurch wird „{{name}}.toml“ dauerhaft gelöscht."
+  },
+  "actions": {
+    "new": "Neuer Befehl",
+    "openSettings": "Einstellungen öffnen",
+    "loading": "Lädt…",
+    "rename": "Umbenennen",
+    "reveal": "Im Ordner anzeigen",
+    "delete": "Löschen",
+    "dismiss": "Schließen",
+    "create": "Erstellen"
+  },
+  "empty": "Noch keine Befehle.",
+  "noMatches": "Keine Treffer.",
+  "errors": {
+    "create": "Befehl konnte nicht erstellt werden.",
+    "rename": "Befehl konnte nicht umbenannt werden."
+  }
+}

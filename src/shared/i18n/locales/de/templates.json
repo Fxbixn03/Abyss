@@ -1,0 +1,61 @@
+{
+  "title": "Prompt-Vorlagen",
+  "description": "Wiederverwendbare System-Prompts und Regelsätze. Wende eine an, um sie zu den Anweisungen eines Agents hinzuzufügen.",
+  "dismiss": "Schließen",
+  "search": "Vorlagen suchen…",
+  "noMatch": "Keine Vorlagen passen zu deinen Filtern.",
+  "selectToCombine": "Zum Kombinieren auswählen",
+  "selected": "{{count}} zum Kombinieren ausgewählt",
+  "combinedTitle": "Kombiniert ({{count}} Vorlagen)",
+  "restore": "Wiederherstellen",
+  "badges": {
+    "custom": "eigene",
+    "edited": "bearbeitet"
+  },
+  "pin": {
+    "pin": "Anheften",
+    "unpin": "Lösen",
+    "pinTop": "Oben anheften",
+    "openPreview": "Vorschau öffnen"
+  },
+  "row": {
+    "preview": "Vorschau",
+    "copy": "Kopieren",
+    "duplicate": "Duplizieren",
+    "edit": "Bearbeiten",
+    "delete": "Löschen"
+  },
+  "confirmRestore": {
+    "title": "Standardvorlagen wiederherstellen?",
+    "desc": "Dadurch werden Bearbeitungen und Löschungen der integrierten Vorlagen rückgängig gemacht. Deine eigenen Vorlagen bleiben erhalten."
+  },
+  "confirmDelete": {
+    "title": "„{{name}}“ löschen?",
+    "builtin": "Dadurch wird die integrierte Vorlage ausgeblendet. „Standards wiederherstellen“ bringt sie zurück.",
+    "custom": "Dadurch wird die eigene Vorlage dauerhaft entfernt."
+  },
+  "filters": {
+    "favorites": "Favoriten",
+    "all": "Alle"
+  },
+  "actions": {
+    "copy": "Kopieren",
+    "apply": "Anwenden",
+    "import": "Importieren",
+    "export": "Exportieren",
+    "restoreDefaults": "Standards wiederherstellen",
+    "new": "Neue Vorlage",
+    "combine": "Kombinieren",
+    "clear": "Leeren",
+    "combineApply": "Kombinieren & anwenden"
+  },
+  "notices": {
+    "copied": "„{{title}}“ kopiert.",
+    "exported": "{{count}} Vorlagen exportiert.",
+    "imported_one": "{{count}} Vorlage importiert.",
+    "imported_other": "{{count}} Vorlagen importiert.",
+    "duplicated": "„{{title}}“ dupliziert.",
+    "applied_one": "„{{title}}“ auf {{count}} Agent angewendet.",
+    "applied_other": "„{{title}}“ auf {{count}} Agents angewendet."
+  }
+}

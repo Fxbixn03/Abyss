@@ -1,0 +1,11 @@
+{
+  "title": "Context",
+  "headerDescription": "What {{agent}} actually sees — layered, with token estimates",
+  "unsupportedDesc": "Switch to an agent with instruction files to inspect what the model sees.",
+  "noContextTitle": "{{agent}} has no compiled context",
+  "compiling": "Compiling context…",
+  "conflicts": {
+    "title": "Conflicts",
+    "none": "No conflicting rules, duplicate instructions or MCP clashes detected."
+  }
+}

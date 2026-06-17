@@ -1,0 +1,41 @@
+{
+  "hub": {
+    "servers": "Server",
+    "marketplace": "Marktplatz"
+  },
+  "title": "MCP-Server",
+  "unsupportedDesc": "Wechsle zu einem Agent, der das Model Context Protocol unterstützt, um Server zu verwalten.",
+  "noSupportTitle": "{{agent}} hat keine MCP-Unterstützung",
+  "userScopedDesc": "Benutzerbezogene Server, automatisch aus ~/.claude.json erkannt",
+  "recheckTitle": "Jetzt jeden Server erneut prüfen",
+  "autoRecheck": "Automatisch alle {{seconds}} s erneut prüfen",
+  "checking": "Wird geprüft…",
+  "autoOn": "Auto an",
+  "autoOff": "Auto aus",
+  "connectorsNote": "claude.ai-Connectors (Google Drive usw.) werden in deinem Claude-Konto verwaltet und sind hier nicht bearbeitbar.",
+  "summary": {
+    "online": "{{count}} online",
+    "offline": "{{count}} offline",
+    "checking": "{{count}} werden geprüft"
+  },
+  "filter": "Nach Name oder Befehl filtern…",
+  "clearFilter": "Filter zurücksetzen",
+  "noPath": {
+    "title": "Kein Konfigurationsort festgelegt",
+    "desc": "Lege ein Konfigurationsverzeichnis in den Einstellungen fest, um MCP-Server zu verwalten."
+  },
+  "empty": {
+    "title": "Noch keine MCP-Server",
+    "desc": "Füge einen Server hinzu, um dem Agent Tools und Ressourcen bereitzustellen."
+  },
+  "actions": {
+    "recheck": "Erneut prüfen",
+    "discover": "Entdecken",
+    "import": "Importieren",
+    "add": "Server hinzufügen",
+    "openSettings": "Einstellungen öffnen",
+    "loading": "Lädt…",
+    "copyJson": "JSON kopieren",
+    "copied": "Kopiert!"
+  }
+}

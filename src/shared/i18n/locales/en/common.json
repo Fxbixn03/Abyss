@@ -1,0 +1,13 @@
+{
+  "actions": {
+    "browse": "Browse…",
+    "clear": "Clear",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel"
+  },
+  "language": {
+    "en": "English",
+    "de": "Deutsch"
+  }
+}

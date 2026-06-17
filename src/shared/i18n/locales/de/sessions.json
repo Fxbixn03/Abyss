@@ -1,0 +1,23 @@
+{
+  "title": "Sitzungen",
+  "explorerTitle": "Sitzungs-Explorer",
+  "headerDescription": "Durchsuche, vergleiche und untersuche {{agent}}-Sitzungen",
+  "unsupportedDesc": "Wechsle zu einem Agent, der Chat-Sitzungen aufzeichnet, um sie hier zu erkunden.",
+  "noHistoryTitle": "{{agent}} hat keinen Sitzungsverlauf",
+  "refreshing": "Wird aktualisiert…",
+  "refresh": "Aktualisieren",
+  "exporting": "Wird exportiert…",
+  "loading": "Sitzungen werden geladen…",
+  "empty": {
+    "title": "Noch keine Sitzungen",
+    "desc": "Sobald du mit diesem Agent gechattet hast, erscheinen seine Sitzungen hier zum Erkunden."
+  },
+  "filter": "Nach Titel oder Projekt filtern…",
+  "groupByTitle": "Sitzungen nach Projekt gruppieren",
+  "groupBy": "Nach Projekt gruppieren",
+  "md": "MD",
+  "json": "JSON",
+  "count": "{{shown}} von {{total}}",
+  "exportN_one": "{{count}} Sitzung exportieren",
+  "exportN_other": "{{count}} Sitzungen exportieren"
+}

@@ -1,0 +1,15 @@
+{
+  "title": "Instructions",
+  "headerDescription": "Configuration files for {{agent}}",
+  "noPath": {
+    "title": "No config location set",
+    "desc": "Abyss could not find a config directory for {{agent}}. Set one in Settings to start editing."
+  },
+  "validationErrors": "Validation errors",
+  "unsavedChanges": "Unsaved changes",
+  "actions": {
+    "openSettings": "Open Settings",
+    "compare": "Compare",
+    "effectiveView": "Effective view"
+  }
+}

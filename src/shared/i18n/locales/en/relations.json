@@ -1,0 +1,10 @@
+{
+  "title": "Relations",
+  "headerDescription": "How this agent's commands, subagents, skills, MCP servers and hooks connect",
+  "noPath": {
+    "title": "No config location set",
+    "desc": "Set a config directory in Settings to map this agent's components."
+  },
+  "resizePreview": "Resize preview",
+  "openSettings": "Open Settings"
+}

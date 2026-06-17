@@ -1,0 +1,25 @@
+{
+  "title": "Einstellungen (roh)",
+  "headerDescription": "Direktes JSON für {{agent}}",
+  "unsupportedDesc": "Wechsle zu einem Agent, der settings.json offenlegt.",
+  "noRawTitle": "{{agent}} hat keine Roheinstellungen",
+  "noPath": {
+    "title": "Kein Konfigurationsort festgelegt",
+    "desc": "Lege zuerst ein Konfigurationsverzeichnis in den Einstellungen fest."
+  },
+  "confirmDiscard": {
+    "title": "Nicht gespeicherte Änderungen verwerfen?",
+    "desc": "Du hast nicht gespeicherte Änderungen in {{file}}. Beim Wechsel der Datei gehen sie verloren."
+  },
+  "openSettings": "Einstellungen öffnen",
+  "saveFailed": "Speichern fehlgeschlagen — ungültiges JSON",
+  "discard": "Verwerfen",
+  "badges": {
+    "new": "neu",
+    "unsaved": "ungespeichert"
+  },
+  "hints": {
+    "shared": "Geteilte Einstellungen — üblicherweise in die Versionskontrolle eingecheckt.",
+    "local": "Lokale Überschreibungen — persönlich und meist von Git ignoriert."
+  }
+}

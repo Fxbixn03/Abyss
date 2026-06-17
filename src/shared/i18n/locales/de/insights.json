@@ -1,0 +1,40 @@
+{
+  "title": "Insights",
+  "headerDescription": "Reibungssignale über die letzten {{agent}}-Sitzungen",
+  "unsupportedDesc": "Wechsle zu einem Agent, der Chat-Sitzungen aufzeichnet, um Reibungs-Insights zu sehen.",
+  "noHistoryTitle": "{{agent}} hat keinen Sitzungsverlauf",
+  "empty": {
+    "title": "Noch nichts zu analysieren",
+    "desc": "Sobald dieser Agent ein paar Sitzungen hat, erscheinen hier Reibungssignale (Tool-Fehler, Korrekturen, wiederholte Aufrufe)."
+  },
+  "analyzing": "Transkripte werden analysiert…",
+  "cards": {
+    "corrections": "Nutzerkorrekturen",
+    "toolErrors": "Tool-Fehler",
+    "repeated": "Wiederholte Tool-Aufrufe"
+  },
+  "stats": {
+    "avgFriction": "Ø Reibung (0–100)",
+    "sessionsAnalyzed": "analysierte Sitzungen",
+    "userCorrections": "Nutzerkorrekturen",
+    "toolErrors": "Tool-Fehler"
+  },
+  "sections": {
+    "distribution": "Reibungsverteilung",
+    "trend": "Reibungsverlauf",
+    "roughest": "Holprigste Sitzungen"
+  },
+  "buckets": {
+    "smooth": "{{count}} glatt",
+    "some": "{{count}} etwas Reibung",
+    "rough": "{{count}} holprig"
+  },
+  "tone": {
+    "smooth": "glatt",
+    "some": "etwas Reibung",
+    "rough": "holprig"
+  },
+  "untitled": "Unbenannte Sitzung",
+  "footer": "Reibung ist eine Heuristik aus messbaren Signalen (Tool-Fehler, Nutzerkorrekturen, wiederholte Tool-Aufrufe) über die {{count}} jüngsten Sitzungen — kein Urteil über die Antwortqualität.",
+  "noFriction": "Keine nennenswerte Reibung — alle analysierten Sitzungen liefen reibungslos."
+}

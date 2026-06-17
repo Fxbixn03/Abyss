@@ -1,0 +1,69 @@
+{
+  "tabs": {
+    "history": "History",
+    "activity": "Activity"
+  },
+  "title": "History",
+  "description": "Automatic snapshots taken before every config save",
+  "allAgents": "All agents",
+  "dismiss": "Dismiss",
+  "labelPlaceholder": "Add a label…",
+  "deleteSnapshot": "Delete snapshot",
+  "empty": {
+    "title": "No snapshots yet",
+    "desc": "Abyss saves a snapshot automatically each time it overwrites a config file. They will appear here."
+  },
+  "noneForAgent": {
+    "title": "No snapshots for this agent",
+    "desc": "No snapshots match the selected agent filter."
+  },
+  "noSelection": {
+    "title": "No snapshot selected",
+    "desc": "Pick a snapshot to preview its contents, diff it against the live file, and restore it."
+  },
+  "confirmRestore": {
+    "title": "Restore this snapshot?",
+    "desc": "This overwrites {{file}} with the snapshot's content. The current content is snapshotted first, so this can be undone."
+  },
+  "confirmDelete": {
+    "title": "Delete this snapshot?",
+    "desc": "This permanently removes the snapshot and its label. It cannot be undone and does not affect the live file."
+  },
+  "actions": {
+    "refresh": "Refresh",
+    "loading": "Loading…",
+    "reveal": "Reveal",
+    "restore": "Restore",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "viewMode": {
+    "byFile": "By file",
+    "timeline": "Timeline"
+  },
+  "detail": {
+    "content": "Content",
+    "diff": "Diff"
+  },
+  "diffLabels": {
+    "current": "Current (on disk)",
+    "snapshot": "This snapshot"
+  },
+  "status": {
+    "matches": "matches the live file",
+    "differs": "differs from live"
+  },
+  "relative": {
+    "now": "just now",
+    "minutes": "{{count}}m ago",
+    "hours": "{{count}}h ago"
+  },
+  "emptyFile": "(empty file)",
+  "restored": "Restored {{path}}",
+  "theFile": "the file",
+  "label": {
+    "edit": "Edit label",
+    "add": "Add label"
+  }
+}

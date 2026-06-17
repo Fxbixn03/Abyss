@@ -1,0 +1,48 @@
+{
+  "title": "Berechtigungen",
+  "headerDescription": "Tool-Berechtigungsregeln für {{agent}}",
+  "unsupportedDesc": "Wechsle zu einem Agent, der Tool-Berechtigungen offenlegt, um sie hier zu bearbeiten.",
+  "noSupportTitle": "{{agent}} hat keine Berechtigungsregeln",
+  "noPath": {
+    "title": "Kein Konfigurationsort festgelegt",
+    "desc": "Lege ein Konfigurationsverzeichnis in den Einstellungen fest, um Berechtigungen zu verwalten."
+  },
+  "filter": "Regeln filtern…",
+  "openSettings": "Einstellungen öffnen",
+  "viewJson": "Als JSON anzeigen",
+  "empty": {
+    "title": "Noch keine Regeln",
+    "desc": "Beginne mit einer Sicherheitsvorlage und passe sie unten an."
+  },
+  "applyPreset": "Standard-Vorlage anwenden",
+  "copyJson": "Als JSON kopieren",
+  "copied": "Kopiert!",
+  "view": {
+    "own": "Eigene",
+    "effective": "Effektiv"
+  },
+  "sort": {
+    "label": "Sortierung: {{label}}",
+    "order": "Reihenfolge",
+    "az": "A–Z",
+    "tool": "Nach Tool"
+  },
+  "conflict_one": "{{count}} Regel erscheint in mehr als einer Spalte. Claude Code wendet deny > ask > allow an, sodass die strengere Spalte gewinnt.",
+  "conflict_other": "{{count}} Regeln erscheinen in mehr als einer Spalte. Claude Code wendet deny > ask > allow an, sodass die strengere Spalte gewinnt.",
+  "globalCount": "+{{count}} global",
+  "effectiveDesc": "Effektive Regeln — global mit diesem Projekt zusammengeführt.",
+  "columns": {
+    "allow": {
+      "title": "Erlauben",
+      "desc": "Tools, die der Agent ohne Nachfrage ausführen darf."
+    },
+    "ask": {
+      "title": "Nachfragen",
+      "desc": "Tools, die zuerst eine Bestätigung erfordern."
+    },
+    "deny": {
+      "title": "Verweigern",
+      "desc": "Tools, die immer blockiert werden — dein Schutz vor Versehen."
+    }
+  }
+}

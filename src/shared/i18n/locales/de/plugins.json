@@ -1,0 +1,44 @@
+{
+  "title": "Plugins",
+  "headerDescription": "Marktplätze & aktivierte Plugins für {{agent}}",
+  "unsupportedDesc": "Die Verwaltung von Plugins & Marktplätzen ist spezifisch für Claude Code. Wechsle zu Claude, um sie zu konfigurieren.",
+  "noSupportTitle": "{{agent}} hat keine Plugins",
+  "noPath": {
+    "title": "Kein Konfigurationsort festgelegt",
+    "desc": "Lege zuerst ein Konfigurationsverzeichnis in den Einstellungen fest."
+  },
+  "openSettings": "Einstellungen öffnen",
+  "note": "Diese Deklarationen liegen in settings.json für den aktuellen Geltungsbereich. Claude Code klont und cacht den eigentlichen Plugin-Inhalt unter ~/.claude/plugins beim nächsten Start, sobald du der Quelle vertraust.",
+  "sourceTypes": {
+    "github": "GitHub",
+    "git": "Git-URL",
+    "directory": "Verzeichnis",
+    "file": "Datei"
+  },
+  "marketplaces": {
+    "heading": "Marktplätze",
+    "desc": "Kataloge, denen Claude Code vertraut. Deklariert als extraKnownMarketplaces.",
+    "empty": "Noch keine Marktplätze deklariert.",
+    "name": "Name",
+    "source": "Quelle",
+    "locationLabel": "{{type}}-Speicherort",
+    "branchTag": "Branch / Tag (optional)",
+    "add": "Marktplatz hinzufügen",
+    "remove": "Marktplatz entfernen",
+    "namePlaceholder": "company-tools"
+  },
+  "plugins": {
+    "heading": "Plugins",
+    "desc": "Standardmäßig zu aktivierende Plugins. Deklariert als enabledPlugins.",
+    "empty": "Noch keine Plugins deklariert.",
+    "name": "Plugin-Name",
+    "marketplace": "Marktplatz",
+    "add": "Hinzufügen",
+    "remove": "Plugin entfernen",
+    "namePlaceholder": "code-formatter",
+    "choose": "Auswählen…",
+    "enabled": "aktiviert",
+    "disabled": "deaktiviert",
+    "addFirst": "Füge zuerst einen Marktplatz hinzu — Plugins werden als plugin@marketplace referenziert."
+  }
+}

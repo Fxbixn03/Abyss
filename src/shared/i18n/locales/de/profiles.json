@@ -1,0 +1,49 @@
+{
+  "title": "Profile",
+  "description": "Benannte Umgebungen — erfasse dein Setup und wechsle zwischen ihnen",
+  "namePlaceholder": "Profilname",
+  "descPlaceholder": "Beschreibung (optional)",
+  "filter": "Profile filtern…",
+  "dismiss": "Schließen",
+  "noMatch": "Keine Profile passen zu deinem Filter.",
+  "empty": {
+    "title": "Noch keine Profile",
+    "desc": "Erfasse deine aktuelle Agent-Konfiguration als benannte Umgebung und wende sie jederzeit an (z. B. auf einem anderen Rechner oder zum Wechseln von Setups)."
+  },
+  "renameProfile": "Profil umbenennen",
+  "confirmApply": {
+    "title": "„{{name}}“ anwenden?",
+    "desc": "Dadurch wird deine aktuelle Agent-Konfiguration mit der des Profils überschrieben. Von jeder Datei wird zuvor ein Snapshot erstellt (siehe Verlauf), sodass dies rückgängig gemacht werden kann."
+  },
+  "confirmDelete": {
+    "title": "„{{name}}“ löschen?",
+    "desc": "Dadurch wird das gespeicherte Profil entfernt. Deine aktive Konfiguration bleibt unberührt."
+  },
+  "closeDryRun": "Testlauf-Vorschau schließen",
+  "templates": {
+    "heading": "Umgebungsvorlagen",
+    "desc": "Vorlagen erfassen deine aktuelle Konfiguration unter einer benannten Umgebung."
+  },
+  "actions": {
+    "cancel": "Abbrechen",
+    "saveCurrent": "Aktuelle Konfiguration als Profil speichern",
+    "save": "Speichern",
+    "new": "Neues Profil",
+    "fromTemplate": "Aus Vorlage",
+    "apply": "Anwenden",
+    "dryRun": "Testlauf",
+    "rename": "Umbenennen",
+    "delete": "Löschen"
+  },
+  "notices": {
+    "saved": "Aktuelle Konfiguration als „{{name}}“ gespeichert",
+    "applied_one": "„{{name}}“ angewendet — {{count}} Datei geändert.",
+    "applied_other": "„{{name}}“ angewendet — {{count}} Dateien geändert."
+  },
+  "dryRun": {
+    "summary": "Testlauf — {{changed}} von {{total}} Ziel(en) unterschiedlich",
+    "changedCount": "{{count}} geändert",
+    "changes": "Änderungen",
+    "same": "gleich"
+  }
+}

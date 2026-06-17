@@ -1,0 +1,35 @@
+{
+  "title": "Arbeitsbereich",
+  "description": "Agent-Konfiguration über all deine Repos hinweg, an einem Ort",
+  "revealInFileManager": "Im Dateimanager anzeigen",
+  "clearSavedFolder": "Gespeicherten Ordner löschen",
+  "rescanning": "Wird erneut gescannt…",
+  "scanning": "Wird gescannt…",
+  "setAsProject": "Als Projekt festlegen",
+  "chooseFolder": "Ordner wählen",
+  "chooseAnother": "Anderen Ordner wählen",
+  "rescan": "Erneut scannen",
+  "dir": "Verz.",
+  "pickTitle": "Ordner zum Scannen nach Agent-Konfiguration wählen",
+  "agentsCount_one": "{{count}} Agent",
+  "agentsCount_other": "{{count}} Agents",
+  "summary_one": "{{count}} Repo mit Agent-Konfiguration · {{scanned}} gescannt in {{root}}",
+  "summary_other": "{{count}} Repos mit Agent-Konfiguration · {{scanned}} gescannt in {{root}}",
+  "toast": {
+    "setProject": "Projekt auf {{name}} gesetzt",
+    "setProjectDesc": "Konfigurationsflächen zielen jetzt auf dieses Repo."
+  },
+  "intro": {
+    "title": "Agent-Konfiguration über deine Repos hinweg entdecken",
+    "desc": "Wähle einen Ordner, der deine Projekte enthält. Abyss scannt eine Ebene tiefer und listet jedes Repo mit CLAUDE.md, .cursor/rules, copilot-instructions.md und mehr auf."
+  },
+  "outOfScope": {
+    "title": "Ordner außerhalb des Geltungsbereichs",
+    "desc": "Abyss scannt nur innerhalb deines Home-Verzeichnisses und seiner eigenen Datenordner. Wähle einen Ordner unterhalb deines Home-Verzeichnisses."
+  },
+  "noConfig": {
+    "title": "Keine Agent-Konfiguration gefunden",
+    "desc_one": "{{count}} Ordner unter {{root}} gescannt. Keiner davon hat eine bekannte Agent-Konfigurationsdatei.",
+    "desc_other": "{{count}} Ordner unter {{root}} gescannt. Keiner davon hat eine bekannte Agent-Konfigurationsdatei."
+  }
+}

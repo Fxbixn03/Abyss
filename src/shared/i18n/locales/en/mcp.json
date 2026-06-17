@@ -1,0 +1,41 @@
+{
+  "hub": {
+    "servers": "Servers",
+    "marketplace": "Marketplace"
+  },
+  "title": "MCP Servers",
+  "unsupportedDesc": "Switch to an agent that supports the Model Context Protocol to manage servers.",
+  "noSupportTitle": "{{agent}} has no MCP support",
+  "userScopedDesc": "User-scoped servers, auto-detected from ~/.claude.json",
+  "recheckTitle": "Re-check every server now",
+  "autoRecheck": "Automatically re-check every {{seconds}}s",
+  "checking": "Checking…",
+  "autoOn": "Auto on",
+  "autoOff": "Auto off",
+  "connectorsNote": "claude.ai connectors (Google Drive, etc.) are managed in your Claude account and aren’t editable here.",
+  "summary": {
+    "online": "{{count}} online",
+    "offline": "{{count}} offline",
+    "checking": "{{count}} checking"
+  },
+  "filter": "Filter by name or command…",
+  "clearFilter": "Clear filter",
+  "noPath": {
+    "title": "No config location set",
+    "desc": "Set a config directory in Settings to manage MCP servers."
+  },
+  "empty": {
+    "title": "No MCP servers yet",
+    "desc": "Add a server to expose tools and resources to the agent."
+  },
+  "actions": {
+    "recheck": "Recheck",
+    "discover": "Discover",
+    "import": "Import",
+    "add": "Add server",
+    "openSettings": "Open Settings",
+    "loading": "Loading…",
+    "copyJson": "Copy JSON",
+    "copied": "Copied!"
+  }
+}

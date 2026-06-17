@@ -1,0 +1,29 @@
+{
+  "title": "Discover",
+  "description": "Agents, CLIs and MCP servers found on this machine",
+  "rescanning": "Rescanning…",
+  "rescan": "Rescan",
+  "scanning": "Scanning…",
+  "empty": {
+    "title": "Nothing new to discover",
+    "desc": "Every agent found on your system is already set up, and no extra MCP servers were found."
+  },
+  "agents": {
+    "heading": "Found on your system, not yet enabled",
+    "hint": "Enable it to manage its config in Abyss.",
+    "enable": "Enable",
+    "configFound": "config found"
+  },
+  "notInstalled": {
+    "heading": "Enabled but not installed",
+    "download": "Download",
+    "noHint": "No install hint available.",
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "mcp": {
+    "heading": "MCP servers in other agents",
+    "compare": "Compare",
+    "configuredIn": "Configured in {{in}}, not in {{agent}}."
+  }
+}

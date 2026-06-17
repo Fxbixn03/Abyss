@@ -1,0 +1,44 @@
+{
+  "title": "Activity",
+  "description": "Every file Abyss changed — newest first, with one-click undo",
+  "filters": {
+    "allAgents": "All agents",
+    "file": "Filter by file name or path…"
+  },
+  "empty": {
+    "title": "No activity yet",
+    "desc": "Abyss logs every config file it overwrites here, so you can review and undo any change it made."
+  },
+  "noMatch": {
+    "title": "No matching changes",
+    "desc": "No changed files match your filter."
+  },
+  "actions": {
+    "refresh": "Refresh",
+    "reveal": "Reveal in file manager",
+    "diff": "Diff",
+    "undo": "Undo",
+    "loading": "Loading…",
+    "loadingDiff": "Loading diff…"
+  },
+  "confirmUndo": {
+    "title": "Undo this change?",
+    "desc": "This restores {{file}} to its content from before this change. The current content is snapshotted first, so the undo itself can be undone."
+  },
+  "noUndo": "This change still matches the file on disk — nothing to undo.",
+  "undoChange": "Undo change",
+  "theFile": "the file",
+  "relative": {
+    "now": "just now",
+    "minutes": "{{count}}m ago",
+    "hours": "{{count}}h ago"
+  },
+  "day": {
+    "today": "Today",
+    "yesterday": "Yesterday"
+  },
+  "diffLabels": {
+    "current": "Current (on disk)",
+    "before": "Before this change"
+  }
+}

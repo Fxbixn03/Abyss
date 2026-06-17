@@ -1,0 +1,79 @@
+{
+  "title": "Hooks",
+  "headerDescription": "Lifecycle-Hooks für {{agent}} ({{file}})",
+  "unsupportedDesc": "Wechsle zu einem Agent, der Lifecycle-Hooks unterstützt.",
+  "noHooksTitle": "{{agent}} hat keine Hooks",
+  "noPath": {
+    "title": "Kein Konfigurationsort festgelegt",
+    "desc": "Lege ein Konfigurationsverzeichnis in den Einstellungen fest, um Hooks zu verwalten."
+  },
+  "empty": {
+    "title": "Keine Hooks konfiguriert",
+    "desc": "Führe bei Ereignissen wie PreToolUse, PostToolUse oder Stop einen Befehl aus."
+  },
+  "aria": {
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "actions": "Hook-Aktionen",
+    "edit": "Hook bearbeiten",
+    "duplicate": "Hook duplizieren",
+    "delete": "Hook löschen"
+  },
+  "confirmDelete": {
+    "title": "Hook löschen?",
+    "desc": "Dadurch wird der Hook aus {{file}} entfernt."
+  },
+  "matcherPlaceholder": "Tool-Name, z. B. Bash oder Edit",
+  "actions": {
+    "openSettings": "Einstellungen öffnen",
+    "more": "Mehr",
+    "import": "Hooks importieren…",
+    "export": "Hooks exportieren…",
+    "add": "Hook hinzufügen",
+    "loading": "Lädt…",
+    "test": "In Sandbox testen",
+    "revealScript": "Skript anzeigen",
+    "copyTo": "Kopieren nach"
+  },
+  "labels": {
+    "whatRuns": "Was automatisch ausgeführt wird",
+    "fileHistory": "Dateiverlauf",
+    "eventCoverage": "Ereignisabdeckung",
+    "matcherDryRun": "Matcher-Testlauf",
+    "noMatch": "Kein Hook passt zu",
+    "scriptNotFound": "Skriptdatei nicht gefunden — erstelle sie über das Menü."
+  },
+  "badges": {
+    "disabled": "deaktiviert"
+  },
+  "toggle": {
+    "enable": "Aktivieren",
+    "disable": "Deaktivieren"
+  },
+  "script": {
+    "edit": "Skript bearbeiten",
+    "create": "Skript erstellen"
+  },
+  "dryRun": {
+    "match_one": "{{count}} Hook passt zu",
+    "match_other": "{{count}} Hooks passen zu"
+  },
+  "otherScope": {
+    "show": "{{scope}}-Scope-Hooks anzeigen",
+    "hide": "{{scope}}-Scope-Hooks ausblenden",
+    "empty": "Keine Hooks im {{scope}}-Scope."
+  },
+  "dialogTitles": {
+    "export": "Hooks exportieren",
+    "import": "Hooks importieren"
+  },
+  "toasts": {
+    "noConfigFor": "Kein Konfigurationsort für {{agent}}",
+    "copiedTo": "Hook nach {{agent}} kopiert",
+    "copyFailed": "Hook konnte nicht kopiert werden",
+    "exported": "Hooks exportiert",
+    "importFailed": "Import fehlgeschlagen: {{error}}",
+    "imported_one": "{{count}} Hook importiert",
+    "imported_other": "{{count}} Hooks importiert"
+  }
+}

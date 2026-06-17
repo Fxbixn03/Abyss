@@ -1,0 +1,20 @@
+{
+  "title": "Modell & Umgebung",
+  "headerDescription": "Standardmodell und Umgebung für {{agent}}",
+  "unsupportedDesc": "Wechsle zu einem Agent, der Modell- und Umgebungskonfiguration unterstützt.",
+  "noSupportTitle": "{{agent}} hat keine Modelleinstellungen",
+  "noPath": {
+    "title": "Kein Konfigurationsort festgelegt",
+    "desc": "Lege zuerst ein Konfigurationsverzeichnis in den Einstellungen fest."
+  },
+  "modelPlaceholder": "claude-sonnet-4-6",
+  "openSettings": "Einstellungen öffnen",
+  "model": {
+    "label": "Modell",
+    "desc": "Standard-Modellkennung, die der Agent verwenden soll."
+  },
+  "env": {
+    "label": "Umgebungsvariablen",
+    "desc": "Werden in die Umgebung des Agents eingefügt."
+  }
+}

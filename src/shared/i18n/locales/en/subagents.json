@@ -1,0 +1,33 @@
+{
+  "title": "Subagents",
+  "headerDescription": "Custom subagents for {{agent}}",
+  "noPath": {
+    "title": "No config location set",
+    "desc": "Set a Codex config directory in Settings to manage subagents."
+  },
+  "filter": "Filter subagents…",
+  "noSelection": {
+    "title": "No subagent selected",
+    "desc": "Pick a subagent to edit, or create a new one."
+  },
+  "newSubagent": {
+    "title": "New subagent",
+    "placeholder": "reviewer"
+  },
+  "renameSubagent": "Rename subagent",
+  "confirmDelete": {
+    "title": "Delete subagent?",
+    "desc": "This permanently deletes \"{{name}}.toml\"."
+  },
+  "actions": {
+    "new": "New Subagent",
+    "openSettings": "Open Settings",
+    "loading": "Loading…",
+    "rename": "Rename",
+    "reveal": "Reveal in folder",
+    "delete": "Delete",
+    "create": "Create"
+  },
+  "empty": "No subagents yet.",
+  "noMatches": "No matches."
+}

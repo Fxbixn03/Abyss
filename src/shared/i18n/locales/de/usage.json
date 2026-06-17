@@ -1,0 +1,46 @@
+{
+  "title": "Analysen",
+  "description": {
+    "project": "Token- & Kostennutzung in {{project}}",
+    "all": "Token- & Kostennutzung über deine Agents hinweg"
+  },
+  "refreshing": "Wird aktualisiert…",
+  "refresh": "Aktualisieren",
+  "crunching": "Nutzung wird berechnet…",
+  "csv": "CSV",
+  "tokensPerDay": "Tokens pro Tag · letzte {{count}} Tage",
+  "weeklyBudget": "Wochenbudget",
+  "budgetExceeded": "Wöchentliches Token-Budget überschritten",
+  "budget": {
+    "usage": "{{used}} / {{budget}} Tokens ({{pct}} %)",
+    "alert": "Über deiner {{percent}}-%-Budgetwarnung"
+  },
+  "statHints": {
+    "sonnet": "Schätzung auf Sonnet-Niveau",
+    "inOut": "{{in}} rein · {{out}} raus",
+    "messages": "{{value}} Nachrichten"
+  },
+  "relative": {
+    "never": "nie",
+    "now": "gerade eben",
+    "minutes": "vor {{count}} Min.",
+    "hours": "vor {{count}} Std.",
+    "days": "vor {{count}} T."
+  },
+  "empty": {
+    "title": "Noch keine Nutzung erfasst",
+    "desc": "Sobald deine Agents Chat-Verlauf haben, erscheinen hier Token-Verbrauch, Kostenschätzungen und ein Aktivitätskalender."
+  },
+  "stats": {
+    "estimatedCost": "geschätzte Kosten",
+    "totalTokens": "Tokens gesamt",
+    "sessions": "Sitzungen",
+    "lastActivity": "letzte Aktivität"
+  },
+  "sections": {
+    "calendar": "Aktivitätskalender",
+    "byAgent": "Nach Agent",
+    "topProjects": "Top-Projekte"
+  },
+  "costNote": "Die Kosten sind grobe Schätzungen aus Token-Zahlen zu einem einzigen Sonnet-Tarif — betrachte sie als Richtwert, nicht als Abrechnung."
+}

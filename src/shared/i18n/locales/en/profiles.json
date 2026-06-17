@@ -1,0 +1,49 @@
+{
+  "title": "Profiles",
+  "description": "Named environments — capture your setup and switch between them",
+  "namePlaceholder": "Profile name",
+  "descPlaceholder": "Description (optional)",
+  "filter": "Filter profiles…",
+  "dismiss": "Dismiss",
+  "noMatch": "No profiles match your filter.",
+  "empty": {
+    "title": "No profiles yet",
+    "desc": "Capture your current agent config as a named environment, then apply it any time (e.g. on another machine or to switch setups)."
+  },
+  "renameProfile": "Rename profile",
+  "confirmApply": {
+    "title": "Apply “{{name}}”?",
+    "desc": "This overwrites your current agent config with the profile's. A snapshot of each file is taken first (see History), so it can be undone."
+  },
+  "confirmDelete": {
+    "title": "Delete “{{name}}”?",
+    "desc": "This removes the saved profile. Your live config is untouched."
+  },
+  "closeDryRun": "Close dry run preview",
+  "templates": {
+    "heading": "Environment templates",
+    "desc": "Templates capture your current config under a named environment."
+  },
+  "actions": {
+    "cancel": "Cancel",
+    "saveCurrent": "Save current config as profile",
+    "save": "Save",
+    "new": "New profile",
+    "fromTemplate": "From template",
+    "apply": "Apply",
+    "dryRun": "Dry run",
+    "rename": "Rename",
+    "delete": "Delete"
+  },
+  "notices": {
+    "saved": "Saved current config as “{{name}}”",
+    "applied_one": "Applied “{{name}}” — {{count}} file changed.",
+    "applied_other": "Applied “{{name}}” — {{count}} files changed."
+  },
+  "dryRun": {
+    "summary": "Dry run — {{changed}} of {{total}} target(s) differ",
+    "changedCount": "{{count}} changed",
+    "changes": "changes",
+    "same": "same"
+  }
+}

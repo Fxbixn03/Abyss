@@ -1,0 +1,10 @@
+{
+  "title": "Beziehungen",
+  "headerDescription": "Wie die Befehle, Subagents, Skills, MCP-Server und Hooks dieses Agents zusammenhängen",
+  "noPath": {
+    "title": "Kein Konfigurationsort festgelegt",
+    "desc": "Lege ein Konfigurationsverzeichnis in den Einstellungen fest, um die Komponenten dieses Agents abzubilden."
+  },
+  "resizePreview": "Vorschaugröße ändern",
+  "openSettings": "Einstellungen öffnen"
+}

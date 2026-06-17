@@ -1,0 +1,20 @@
+{
+  "title": "Model & Env",
+  "headerDescription": "Default model and environment for {{agent}}",
+  "unsupportedDesc": "Switch to an agent that supports model and environment configuration.",
+  "noSupportTitle": "{{agent}} has no model settings",
+  "noPath": {
+    "title": "No config location set",
+    "desc": "Set a config directory in Settings first."
+  },
+  "modelPlaceholder": "claude-sonnet-4-6",
+  "openSettings": "Open Settings",
+  "model": {
+    "label": "Model",
+    "desc": "Default model identifier the agent should use."
+  },
+  "env": {
+    "label": "Environment variables",
+    "desc": "Injected into the agent's environment."
+  }
+}

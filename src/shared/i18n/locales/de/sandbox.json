@@ -1,0 +1,47 @@
+{
+  "title": "Sandbox",
+  "description": "Probiere Befehle, Hooks und Prompts aus, ohne deine Konfiguration anzufassen",
+  "workingDirPlaceholder": "Arbeitsverzeichnis (optional)",
+  "pickTitle": "Sandbox-Arbeitsverzeichnis",
+  "running": "Wird ausgeführt…",
+  "run": "Ausführen",
+  "pick": "Übernehmen",
+  "ack": "Verstanden, ausführen",
+  "noOutput": "Keine Ausgabe.",
+  "clearHistory": "Verlauf leeren",
+  "loadCommand": "Klicken, um diesen Befehl zu laden",
+  "warnCommands": "Befehle laufen auf deinem echten Rechner. Nutze ein Wegwerf-Verzeichnis und vermeide destruktive Befehle.",
+  "systemPromptPlaceholder": "System-Prompt…",
+  "userPromptPlaceholder": "User-Prompt…",
+  "copied": "Kopiert",
+  "copy": "Kopieren",
+  "confirmRun": {
+    "title": "Shell-Befehle auf diesem Rechner ausführen?",
+    "desc": "Die Sandbox führt den von dir eingegebenen Befehl direkt auf deinem Computer mit den Berechtigungen deines Kontos aus. Führe nur Befehle aus, denen du vertraust, und nutze bevorzugt ein Wegwerf-Arbeitsverzeichnis. Du wirst nicht erneut gefragt."
+  },
+  "hookRunner": {
+    "title": "Hook-/Befehlsausführung",
+    "desc": "Probiere ein Hook- oder Befehls-Shell-Snippet in einem einmaligen Lauf aus und sieh dir die Ausgabe an."
+  },
+  "promptScratchpad": {
+    "title": "Prompt-Notizblock",
+    "desc": "Entwirf einen System- + User-Prompt und sieh dir seine Größe an, bevor du ihn für einen echten Lauf einsetzt."
+  },
+  "result": {
+    "timedOut": "Zeitüberschreitung",
+    "exit": "Exit {{code}}",
+    "stdout": "stdout",
+    "stderr": "stderr"
+  },
+  "history": {
+    "show": "Verlauf anzeigen ({{count}})",
+    "hide": "Verlauf ausblenden",
+    "timeout": "Timeout",
+    "exit": "Exit {{code}}"
+  },
+  "tokens": {
+    "system": "System ~{{n}}",
+    "user": "User ~{{n}}",
+    "total": "Gesamt ~{{n}} Tokens"
+  }
+}

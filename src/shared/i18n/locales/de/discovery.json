@@ -1,0 +1,29 @@
+{
+  "title": "Entdecken",
+  "description": "Auf diesem Rechner gefundene Agents, CLIs und MCP-Server",
+  "rescanning": "Wird erneut gescannt…",
+  "rescan": "Erneut scannen",
+  "scanning": "Wird gescannt…",
+  "empty": {
+    "title": "Nichts Neues zu entdecken",
+    "desc": "Jeder auf deinem System gefundene Agent ist bereits eingerichtet, und es wurden keine zusätzlichen MCP-Server gefunden."
+  },
+  "agents": {
+    "heading": "Auf deinem System gefunden, noch nicht aktiviert",
+    "hint": "Aktiviere ihn, um seine Konfiguration in Abyss zu verwalten.",
+    "enable": "Aktivieren",
+    "configFound": "Konfiguration gefunden"
+  },
+  "notInstalled": {
+    "heading": "Aktiviert, aber nicht installiert",
+    "download": "Herunterladen",
+    "noHint": "Kein Installationshinweis verfügbar.",
+    "copy": "Kopieren",
+    "copied": "Kopiert"
+  },
+  "mcp": {
+    "heading": "MCP-Server in anderen Agents",
+    "compare": "Vergleichen",
+    "configuredIn": "Konfiguriert in {{in}}, nicht in {{agent}}."
+  }
+}

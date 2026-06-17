@@ -1,0 +1,40 @@
+{
+  "title": "Bundles",
+  "description": "Export your config and apply it on another machine",
+  "includedAgents": "Included agents",
+  "agentsToApply": "Agents to apply",
+  "preview": "Bundle preview",
+  "selectAtLeastOne": "Select at least one agent to export",
+  "actions": {
+    "export": "Export",
+    "apply": "Apply",
+    "preview": "Preview",
+    "exportToFile": "Export to file…",
+    "loadFile": "Load bundle file…",
+    "dryRun": "Dry run",
+    "dismiss": "Dismiss"
+  },
+  "confirmApply": {
+    "title": "Apply this bundle?",
+    "desc": "This overwrites the selected agents' real config files. A snapshot of each file is taken first (see History), so changes can be undone."
+  },
+  "secrets": {
+    "label": "Include secrets (MCP API tokens)",
+    "warn": "The bundle will contain real API tokens — share with care.",
+    "safe": "Tokens in MCP server env are replaced with a placeholder, so the bundle is safe to share."
+  },
+  "notices": {
+    "exported": "Exported to {{path}}",
+    "exportFailed": "Export failed",
+    "invalidFile": "Not a valid Abyss bundle file.",
+    "applied_one": "Applied — {{count}} file changed.",
+    "applied_other": "Applied — {{count}} files changed."
+  },
+  "agentCount_one": "{{count}} agent",
+  "agentCount_other": "{{count}} agents",
+  "diff": {
+    "summary": "{{changed}} of {{total}} target(s) differ",
+    "changes": "changes",
+    "same": "same"
+  }
+}

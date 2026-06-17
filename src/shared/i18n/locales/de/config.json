@@ -1,0 +1,15 @@
+{
+  "title": "Anweisungen",
+  "headerDescription": "Konfigurationsdateien für {{agent}}",
+  "noPath": {
+    "title": "Kein Konfigurationsort festgelegt",
+    "desc": "Abyss konnte kein Konfigurationsverzeichnis für {{agent}} finden. Lege eines in den Einstellungen fest, um mit dem Bearbeiten zu beginnen."
+  },
+  "validationErrors": "Validierungsfehler",
+  "unsavedChanges": "Nicht gespeicherte Änderungen",
+  "actions": {
+    "openSettings": "Einstellungen öffnen",
+    "compare": "Vergleichen",
+    "effectiveView": "Effektive Ansicht"
+  }
+}

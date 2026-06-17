@@ -1,0 +1,24 @@
+{
+  "title": "MCP-Marktplatz",
+  "headerDescription": "Durchsuche die offizielle Registry und installiere mit einem Klick in {{agent}}",
+  "unsupportedDesc": "Wechsle zu einem Agent, der das Model Context Protocol unterstützt, um Server zu durchsuchen und zu installieren.",
+  "noSupportTitle": "{{agent}} hat keine MCP-Unterstützung",
+  "search": "MCP-Server suchen — z. B. github, postgres, slack…",
+  "searchButton": "Suchen",
+  "searching": "Wird gesucht…",
+  "searchingRegistry": "Registry wird durchsucht…",
+  "registryUnavailable": "Registry nicht verfügbar",
+  "errorUnreachable": "Registry konnte nicht erreicht werden. Prüfe deine Verbindung.",
+  "installsDisabled": "Kein Konfigurationsort für {{agent}} festgelegt — Installationen sind deaktiviert. Lege zuerst einen Pfad in den Einstellungen fest.",
+  "loadMore": "Mehr laden",
+  "moreDirectories": "Weitere Verzeichnisse:",
+  "noInstallable": "Kein installierbares Paket gefunden",
+  "noServers": {
+    "title": "Keine Server gefunden",
+    "desc": "Versuche einen anderen Suchbegriff oder durchsuche eines der Community-Verzeichnisse unten."
+  },
+  "openRepo": "Repository öffnen",
+  "loadingMore": "Mehr wird geladen…",
+  "installed": "Installiert",
+  "install": "Installieren"
+}
