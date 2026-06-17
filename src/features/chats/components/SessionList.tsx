@@ -305,9 +305,12 @@ export function SessionList({
         })}
       </div>
 
-      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- session buttons inside are the interactive elements with their own keyboard roles; this div is a scroll container */}
       <div
         ref={scrollRef}
+        role="listbox"
+        aria-label="Chat sessions"
+        aria-multiselectable="false"
+        tabIndex={-1}
         onScroll={onScroll}
         onKeyDown={onKeyDown}
         className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1"
