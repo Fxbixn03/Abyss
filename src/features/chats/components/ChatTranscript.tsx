@@ -228,14 +228,16 @@ export function ChatTranscript({
   }
 
   return (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
+      role="region"
+      aria-label="Chat transcript"
+      tabIndex={-1}
       className="relative h-full"
       onKeyDown={handleContainerKeyDown}
     >
       {/* Search bar overlay */}
       {searchOpen && (
-        <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-1.5 border-b border-border bg-background/95 px-2 py-1.5 backdrop-blur-sm">
+        <div role="search" className="absolute inset-x-0 top-0 z-10 flex items-center gap-1.5 border-b border-border bg-background/95 px-2 py-1.5 backdrop-blur-sm">
           <Icon name="search" className="size-3.5 shrink-0 text-muted-foreground" />
           <Input
             ref={inputRef}
@@ -298,6 +300,7 @@ export function ChatTranscript({
         // data-selectable opts this surface out of the app-wide user-select:none
         // so conversation text can be highlighted and copied.
         data-selectable
+        aria-label="Messages"
         className={cn(
           'flex h-full flex-col gap-5 overflow-y-auto px-1 py-2',
           searchOpen && 'pt-11',
