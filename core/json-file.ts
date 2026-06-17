@@ -15,30 +15,13 @@ import {
   ConfigValidationError,
   ConfigWriteError,
 } from './config-error'
-
-/** Returns true when a Node.js filesystem error is a permission denial. */
-function isPermissionError(err: unknown): boolean {
-  if (err && typeof err === 'object') {
-    const code = (err as Record<string, unknown>).code
-    return code === 'EACCES' || code === 'EPERM'
-  }
-  return false
-}
+import { isDiskError, isPermissionError } from './os-errors'
 
 /** Returns true when a Node.js filesystem error indicates the path does not exist. */
 function isNotFoundOsError(err: unknown): boolean {
-  if (err && typeof err === 'object') {
-    const code = (err as Record<string, unknown>).code
+  if (err && typeof err === 'object' && 'code' in err) {
+    const code = (err as { code: unknown }).code
     return code === 'ENOENT'
-  }
-  return false
-}
-
-/** Returns true when a Node.js filesystem error is a disk-space or cross-device issue. */
-function isDiskError(err: unknown): boolean {
-  if (err && typeof err === 'object') {
-    const code = (err as Record<string, unknown>).code
-    return code === 'ENOSPC' || code === 'EXDEV'
   }
   return false
 }

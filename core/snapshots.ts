@@ -13,25 +13,8 @@ import { createHash } from 'node:crypto'
 import { uniqueTempPath } from './tmp-path'
 import { isInsideRoot } from './path-scope'
 import { ConfigDiskError, ConfigWriteError } from './config-error'
+import { isDiskError, isPermissionError } from './os-errors'
 import type { SnapshotContent, SnapshotMeta } from '@/shared/types/snapshots'
-
-/** Returns true when a Node.js filesystem error is a permission denial. */
-function isPermissionError(err: unknown): boolean {
-  if (err && typeof err === 'object') {
-    const code = (err as Record<string, unknown>).code
-    return code === 'EACCES' || code === 'EPERM'
-  }
-  return false
-}
-
-/** Returns true when a Node.js filesystem error is a disk-space or cross-device issue. */
-function isDiskError(err: unknown): boolean {
-  if (err && typeof err === 'object') {
-    const code = (err as Record<string, unknown>).code
-    return code === 'ENOSPC' || code === 'EXDEV'
-  }
-  return false
-}
 
 interface SnapshotConfig {
   root: string

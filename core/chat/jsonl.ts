@@ -7,14 +7,7 @@
 import { createReadStream } from 'node:fs'
 import { createInterface } from 'node:readline'
 import { ConfigReadError } from '../config-error'
-
-function isPermissionError(err: unknown): boolean {
-  if (err && typeof err === 'object' && 'code' in err) {
-    const code = (err as { code: unknown }).code
-    return code === 'EACCES' || code === 'EPERM'
-  }
-  return false
-}
+import { isPermissionError } from '../os-errors'
 
 export async function* readJsonlLines(
   filePath: string,
