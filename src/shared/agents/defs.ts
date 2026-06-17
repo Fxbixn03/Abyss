@@ -343,7 +343,7 @@ export const aiderDefinition: AgentDefinition = {
   docsUrl: 'https://aider.chat/docs/config/aider_conf.html',
   capabilities: {
     instructions: true,
-    mcp: false,
+    mcp: true,
     permissions: false,
     modelEnv: false,
     agents: false,

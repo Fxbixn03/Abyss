@@ -216,6 +216,99 @@ function ampMcpPath(basePath: string): string {
 }
 
 /**
+ * Aider stores its full config (including MCP servers) in `~/.aider.conf.yml`.
+ * The base path for the Aider agent resolves to `~`, so the file is at
+ * `<base>/.aider.conf.yml`. MCP servers live under the `mcp_servers` key
+ * (snake_case, as used by Aider 0.77+).
+ */
+function aiderConfigPath(basePath: string): string {
+  return path.join(basePath, '.aider.conf.yml')
+}
+
+/**
+ * Raw shape of `~/.aider.conf.yml` — we only read `mcp_servers`;
+ * all other top-level keys are preserved as unknown pass-through.
+ */
+interface AiderConfig {
+  mcp_servers?: Record<string, RawMcpServer>
+  [key: string]: unknown
+}
+
+async function readAiderYaml(file: string): Promise<AiderConfig> {
+  if (!(await pathExists(file))) return {}
+  const raw = await readTextFile(file)
+  if (raw.trim() === '') return {}
+  try {
+    const parsed = yaml.load(raw)
+    if (parsed === null || parsed === undefined) return {}
+    if (typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    return parsed as AiderConfig
+  } catch (err) {
+    throw new ConfigParseError(file, err)
+  }
+}
+
+export async function readAiderMcp(basePath: string): Promise<McpServerEntry[]> {
+  const file = aiderConfigPath(basePath)
+  const data = await readAiderYaml(file)
+  const servers = data.mcp_servers ?? {}
+  return Object.entries(servers).map(([name, s], index) => {
+    const raw = s as RawMcpServer
+    return {
+      id: `${name}-${index}`,
+      name,
+      type: normalizeType(raw),
+      command: raw.command,
+      args: raw.args,
+      url: raw.url,
+      env: raw.env,
+      enabled: raw.disabled !== true,
+    }
+  })
+}
+
+export async function writeAiderMcp(
+  basePath: string,
+  entries: McpServerEntry[],
+): Promise<{ success: boolean; path: string }> {
+  const file = aiderConfigPath(basePath)
+  // Re-read to preserve all other top-level YAML keys (model, git, etc.).
+  const data = await readAiderYaml(file)
+  const existing = data.mcp_servers ?? {}
+  const out: Record<string, RawMcpServer> = {}
+
+  for (const entry of entries) {
+    const raw: RawMcpServer = { ...(existing[entry.name] ?? {}) }
+    raw.type = entry.type === 'stdio' ? 'stdio' : entry.type
+
+    if (entry.type === 'stdio') {
+      if (entry.command) raw.command = entry.command
+      else delete raw.command
+      if (entry.args !== undefined) raw.args = entry.args
+      else delete raw.args
+      delete raw.url
+    } else {
+      if (entry.url) raw.url = entry.url
+      else delete raw.url
+      delete raw.command
+      delete raw.args
+    }
+
+    if (entry.env !== undefined) raw.env = entry.env
+    else delete raw.env
+
+    if (!entry.enabled) raw.disabled = true
+    else delete raw.disabled
+
+    out[entry.name] = raw
+  }
+
+  data.mcp_servers = out
+  await writeTextFileAtomic(file, yaml.dump(data, { lineWidth: -1 }))
+  return { success: true, path: file }
+}
+
+/**
  * Zed Editor stores its full config (including MCP context servers) in
  * `<base>/settings.json` under the `context_servers` key. This is a different
  * key name from the `mcpServers` used by most other agents.
@@ -511,6 +604,7 @@ export function getMcpConfigPath(
   if (agentId === 'continue') return continueConfigPath(basePath)
   if (agentId === 'goose') return gooseConfigPath(basePath)
   if (agentId === 'zed') return zedSettingsPath(basePath)
+  if (agentId === 'aider') return aiderConfigPath(basePath)
   return mcpConfigPath(projectDir)
 }
 
@@ -542,6 +636,7 @@ export function readMcpServers(
   if (agentId === 'continue') return readContinueMcp(basePath)
   if (agentId === 'goose') return readGooseMcp(basePath)
   if (agentId === 'zed') return readZedMcp(basePath)
+  if (agentId === 'aider') return readAiderMcp(basePath)
   return readJsonMcp(mcpConfigPath(projectDir))
 }
 
@@ -582,5 +677,7 @@ export function writeMcpServers(
     return writeGooseMcp(basePath, entries)
   if (agentId === 'zed')
     return writeZedMcp(basePath, entries)
+  if (agentId === 'aider')
+    return writeAiderMcp(basePath, entries)
   return writeJsonMcp(mcpConfigPath(projectDir), entries)
 }
