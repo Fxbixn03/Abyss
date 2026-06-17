@@ -8,10 +8,12 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import { agentRegistry } from '@/features/agents/registry/agent.registry'
 import {
   isDiskWriteError,
+  isPathScopeError,
   isReadPermissionError,
   isWritePermissionError,
   reportDiskWriteError,
   reportError,
+  reportPathScopeError,
   reportReadPermissionError,
   reportWritePermissionError,
 } from '@/shared/lib/errors'
@@ -110,7 +112,9 @@ export const useConfigStore = create<ConfigEditorState>()((set, get) => ({
       set({ original: draft, fileExists: true })
       return { path: result.path }
     } catch (err) {
-      if (isWritePermissionError(err)) {
+      if (isPathScopeError(err)) {
+        reportPathScopeError(err)
+      } else if (isWritePermissionError(err)) {
         reportWritePermissionError(err, (path) => void ipc.revealPath(path))
       } else if (isDiskWriteError(err)) {
         reportDiskWriteError(err)

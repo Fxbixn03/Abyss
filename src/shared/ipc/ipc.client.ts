@@ -55,6 +55,9 @@ const SILENT_NET_CODES = new Set<string>([
   IpcErrorCode.WritePermission,
   IpcErrorCode.ReadPermission,
   IpcErrorCode.DiskFull,
+  // PathScope errors are owned by write-path callers that show a targeted
+  // 'Path not allowed' toast via reportPathScopeError.
+  IpcErrorCode.PathScope,
   // NotFound errors are owned by callers that watch files — they handle the
   // race gracefully rather than showing a generic fallback toast.
   IpcErrorCode.NotFound,

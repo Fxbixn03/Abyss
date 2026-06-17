@@ -5,10 +5,12 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import {
   isConfigParseError,
   isDiskWriteError,
+  isPathScopeError,
   isReadPermissionError,
   isWritePermissionError,
   reportDiskWriteError,
   reportError,
+  reportPathScopeError,
   reportReadPermissionError,
   reportWritePermissionError,
 } from '@/shared/lib/errors'
@@ -174,7 +176,9 @@ async function persist(
     await ipc.setMcpServers(agentId, basePath, next, projectDir)
   } catch (err) {
     set({ servers: previous }) // roll back the optimistic update
-    if (isWritePermissionError(err)) {
+    if (isPathScopeError(err)) {
+      reportPathScopeError(err)
+    } else if (isWritePermissionError(err)) {
       reportWritePermissionError(err, (path) => void ipc.revealPath(path))
     } else if (isDiskWriteError(err)) {
       reportDiskWriteError(err)

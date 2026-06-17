@@ -5,9 +5,11 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import {
   isConfigParseError,
   isDiskWriteError,
+  isPathScopeError,
   isWritePermissionError,
   reportDiskWriteError,
   reportError,
+  reportPathScopeError,
   reportWritePermissionError,
 } from '@/shared/lib/errors'
 import type { ConfigParseInfo } from '@/shared/lib/errors'
@@ -152,7 +154,9 @@ async function persist(
     set({ entries })
   } catch (err) {
     set({ entries: previous }) // roll back the optimistic update
-    if (isWritePermissionError(err)) {
+    if (isPathScopeError(err)) {
+      reportPathScopeError(err)
+    } else if (isWritePermissionError(err)) {
       reportWritePermissionError(err, (path) => void ipc.revealPath(path))
     } else if (isDiskWriteError(err)) {
       reportDiskWriteError(err)

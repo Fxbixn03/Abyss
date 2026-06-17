@@ -48,6 +48,20 @@ export function isPathScopeError(err: unknown): err is IpcError {
   return err instanceof IpcError && err.code === IpcErrorCode.PathScope
 }
 
+/**
+ * Show a targeted 'Path not allowed' toast for a path-scope error, with
+ * the rejected file path as description. Marks the error as handled so the
+ * global IPC net stays quiet.
+ *
+ * @param err - The caught error (checked via {@link isPathScopeError}).
+ */
+export function reportPathScopeError(err: IpcError): void {
+  markErrorReported(err)
+  toast.error('Path not allowed — this location is outside Abyss’s permitted directories', {
+    description: err.filePath,
+  })
+}
+
 /** A write was denied by the OS (EACCES or EPERM on the config file). */
 export function isWritePermissionError(err: unknown): err is IpcError {
   return err instanceof IpcError && err.code === IpcErrorCode.WritePermission

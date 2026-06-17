@@ -12,9 +12,11 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import {
   isConfigValidationError,
   isDiskWriteError,
+  isPathScopeError,
   isWritePermissionError,
   reportDiskWriteError,
   reportError,
+  reportPathScopeError,
   reportWritePermissionError,
 } from '@/shared/lib/errors'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
@@ -124,6 +126,8 @@ export function SettingsFilePage() {
           silent: true,
         })
         setSaveError(err.message)
+      } else if (isPathScopeError(err)) {
+        reportPathScopeError(err)
       } else if (isWritePermissionError(err)) {
         reportWritePermissionError(err, (path) => void ipc.revealPath(path))
       } else if (isDiskWriteError(err)) {
