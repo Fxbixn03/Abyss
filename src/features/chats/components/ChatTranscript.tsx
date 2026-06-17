@@ -72,6 +72,7 @@ export function ChatTranscript({
   streaming,
   searchOpen: searchOpenProp,
   onSearchOpenChange,
+  density = 'comfortable',
 }: {
   messages: ChatMessage[]
   loading: boolean
@@ -82,6 +83,8 @@ export function ChatTranscript({
   searchOpen?: boolean
   /** Callback when the search bar is opened/closed internally. */
   onSearchOpenChange?: (open: boolean) => void
+  /** Message density: 'compact' uses less vertical space, 'comfortable' is the default. */
+  density?: 'compact' | 'comfortable'
 }) {
   const endRef = useRef<HTMLDivElement>(null)
   const bottomLocked = useRef(true)
@@ -302,7 +305,8 @@ export function ChatTranscript({
         data-selectable
         aria-label="Messages"
         className={cn(
-          'flex h-full flex-col gap-5 overflow-y-auto px-1 py-2',
+          'flex h-full flex-col overflow-y-auto px-1',
+          density === 'compact' ? 'gap-2 py-0.5' : 'gap-5 py-2',
           searchOpen && 'pt-11',
         )}
       >

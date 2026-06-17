@@ -76,6 +76,8 @@ export function ChatsPage() {
   const [scanning, setScanning] = useState(false)
   // Whether the in-transcript search bar is open.
   const [transcriptSearchOpen, setTranscriptSearchOpen] = useState(false)
+  // Message density: resets to comfortable on each page mount.
+  const [density, setDensity] = useState<'compact' | 'comfortable'>('comfortable')
 
   // Session replay: when set, the transcript reveals messages up to `index`.
   // `key` ties the replay to its session so it's ignored after switching chats.
@@ -296,6 +298,28 @@ export function ChatsPage() {
                       <Icon name="search" className="size-4" />
                     </Button>
                   )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      setDensity((d) => (d === 'comfortable' ? 'compact' : 'comfortable'))
+                    }
+                    aria-label={
+                      density === 'comfortable'
+                        ? 'Switch to compact density'
+                        : 'Switch to comfortable density'
+                    }
+                    title={
+                      density === 'comfortable'
+                        ? 'Switch to compact density'
+                        : 'Switch to comfortable density'
+                    }
+                  >
+                    <Icon
+                      name={density === 'comfortable' ? 'rows-3' : 'rows-2'}
+                      className="size-4"
+                    />
+                  </Button>
                   {messages.length > 1 && (
                     <Button
                       variant="outline"
@@ -443,6 +467,7 @@ export function ChatsPage() {
                   streaming={status === 'streaming'}
                   searchOpen={transcriptSearchOpen}
                   onSearchOpenChange={setTranscriptSearchOpen}
+                  density={density}
                 />
               </div>
 
