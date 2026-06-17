@@ -26,6 +26,8 @@ import {
 } from './json-file'
 import { parseFrontmatter } from './frontmatter'
 import { writeZip } from './zip'
+import { ConfigDiskError, ConfigWriteError } from './config-error'
+import { isDiskError, isPermissionError } from './os-errors'
 
 const SEGMENT_RE = /^[A-Za-z0-9._()-]+$/
 
@@ -250,11 +252,21 @@ export async function deleteCollectionItem(
   const dir = collectionDir(agentId, basePath, kind)
   if (kind === 'skills') {
     // A skill is a folder; remove it (and its references) entirely.
-    await fs.rm(skillFolderPath(dir, safe), { recursive: true, force: true })
+    const folderPath = skillFolderPath(dir, safe)
+    try {
+      await fs.rm(folderPath, { recursive: true, force: true })
+    } catch (err) {
+      if (isPermissionError(err)) throw new ConfigWriteError(folderPath, err)
+      throw err
+    }
   } else {
-    await fs.rm(path.join(dir, `${safe}${collectionExt(kind)}`), {
-      force: true,
-    })
+    const filePath = path.join(dir, `${safe}${collectionExt(kind)}`)
+    try {
+      await fs.rm(filePath, { force: true })
+    } catch (err) {
+      if (isPermissionError(err)) throw new ConfigWriteError(filePath, err)
+      throw err
+    }
   }
   return { success: true }
 }
@@ -284,7 +296,13 @@ export async function renameCollectionItem(
       throw new Error(`A skill named "${to}" already exists.`)
     }
     await ensureDir(path.dirname(dest))
-    await fs.rename(src, dest)
+    try {
+      await fs.rename(src, dest)
+    } catch (err) {
+      if (isPermissionError(err)) throw new ConfigWriteError(src, err)
+      if (isDiskError(err)) throw new ConfigDiskError(src, err)
+      throw err
+    }
     return { success: true, id: to, path: path.join(dest, 'SKILL.md') }
   }
   const ext = collectionExt(kind)
@@ -293,7 +311,13 @@ export async function renameCollectionItem(
   if (await pathExists(dest)) {
     throw new Error(`A ${kind} item named "${to}" already exists.`)
   }
-  await fs.rename(src, dest)
+  try {
+    await fs.rename(src, dest)
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(src, err)
+    if (isDiskError(err)) throw new ConfigDiskError(src, err)
+    throw err
+  }
   return { success: true, id: to, path: dest }
 }
 
