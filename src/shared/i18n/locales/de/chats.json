@@ -43,5 +43,96 @@
     "opus": "Opus",
     "sonnet": "Sonnet",
     "haiku": "Haiku"
+  },
+  "sessionList": {
+    "newChat": "Neuer Chat",
+    "searchPlaceholder": "Chats suchen…",
+    "sortGroup": "Sitzungen sortieren",
+    "groupGroup": "Sitzungen gruppieren",
+    "sort": {
+      "recent": "Aktuell",
+      "longest": "Längste",
+      "costliest": "Teuerste"
+    },
+    "group": {
+      "project": "Nach Projekt",
+      "date": "Nach Datum"
+    },
+    "dateBuckets": {
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "thisWeek": "Diese Woche",
+      "thisMonth": "Diesen Monat",
+      "older": "Älter"
+    },
+    "loading": "Wird geladen…",
+    "loadingMore": "Weitere werden geladen…",
+    "noChatsYet": "Noch keine Chats.",
+    "noMatches": "Keine Treffer.",
+    "loadMore": "{{count}} weitere laden · {{remaining}} übrig",
+    "sessionAriaLabel": "{{title}} — {{project}}, {{time}}, {{count}} Nachrichten",
+    "sessionAriaLabelPinned": "Angeheftet: {{title}} — {{project}}, {{time}}, {{count}} Nachrichten",
+    "renameAriaLabel": "Sitzung umbenennen",
+    "contextMenu": {
+      "pin": "Anheften",
+      "unpin": "Lösen",
+      "rename": "Umbenennen",
+      "exportMarkdown": "Als Markdown exportieren",
+      "exportJson": "Als JSON exportieren",
+      "revealFile": "Datei anzeigen",
+      "delete": "Löschen"
+    },
+    "deleteDialog": {
+      "title": "Diesen Chat löschen?",
+      "description": "Dies entfernt die Transkriptdatei dauerhaft vom Datenträger.",
+      "confirm": "Löschen"
+    }
+  },
+  "messageBubble": {
+    "roles": {
+      "user": "Du",
+      "assistant": "Assistent",
+      "system": "System"
+    },
+    "blocks": {
+      "thinking": "Denkt nach",
+      "tool": "Tool · {{name}}",
+      "toolResult": "Tool-Ergebnis",
+      "toolResultError": "Tool-Ergebnis · Fehler",
+      "image": "[Bild]"
+    },
+    "copy": {
+      "copy": "Kopieren",
+      "copied": "Kopiert!",
+      "copyMessage": "Nachricht kopieren",
+      "copiedMessage": "Kopiert!",
+      "copyToClipboard": "In die Zwischenablage kopieren",
+      "copiedToClipboard": "Kopiert!"
+    },
+    "thinking": "denkt nach…",
+    "sentAt": "Gesendet {{time}}"
+  },
+  "composer": {
+    "placeholderDisabled": "Anmelden, um zu chatten…",
+    "placeholderActive": "Nachricht an den Agenten…",
+    "stop": "Stopp",
+    "send": "Senden (Enter / Cmd+Enter)"
+  },
+  "loginGate": {
+    "checking": "{{agent}} wird geprüft…",
+    "cliNotFound": "{{agent}} CLI nicht gefunden",
+    "cliInstallHint": "Installiere die {{agent}} CLI und stelle sicher, dass sie im PATH ist.",
+    "reCheck": "Erneut prüfen",
+    "signInTitle": "Bei Chats anmelden",
+    "signInDesc": "Abyss verwendet dein bestehendes {{agent}}-Abonnement. Kein API-Schlüssel nötig — die Anmeldung öffnet sich im Browser.",
+    "waitingForBrowser": "Warte auf Browser-Anmeldung…",
+    "finishedReCheck": "Fertig — erneut prüfen",
+    "signInWith": "Mit {{agent}} anmelden",
+    "apiKeyPlaceholder": "API-Schlüssel (sk-…)",
+    "useApiKey": "API-Schlüssel verwenden",
+    "backToSubscription": "← Zurück zur Abonnement-Anmeldung",
+    "useApiKeyInstead": "Stattdessen API-Schlüssel verwenden",
+    "saveCredentials": "Anmeldedaten speichern",
+    "saveCredentialsDesc": "Angemeldet bleiben, nachdem Abyss geschlossen wurde."
   }
 }

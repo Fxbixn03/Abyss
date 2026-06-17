@@ -25,7 +25,7 @@
   },
   "missingFile": {
     "title": "Referenced file not found",
-    "detail": "“{{ref}}” doesn't exist under the session directory."
+    "detail": "“{{ref}}” doesn’t exist under the session directory."
   },
   "starting": "Starting…",
   "startingText": "starting…",
@@ -43,5 +43,96 @@
     "opus": "Opus",
     "sonnet": "Sonnet",
     "haiku": "Haiku"
+  },
+  "sessionList": {
+    "newChat": "New chat",
+    "searchPlaceholder": "Search chats…",
+    "sortGroup": "Sort sessions",
+    "groupGroup": "Group sessions",
+    "sort": {
+      "recent": "Recent",
+      "longest": "Longest",
+      "costliest": "Costliest"
+    },
+    "group": {
+      "project": "By project",
+      "date": "By date"
+    },
+    "dateBuckets": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This week",
+      "thisMonth": "This month",
+      "older": "Older"
+    },
+    "loading": "Loading…",
+    "loadingMore": "Loading more…",
+    "noChatsYet": "No chats yet.",
+    "noMatches": "No matches.",
+    "loadMore": "Load {{count}} more · {{remaining}} left",
+    "sessionAriaLabel": "{{title}} — {{project}}, {{time}}, {{count}} messages",
+    "sessionAriaLabelPinned": "Pinned: {{title}} — {{project}}, {{time}}, {{count}} messages",
+    "renameAriaLabel": "Rename session",
+    "contextMenu": {
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "rename": "Rename",
+      "exportMarkdown": "Export as Markdown",
+      "exportJson": "Export as JSON",
+      "revealFile": "Reveal file",
+      "delete": "Delete"
+    },
+    "deleteDialog": {
+      "title": "Delete this chat?",
+      "description": "This permanently removes the transcript file from disk.",
+      "confirm": "Delete"
+    }
+  },
+  "messageBubble": {
+    "roles": {
+      "user": "You",
+      "assistant": "Assistant",
+      "system": "System"
+    },
+    "blocks": {
+      "thinking": "Thinking",
+      "tool": "Tool · {{name}}",
+      "toolResult": "Tool result",
+      "toolResultError": "Tool result · error",
+      "image": "[image]"
+    },
+    "copy": {
+      "copy": "Copy",
+      "copied": "Copied!",
+      "copyMessage": "Copy message",
+      "copiedMessage": "Copied!",
+      "copyToClipboard": "Copy to clipboard",
+      "copiedToClipboard": "Copied!"
+    },
+    "thinking": "thinking…",
+    "sentAt": "Sent {{time}}"
+  },
+  "composer": {
+    "placeholderDisabled": "Sign in to start chatting…",
+    "placeholderActive": "Message the agent…",
+    "stop": "Stop",
+    "send": "Send (Enter / Cmd+Enter)"
+  },
+  "loginGate": {
+    "checking": "Checking {{agent}}…",
+    "cliNotFound": "{{agent}} CLI not found",
+    "cliInstallHint": "Install the {{agent}} CLI and make sure it is on your PATH.",
+    "reCheck": "Re-check",
+    "signInTitle": "Sign in to Chats",
+    "signInDesc": "Abyss uses your existing {{agent}} subscription. No API key needed — sign-in opens in your browser.",
+    "waitingForBrowser": "Waiting for browser sign-in…",
+    "finishedReCheck": "I’ve finished — re-check",
+    "signInWith": "Sign in with {{agent}}",
+    "apiKeyPlaceholder": "API key (sk-…)",
+    "useApiKey": "Use API key",
+    "backToSubscription": "← Back to subscription sign-in",
+    "useApiKeyInstead": "Use an API key instead",
+    "saveCredentials": "Save credentials",
+    "saveCredentialsDesc": "Stay signed in after closing Abyss."
   }
 }

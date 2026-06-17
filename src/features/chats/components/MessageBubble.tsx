@@ -1,5 +1,6 @@
 import { useState, useId, memo } from 'react'
 import type { ReactNode, MouseEvent, KeyboardEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ChatBlock, ChatMessage } from '@/shared/types/chat'
 import { Icon } from '@/shared/components/Icon'
 import { Spinner } from '@/shared/components/Spinner'
@@ -25,6 +26,7 @@ function CollapsibleBlock({
   copyText?: string
   children: ReactNode
 }) {
+  const { t } = useTranslation('chats')
   const [open, setOpen] = useState(defaultOpen)
   const [copiedBlock, setCopiedBlock] = useState(false)
   const contentId = useId()
@@ -71,8 +73,8 @@ function CollapsibleBlock({
             variant="ghost"
             size="icon"
             className="ml-auto size-5 shrink-0 opacity-0 transition-opacity duration-150 group-hover/block:opacity-100"
-            title={copiedBlock ? 'Copied!' : 'Copy'}
-            aria-label={copiedBlock ? 'Copied!' : 'Copy to clipboard'}
+            title={copiedBlock ? t('messageBubble.copy.copied') : t('messageBubble.copy.copy')}
+            aria-label={copiedBlock ? t('messageBubble.copy.copiedToClipboard') : t('messageBubble.copy.copyToClipboard')}
             onClick={handleCopyBlock}
           >
             <Icon
@@ -102,6 +104,8 @@ function BlockView({
   block: ChatBlock
   showCursor?: boolean
 }) {
+  const { t } = useTranslation('chats')
+
   switch (block.kind) {
     case 'text':
       return (
@@ -117,7 +121,7 @@ function BlockView({
       )
     case 'thinking':
       return (
-        <CollapsibleBlock icon="brain" label="Thinking">
+        <CollapsibleBlock icon="brain" label={t('messageBubble.blocks.thinking')}>
           <div className="text-muted-foreground">
             <Markdown content={block.text} />
           </div>
@@ -127,7 +131,7 @@ function BlockView({
       return (
         <CollapsibleBlock
           icon="wrench"
-          label={`Tool · ${block.name}`}
+          label={t('messageBubble.blocks.tool', { name: block.name })}
           copyText={JSON.stringify(block.input, null, 2)}
         >
           <pre className="overflow-x-auto whitespace-pre-wrap break-words font-code">
@@ -139,7 +143,7 @@ function BlockView({
       return (
         <CollapsibleBlock
           icon="terminal"
-          label={block.isError ? 'Tool result · error' : 'Tool result'}
+          label={block.isError ? t('messageBubble.blocks.toolResultError') : t('messageBubble.blocks.toolResult')}
           tone={block.isError ? 'error' : 'muted'}
           copyText={block.output}
         >
@@ -149,7 +153,7 @@ function BlockView({
         </CollapsibleBlock>
       )
     case 'image':
-      return <div className="text-xs italic text-muted-foreground">[image]</div>
+      return <div className="text-xs italic text-muted-foreground">{t('messageBubble.blocks.image')}</div>
     case 'error':
       return (
         <div className="flex items-start gap-1.5 rounded-md border border-destructive/40 bg-destructive/5 px-2.5 py-1.5 text-xs text-destructive">
@@ -162,10 +166,10 @@ function BlockView({
   }
 }
 
-const ROLE_META: Record<string, { icon: string; label: string }> = {
-  user: { icon: 'user', label: 'You' },
-  assistant: { icon: 'bot', label: 'Assistant' },
-  system: { icon: 'sliders', label: 'System' },
+const ROLE_ICONS: Record<string, string> = {
+  user: 'user',
+  assistant: 'bot',
+  system: 'sliders',
 }
 
 type MessageBubbleProps = {
@@ -193,13 +197,17 @@ function MessageBubbleInner({
   agentName,
   isStreaming,
 }: MessageBubbleProps) {
+  const { t } = useTranslation('chats')
   const [copied, setCopied] = useState(false)
   const currency = useSettingsStore((s) => s.settings.currency)
-  const meta = ROLE_META[message.role] ?? ROLE_META.assistant
+
+  const roleKey = message.role in ROLE_ICONS ? message.role : 'assistant'
+  const icon = ROLE_ICONS[roleKey] ?? 'bot'
+  const roleLabel = t(`messageBubble.roles.${roleKey}`)
   // Label assistant turns with the actual agent (Claude, Codex, …) instead of
   // the generic "Assistant".
   const label =
-    message.role === 'assistant' && agentName ? agentName : meta.label
+    message.role === 'assistant' && agentName ? agentName : roleLabel
   const onlyToolResults =
     message.blocks.length > 0 &&
     message.blocks.every((b) => b.kind === 'tool_result')
@@ -246,7 +254,7 @@ function MessageBubbleInner({
             : 'bg-muted text-muted-foreground',
         )}
       >
-        <Icon name={meta.icon} className="size-3.5" />
+        <Icon name={icon} className="size-3.5" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-center gap-2">
@@ -276,7 +284,7 @@ function MessageBubbleInner({
           {timestamp && (
             <span
               className="text-xs text-muted-foreground/50 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
-              aria-label={`Sent ${timestamp}`}
+              aria-label={t('messageBubble.sentAt', { time: timestamp })}
             >
               {timestamp}
             </span>
@@ -287,8 +295,8 @@ function MessageBubbleInner({
               variant="ghost"
               size="icon"
               className="ml-auto size-5 shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
-              title={copied ? 'Copied!' : 'Copy message'}
-              aria-label={copied ? 'Copied!' : 'Copy message to clipboard'}
+              title={copied ? t('messageBubble.copy.copiedMessage') : t('messageBubble.copy.copyMessage')}
+              aria-label={copied ? t('messageBubble.copy.copiedMessage') : t('messageBubble.copy.copyMessage')}
               onClick={handleCopy}
             >
               <Icon
@@ -300,8 +308,8 @@ function MessageBubbleInner({
         </div>
         {message.blocks.length === 0 ? (
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-            <Spinner className="size-3" label="Thinking…" />
-            thinking…
+            <Spinner className="size-3" label={t('messageBubble.thinking')} />
+            {t('messageBubble.thinking')}
           </span>
         ) : (() => {
           // Find the index of the last text block so the cursor appears there.

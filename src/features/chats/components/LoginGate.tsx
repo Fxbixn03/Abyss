@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ChatAvailability } from '@/shared/types/chat'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
@@ -23,6 +24,7 @@ export function LoginGate({
   onLogin,
   onRefresh,
 }: LoginGateProps) {
+  const { t } = useTranslation('chats')
   const [persist, setPersist] = useState(false)
   const [useApiKey, setUseApiKey] = useState(false)
   const [apiKey, setApiKey] = useState('')
@@ -30,7 +32,7 @@ export function LoginGate({
   if (loading && !availability) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        Checking {agentName}…
+        {t('loginGate.checking', { agent: agentName })}
       </div>
     )
   }
@@ -42,15 +44,14 @@ export function LoginGate({
           <Icon name="terminal" className="size-6" />
         </div>
         <div className="space-y-1">
-          <p className="font-medium">{agentName} CLI not found</p>
+          <p className="font-medium">{t('loginGate.cliNotFound', { agent: agentName })}</p>
           <p className="mx-auto max-w-sm text-sm text-muted-foreground">
-            {availability.reason ??
-              `Install the ${agentName} CLI and make sure it is on your PATH.`}
+            {availability.reason ?? t('loginGate.cliInstallHint', { agent: agentName })}
           </p>
         </div>
         <Button variant="outline" onClick={onRefresh}>
           <Icon name="refresh-cw" />
-          Re-check
+          {t('loginGate.reCheck')}
         </Button>
       </div>
     )
@@ -63,24 +64,23 @@ export function LoginGate({
           <div className="flex size-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
             <Icon name="messages-square" className="size-5" />
           </div>
-          <h2 className="text-base font-semibold">Sign in to Chats</h2>
+          <h2 className="text-base font-semibold">{t('loginGate.signInTitle')}</h2>
           <p className="text-sm text-muted-foreground">
-            Abyss uses your existing {agentName} subscription. No API key needed
-            — sign-in opens in your browser.
+            {t('loginGate.signInDesc', { agent: agentName })}
           </p>
         </div>
 
         {busy ? (
           <div className="flex flex-col items-center gap-2 py-4 text-sm text-muted-foreground">
-            <Spinner className="size-5" label="Waiting for browser sign-in…" />
-            Waiting for browser sign-in…
+            <Spinner className="size-5" label={t('loginGate.waitingForBrowser')} />
+            {t('loginGate.waitingForBrowser')}
             <Button
               variant="ghost"
               size="sm"
               className="mt-1"
               onClick={onRefresh}
             >
-              I&rsquo;ve finished — re-check
+              {t('loginGate.finishedReCheck')}
             </Button>
           </div>
         ) : (
@@ -88,7 +88,7 @@ export function LoginGate({
             {!useApiKey ? (
               <Button onClick={() => onLogin(persist)} className="w-full">
                 <Icon name="log-in" />
-                Sign in with {agentName}
+                {t('loginGate.signInWith', { agent: agentName })}
               </Button>
             ) : (
               <div className="flex flex-col gap-2">
@@ -96,7 +96,7 @@ export function LoginGate({
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="API key (sk-…)"
+                  placeholder={t('loginGate.apiKeyPlaceholder')}
                   className="font-code"
                 />
                 <Button
@@ -105,7 +105,7 @@ export function LoginGate({
                   className="w-full"
                 >
                   <Icon name="key" />
-                  Use API key
+                  {t('loginGate.useApiKey')}
                 </Button>
               </div>
             )}
@@ -116,15 +116,15 @@ export function LoginGate({
               className="text-center text-xs text-muted-foreground hover:text-foreground"
             >
               {useApiKey
-                ? '← Back to subscription sign-in'
-                : 'Use an API key instead'}
+                ? t('loginGate.backToSubscription')
+                : t('loginGate.useApiKeyInstead')}
             </button>
 
             <label className="mt-1 flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
               <span className="flex flex-col">
-                <span className="text-sm font-medium">Save credentials</span>
+                <span className="text-sm font-medium">{t('loginGate.saveCredentials')}</span>
                 <span className="text-xs text-muted-foreground">
-                  Stay signed in after closing Abyss.
+                  {t('loginGate.saveCredentialsDesc')}
                 </span>
               </span>
               <Switch checked={persist} onCheckedChange={setPersist} />

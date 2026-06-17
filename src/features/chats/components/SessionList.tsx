@@ -1,5 +1,6 @@
 import type { UIEvent, KeyboardEvent } from 'react'
 import { useMemo, useState, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/shared/components/ui/input'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
@@ -30,16 +31,8 @@ interface RenameState {
 type SortOrder = 'recent' | 'longest' | 'costliest'
 type GroupBy = 'project' | 'date'
 
-const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
-  { value: 'recent', label: 'Recent' },
-  { value: 'longest', label: 'Longest' },
-  { value: 'costliest', label: 'Costliest' },
-]
-
-const GROUP_OPTIONS: { value: GroupBy; label: string }[] = [
-  { value: 'project', label: 'By project' },
-  { value: 'date', label: 'By date' },
-]
+const SORT_ORDERS: SortOrder[] = ['recent', 'longest', 'costliest']
+const GROUP_BYS: GroupBy[] = ['project', 'date']
 
 function sortSessions(
   sessions: ChatSessionMeta[],
@@ -60,11 +53,12 @@ function sortSessions(
   return copy
 }
 
+type DateBucketKey = 'today' | 'yesterday' | 'thisWeek' | 'thisMonth' | 'older'
+
 /**
- * Returns a human-readable date bucket label for a given timestamp.
- * Buckets: 'Today', 'Yesterday', 'This week', 'This month', 'Older'
+ * Returns a date bucket key for a given timestamp.
  */
-function dateBucket(updatedAt: string | number | Date | undefined): string {
+function dateBucketKey(updatedAt: string | number | Date | undefined): DateBucketKey {
   const now = new Date()
   const date = updatedAt != null ? new Date(updatedAt) : new Date(0)
 
@@ -81,21 +75,21 @@ function dateBucket(updatedAt: string | number | Date | undefined): string {
   // Start of this month
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  if (date >= startOfToday) return 'Today'
-  if (date >= startOfYesterday) return 'Yesterday'
-  if (date >= startOfWeek) return 'This week'
-  if (date >= startOfMonth) return 'This month'
-  return 'Older'
+  if (date >= startOfToday) return 'today'
+  if (date >= startOfYesterday) return 'yesterday'
+  if (date >= startOfWeek) return 'thisWeek'
+  if (date >= startOfMonth) return 'thisMonth'
+  return 'older'
 }
 
-/** Ordered list of date bucket labels for deterministic group ordering */
-const DATE_BUCKET_ORDER = [
-  'Today',
-  'Yesterday',
-  'This week',
-  'This month',
-  'Older',
-] as const
+/** Ordered list of date bucket keys for deterministic group ordering */
+const DATE_BUCKET_KEY_ORDER: DateBucketKey[] = [
+  'today',
+  'yesterday',
+  'thisWeek',
+  'thisMonth',
+  'older',
+]
 
 function groupSessions(
   sessions: ChatSessionMeta[],
@@ -123,17 +117,17 @@ function groupSessions(
     ])
   }
 
-  // date grouping
-  const byDate = new Map<string, ChatSessionMeta[]>()
+  // date grouping — use keys instead of translated strings so we can look up later
+  const byDate = new Map<DateBucketKey, ChatSessionMeta[]>()
   for (const s of sessions) {
-    const bucket = dateBucket(s.updatedAt)
+    const bucket = dateBucketKey(s.updatedAt)
     const list = byDate.get(bucket) ?? []
     list.push(s)
     byDate.set(bucket, list)
   }
-  // Return in canonical order, omitting empty buckets
-  return DATE_BUCKET_ORDER.filter((label) => byDate.has(label)).map(
-    (label) => [label, sortGroupItems(byDate.get(label) ?? [])],
+  // Return in canonical order using keys; the component will translate them
+  return DATE_BUCKET_KEY_ORDER.filter((key) => byDate.has(key)).map(
+    (key) => [key, sortGroupItems(byDate.get(key) ?? [])],
   )
 }
 
@@ -144,6 +138,7 @@ export function SessionList({
   onNewChat: () => void
   showNewChat?: boolean
 }) {
+  const { t } = useTranslation('chats')
   const sessions = useChatsStore((s) => s.sessions)
   const loading = useChatsStore((s) => s.sessionsLoading)
   const loadingMore = useChatsStore((s) => s.sessionsLoadingMore)
@@ -290,12 +285,36 @@ export function SessionList({
     [effectiveCursor, flatSessions, moveCursor, openSession],
   )
 
+  // Resolve a group label: for date-grouped views the label is a DateBucketKey;
+  // for project-grouped views it's the raw project name. We detect which by
+  // checking whether the label is one of the known date bucket keys.
+  const dateBucketLabels: Record<DateBucketKey, string> = useMemo(
+    () => ({
+      today: t('sessionList.dateBuckets.today'),
+      yesterday: t('sessionList.dateBuckets.yesterday'),
+      thisWeek: t('sessionList.dateBuckets.thisWeek'),
+      thisMonth: t('sessionList.dateBuckets.thisMonth'),
+      older: t('sessionList.dateBuckets.older'),
+    }),
+    [t],
+  )
+
+  const resolveGroupLabel = useCallback(
+    (label: string): string => {
+      if (DATE_BUCKET_KEY_ORDER.includes(label as DateBucketKey)) {
+        return dateBucketLabels[label as DateBucketKey]
+      }
+      return label
+    },
+    [dateBucketLabels],
+  )
+
   return (
     <div className="flex min-h-0 flex-col gap-2">
       {showNewChat && (
         <Button onClick={onNewChat} className="w-full">
           <Icon name="plus" />
-          New chat
+          {t('sessionList.newChat')}
         </Button>
       )}
 
@@ -307,7 +326,7 @@ export function SessionList({
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search chats…"
+          placeholder={t('sessionList.searchPlaceholder')}
           className="pl-8"
         />
       </div>
@@ -315,15 +334,15 @@ export function SessionList({
       <div
         className="flex gap-0.5 rounded-md border border-border bg-muted/40 p-0.5"
         role="group"
-        aria-label="Sort sessions"
+        aria-label={t('sessionList.sortGroup')}
       >
-        {SORT_OPTIONS.map((opt) => {
-          const active = !query.trim() && sortOrder === opt.value
+        {SORT_ORDERS.map((value) => {
+          const active = !query.trim() && sortOrder === value
           return (
             <button
-              key={opt.value}
+              key={value}
               type="button"
-              onClick={() => setSortOrder(opt.value)}
+              onClick={() => setSortOrder(value)}
               disabled={!!query.trim()}
               className={cn(
                 'flex-1 rounded px-1.5 py-0.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
@@ -333,7 +352,7 @@ export function SessionList({
               )}
               aria-pressed={active}
             >
-              {opt.label}
+              {t(`sessionList.sort.${value}`)}
             </button>
           )
         })}
@@ -342,15 +361,15 @@ export function SessionList({
       <div
         className="flex gap-0.5 rounded-md border border-border bg-muted/40 p-0.5"
         role="group"
-        aria-label="Group sessions"
+        aria-label={t('sessionList.groupGroup')}
       >
-        {GROUP_OPTIONS.map((opt) => {
-          const active = !query.trim() && groupBy === opt.value
+        {GROUP_BYS.map((value) => {
+          const active = !query.trim() && groupBy === value
           return (
             <button
-              key={opt.value}
+              key={value}
               type="button"
-              onClick={() => setGroupBy(opt.value)}
+              onClick={() => setGroupBy(value)}
               disabled={!!query.trim()}
               className={cn(
                 'flex-1 rounded px-1.5 py-0.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
@@ -360,7 +379,7 @@ export function SessionList({
               )}
               aria-pressed={active}
             >
-              {opt.label}
+              {t(`sessionList.group.${value}`)}
             </button>
           )
         })}
@@ -369,7 +388,7 @@ export function SessionList({
       <div
         ref={scrollRef}
         role="listbox"
-        aria-label="Chat sessions"
+        aria-label={t('title')}
         aria-multiselectable="false"
         tabIndex={-1}
         onScroll={onScroll}
@@ -377,16 +396,16 @@ export function SessionList({
         className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1"
       >
         {loading ? (
-          <p className="px-1 pt-2 text-sm text-muted-foreground">Loading…</p>
+          <p className="px-1 pt-2 text-sm text-muted-foreground">{t('sessionList.loading')}</p>
         ) : groups.length === 0 ? (
           <p className="px-1 pt-2 text-sm text-muted-foreground">
-            {sessions.length === 0 ? 'No chats yet.' : 'No matches.'}
+            {sessions.length === 0 ? t('sessionList.noChatsYet') : t('sessionList.noMatches')}
           </p>
         ) : (
           groups.map(([groupLabel, items]) => (
             <div key={groupLabel} className="flex flex-col gap-1">
               <p className="truncate px-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-                {groupLabel}
+                {resolveGroupLabel(groupLabel)}
               </p>
               {items.map((s) => {
                 const active = s.id === activeSessionId
@@ -396,6 +415,19 @@ export function SessionList({
                 const isFirstWithNoCursor =
                   effectiveCursor < 0 && flatIdx === 0
                 const pinned = pinnedSessionIds.has(s.id)
+                const sessionAriaLabel = pinned
+                  ? t('sessionList.sessionAriaLabelPinned', {
+                      title: s.title,
+                      project: s.projectLabel,
+                      time: relativeTime(s.updatedAt),
+                      count: s.messageCount,
+                    })
+                  : t('sessionList.sessionAriaLabel', {
+                      title: s.title,
+                      project: s.projectLabel,
+                      time: relativeTime(s.updatedAt),
+                      count: s.messageCount,
+                    })
                 return (
                   <ContextMenu key={s.id}>
                     <ContextMenuTrigger asChild>
@@ -417,7 +449,7 @@ export function SessionList({
                         }}
                         tabIndex={isCursor || isFirstWithNoCursor ? 0 : -1}
                         aria-selected={active}
-                        aria-label={`${pinned ? 'Pinned: ' : ''}${s.title} — ${s.projectLabel}, ${relativeTime(s.updatedAt)}, ${s.messageCount} messages`}
+                        aria-label={sessionAriaLabel}
                         className={cn(
                           'flex flex-col gap-0.5 rounded-md border px-2.5 py-2 text-left transition-colors',
                           active
@@ -437,7 +469,7 @@ export function SessionList({
                             onBlur={commitRename}
                             onClick={(e) => e.stopPropagation()}
                             className="w-full rounded bg-transparent text-sm font-medium outline-none ring-1 ring-primary/60 focus:ring-primary"
-                            aria-label="Rename session"
+                            aria-label={t('sessionList.renameAriaLabel')}
                           />
                         ) : (
                           <span className="flex items-center gap-1 truncate">
@@ -479,31 +511,31 @@ export function SessionList({
                     <ContextMenuContent>
                       <ContextMenuItem onSelect={() => togglePin(s.id)}>
                         <Icon name="pin" />
-                        {pinned ? 'Unpin' : 'Pin'}
+                        {pinned ? t('sessionList.contextMenu.unpin') : t('sessionList.contextMenu.pin')}
                       </ContextMenuItem>
                       <ContextMenuSeparator />
                       <ContextMenuItem onSelect={() => startRename(s)}>
                         <Icon name="pencil" />
-                        Rename
+                        {t('sessionList.contextMenu.rename')}
                       </ContextMenuItem>
                       <ContextMenuSeparator />
                       <ContextMenuItem
                         onSelect={() => void exportSession(s.id, 'markdown')}
                       >
                         <Icon name="download" />
-                        Export as Markdown
+                        {t('sessionList.contextMenu.exportMarkdown')}
                       </ContextMenuItem>
                       <ContextMenuItem
                         onSelect={() => void exportSession(s.id, 'json')}
                       >
                         <Icon name="braces" />
-                        Export as JSON
+                        {t('sessionList.contextMenu.exportJson')}
                       </ContextMenuItem>
                       <ContextMenuItem
                         onSelect={() => void ipc.revealPath(s.filePath)}
                       >
                         <Icon name="folder-open" />
-                        Reveal file
+                        {t('sessionList.contextMenu.revealFile')}
                       </ContextMenuItem>
                       <ContextMenuSeparator />
                       <ContextMenuItem
@@ -511,7 +543,7 @@ export function SessionList({
                         onSelect={() => setPendingDelete(s.id)}
                       >
                         <Icon name="trash" />
-                        Delete
+                        {t('sessionList.contextMenu.delete')}
                       </ContextMenuItem>
                     </ContextMenuContent>
                   </ContextMenu>
@@ -525,8 +557,8 @@ export function SessionList({
           <div className="px-1 pb-2">
             {loadingMore ? (
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Spinner className="size-3" label="Loading more…" />
-                Loading more…
+                <Spinner className="size-3" label={t('sessionList.loadingMore')} />
+                {t('sessionList.loadingMore')}
               </p>
             ) : (
               <Button
@@ -535,8 +567,10 @@ export function SessionList({
                 className="w-full"
                 onClick={() => void loadMoreSessions()}
               >
-                Load {Math.min(20, total - sessions.length)} more ·{' '}
-                {total - sessions.length} left
+                {t('sessionList.loadMore', {
+                  count: Math.min(20, total - sessions.length),
+                  remaining: total - sessions.length,
+                })}
               </Button>
             )}
           </div>
@@ -548,9 +582,9 @@ export function SessionList({
         onOpenChange={(open) => {
           if (!open) setPendingDelete(null)
         }}
-        title="Delete this chat?"
-        description="This permanently removes the transcript file from disk."
-        confirmLabel="Delete"
+        title={t('sessionList.deleteDialog.title')}
+        description={t('sessionList.deleteDialog.description')}
+        confirmLabel={t('sessionList.deleteDialog.confirm')}
         onConfirm={() => {
           const id = pendingDelete
           setPendingDelete(null)

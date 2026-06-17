@@ -1,5 +1,6 @@
 import { useState, useRef, useLayoutEffect } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/components/ui/button'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { Icon } from '@/shared/components/Icon'
@@ -39,6 +40,7 @@ function ComposerInner({
   onTextChange,
   onSubmitClear,
 }: ComposerInnerProps) {
+  const { t } = useTranslation('chats')
   const [text, setText] = useState(initialText)
 
   // Ref for the textarea DOM element — used for auto-grow height adjustment.
@@ -118,7 +120,9 @@ function ComposerInner({
     historyIndex.current = history.current.length
   }
 
-  const textareaLabel = disabled ? 'Sign in to start chatting…' : 'Message the agent…'
+  const textareaLabel = disabled
+    ? t('composer.placeholderDisabled')
+    : t('composer.placeholderActive')
 
   return (
     <div aria-busy={busy} className="flex flex-col gap-2 rounded-lg border border-border bg-card/40 p-2.5">
@@ -146,8 +150,8 @@ function ComposerInner({
             variant="destructive"
             size="icon"
             onClick={onStop}
-            title="Stop"
-            aria-label="Stop"
+            title={t('composer.stop')}
+            aria-label={t('composer.stop')}
           >
             <Icon name="square" />
           </Button>
@@ -156,8 +160,8 @@ function ComposerInner({
             size="icon"
             onClick={submit}
             disabled={disabled || text.trim() === ''}
-            title="Send (Enter / Cmd+Enter)"
-            aria-label="Send (Enter / Cmd+Enter)"
+            title={t('composer.send')}
+            aria-label={t('composer.send')}
           >
             <Icon name="send" />
           </Button>
