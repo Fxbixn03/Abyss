@@ -122,6 +122,10 @@ export function ChatTranscript({
   const [showJumpBottom, setShowJumpBottom] = useState(false)
   // Index of the message currently highlighted via a risk-panel jump (cleared after 1s).
   const [jumpHighlight, setJumpHighlight] = useState<number | null>(null)
+  // Count of new messages that arrived while the user was scrolled away from the bottom.
+  const [newMessageCount, setNewMessageCount] = useState(0)
+  // Tracks the previous messages.length to compute the delta on each render.
+  const prevMessageCountRef = useRef(messages.length)
 
   // Stable imperative handle: re-locks to bottom and scrolls immediately.
   // Registered with the parent via the scrollToBottom prop so ChatsPage can
@@ -129,6 +133,7 @@ export function ChatTranscript({
   const scrollToBottomFn = useCallback(() => {
     bottomLocked.current = true
     setShowJumpBottom(false)
+    setNewMessageCount(0)
     endRef.current?.scrollIntoView({ block: 'end', behavior: scrollBehavior() })
   }, [])
 
@@ -200,6 +205,9 @@ export function ChatTranscript({
     bottomLocked.current = isNearBottom
     setShowJumpBottom(!isNearBottom)
     setShowJumpTop(el.scrollTop > el.clientHeight)
+    if (isNearBottom) {
+      setNewMessageCount(0)
+    }
   }
 
   useEffect(() => {
@@ -207,6 +215,19 @@ export function ChatTranscript({
       endRef.current?.scrollIntoView({ block: 'end', behavior: scrollBehavior() })
     }
   }, [messages, pending])
+
+  // Track new messages that arrive while the user is scrolled up (not bottom-locked).
+  useEffect(() => {
+    const delta = messages.length - prevMessageCountRef.current
+    prevMessageCountRef.current = messages.length
+    if (delta > 0 && !bottomLocked.current) {
+      setNewMessageCount((c) => c + delta)
+    }
+    // When the user is back at the bottom, auto-scroll fires above and we reset.
+    if (bottomLocked.current) {
+      setNewMessageCount(0)
+    }
+  }, [messages.length])
 
   // When searchOpen becomes true, focus the input
   useEffect(() => {
@@ -251,6 +272,7 @@ export function ChatTranscript({
     el.scrollTo({ top: el.scrollHeight, behavior: scrollBehavior() })
     bottomLocked.current = true
     setShowJumpBottom(false)
+    setNewMessageCount(0)
   }
 
   const goToPrev = () => {
@@ -441,16 +463,30 @@ export function ChatTranscript({
             </Button>
           )}
           {showJumpBottom && (
-            <Button
-              size="icon"
-              variant="outline"
-              aria-label="Jump to bottom"
-              title="Jump to bottom"
-              className="pointer-events-auto shadow-md"
-              onClick={jumpToBottom}
-            >
-              <Icon name="arrow-down" className="size-4" />
-            </Button>
+            <div className="relative">
+              <Button
+                size="icon"
+                variant="outline"
+                aria-label={
+                  newMessageCount > 0
+                    ? `Jump to bottom — ${newMessageCount > 99 ? '99+' : newMessageCount} new message${newMessageCount === 1 ? '' : 's'}`
+                    : 'Jump to bottom'
+                }
+                title="Jump to bottom"
+                className="pointer-events-auto shadow-md"
+                onClick={jumpToBottom}
+              >
+                <Icon name="arrow-down" className="size-4" />
+              </Button>
+              {newMessageCount > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[10px] font-medium leading-none text-primary-foreground"
+                >
+                  {newMessageCount > 99 ? '99+' : newMessageCount}
+                </span>
+              )}
+            </div>
           )}
         </div>
       )}
