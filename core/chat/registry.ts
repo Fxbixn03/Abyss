@@ -17,6 +17,7 @@ import { amazonqChatRuntime } from './amazonq/runtime'
 import { windsurfChatRuntime } from './windsurf/runtime'
 import { warpChatRuntime } from './warp/runtime'
 import { continueChatRuntime } from './continue/runtime'
+import { copilotChatRuntime } from './copilot/runtime'
 
 const runtimes = new Map<string, ChatRuntime>()
 
@@ -53,3 +54,4 @@ register(amazonqChatRuntime)
 register(windsurfChatRuntime)
 register(warpChatRuntime)
 register(continueChatRuntime)
+register(copilotChatRuntime)

@@ -239,7 +239,7 @@ export const copilotDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: true,
-    chats: false,
+    chats: true,
   },
   configFiles: [copilotInstructions],
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.copilot')],
