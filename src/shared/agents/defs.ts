@@ -463,7 +463,7 @@ export const ampDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: true,
-    chats: false,
+    chats: true,
   },
   configFiles: [ampInstructions],
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.amp')],

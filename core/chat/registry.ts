@@ -18,6 +18,7 @@ import { windsurfChatRuntime } from './windsurf/runtime'
 import { warpChatRuntime } from './warp/runtime'
 import { continueChatRuntime } from './continue/runtime'
 import { copilotChatRuntime } from './copilot/runtime'
+import { ampChatRuntime } from './amp/runtime'
 
 const runtimes = new Map<string, ChatRuntime>()
 
@@ -55,3 +56,4 @@ register(windsurfChatRuntime)
 register(warpChatRuntime)
 register(continueChatRuntime)
 register(copilotChatRuntime)
+register(ampChatRuntime)
