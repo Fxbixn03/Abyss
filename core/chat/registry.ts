@@ -19,6 +19,7 @@ import { warpChatRuntime } from './warp/runtime'
 import { continueChatRuntime } from './continue/runtime'
 import { copilotChatRuntime } from './copilot/runtime'
 import { ampChatRuntime } from './amp/runtime'
+import { kiroChatRuntime } from './kiro/runtime'
 
 const runtimes = new Map<string, ChatRuntime>()
 
@@ -57,3 +58,4 @@ register(warpChatRuntime)
 register(continueChatRuntime)
 register(copilotChatRuntime)
 register(ampChatRuntime)
+register(kiroChatRuntime)

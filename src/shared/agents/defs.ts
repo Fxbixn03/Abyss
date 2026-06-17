@@ -544,7 +544,7 @@ export const kiroDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: true,
-    chats: false,
+    chats: true,
   },
   configFiles: [kiroInstructions, kiroSettings],
   resolvePaths: (env: OsEnv) => [
