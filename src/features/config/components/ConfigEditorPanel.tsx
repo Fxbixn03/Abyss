@@ -122,20 +122,20 @@ export function ConfigEditorPanel() {
   }, [])
   useFileWatch(filePath, onExternal)
 
-  const performSave = async () => {
+  const performSave = useCallback(async () => {
     try {
       await save()
       setDiffOpen(false)
     } catch {
       // save() already surfaced the failure via a toast; keep the editor open.
     }
-  }
+  }, [save])
 
-  const requestSave = () => {
+  const requestSave = useCallback(() => {
     if (!isDirty || hasErrors) return
     if (confirmDiff) setDiffOpen(true)
     else void performSave()
-  }
+  }, [isDirty, hasErrors, confirmDiff, performSave])
 
   // Ctrl/Cmd+S to save the open file.
   useEffect(() => {
@@ -147,8 +147,7 @@ export function ConfigEditorPanel() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDirty, hasErrors, confirmDiff, draft, original])
+  }, [requestSave])
 
   // Debounced autosave: fire requestSave() after the configured idle period.
   useEffect(() => {
@@ -158,8 +157,7 @@ export function ConfigEditorPanel() {
       requestSave()
     }, delayMs)
     return () => window.clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autosave, autosaveDelaySeconds, draft, isDirty, hasErrors, confirmDiff, original])
+  }, [autosave, autosaveDelaySeconds, isDirty, hasErrors, requestSave])
 
   const insertIntoDraft = (content: string) => {
     const base = draft.replace(/\n+$/, '')
