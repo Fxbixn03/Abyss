@@ -7,6 +7,55 @@ import { Input } from '@/shared/components/ui/input'
 import { Icon } from '@/shared/components/Icon'
 import { cn } from '@/shared/lib/utils'
 
+/** Skeleton placeholder for a single bubble row while the transcript loads. */
+function SkeletonBubbleRow({
+  role,
+  bars,
+}: {
+  role: 'user' | 'assistant'
+  bars: string[]
+}) {
+  const isUser = role === 'user'
+  return (
+    <div className={cn('flex gap-2.5', isUser && 'flex-row-reverse')}>
+      {/* Avatar placeholder */}
+      <div className="mt-0.5 size-6 shrink-0 rounded bg-muted/60" />
+      {/* Content bars */}
+      <div
+        className={cn(
+          'flex flex-col gap-1.5',
+          isUser ? 'items-end' : 'items-start',
+        )}
+      >
+        {bars.map((width, i) => (
+          <div
+            key={i}
+            className={cn('h-3 animate-pulse rounded-full bg-muted/60', width)}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Four skeleton rows mimicking the real bubble layout, shown while loading. */
+function TranscriptSkeleton() {
+  return (
+    <div className="flex h-full flex-col gap-5 px-1 py-2">
+      <SkeletonBubbleRow role="user" bars={['w-36', 'w-24']} />
+      <SkeletonBubbleRow
+        role="assistant"
+        bars={['w-64', 'w-80', 'w-48']}
+      />
+      <SkeletonBubbleRow role="user" bars={['w-28']} />
+      <SkeletonBubbleRow
+        role="assistant"
+        bars={['w-72', 'w-56']}
+      />
+    </div>
+  )
+}
+
 /** Extract all plain text from a message's text blocks. */
 function extractText(message: ChatMessage): string {
   return message.blocks
@@ -161,11 +210,7 @@ export function ChatTranscript({
   }
 
   if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        Loading transcript…
-      </div>
-    )
+    return <TranscriptSkeleton />
   }
 
   if (messages.length === 0) {
