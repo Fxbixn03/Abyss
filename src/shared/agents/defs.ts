@@ -758,7 +758,7 @@ const devinConfig: ConfigFileSpec = {
   id: 'settings',
   filename: 'config.toml',
   scope: 'global',
-  language: 'text',
+  language: 'toml',
   description: 'Devin CLI global config (~/.devin/config.toml).',
 }
 

@@ -9,6 +9,7 @@
 
 import path from 'node:path'
 import * as yaml from 'js-yaml'
+import { parse as parseToml } from 'smol-toml'
 import { getAgentDefinition } from '@/shared/agents/defs'
 import type { ConfigFileSpec } from '@/shared/types/agent'
 import { pathExists, readTextFile, writeTextFileAtomic } from './json-file'
@@ -61,6 +62,12 @@ export function validateContent(
       yaml.load(content)
     } catch (cause) {
       throw new ConfigValidationError(filePath, 'Content is not valid YAML', cause)
+    }
+  } else if (spec.language === 'toml') {
+    try {
+      parseToml(content)
+    } catch (cause) {
+      throw new ConfigValidationError(filePath, 'Content is not valid TOML', cause)
     }
   }
 }

@@ -74,7 +74,7 @@ export const customAgentSpecSchema = z.object({
   capabilities: agentCapabilitiesSchema,
   instructions: z.object({
     filename: z.string().trim().min(1),
-    language: z.enum(['markdown', 'json', 'yaml', 'text']),
+    language: z.enum(['markdown', 'json', 'yaml', 'toml', 'text']),
     description: z.string(),
   }),
   configDir: z.string().trim().min(1),

@@ -11,7 +11,7 @@ export type AgentId = string
 
 export type ConfigScope = 'global' | 'project'
 
-export type ConfigLanguage = 'markdown' | 'json' | 'yaml' | 'text'
+export type ConfigLanguage = 'markdown' | 'json' | 'yaml' | 'toml' | 'text'
 
 export interface ConfigFileSpec {
   /** Stable id used for editor tabs / routing, e.g. 'instructions'. */
