@@ -318,6 +318,7 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
     } catch (err) {
       set({
         status: 'idle',
+        liveId: null,
         error: err instanceof Error ? err.message : 'Failed to send message',
       })
     }
