@@ -56,7 +56,7 @@ function firstText(message: ChatMessage): string {
   return ''
 }
 
-function looksLikeCorrection(text: string): boolean {
+export function looksLikeCorrection(text: string): boolean {
   const t = text.trim().toLowerCase()
   if (!t || t.length > 240) return false
   return CORRECTION_PATTERNS.some((re) => re.test(t))
