@@ -173,11 +173,10 @@ export function UsagePage() {
   const [reload, setReload] = useState(0)
 
   const agentIds = useMemo(() => chatAgents.map((a) => a.id), [chatAgents])
-  const idsKey = agentIds.join(',')
 
   useEffect(() => {
     let active = true
-    const run = async () => {
+    void (async () => {
       setLoading(true)
       try {
         const res = await ipc.chatUsageAnalytics(agentIds, {
@@ -191,14 +190,13 @@ export function UsagePage() {
       } finally {
         if (active) setLoading(false)
       }
-    }
-    void run()
+    })()
     return () => {
       active = false
     }
-    // idsKey stands in for agentIds (stable string), projectDir/days/reload retrigger.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idsKey, projectDir, days, reload])
+    // `agentIds` comes from useMemo and is referentially stable; it only changes
+    // when chatAgents changes — the same condition that would change idsKey.
+  }, [agentIds, projectDir, days, reload])
 
   const nameOf = (id: string) =>
     chatAgents.find((a) => a.id === id)?.displayName ?? id

@@ -173,8 +173,6 @@ export function ValidationPage() {
   const [loading, setLoading] = useState(true)
   const [ranAt, setRanAt] = useState(0)
 
-  const agentsKey = allAgents.map((a) => a.id).join(',')
-
   useEffect(() => {
     let active = true
     const run = async () => {
@@ -352,8 +350,7 @@ export function ValidationPage() {
     return () => {
       active = false
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agent, agentsKey, projectDir, getBasePath, ranAt])
+  }, [agent, allAgents, projectDir, getBasePath, ranAt])
 
   const counts = useMemo(() => {
     const c: Record<LintSeverity, number> = { error: 0, warning: 0, info: 0 }

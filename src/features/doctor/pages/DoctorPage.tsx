@@ -63,13 +63,12 @@ export function DoctorPage() {
     [agents, getBasePath],
   )
 
-  const inputsKey = inputs.map((i) => `${i.agentId}:${i.basePath}`).join('|')
-
   useEffect(() => {
-    void scan(inputs)
-    // inputsKey captures the meaningful identity of `inputs`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputsKey])
+    void useDoctorStore.getState().scan(inputs)
+    // `inputs` comes from useMemo and is referentially stable between renders;
+    // it only changes when agents or getBasePath changes — the same conditions
+    // that would change inputsKey.
+  }, [inputs])
 
   const counts = report?.counts
   const healthy = report && report.findings.length === 0

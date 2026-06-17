@@ -119,12 +119,29 @@ export function MarketplacePage() {
 
   // Initial load: the registry's top servers (empty query).
   useEffect(() => {
-    const run = async () => {
-      await runSearch('')
-    }
-    void run()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    void (async () => {
+      setLoading(true)
+      setError(null)
+      const requestId = genId()
+      try {
+        const res = await ipc.discoverySearch({
+          kind: 'mcp',
+          sourceId: 'mcp-official',
+          query: '',
+          cursor: undefined,
+          requestId,
+        })
+        setRan(true)
+        setError(res.error ?? null)
+        setResults(res.results)
+        setCursor(res.nextCursor)
+      } catch {
+        setError(t('errorUnreachable'))
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [t])
 
   const install = async (result: DiscoveryResult) => {
     const entry = installSpecToEntry(
