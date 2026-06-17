@@ -73,6 +73,7 @@ export function ChatTranscript({
   searchOpen: searchOpenProp,
   onSearchOpenChange,
   density = 'comfortable',
+  scrollToBottom: scrollToBottomRef,
 }: {
   messages: ChatMessage[]
   loading: boolean
@@ -85,6 +86,12 @@ export function ChatTranscript({
   onSearchOpenChange?: (open: boolean) => void
   /** Message density: 'compact' uses less vertical space, 'comfortable' is the default. */
   density?: 'compact' | 'comfortable'
+  /**
+   * If provided, the component will call this with a stable `scrollToBottom`
+   * function that re-locks the view to the bottom and scrolls immediately.
+   * Call it from the parent's onSend handler to ensure the new turn is visible.
+   */
+  scrollToBottom?: (fn: () => void) => void
 }) {
   const endRef = useRef<HTMLDivElement>(null)
   const bottomLocked = useRef(true)
@@ -96,6 +103,23 @@ export function ChatTranscript({
   const [showJumpTop, setShowJumpTop] = useState(false)
   // Whether the user is NOT at the bottom (bottomLocked === false).
   const [showJumpBottom, setShowJumpBottom] = useState(false)
+
+  // Stable imperative handle: re-locks to bottom and scrolls immediately.
+  // Registered with the parent via the scrollToBottom prop so ChatsPage can
+  // call it from the Composer's onSend handler after the user submits.
+  const scrollToBottomFn = useCallback(() => {
+    bottomLocked.current = true
+    setShowJumpBottom(false)
+    endRef.current?.scrollIntoView({ block: 'end', behavior: scrollBehavior() })
+  }, [])
+
+  // Publish the stable handle to the parent on first render (and never again).
+  useEffect(() => {
+    scrollToBottomRef?.(scrollToBottomFn)
+    // We intentionally run this only once — scrollToBottomFn is stable via
+    // useCallback with no deps, and scrollToBottomRef is an external prop ref.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Search state — all local
   const [searchOpenInternal, setSearchOpenInternal] = useState(false)
@@ -138,7 +162,7 @@ export function ChatTranscript({
 
   useEffect(() => {
     if (bottomLocked.current) {
-      endRef.current?.scrollIntoView({ block: 'end' })
+      endRef.current?.scrollIntoView({ block: 'end', behavior: scrollBehavior() })
     }
   }, [messages])
 

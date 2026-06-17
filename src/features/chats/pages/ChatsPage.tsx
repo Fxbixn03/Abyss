@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ChatPermissionMode } from '@/shared/types/chat'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
@@ -76,6 +76,8 @@ export function ChatsPage() {
   const [scanning, setScanning] = useState(false)
   // Whether the in-transcript search bar is open.
   const [transcriptSearchOpen, setTranscriptSearchOpen] = useState(false)
+  // Imperative handle published by ChatTranscript so onSend can re-lock scroll.
+  const scrollToBottomRef = useRef<() => void>(null)
   // Message density: resets to comfortable on each page mount.
   const [density, setDensity] = useState<'compact' | 'comfortable'>('comfortable')
 
@@ -468,6 +470,9 @@ export function ChatsPage() {
                   searchOpen={transcriptSearchOpen}
                   onSearchOpenChange={setTranscriptSearchOpen}
                   density={density}
+                  scrollToBottom={(fn) => {
+                    scrollToBottomRef.current = fn
+                  }}
                 />
               </div>
 
@@ -477,13 +482,14 @@ export function ChatsPage() {
                     busy={busy}
                     disabled={!canChat}
                     draftKey={activeSessionId ?? 'new'}
-                    onSend={(text) =>
+                    onSend={(text) => {
+                      scrollToBottomRef.current?.()
                       void send(text, {
                         cwd,
                         model: model === 'default' ? undefined : model,
                         permissionMode,
                       })
-                    }
+                    }}
                     onStop={() => void interrupt()}
                     settingsBar={
                       <div className="flex flex-wrap items-center gap-2 border-b border-border/60 pb-2">
