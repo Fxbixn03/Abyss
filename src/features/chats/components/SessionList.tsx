@@ -20,11 +20,17 @@ import { relativeTime } from '../lib/format'
 import type { ChatSessionMeta } from '@/shared/types/chat'
 
 type SortOrder = 'recent' | 'longest' | 'costliest'
+type GroupBy = 'project' | 'date'
 
 const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'recent', label: 'Recent' },
   { value: 'longest', label: 'Longest' },
   { value: 'costliest', label: 'Costliest' },
+]
+
+const GROUP_OPTIONS: { value: GroupBy; label: string }[] = [
+  { value: 'project', label: 'By project' },
+  { value: 'date', label: 'By date' },
 ]
 
 function sortSessions(
@@ -46,6 +52,71 @@ function sortSessions(
   return copy
 }
 
+/**
+ * Returns a human-readable date bucket label for a given timestamp.
+ * Buckets: 'Today', 'Yesterday', 'This week', 'This month', 'Older'
+ */
+function dateBucket(updatedAt: string | number | Date | undefined): string {
+  const now = new Date()
+  const date = updatedAt != null ? new Date(updatedAt) : new Date(0)
+
+  // Start of today (midnight local time)
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  // Start of yesterday
+  const startOfYesterday = new Date(startOfToday)
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1)
+  // Start of this week (Monday = day 1; Sunday = 0 → shift to last Monday)
+  const dayOfWeek = now.getDay() // 0=Sun, 1=Mon, …, 6=Sat
+  const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+  const startOfWeek = new Date(startOfToday)
+  startOfWeek.setDate(startOfWeek.getDate() - daysToMonday)
+  // Start of this month
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  if (date >= startOfToday) return 'Today'
+  if (date >= startOfYesterday) return 'Yesterday'
+  if (date >= startOfWeek) return 'This week'
+  if (date >= startOfMonth) return 'This month'
+  return 'Older'
+}
+
+/** Ordered list of date bucket labels for deterministic group ordering */
+const DATE_BUCKET_ORDER = [
+  'Today',
+  'Yesterday',
+  'This week',
+  'This month',
+  'Older',
+] as const
+
+function groupSessions(
+  sessions: ChatSessionMeta[],
+  groupBy: GroupBy,
+): [string, ChatSessionMeta[]][] {
+  if (groupBy === 'project') {
+    const byProject = new Map<string, ChatSessionMeta[]>()
+    for (const s of sessions) {
+      const list = byProject.get(s.projectLabel) ?? []
+      list.push(s)
+      byProject.set(s.projectLabel, list)
+    }
+    return [...byProject.entries()]
+  }
+
+  // date grouping
+  const byDate = new Map<string, ChatSessionMeta[]>()
+  for (const s of sessions) {
+    const bucket = dateBucket(s.updatedAt)
+    const list = byDate.get(bucket) ?? []
+    list.push(s)
+    byDate.set(bucket, list)
+  }
+  // Return in canonical order, omitting empty buckets
+  return DATE_BUCKET_ORDER.filter((label) => byDate.has(label)).map(
+    (label) => [label, byDate.get(label) ?? []],
+  )
+}
+
 export function SessionList({
   onNewChat,
   showNewChat = true,
@@ -65,6 +136,7 @@ export function SessionList({
 
   const [query, setQuery] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
+  const [groupBy, setGroupBy] = useState<GroupBy>('project')
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   // Raw cursor index — clamped to valid range during render
   const [cursorIndex, setCursorIndex] = useState<number>(-1)
@@ -96,14 +168,8 @@ export function SessionList({
     // When a search is active, skip sorting (filtering order is fine); otherwise
     // apply the user-selected sort before grouping so groups and items both reflect it.
     const sorted = q ? filtered : sortSessions(filtered, sortOrder)
-    const byProject = new Map<string, typeof sorted>()
-    for (const s of sorted) {
-      const list = byProject.get(s.projectLabel) ?? []
-      list.push(s)
-      byProject.set(s.projectLabel, list)
-    }
-    return [...byProject.entries()]
-  }, [sessions, query, sortOrder])
+    return groupSessions(sorted, groupBy)
+  }, [sessions, query, sortOrder, groupBy])
 
   // Flatten all visible sessions in order (skipping group headers) for keyboard nav
   const flatSessions = useMemo(
@@ -212,6 +278,33 @@ export function SessionList({
         })}
       </div>
 
+      <div
+        className="flex gap-0.5 rounded-md border border-border bg-muted/40 p-0.5"
+        role="group"
+        aria-label="Group sessions"
+      >
+        {GROUP_OPTIONS.map((opt) => {
+          const active = !query.trim() && groupBy === opt.value
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setGroupBy(opt.value)}
+              disabled={!!query.trim()}
+              className={cn(
+                'flex-1 rounded px-1.5 py-0.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                active
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-50',
+              )}
+              aria-pressed={active}
+            >
+              {opt.label}
+            </button>
+          )
+        })}
+      </div>
+
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- session buttons inside are the interactive elements with their own keyboard roles; this div is a scroll container */}
       <div
         ref={scrollRef}
@@ -226,10 +319,10 @@ export function SessionList({
             {sessions.length === 0 ? 'No chats yet.' : 'No matches.'}
           </p>
         ) : (
-          groups.map(([project, items]) => (
-            <div key={project} className="flex flex-col gap-1">
+          groups.map(([groupLabel, items]) => (
+            <div key={groupLabel} className="flex flex-col gap-1">
               <p className="truncate px-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-                {project}
+                {groupLabel}
               </p>
               {items.map((s) => {
                 const active = s.id === activeSessionId
