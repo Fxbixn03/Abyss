@@ -1,9 +1,12 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
+import type { ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { cn } from '@/shared/lib/utils'
+import { Button } from '@/shared/components/ui/button'
+import { Icon } from '@/shared/components/Icon'
 
 /**
  * Shared markdown renderer (chat messages + editor previews). Renders to React
@@ -11,6 +14,54 @@ import { cn } from '@/shared/lib/utils'
  * maps every element to semantic theme tokens instead of hard-coded colors. GFM
  * adds tables, task lists, strikethrough and autolinks; links open externally.
  */
+
+/**
+ * Wrapper around a fenced code block that adds a hover-reveal copy button in
+ * the top-right corner, matching the pattern used in CollapsibleBlock and
+ * MessageBubble.
+ */
+function CodeBlock({ children }: { children: ReactNode }) {
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy() {
+    // Walk the React tree to collect the raw text content of the code element.
+    function extractText(node: ReactNode): string {
+      if (typeof node === 'string') return node
+      if (typeof node === 'number') return String(node)
+      if (Array.isArray(node)) return node.map(extractText).join('')
+      if (node !== null && typeof node === 'object' && 'props' in node) {
+        const element = node as { props?: { children?: ReactNode } }
+        return extractText(element.props?.children)
+      }
+      return ''
+    }
+
+    const text = extractText(children)
+    void navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+
+  return (
+    <div className="group/code relative">
+      <pre className="my-2 max-h-[28rem] overflow-auto rounded-md border border-border bg-muted/50 p-3 font-code text-xs leading-relaxed">
+        {children}
+      </pre>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="absolute right-1.5 top-1.5 size-5 shrink-0 opacity-0 transition-opacity duration-150 group-hover/code:opacity-100"
+        title={copied ? 'Copied!' : 'Copy code'}
+        aria-label={copied ? 'Copied!' : 'Copy code to clipboard'}
+        onClick={handleCopy}
+      >
+        <Icon name={copied ? 'check' : 'copy'} className="size-3.5" />
+      </Button>
+    </div>
+  )
+}
 
 const components: Components = {
   p: ({ children }) => (
@@ -67,11 +118,7 @@ const components: Components = {
     </blockquote>
   ),
   hr: () => <hr className="my-3 border-border" />,
-  pre: ({ children }) => (
-    <pre className="my-2 max-h-[28rem] overflow-auto rounded-md border border-border bg-muted/50 p-3 font-code text-xs leading-relaxed">
-      {children}
-    </pre>
-  ),
+  pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
   code: ({ className, children }) => {
     const text = String(children)
     const isBlock = /language-/.test(className ?? '') || text.includes('\n')
