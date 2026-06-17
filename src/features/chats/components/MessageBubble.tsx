@@ -1,4 +1,4 @@
-import { useState, useId } from 'react'
+import { useState, useId, memo } from 'react'
 import type { ReactNode, MouseEvent, KeyboardEvent } from 'react'
 import type { ChatBlock, ChatMessage } from '@/shared/types/chat'
 import { Icon } from '@/shared/components/Icon'
@@ -166,17 +166,29 @@ const ROLE_META: Record<string, { icon: string; label: string }> = {
   system: { icon: 'sliders', label: 'System' },
 }
 
-export function MessageBubble({
-  message,
-  agentName,
-  isStreaming,
-}: {
+type MessageBubbleProps = {
   message: ChatMessage
   /** Display name of the agent driving the chat (used for assistant turns). */
   agentName?: string
   /** When true, renders a blinking cursor after the last text block. */
   isStreaming?: boolean
-}) {
+}
+
+function areEqual(prev: MessageBubbleProps, next: MessageBubbleProps): boolean {
+  return (
+    prev.message.id === next.message.id &&
+    prev.message.blocks === next.message.blocks &&
+    prev.message.blocks.length === next.message.blocks.length &&
+    prev.isStreaming === next.isStreaming &&
+    prev.agentName === next.agentName
+  )
+}
+
+function MessageBubbleInner({
+  message,
+  agentName,
+  isStreaming,
+}: MessageBubbleProps) {
   const [copied, setCopied] = useState(false)
   const meta = ROLE_META[message.role] ?? ROLE_META.assistant
   // Label assistant turns with the actual agent (Claude, Codex, …) instead of
@@ -291,3 +303,5 @@ export function MessageBubble({
     </div>
   )
 }
+
+export const MessageBubble = memo(MessageBubbleInner, areEqual)
