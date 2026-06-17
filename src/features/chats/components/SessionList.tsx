@@ -15,7 +15,9 @@ import {
 import { cn } from '@/shared/lib/utils'
 import { scrollBehavior } from '@/shared/lib/motion'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { estimateCostUsd, formatMoney } from '@/shared/lib/cost'
 import { useChatsStore } from '../store/chats.store'
+import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { relativeTime } from '../lib/format'
 import type { ChatSessionMeta } from '@/shared/types/chat'
 
@@ -133,6 +135,7 @@ export function SessionList({
   const deleteSession = useChatsStore((s) => s.deleteSession)
   const exportSession = useChatsStore((s) => s.exportSession)
   const loadMoreSessions = useChatsStore((s) => s.loadMoreSessions)
+  const currency = useSettingsStore((s) => s.settings.currency)
 
   const [query, setQuery] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
@@ -370,6 +373,17 @@ export function SessionList({
                               {s.gitBranch}
                             </span>
                           )}
+                          {(() => {
+                            const cost = estimateCostUsd(
+                              s.inputTokens ?? 0,
+                              s.outputTokens ?? 0,
+                            )
+                            return cost >= 0.001 ? (
+                              <span className="font-code text-[11px] text-muted-foreground">
+                                {formatMoney(cost, currency)}
+                              </span>
+                            ) : null
+                          })()}
                         </span>
                       </button>
                     </ContextMenuTrigger>
