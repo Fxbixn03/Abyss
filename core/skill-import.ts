@@ -18,6 +18,12 @@ import type {
 import { readZip } from './zip'
 import { parseFrontmatter } from './frontmatter'
 import { pathExists } from './json-file'
+import {
+  ConfigWriteError,
+  ConfigDiskError,
+  ConfigReadError,
+} from './config-error'
+import { isPermissionError, isDiskError } from './os-errors'
 
 /** Allowed characters for a skill folder name (and therefore its id). */
 const SAFE_ID = /^[A-Za-z0-9._()-]+$/
@@ -35,7 +41,14 @@ export async function importSkillArchive(
   archivePath: string,
   onCollision: SkillCollisionMode,
 ): Promise<SkillImportResult> {
-  const entries = readZip(await fs.readFile(archivePath))
+  let archiveBuffer: Buffer
+  try {
+    archiveBuffer = await fs.readFile(archivePath)
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigReadError(archivePath, err)
+    throw err
+  }
+  const entries = readZip(archiveBuffer)
 
   // The skill folder name is the first path segment of the `<name>/SKILL.md`.
   const skillMd = entries.find((e) => /^[^/]+\/SKILL\.md$/i.test(e.path))
@@ -88,7 +101,13 @@ export async function importSkillArchive(
       await fs.mkdir(target, { recursive: true })
     } else {
       await fs.mkdir(path.dirname(target), { recursive: true })
-      await fs.writeFile(target, entry.data)
+      try {
+        await fs.writeFile(target, entry.data)
+      } catch (err) {
+        if (isPermissionError(err)) throw new ConfigWriteError(target, err)
+        if (isDiskError(err)) throw new ConfigDiskError(target, err)
+        throw err
+      }
     }
   }
 
