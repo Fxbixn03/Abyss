@@ -495,7 +495,7 @@ export const gooseDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: false,
-    chats: false,
+    chats: true,
   },
   configFiles: [gooseConfig],
   resolvePaths: (env: OsEnv) => [

@@ -11,6 +11,7 @@ import { cursorChatRuntime } from './cursor/runtime'
 import { aiderChatRuntime } from './aider/runtime'
 import { clineChatRuntime } from './cline/runtime'
 import { rooChatRuntime } from './roo/runtime'
+import { gooseChatRuntime } from './goose/runtime'
 
 const runtimes = new Map<string, ChatRuntime>()
 
@@ -41,3 +42,4 @@ register(cursorChatRuntime)
 register(aiderChatRuntime)
 register(clineChatRuntime)
 register(rooChatRuntime)
+register(gooseChatRuntime)
