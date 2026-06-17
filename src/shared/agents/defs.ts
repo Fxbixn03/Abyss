@@ -745,7 +745,7 @@ export const codyDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: false,
-    chats: false,
+    chats: true,
   },
   configFiles: [codyConfig],
   resolvePaths: (env: OsEnv) => [
