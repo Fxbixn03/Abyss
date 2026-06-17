@@ -29,6 +29,7 @@ import { paginateMetas } from '../paginate'
 import { projectLabelFromCwd } from '../normalize'
 import { aiderHistoryFile } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
+import { ConfigReadError, ConfigNotFoundError } from '../../config-error'
 
 /** Regex that matches the `#### aider chat started at …` session delimiter. */
 const SESSION_HEADER_RE = /^#### aider chat started at (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/
@@ -199,7 +200,16 @@ export async function listAiderSessions(
     return { sessions: [], total: 0 }
   }
 
-  const content = await fs.readFile(filePath, 'utf-8')
+  let content: string
+  try {
+    content = await fs.readFile(filePath, 'utf-8')
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code
+    if (code === 'EACCES' || code === 'EPERM') {
+      throw new ConfigReadError(filePath, err)
+    }
+    throw err
+  }
   const raw = splitSessions(content)
   if (raw.length === 0) return { sessions: [], total: 0 }
 
@@ -248,13 +258,23 @@ export async function readAiderSession(
   sessionId: string,
 ): Promise<ChatTranscript> {
   const filePath = aiderHistoryFile(env)
-  const stat = await fs.stat(filePath)
-  const content = await fs.readFile(filePath, 'utf-8')
+  let stat: Awaited<ReturnType<typeof fs.stat>>
+  let content: string
+  try {
+    stat = await fs.stat(filePath)
+    content = await fs.readFile(filePath, 'utf-8')
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code
+    if (code === 'EACCES' || code === 'EPERM') {
+      throw new ConfigReadError(filePath, err)
+    }
+    throw err
+  }
   const raw = splitSessions(content)
 
   // Match by generated session id
   const found = raw.find((s) => sessionIdFromIndex(s.index) === sessionId)
-  if (!found) throw new Error(`Aider session not found: ${sessionId}`)
+  if (!found) throw new ConfigNotFoundError(filePath)
 
   const messages = parseMessages(found.lines, found.index)
   const firstUser = messages.find((m) => m.role === 'user')
