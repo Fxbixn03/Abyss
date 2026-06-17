@@ -116,6 +116,13 @@ export function ChatTranscript({
   // its dep array without re-running whenever the parent re-renders.
   const scrollToBottomRefCallback = useRef(scrollToBottomRef)
 
+  // Track message IDs that were already present when the current session mounted.
+  // Only messages NOT in this set receive the bubble-in entrance animation.
+  // Initialised lazily so the first render's messages are all treated as historical.
+  const [mountedMessageIds, setMountedMessageIds] = useState<Set<string>>(
+    () => new Set(messages.map((m) => m.id)),
+  )
+
   // Whether the user has scrolled more than one viewport height from the top.
   const [showJumpTop, setShowJumpTop] = useState(false)
   // Whether the user is NOT at the bottom (bottomLocked === false).
@@ -195,6 +202,9 @@ export function ChatTranscript({
   if (prevFirstId.current !== firstId) {
     prevFirstId.current = firstId
     setVisibleCount(WINDOW)
+    // Populate the mounted-ids set so all messages present at session-switch
+    // are treated as historical (no entrance animation).
+    setMountedMessageIds(new Set(messages.map((m) => m.id)))
   }
 
   // Track whether the user is pinned near the bottom; only autoscroll if so.
@@ -424,6 +434,8 @@ export function ChatTranscript({
           const isMatch = matchPos !== -1
           const isActive = isMatch && matchPos === activeMatch
           const isJumpTarget = jumpHighlight != null && jumpHighlight === i
+          // Only animate messages that weren't present when the session mounted.
+          const isNew = !mountedMessageIds.has(m.id)
           return (
             <div
               key={m.id}
@@ -431,7 +443,7 @@ export function ChatTranscript({
                 messageRefs.current[i] = el
               }}
               className={cn(
-                'motion-safe:animate-bubble-in',
+                isNew && 'motion-safe:animate-bubble-in',
                 isMatch && 'rounded-lg ring-1 ring-primary/50',
                 isActive && 'ring-primary',
                 isJumpTarget && 'rounded-lg ring-2 ring-primary',
@@ -503,9 +515,9 @@ function TypingIndicator({ agentName }: { agentName?: string }) {
       className="flex items-center gap-1.5 text-muted-foreground"
       aria-label={`${agentName ?? 'Agent'} is responding`}
     >
-      <span className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
-      <span className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
-      <span className="size-1.5 animate-bounce rounded-full bg-current" />
+      <span className="size-1.5 motion-safe:animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
+      <span className="size-1.5 motion-safe:animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
+      <span className="size-1.5 motion-safe:animate-bounce rounded-full bg-current" />
     </div>
   )
 }
