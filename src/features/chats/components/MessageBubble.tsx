@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import type { ReactNode, MouseEvent, KeyboardEvent } from 'react'
 import type { ChatBlock, ChatMessage } from '@/shared/types/chat'
 import { Icon } from '@/shared/components/Icon'
@@ -25,6 +25,7 @@ function CollapsibleBlock({
 }) {
   const [open, setOpen] = useState(defaultOpen)
   const [copiedBlock, setCopiedBlock] = useState(false)
+  const contentId = useId()
 
   function handleCopyBlock(e: MouseEvent) {
     e.stopPropagation()
@@ -54,6 +55,8 @@ function CollapsibleBlock({
       <div
         role="button"
         tabIndex={0}
+        aria-expanded={open}
+        aria-controls={contentId}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={handleToggleKeyDown}
         className="flex w-full items-center gap-1.5 px-2.5 py-1.5 text-left font-medium text-muted-foreground hover:text-foreground cursor-pointer"
@@ -82,7 +85,9 @@ function CollapsibleBlock({
         />
       </div>
       {open && (
-        <div className="border-t border-border/60 px-2.5 py-2">{children}</div>
+        <div id={contentId} className="border-t border-border/60 px-2.5 py-2">
+          {children}
+        </div>
       )}
     </div>
   )
