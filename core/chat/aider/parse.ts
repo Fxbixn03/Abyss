@@ -30,6 +30,7 @@ import { projectLabelFromCwd } from '../normalize'
 import { aiderHistoryFile } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
 import { ConfigReadError, ConfigNotFoundError } from '../../config-error'
+import { isPermissionError } from '../../os-errors'
 
 /** Regex that matches the `#### aider chat started at …` session delimiter. */
 const SESSION_HEADER_RE = /^#### aider chat started at (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/
@@ -204,8 +205,7 @@ export async function listAiderSessions(
   try {
     content = await fs.readFile(filePath, 'utf-8')
   } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code
-    if (code === 'EACCES' || code === 'EPERM') {
+    if (isPermissionError(err)) {
       throw new ConfigReadError(filePath, err)
     }
     throw err
@@ -264,8 +264,7 @@ export async function readAiderSession(
     stat = await fs.stat(filePath)
     content = await fs.readFile(filePath, 'utf-8')
   } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code
-    if (code === 'EACCES' || code === 'EPERM') {
+    if (isPermissionError(err)) {
       throw new ConfigReadError(filePath, err)
     }
     throw err

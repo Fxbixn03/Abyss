@@ -28,6 +28,7 @@ import {
   listClaudeSessionFiles,
 } from './paths'
 import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
+import { isPermissionError } from '../../os-errors'
 
 const MESSAGE_TYPES = new Set(['user', 'assistant'])
 
@@ -199,8 +200,7 @@ export async function deleteClaudeSession(
   try {
     await fs.rm(found.filePath, { force: true })
   } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code
-    if (code === 'EACCES' || code === 'EPERM') {
+    if (isPermissionError(err)) {
       throw new ConfigWriteError(found.filePath, err)
     }
     throw err

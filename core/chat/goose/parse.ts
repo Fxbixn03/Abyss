@@ -36,6 +36,7 @@ import {
 } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
 import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
+import { isPermissionError } from '../../os-errors'
 
 /**
  * Attempt to extract a role + content pair from a Goose JSONL event line.
@@ -262,8 +263,7 @@ export async function deleteGooseSession(
   try {
     await fs.rm(filePath, { force: true })
   } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code
-    if (code === 'EACCES' || code === 'EPERM') {
+    if (isPermissionError(err)) {
       throw new ConfigWriteError(filePath, err)
     }
     throw err

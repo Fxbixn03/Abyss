@@ -34,6 +34,7 @@ import {
 } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
 import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
+import { isPermissionError } from '../../os-errors'
 
 /**
  * A single raw entry in `api_conversation_history.json`. Roo Code uses the
@@ -195,8 +196,7 @@ export async function deleteRooSession(
   try {
     await fs.rm(taskDir, { recursive: true, force: true })
   } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code
-    if (code === 'EACCES' || code === 'EPERM') {
+    if (isPermissionError(err)) {
       throw new ConfigWriteError(taskDir, err)
     }
     throw err

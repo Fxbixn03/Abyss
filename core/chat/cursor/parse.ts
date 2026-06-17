@@ -27,6 +27,7 @@ import type {
 } from '@/shared/types/chat'
 import { readJsonlLines, asString, asRecord } from '../jsonl'
 import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
+import { isPermissionError } from '../../os-errors'
 import { blocksFromAnthropicContent, projectLabelFromCwd } from '../normalize'
 import { paginateByMtime } from '../paginate'
 import {
@@ -278,8 +279,7 @@ export async function deleteCursorSession(
   try {
     await fs.rm(filePath, { force: true })
   } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code
-    if (code === 'EACCES' || code === 'EPERM') {
+    if (isPermissionError(err)) {
       throw new ConfigWriteError(filePath, err)
     }
     throw err

@@ -34,6 +34,7 @@ import {
 } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
 import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
+import { isPermissionError } from '../../os-errors'
 
 /**
  * Attempt to extract a role + content pair from a Plandex JSONL event line.
@@ -228,8 +229,7 @@ export async function deletePlandexSession(
   try {
     await fs.rm(planDir, { recursive: true, force: true })
   } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code
-    if (code === 'EACCES' || code === 'EPERM') {
+    if (isPermissionError(err)) {
       throw new ConfigWriteError(planDir, err)
     }
     throw err

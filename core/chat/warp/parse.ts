@@ -28,6 +28,7 @@ import { paginateByMtime } from '../paginate'
 import { warpSessionId, findWarpSessionFile, listWarpSessionFiles } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
 import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
+import { isPermissionError } from '../../os-errors'
 
 /** Read session-level metadata for the list view (one fast pass over the file). */
 export async function readWarpMeta(
@@ -196,8 +197,7 @@ export async function deleteWarpSession(
   try {
     await fs.rm(filePath, { force: true })
   } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code
-    if (code === 'EACCES' || code === 'EPERM') {
+    if (isPermissionError(err)) {
       throw new ConfigWriteError(filePath, err)
     }
     throw err

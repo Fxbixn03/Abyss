@@ -34,6 +34,7 @@ import {
 } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
 import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
+import { isPermissionError } from '../../os-errors'
 
 /** Top-level shape of a Windsurf conversation JSON file. */
 interface WindsurfConversationFile {
@@ -235,8 +236,7 @@ export async function deleteWindsurfSession(
   try {
     await fs.rm(filePath, { force: true })
   } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code
-    if (code === 'EACCES' || code === 'EPERM') {
+    if (isPermissionError(err)) {
       throw new ConfigWriteError(filePath, err)
     }
     throw err
