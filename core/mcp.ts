@@ -185,6 +185,15 @@ function plandexMcpPath(basePath: string): string {
 }
 
 /**
+ * Cody CLI stores its full config (including `mcpServers`) in `config.json`
+ * alongside `customInstructions` and other fields. The `writeJsonMcp` read-
+ * merge-write cycle preserves every other key in that file.
+ */
+function codyMcpPath(basePath: string): string {
+  return path.join(basePath, 'config.json')
+}
+
+/**
  * Cline stores MCP config at `~/Documents/Cline/mcp_settings.json`. Since
  * `clineDefinition.resolvePaths` returns `~/Documents/Cline/Rules`, we step
  * one level up to reach `~/Documents/Cline/`.
@@ -495,6 +504,7 @@ export function getMcpConfigPath(
   if (agentId === 'kiro') return kiroMcpPath(basePath)
   if (agentId === 'amazonq') return amazonqMcpPath(basePath)
   if (agentId === 'plandex') return plandexMcpPath(basePath)
+  if (agentId === 'cody') return codyMcpPath(basePath)
   if (agentId === 'amp') return ampMcpPath(basePath)
   if (agentId === 'warp') return warpMcpPath(basePath)
   if (agentId === 'cline') return clineMcpPath(basePath)
@@ -525,6 +535,7 @@ export function readMcpServers(
   if (agentId === 'kiro') return readJsonMcp(kiroMcpPath(basePath))
   if (agentId === 'amazonq') return readJsonMcp(amazonqMcpPath(basePath))
   if (agentId === 'plandex') return readJsonMcp(plandexMcpPath(basePath))
+  if (agentId === 'cody') return readJsonMcp(codyMcpPath(basePath))
   if (agentId === 'amp') return readJsonMcp(ampMcpPath(basePath))
   if (agentId === 'warp') return readJsonMcp(warpMcpPath(basePath))
   if (agentId === 'cline') return readJsonMcp(clineMcpPath(basePath))
@@ -557,6 +568,8 @@ export function writeMcpServers(
     return writeJsonMcp(amazonqMcpPath(basePath), entries)
   if (agentId === 'plandex')
     return writeJsonMcp(plandexMcpPath(basePath), entries)
+  if (agentId === 'cody')
+    return writeJsonMcp(codyMcpPath(basePath), entries)
   if (agentId === 'amp')
     return writeJsonMcp(ampMcpPath(basePath), entries)
   if (agentId === 'warp')

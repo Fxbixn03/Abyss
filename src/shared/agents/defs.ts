@@ -735,7 +735,7 @@ export const codyDefinition: AgentDefinition = {
   docsUrl: 'https://sourcegraph.com/cody',
   capabilities: {
     instructions: true,
-    mcp: false,
+    mcp: true,
     permissions: false,
     modelEnv: false,
     agents: false,
