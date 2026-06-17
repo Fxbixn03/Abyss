@@ -377,6 +377,8 @@ export const ipc = {
     invoke(IpcChannel.ChatReadSession, { agentId, sessionId }),
   chatDeleteSession: (agentId: AgentId, sessionId: string) =>
     invoke(IpcChannel.ChatDeleteSession, { agentId, sessionId }),
+  chatRenameSession: (agentId: string, sessionId: string, title: string) =>
+    invoke(IpcChannel.ChatRenameSession, { agentId, sessionId, title }),
   chatExportSession: (
     agentId: AgentId,
     sessionId: string,

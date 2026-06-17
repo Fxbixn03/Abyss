@@ -195,6 +195,7 @@ export enum IpcChannel {
   ChatListSessions = 'chat:list-sessions',
   ChatReadSession = 'chat:read-session',
   ChatDeleteSession = 'chat:delete-session',
+  ChatRenameSession = 'chat:rename-session',
   ChatExportSession = 'chat:export-session',
   ChatUsageStats = 'chat:usage-stats',
   ChatUsageAnalytics = 'chat:usage-analytics',
@@ -669,6 +670,10 @@ export interface IpcMap {
   [IpcChannel.ChatDeleteSession]: {
     request: { agentId: AgentId; sessionId: string }
     response: { success: boolean }
+  }
+  [IpcChannel.ChatRenameSession]: {
+    request: { agentId: string; sessionId: string; title: string }
+    response: void
   }
   [IpcChannel.ChatExportSession]: {
     request: {

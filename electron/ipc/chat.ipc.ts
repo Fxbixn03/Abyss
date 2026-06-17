@@ -5,6 +5,7 @@ import {
   listChatSessions,
   readChatSession,
   deleteChatSession,
+  renameChatSession,
 } from '@core/chat/history'
 import { computeUsageStats, computeUsageAnalytics } from '@core/chat/usage'
 import { computeInsights } from '@core/chat/insights'
@@ -32,6 +33,9 @@ export function registerChatIpc(ctx: IpcContext): void {
   handle(IpcChannel.ChatDeleteSession, async ({ agentId, sessionId }) => {
     await deleteChatSession(ctx.env, agentId, sessionId)
     return { success: true }
+  })
+  handle(IpcChannel.ChatRenameSession, async ({ agentId, sessionId, title }) => {
+    await renameChatSession(ctx.env, agentId, sessionId, title)
   })
   handle(IpcChannel.ChatUsageStats, ({ agentId, cwd }) =>
     computeUsageStats(ctx.env, agentId, { cwd }),

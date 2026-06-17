@@ -21,6 +21,11 @@ import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { relativeTime } from '../lib/format'
 import type { ChatSessionMeta } from '@/shared/types/chat'
 
+interface RenameState {
+  sessionId: string
+  draft: string
+}
+
 type SortOrder = 'recent' | 'longest' | 'costliest'
 type GroupBy = 'project' | 'date'
 
@@ -133,6 +138,7 @@ export function SessionList({
   const activeSessionId = useChatsStore((s) => s.activeSessionId)
   const openSession = useChatsStore((s) => s.openSession)
   const deleteSession = useChatsStore((s) => s.deleteSession)
+  const renameSession = useChatsStore((s) => s.renameSession)
   const exportSession = useChatsStore((s) => s.exportSession)
   const loadMoreSessions = useChatsStore((s) => s.loadMoreSessions)
   const currency = useSettingsStore((s) => s.settings.currency)
@@ -141,8 +147,45 @@ export function SessionList({
   const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
   const [groupBy, setGroupBy] = useState<GroupBy>('project')
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
+  const [renaming, setRenaming] = useState<RenameState | null>(null)
   // Raw cursor index — clamped to valid range during render
   const [cursorIndex, setCursorIndex] = useState<number>(-1)
+
+  const renameInputRef = useRef<HTMLInputElement>(null)
+
+  const startRename = useCallback((session: ChatSessionMeta) => {
+    setRenaming({ sessionId: session.id, draft: session.title })
+    // Focus the input on the next frame so the DOM has updated
+    requestAnimationFrame(() => {
+      renameInputRef.current?.select()
+    })
+  }, [])
+
+  const commitRename = useCallback(() => {
+    if (!renaming) return
+    const trimmed = renaming.draft.trim()
+    if (trimmed && trimmed !== sessions.find((s) => s.id === renaming.sessionId)?.title) {
+      void renameSession(renaming.sessionId, trimmed)
+    }
+    setRenaming(null)
+  }, [renaming, renameSession, sessions])
+
+  const cancelRename = useCallback(() => {
+    setRenaming(null)
+  }, [])
+
+  const onRenameKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        commitRename()
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        cancelRename()
+      }
+    },
+    [commitRename, cancelRename],
+  )
 
   // Ref to the scroll container for querying session buttons by data-session-id
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -345,8 +388,13 @@ export function SessionList({
                         type="button"
                         role="option"
                         onClick={() => {
+                          if (renaming?.sessionId === s.id) return
                           setCursorIndex(flatIdx)
                           void openSession(s.id)
+                        }}
+                        onDoubleClick={(e) => {
+                          e.preventDefault()
+                          startRename(s)
                         }}
                         onFocus={() => {
                           setCursorIndex(flatIdx)
@@ -361,9 +409,25 @@ export function SessionList({
                             : 'border-transparent hover:bg-accent/60',
                         )}
                       >
-                        <span className="truncate text-sm font-medium">
-                          {s.title}
-                        </span>
+                        {renaming?.sessionId === s.id ? (
+                          <input
+                            ref={renameInputRef}
+                            type="text"
+                            value={renaming.draft}
+                            onChange={(e) =>
+                              setRenaming({ ...renaming, draft: e.target.value })
+                            }
+                            onKeyDown={onRenameKeyDown}
+                            onBlur={commitRename}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full rounded bg-transparent text-sm font-medium outline-none ring-1 ring-primary/60 focus:ring-primary"
+                            aria-label="Rename session"
+                          />
+                        ) : (
+                          <span className="truncate text-sm font-medium">
+                            {s.title}
+                          </span>
+                        )}
                         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
                           <span>{relativeTime(s.updatedAt)}</span>
                           <span>· {s.messageCount} msg</span>
@@ -388,6 +452,11 @@ export function SessionList({
                       </button>
                     </ContextMenuTrigger>
                     <ContextMenuContent>
+                      <ContextMenuItem onSelect={() => startRename(s)}>
+                        <Icon name="pencil" />
+                        Rename
+                      </ContextMenuItem>
+                      <ContextMenuSeparator />
                       <ContextMenuItem
                         onSelect={() => void exportSession(s.id, 'markdown')}
                       >

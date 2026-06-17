@@ -82,6 +82,7 @@ interface ChatsState {
   interrupt: () => Promise<void>
   stopLive: () => Promise<void>
   deleteSession: (sessionId: string) => Promise<void>
+  renameSession: (sessionId: string, title: string) => Promise<void>
   exportSession: (sessionId: string, format: ChatExportFormat) => Promise<void>
   handleStreamEvent: (envelope: ChatStreamEnvelope) => void
 }
@@ -363,6 +364,26 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
       } else {
         reportError(err, { title: "Couldn't delete session" })
       }
+    }
+  },
+
+  renameSession: async (sessionId, title) => {
+    const agentId = get().agentId
+    if (!agentId) return
+    // Optimistic update: immediately reflect the new title in the session list
+    // and in the active transcript title (if this is the currently-open session).
+    set((s) => ({
+      sessions: s.sessions.map((sess) =>
+        sess.id === sessionId ? { ...sess, title } : sess,
+      ),
+      title: s.activeSessionId === sessionId ? title : s.title,
+    }))
+    try {
+      await ipc.chatRenameSession(agentId, sessionId, title)
+    } catch {
+      // Non-Claude agents throw a ConfigWriteError with 'not supported' — swallow
+      // silently since the optimistic update still gives a useful UX for Claude,
+      // and non-Claude agents will simply revert on the next list refresh.
     }
   },
 
