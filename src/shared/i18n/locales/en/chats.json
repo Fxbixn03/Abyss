@@ -27,6 +27,20 @@
     "title": "Referenced file not found",
     "detail": "“{{ref}}” doesn’t exist under the session directory."
   },
+  "markers": {
+    "overconfident": {
+      "title": "High-confidence claim without evidence",
+      "detail": "\"{{phrase}}\" asserted without a tool call, test or reproduction in this message."
+    },
+    "noVerification": {
+      "title": "Claim made without verification",
+      "detail": "States \"{{claim}}\" but no tool, query or file read happened in this conversation."
+    },
+    "contradiction": {
+      "title": "Possible self-contradiction",
+      "detail": "This message contains both sides of \"{{label}}\"."
+    }
+  },
   "starting": "Starting…",
   "startingText": "starting…",
   "newChat": "New chat",

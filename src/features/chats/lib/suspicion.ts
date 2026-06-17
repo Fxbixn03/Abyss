@@ -13,11 +13,29 @@ export type SuspicionKind =
   | 'contradiction'
   | 'missing-file'
 
+/** Valid i18n title keys for suspicion markers in the 'chats' namespace. */
+export type SuspicionTitleKey =
+  | 'markers.overconfident.title'
+  | 'markers.noVerification.title'
+  | 'markers.contradiction.title'
+  | 'missingFile.title'
+
+/** Valid i18n detail keys for suspicion markers in the 'chats' namespace. */
+export type SuspicionDetailKey =
+  | 'markers.overconfident.detail'
+  | 'markers.noVerification.detail'
+  | 'markers.contradiction.detail'
+  | 'missingFile.detail'
+
 export interface SuspicionMarker {
   kind: SuspicionKind
   severity: 'warning' | 'info'
-  title: string
-  detail: string
+  /** i18n key for the marker title (resolved in ChatsPage via useTranslation). */
+  titleKey: SuspicionTitleKey
+  /** i18n key for the marker detail (resolved in ChatsPage via useTranslation). */
+  detailKey: SuspicionDetailKey
+  /** Optional interpolation params for the detail translation string. */
+  detailParams?: Record<string, string>
   /** Short excerpt of the offending message. */
   snippet: string
   /** Index of the originating message in the transcript (absent for post-hoc markers). */
@@ -93,8 +111,9 @@ export function analyzeTranscript(messages: ChatMessage[]): SuspicionMarker[] {
       markers.push({
         kind: 'overconfident',
         severity: 'warning',
-        title: 'High-confidence claim without evidence',
-        detail: `”${phrase}” asserted without a tool call, test or reproduction in this message.`,
+        titleKey: 'markers.overconfident.title',
+        detailKey: 'markers.overconfident.detail',
+        detailParams: { phrase },
         snippet: snippetAround(text, phrase),
         messageIndex: msgIdx,
       })
@@ -106,8 +125,9 @@ export function analyzeTranscript(messages: ChatMessage[]): SuspicionMarker[] {
       markers.push({
         kind: 'no-verification',
         severity: 'warning',
-        title: 'Claim made without verification',
-        detail: `States “${quant[0]}” but no tool, query or file read happened in this conversation.`,
+        titleKey: 'markers.noVerification.title',
+        detailKey: 'markers.noVerification.detail',
+        detailParams: { claim: quant[0] },
         snippet: snippetAround(text, quant[0]),
         messageIndex: msgIdx,
       })
@@ -119,8 +139,9 @@ export function analyzeTranscript(messages: ChatMessage[]): SuspicionMarker[] {
         markers.push({
           kind: 'contradiction',
           severity: 'info',
-          title: 'Possible self-contradiction',
-          detail: `This message contains both sides of “${label}”.`,
+          titleKey: 'markers.contradiction.title',
+          detailKey: 'markers.contradiction.detail',
+          detailParams: { label },
           snippet: text.slice(0, 140),
           messageIndex: msgIdx,
         })

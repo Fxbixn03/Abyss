@@ -190,8 +190,9 @@ export function ChatsPage() {
         markers.push({
           kind: 'missing-file',
           severity: 'warning',
-          title: t('missingFile.title'),
-          detail: t('missingFile.detail', { ref }),
+          titleKey: 'missingFile.title',
+          detailKey: 'missingFile.detail',
+          detailParams: { ref },
           snippet: ref,
         })
       }
@@ -457,8 +458,8 @@ export function ChatsPage() {
                           )}
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium">{marker.title}</p>
-                          <p className="text-muted-foreground">{marker.detail}</p>
+                          <p className="font-medium">{t(marker.titleKey)}</p>
+                          <p className="text-muted-foreground">{t(marker.detailKey, marker.detailParams)}</p>
                           <p className="mt-0.5 truncate font-code text-[11px] text-muted-foreground/70">
                             {marker.snippet}
                           </p>

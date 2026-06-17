@@ -206,14 +206,14 @@ test('analyzeTranscript: does NOT flag contradiction when antonym pair is not in
   assert.equal(contradictions.length, 0)
 })
 
-test('analyzeTranscript: contradiction marker has correct title', () => {
+test('analyzeTranscript: contradiction marker has correct titleKey', () => {
   const messages: ChatMessage[] = [
     textMessage('It failed but everything succeeded in the end.'),
   ]
   const markers = analyzeTranscript(messages)
   const contradiction = markers.find((m) => m.kind === 'contradiction')
   assert.ok(contradiction)
-  assert.equal(contradiction.title, 'Possible self-contradiction')
+  assert.equal(contradiction.titleKey, 'markers.contradiction.title')
 })
 
 // ── analyzeTranscript — tool use suppression ──────────────────────────────────

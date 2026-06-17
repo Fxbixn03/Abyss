@@ -27,6 +27,20 @@
     "title": "Referenzierte Datei nicht gefunden",
     "detail": "„{{ref}}“ existiert nicht im Sitzungsverzeichnis."
   },
+  "markers": {
+    "overconfident": {
+      "title": "Hochkonfidenz-Aussage ohne Belege",
+      "detail": "\"{{phrase}}\" wurde ohne Tool-Aufruf, Test oder Reproduktion in dieser Nachricht behauptet."
+    },
+    "noVerification": {
+      "title": "Behauptung ohne Verifikation",
+      "detail": "Gibt an \"{{claim}}\", aber kein Tool, keine Abfrage und kein Datei-Lesen fand in diesem Gespräch statt."
+    },
+    "contradiction": {
+      "title": "Möglicher Selbstwiderspruch",
+      "detail": "Diese Nachricht enthält beide Seiten von \"{{label}}\"."
+    }
+  },
   "starting": "Wird gestartet…",
   "startingText": "wird gestartet…",
   "newChat": "Neuer Chat",
