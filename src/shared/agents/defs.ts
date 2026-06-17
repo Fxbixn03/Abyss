@@ -704,7 +704,7 @@ export const amazonqDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: false,
-    chats: false,
+    chats: true,
   },
   configFiles: [amazonqInstructions],
   resolvePaths: (env: OsEnv) => [
