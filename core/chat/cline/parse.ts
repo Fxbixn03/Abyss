@@ -32,7 +32,7 @@ import {
   listClineSessionFiles,
 } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
-import { ConfigWriteError } from '../../config-error'
+import { ConfigWriteError, ConfigNotFoundError, ConfigReadError } from '../../config-error'
 
 /**
  * A single raw entry in `api_conversation_history.json`. Cline uses the
@@ -79,7 +79,16 @@ async function parseHistoryFile(
   filePath: string,
 ): Promise<{ messages: ChatMessage[]; taskId: string }> {
   const taskId = clineSessionId(filePath)
-  const raw = await fs.readFile(filePath, 'utf-8')
+  let raw: string
+  try {
+    raw = await fs.readFile(filePath, 'utf-8')
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code
+    if (code === 'EACCES' || code === 'EPERM') {
+      throw new ConfigReadError(filePath, err)
+    }
+    throw err
+  }
   const parsed: unknown = JSON.parse(raw)
 
   if (!Array.isArray(parsed)) return { messages: [], taskId }
@@ -160,7 +169,7 @@ export async function readClineSession(
   sessionId: string,
 ): Promise<ChatTranscript> {
   const filePath = await findClineSessionFile(env, sessionId)
-  if (!filePath) throw new Error(`Cline session not found: ${sessionId}`)
+  if (!filePath) throw new ConfigNotFoundError(sessionId)
 
   const stat = await fs.stat(filePath)
   const { messages } = await parseHistoryFile(filePath)
