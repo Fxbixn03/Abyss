@@ -12,6 +12,7 @@ import { aiderChatRuntime } from './aider/runtime'
 import { clineChatRuntime } from './cline/runtime'
 import { rooChatRuntime } from './roo/runtime'
 import { gooseChatRuntime } from './goose/runtime'
+import { plandexChatRuntime } from './plandex/runtime'
 
 const runtimes = new Map<string, ChatRuntime>()
 
@@ -43,3 +44,4 @@ register(aiderChatRuntime)
 register(clineChatRuntime)
 register(rooChatRuntime)
 register(gooseChatRuntime)
+register(plandexChatRuntime)

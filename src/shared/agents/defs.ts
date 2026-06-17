@@ -626,7 +626,7 @@ export const plandexDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: false,
-    chats: false,
+    chats: true,
   },
   configFiles: [plandexInstructions],
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.plandex')],
