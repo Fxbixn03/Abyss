@@ -77,6 +77,12 @@ function ComposerInner({
       return
     }
 
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault()
+      submit()
+      return
+    }
+
     if (e.key === 'ArrowUp') {
       const el = e.currentTarget
       // Only navigate history when the textarea is empty or the cursor is on the first line.
@@ -149,8 +155,8 @@ function ComposerInner({
             size="icon"
             onClick={submit}
             disabled={disabled || text.trim() === ''}
-            title="Send (Enter)"
-            aria-label="Send (Enter)"
+            title="Send (Enter / Cmd+Enter)"
+            aria-label="Send (Enter / Cmd+Enter)"
           >
             <Icon name="send" />
           </Button>
