@@ -8,9 +8,11 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import { agentRegistry } from '@/features/agents/registry/agent.registry'
 import {
   isDiskWriteError,
+  isReadPermissionError,
   isWritePermissionError,
   reportDiskWriteError,
   reportError,
+  reportReadPermissionError,
   reportWritePermissionError,
 } from '@/shared/lib/errors'
 
@@ -78,7 +80,11 @@ export const useConfigStore = create<ConfigEditorState>()((set, get) => ({
       if (get().spec?.id === spec.id && get().agentId === agentId) {
         set({ loading: false })
       }
-      reportError(err, { title: `Couldn't open ${spec.filename}` })
+      if (isReadPermissionError(err)) {
+        reportReadPermissionError(err, (path) => void ipc.revealPath(path))
+      } else {
+        reportError(err, { title: `Couldn't open ${spec.filename}` })
+      }
     }
   },
 
@@ -140,7 +146,11 @@ export const useConfigStore = create<ConfigEditorState>()((set, get) => ({
         issues: validate(agentId, spec, result.content),
       })
     } catch (err) {
-      reportError(err, { title: `Couldn't reload ${spec.filename}` })
+      if (isReadPermissionError(err)) {
+        reportReadPermissionError(err, (path) => void ipc.revealPath(path))
+      } else {
+        reportError(err, { title: `Couldn't reload ${spec.filename}` })
+      }
     }
   },
 }))

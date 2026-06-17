@@ -5,9 +5,11 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import {
   isConfigParseError,
   isDiskWriteError,
+  isReadPermissionError,
   isWritePermissionError,
   reportDiskWriteError,
   reportError,
+  reportReadPermissionError,
   reportWritePermissionError,
 } from '@/shared/lib/errors'
 import type { ConfigParseInfo } from '@/shared/lib/errors'
@@ -71,7 +73,10 @@ export const useMcpStore = create<McpState>()((set, get) => ({
     } catch (err) {
       // Only act if this load is still the current one.
       const current = get().basePath === basePath && get().agentId === agentId
-      if (isConfigParseError(err)) {
+      if (isReadPermissionError(err)) {
+        if (current) set({ loading: false })
+        reportReadPermissionError(err, (path) => void ipc.revealPath(path))
+      } else if (isConfigParseError(err)) {
         // A corrupt file isn't a transient failure — show the repair banner
         // instead of a toast that vanishes.
         if (current) {
