@@ -10,6 +10,9 @@ import type { OsEnv } from '@/shared/types/agent'
 import type { BackupInfo, BackupStatus } from '@/shared/types/backup'
 import type { ExportBundle } from '@/shared/types/bundle'
 import { exportBundle } from './bundle'
+import { writeTextFileAtomic } from './json-file'
+import { isPermissionError, isDiskError } from './os-errors'
+import { ConfigWriteError, ConfigDiskError } from './config-error'
 
 const PREFIX = 'abyss-backup-'
 
@@ -57,7 +60,13 @@ export async function createBackup(
   const stamp = new Date().toISOString().replace(/[:.]/g, '-')
   const name = `${PREFIX}${stamp}.json`
   const full = path.join(dir, name)
-  await fs.writeFile(full, `${JSON.stringify(bundle, null, 2)}\n`, 'utf8')
+  try {
+    await writeTextFileAtomic(full, `${JSON.stringify(bundle, null, 2)}\n`)
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(full, err)
+    if (isDiskError(err)) throw new ConfigDiskError(full, err)
+    throw err
+  }
   await prune(dir, keep)
   const stat = await fs.stat(full)
   return {
