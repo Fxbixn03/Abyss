@@ -19,6 +19,7 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import { estimateCostUsd, formatMoney } from '@/shared/lib/cost'
 import { useChatsStore } from '../store/chats.store'
 import { usePinnedSessionsStore } from '../store/pinnedSessions.store'
+import { useSessionListPrefsStore } from '../store/sessionListPrefs.store'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { relativeTime } from '../lib/format'
 import {
@@ -60,9 +61,12 @@ export function SessionList({
   const pinnedSessionIds = usePinnedSessionsStore((s) => s.pinnedSessionIds)
   const togglePin = usePinnedSessionsStore((s) => s.togglePin)
 
+  const sortOrder = useSessionListPrefsStore((s) => s.sortOrder)
+  const setSortOrder = useSessionListPrefsStore((s) => s.setSortOrder)
+  const groupBy = useSessionListPrefsStore((s) => s.groupBy)
+  const setGroupBy = useSessionListPrefsStore((s) => s.setGroupBy)
+
   const [query, setQuery] = useState('')
-  const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
-  const [groupBy, setGroupBy] = useState<GroupBy>('project')
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const [renaming, setRenaming] = useState<RenameState | null>(null)
   // Raw cursor index — clamped to valid range during render
