@@ -3,7 +3,7 @@ import { rooDefinition } from '@/shared/agents/defs'
 import { validateMarkdownInstructions } from '../lib/validators'
 import { createAdapter } from './base.adapter'
 
-/** Roo Code — edits a global rules file under `~/.roo/rules/`. */
+/** Roo Code — edits global rules, MCP servers, and raw settings under `~/.roo/`. */
 export const rooAdapter: AgentAdapter = createAdapter(rooDefinition, {
   icon: 'img:roo',
   validate: validateMarkdownInstructions,
@@ -14,6 +14,13 @@ export const rooAdapter: AgentAdapter = createAdapter(rooDefinition, {
       icon: 'plug',
       route: '/mcp',
       description: 'Model Context Protocol servers',
+    },
+    {
+      id: 'settings-file',
+      label: 'Settings (raw)',
+      icon: 'braces',
+      route: '/settings-file',
+      description: 'Raw settings.json',
     },
   ],
 })

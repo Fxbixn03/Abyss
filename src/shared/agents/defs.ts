@@ -406,15 +406,24 @@ export const clineDefinition: AgentDefinition = {
 
 const rooRules: ConfigFileSpec = {
   id: 'instructions',
-  filename: 'instructions.md',
+  filename: 'rules/instructions.md',
   scope: 'global',
   language: 'markdown',
   description: 'Global Roo Code rules (loaded from ~/.roo/rules/).',
 }
 
+const rooSettings: ConfigFileSpec = {
+  id: 'settings',
+  filename: 'settings.json',
+  scope: 'global',
+  language: 'json',
+  description: 'Roo Code user settings (approval mode, model preferences).',
+}
+
 /**
- * Roo Code (RooVetGit/Cline fork) — global rules at `~/.roo/rules/` and MCP
- * servers in `~/.roo/mcp.json` (standard `{ mcpServers }` JSON shape).
+ * Roo Code (RooVetGit/Cline fork) — global rules at `~/.roo/rules/`, MCP
+ * servers in `~/.roo/mcp.json` (standard `{ mcpServers }` JSON shape), and
+ * global preferences in `~/.roo/settings.json`.
  */
 export const rooDefinition: AgentDefinition = {
   id: 'roo',
@@ -433,14 +442,14 @@ export const rooDefinition: AgentDefinition = {
     skills: false,
     hooks: false,
     rules: false,
-    rawSettings: false,
+    rawSettings: true,
     chats: true,
   },
-  configFiles: [rooRules],
+  configFiles: [rooRules, rooSettings],
   resolvePaths: (env: OsEnv) => [
     env.platform === 'win32'
-      ? joinPath(env.platform, env.appData, 'roo', 'rules')
-      : joinPath(env.platform, env.home, '.roo', 'rules'),
+      ? joinPath(env.platform, env.appData, 'roo')
+      : joinPath(env.platform, env.home, '.roo'),
   ],
 }
 
