@@ -6,6 +6,10 @@ import { Textarea } from '@/shared/components/ui/textarea'
 import { Icon } from '@/shared/components/Icon'
 import { useComposerDraft } from '../hooks/useComposerDraft'
 
+// Character count thresholds for the live counter badge.
+const CHAR_COUNT_WARN = 1_000  // amber
+const CHAR_COUNT_DANGER = 4_000 // red
+
 export interface ComposerProps {
   onSend: (text: string) => void
   onStop: () => void
@@ -124,6 +128,15 @@ function ComposerInner({
     ? t('composer.placeholderDisabled')
     : t('composer.placeholderActive')
 
+  const charCount = text.length
+  const showCounter = !busy && !disabled && charCount > 0
+  const counterClass =
+    charCount >= CHAR_COUNT_DANGER
+      ? 'text-destructive'
+      : charCount >= CHAR_COUNT_WARN
+        ? 'text-yellow-500'
+        : 'text-muted-foreground'
+
   return (
     <form
       aria-label={t('composer.formLabel')}
@@ -177,6 +190,17 @@ function ComposerInner({
           </Button>
         )}
       </div>
+      {showCounter && (
+        <div className="flex justify-end">
+          <span
+            aria-live="polite"
+            aria-atomic="true"
+            className={`text-xs tabular-nums select-none ${counterClass}`}
+          >
+            {charCount.toLocaleString()}
+          </span>
+        </div>
+      )}
     </form>
   )
 }
