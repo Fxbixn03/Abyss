@@ -836,7 +836,7 @@ export const devinDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: true,
-    chats: false,
+    chats: true,
   },
   configFiles: [devinConfig],
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.devin')],

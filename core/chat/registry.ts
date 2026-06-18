@@ -22,6 +22,7 @@ import { ampChatRuntime } from './amp/runtime'
 import { kiroChatRuntime } from './kiro/runtime'
 import { codyChatRuntime } from './cody/runtime'
 import { zedChatRuntime } from './zed/runtime'
+import { devinChatRuntime } from './devin/runtime'
 
 const runtimes = new Map<string, ChatRuntime>()
 
@@ -63,3 +64,4 @@ register(ampChatRuntime)
 register(kiroChatRuntime)
 register(codyChatRuntime)
 register(zedChatRuntime)
+register(devinChatRuntime)
