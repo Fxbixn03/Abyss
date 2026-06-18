@@ -49,6 +49,11 @@ interface CachedFriction {
 /** filePath → cached friction, per agent id. Survives across IPC calls. */
 const cache = new Map<string, Map<string, CachedFriction>>()
 
+/** Clear all mtime-cache entries so the next call re-reads every transcript. */
+export function invalidateInsightsCache(): void {
+  cache.clear()
+}
+
 function firstText(message: ChatMessage): string {
   for (const block of message.blocks) {
     if (block.kind === 'text') return block.text
