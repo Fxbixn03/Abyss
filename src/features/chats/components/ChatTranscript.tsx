@@ -332,7 +332,7 @@ export function ChatTranscript({
   return (
     <div
       role="region"
-      aria-label="Chat transcript"
+      aria-label={t('transcript.regionLabel')}
       tabIndex={-1}
       className="relative h-full"
       onKeyDown={handleContainerKeyDown}
@@ -403,7 +403,7 @@ export function ChatTranscript({
         // so conversation text can be highlighted and copied.
         data-selectable
         role="log"
-        aria-label="Chat messages"
+        aria-label={t('transcript.logLabel')}
         aria-live="polite"
         className={cn(
           'flex h-full flex-col overflow-y-auto px-1',

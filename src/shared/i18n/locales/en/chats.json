@@ -87,7 +87,9 @@
     "jumpToBottom": "Jump to bottom",
     "jumpToBottomNew_one": "Jump to bottom — {{count}} new message",
     "jumpToBottomNew_other": "Jump to bottom — {{count}} new messages",
-    "typingIndicator": "{{agent}} is responding"
+    "typingIndicator": "{{agent}} is responding",
+    "regionLabel": "Chat transcript",
+    "logLabel": "Chat messages"
   },
   "searchTranscript": "Search transcript",
   "searchTranscriptHint": "Search transcript (Ctrl+F)",

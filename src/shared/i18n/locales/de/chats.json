@@ -87,7 +87,9 @@
     "jumpToBottom": "Nach unten springen",
     "jumpToBottomNew_one": "Nach unten springen — {{count}} neue Nachricht",
     "jumpToBottomNew_other": "Nach unten springen — {{count}} neue Nachrichten",
-    "typingIndicator": "{{agent}} antwortet"
+    "typingIndicator": "{{agent}} antwortet",
+    "regionLabel": "Chat-Transkript",
+    "logLabel": "Chat-Nachrichten"
   },
   "searchTranscript": "Transkript durchsuchen",
   "searchTranscriptHint": "Transkript durchsuchen (Ctrl+F)",
