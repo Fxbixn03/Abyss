@@ -603,7 +603,7 @@ export const zedDefinition: AgentDefinition = {
     hooks: false,
     rules: false,
     rawSettings: true,
-    chats: false,
+    chats: true,
   },
   configFiles: [zedSettings],
   resolvePaths: (env: OsEnv) => [
