@@ -303,8 +303,8 @@ export function ChatsPage() {
                       onClick={() =>
                         setTranscriptSearchOpen((o) => !o)
                       }
-                      aria-label="Search transcript"
-                      title="Search transcript (Ctrl+F)"
+                      aria-label={t('searchTranscript')}
+                      title={t('searchTranscriptHint')}
                     >
                       <Icon name="search" className="size-4" />
                     </Button>
@@ -317,13 +317,13 @@ export function ChatsPage() {
                     }
                     aria-label={
                       density === 'comfortable'
-                        ? 'Switch to compact density'
-                        : 'Switch to comfortable density'
+                        ? t('densityCompact')
+                        : t('densityComfortable')
                     }
                     title={
                       density === 'comfortable'
-                        ? 'Switch to compact density'
-                        : 'Switch to comfortable density'
+                        ? t('densityCompact')
+                        : t('densityComfortable')
                     }
                   >
                     <Icon
@@ -469,8 +469,8 @@ export function ChatsPage() {
                             size="icon"
                             variant="ghost"
                             className="size-5 shrink-0 self-start"
-                            aria-label="Jump to message"
-                            title="Jump to message"
+                            aria-label={t('jumpToMessage')}
+                            title={t('jumpToMessage')}
                             onClick={() => {
                               riskJumpSeqRef.current += 1
                               setRiskJumpTarget({

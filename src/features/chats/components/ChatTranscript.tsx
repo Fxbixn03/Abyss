@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ChatMessage } from '@/shared/types/chat'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Button } from '@/shared/components/ui/button'
@@ -107,6 +108,7 @@ export function ChatTranscript({
   /** Agent is working but hasn't produced visible output yet → show typing dots. */
   pending?: boolean
 }) {
+  const { t } = useTranslation('chats')
   const endRef = useRef<HTMLDivElement>(null)
   const bottomLocked = useRef(true)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -322,8 +324,8 @@ export function ChatTranscript({
     return (
       <EmptyState
         icon="messages-square"
-        title="No messages yet"
-        description="Type below to start the conversation."
+        title={t('transcript.emptyTitle')}
+        description={t('transcript.emptyDesc')}
       />
     )
   }
@@ -351,17 +353,17 @@ export function ChatTranscript({
               setActiveMatch(0)
             }}
             onKeyDown={handleSearchKeyDown}
-            placeholder="Search messages…"
+            placeholder={t('transcript.searchPlaceholder')}
             className="h-7 flex-1 border-none bg-transparent px-1 text-sm shadow-none focus-visible:ring-0"
-            aria-label="Search messages"
+            aria-label={t('transcript.searchAriaLabel')}
           />
           <span
             className="shrink-0 text-xs text-muted-foreground"
             aria-live="polite"
           >
             {query.trim() === '' ? '' : matchIndices.length === 0
-              ? 'No results'
-              : `${activeMatch + 1} / ${matchIndices.length}`}
+              ? t('transcript.noResults')
+              : t('transcript.matchCounter', { current: activeMatch + 1, total: matchIndices.length })}
           </span>
           <Button
             size="icon"
@@ -369,8 +371,8 @@ export function ChatTranscript({
             className="size-6 shrink-0"
             onClick={goToPrev}
             disabled={matchIndices.length === 0}
-            aria-label="Previous match"
-            title="Previous match"
+            aria-label={t('transcript.prevMatch')}
+            title={t('transcript.prevMatch')}
           >
             <Icon name="chevron-up" className="size-3.5" />
           </Button>
@@ -380,8 +382,8 @@ export function ChatTranscript({
             className="size-6 shrink-0"
             onClick={goToNext}
             disabled={matchIndices.length === 0}
-            aria-label="Next match"
-            title="Next match"
+            aria-label={t('transcript.nextMatch')}
+            title={t('transcript.nextMatch')}
           >
             <Icon name="chevron-down" className="size-3.5" />
           </Button>
@@ -390,8 +392,8 @@ export function ChatTranscript({
             variant="ghost"
             className="size-6 shrink-0"
             onClick={closeSearch}
-            aria-label="Close search"
-            title="Close search"
+            aria-label={t('transcript.closeSearch')}
+            title={t('transcript.closeSearch')}
           >
             <Icon name="x" className="size-3.5" />
           </Button>
@@ -421,8 +423,7 @@ export function ChatTranscript({
               onClick={() => setVisibleCount((c) => c + WINDOW)}
             >
               <Icon name="chevron-up" />
-              Load {Math.min(WINDOW, hiddenCount)} older message
-              {Math.min(WINDOW, hiddenCount) === 1 ? '' : 's'}
+              {t('transcript.loadOlder', { count: Math.min(WINDOW, hiddenCount) })}
             </Button>
           </div>
         )}
@@ -468,8 +469,8 @@ export function ChatTranscript({
             <Button
               size="icon"
               variant="outline"
-              aria-label="Jump to top"
-              title="Jump to top"
+              aria-label={t('transcript.jumpToTop')}
+              title={t('transcript.jumpToTop')}
               className="pointer-events-auto shadow-md"
               onClick={jumpToTop}
             >
@@ -483,10 +484,10 @@ export function ChatTranscript({
                 variant="outline"
                 aria-label={
                   newMessageCount > 0
-                    ? `Jump to bottom — ${newMessageCount > 99 ? '99+' : newMessageCount} new message${newMessageCount === 1 ? '' : 's'}`
-                    : 'Jump to bottom'
+                    ? t('transcript.jumpToBottomNew', { count: Math.min(newMessageCount, 99) })
+                    : t('transcript.jumpToBottom')
                 }
-                title="Jump to bottom"
+                title={t('transcript.jumpToBottom')}
                 className="pointer-events-auto shadow-md"
                 onClick={jumpToBottom}
               >
@@ -510,10 +511,11 @@ export function ChatTranscript({
 
 /** Animated three-dot "agent is working" indicator. */
 function TypingIndicator({ agentName }: { agentName?: string }) {
+  const { t } = useTranslation('chats')
   return (
     <div
       className="flex items-center gap-1.5 text-muted-foreground"
-      aria-label={`${agentName ?? 'Agent'} is responding`}
+      aria-label={t('transcript.typingIndicator', { agent: agentName ?? 'Agent' })}
     >
       <span className="size-1.5 motion-safe:animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
       <span className="size-1.5 motion-safe:animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
