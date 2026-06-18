@@ -127,6 +127,12 @@ export async function renameCodexSubagent(
   if (await pathExists(dest)) {
     throw new Error(`A Codex subagent named "${to}" already exists.`)
   }
-  await fs.rename(src, dest)
+  try {
+    await fs.rename(src, dest)
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(src, err)
+    if (isDiskError(err)) throw new ConfigDiskError(src, err)
+    throw err
+  }
   return { success: true, id: to, path: dest }
 }

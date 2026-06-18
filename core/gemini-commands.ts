@@ -160,6 +160,12 @@ export async function renameGeminiCommand(
     throw new Error(`A Gemini command named "${to}" already exists.`)
   }
   await ensureDir(path.dirname(dest))
-  await fs.rename(src, dest)
+  try {
+    await fs.rename(src, dest)
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(src, err)
+    if (isDiskError(err)) throw new ConfigDiskError(src, err)
+    throw err
+  }
   return { success: true, id: to, path: dest }
 }
