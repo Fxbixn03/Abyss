@@ -21,6 +21,8 @@ import {
   readTextFile,
   writeTextFileAtomic,
 } from './json-file'
+import { ConfigDiskError, ConfigWriteError } from './config-error'
+import { isDiskError, isPermissionError } from './os-errors'
 
 /** Subdirectory (relative to the Gemini base) that holds slash commands. */
 const COMMANDS_DIR = 'commands'
@@ -131,7 +133,14 @@ export async function deleteGeminiCommand(
   basePath: string,
   id: string,
 ): Promise<{ success: boolean }> {
-  await fs.rm(itemFilePath(basePath, id), { force: true })
+  const filePath = itemFilePath(basePath, id)
+  try {
+    await fs.rm(filePath, { force: true })
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(filePath, err)
+    if (isDiskError(err)) throw new ConfigDiskError(filePath, err)
+    throw err
+  }
   return { success: true }
 }
 

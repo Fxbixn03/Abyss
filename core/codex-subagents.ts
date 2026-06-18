@@ -15,6 +15,8 @@ import { promises as fs } from 'node:fs'
 import { parse } from 'smol-toml'
 import type { CodexSubagentSummary } from '@/shared/types/codex-subagent'
 import { pathExists, readTextFile, writeTextFileAtomic } from './json-file'
+import { ConfigDiskError, ConfigWriteError } from './config-error'
+import { isDiskError, isPermissionError } from './os-errors'
 
 /** Subdirectory (relative to the Codex base) that holds custom agents. */
 const AGENTS_DIR = 'agents'
@@ -99,7 +101,14 @@ export async function deleteCodexSubagent(
   basePath: string,
   id: string,
 ): Promise<{ success: boolean }> {
-  await fs.rm(itemFilePath(basePath, id), { force: true })
+  const filePath = itemFilePath(basePath, id)
+  try {
+    await fs.rm(filePath, { force: true })
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(filePath, err)
+    if (isDiskError(err)) throw new ConfigDiskError(filePath, err)
+    throw err
+  }
   return { success: true }
 }
 
