@@ -349,6 +349,14 @@ test('FONT_SIZE_PX: large maps to "15px"', () => {
   assert.equal(FONT_SIZE_PX['large'], '15px')
 })
 
-test('FONT_SIZE_PX: has exactly three entries', () => {
-  assert.equal(Object.keys(FONT_SIZE_PX).length, 3)
+test('FONT_SIZE_PX: tiny maps to "11px"', () => {
+  assert.equal(FONT_SIZE_PX['tiny'], '11px')
+})
+
+test('FONT_SIZE_PX: huge maps to "18px"', () => {
+  assert.equal(FONT_SIZE_PX['huge'], '18px')
+})
+
+test('FONT_SIZE_PX: has one entry per preset', () => {
+  assert.equal(Object.keys(FONT_SIZE_PX).length, 5)
 })
