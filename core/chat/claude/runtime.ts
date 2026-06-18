@@ -36,6 +36,15 @@ class ClaudeLiveSession implements LiveSession {
   private sessionId: string | undefined
   private disposed = false
   private killTimer: ReturnType<typeof setTimeout> | null = null
+  /**
+   * Accumulates streaming `tool_use` blocks by content-block index while their
+   * input JSON arrives in `input_json_delta` fragments. Emitted as a complete
+   * `block` event on `content_block_stop`. Reset at each `message_start`.
+   */
+  private partialTools = new Map<
+    number,
+    { id: string; name: string; json: string }
+  >()
 
   constructor(
     private readonly binary: string,
@@ -82,6 +91,9 @@ class ClaudeLiveSession implements LiveSession {
       'stream-json',
       '--output-format',
       'stream-json',
+      // Emit token-by-token partial events so the transcript streams live
+      // instead of appearing all at once when the turn completes.
+      '--include-partial-messages',
       '--verbose',
       '--permission-mode',
       o.permissionMode,
@@ -145,15 +157,25 @@ class ClaudeLiveSession implements LiveSession {
       return
     }
 
-    if (type === 'assistant' || type === 'user') {
+    // Token-by-token partial events (`--include-partial-messages`): these carry
+    // the raw Anthropic stream event and drive the live transcript reveal.
+    if (type === 'stream_event') {
+      this.onPartialEvent(asRecord(obj.event))
+      return
+    }
+
+    // Assistant turns are fully covered by the partial `stream_event` path
+    // above, so the consolidated `assistant` line is redundant — skip it to
+    // avoid emitting every block a second time. `user` lines (tool results)
+    // are not part of partial streaming, so they are still surfaced here.
+    if (type === 'user') {
       const message = asRecord(obj.message)
       if (!message) return
       const blocks = blocksFromAnthropicContent(message.content)
       if (blocks.length === 0) return
-      const role = type === 'assistant' ? 'assistant' : 'user'
       this.ctx.emit({
         t: 'message_start',
-        role,
+        role: 'user',
         messageId: asString(message.id) ?? randomUUID(),
       })
       for (const block of blocks) {
@@ -188,6 +210,80 @@ class ClaudeLiveSession implements LiveSession {
               : undefined,
         },
       })
+    }
+  }
+
+  /**
+   * Map a single raw Anthropic streaming event (delivered inside a
+   * `stream_event` line) onto normalized {@link ChatStreamEvent}s. Text and
+   * thinking arrive as deltas so the transcript grows token-by-token; tool_use
+   * blocks are reassembled from their `input_json_delta` fragments and emitted
+   * whole on `content_block_stop`.
+   */
+  private onPartialEvent(event: Record<string, unknown> | undefined): void {
+    if (!event) return
+    const eventType = asString(event.type)
+
+    switch (eventType) {
+      case 'message_start': {
+        const message = asRecord(event.message)
+        this.partialTools.clear()
+        this.ctx.emit({
+          t: 'message_start',
+          role: asString(message?.role) === 'user' ? 'user' : 'assistant',
+          messageId: asString(message?.id) ?? randomUUID(),
+        })
+        return
+      }
+      case 'content_block_start': {
+        const index = event.index
+        const block = asRecord(event.content_block)
+        if (typeof index === 'number' && asString(block?.type) === 'tool_use') {
+          this.partialTools.set(index, {
+            id: asString(block?.id) ?? '',
+            name: asString(block?.name) ?? '',
+            json: '',
+          })
+        }
+        return
+      }
+      case 'content_block_delta': {
+        const delta = asRecord(event.delta)
+        const deltaType = asString(delta?.type)
+        if (deltaType === 'text_delta') {
+          const text = asString(delta?.text)
+          if (text) this.ctx.emit({ t: 'text_delta', text })
+        } else if (deltaType === 'thinking_delta') {
+          const text = asString(delta?.thinking)
+          if (text) this.ctx.emit({ t: 'thinking_delta', text })
+        } else if (deltaType === 'input_json_delta') {
+          const index = event.index
+          const tool =
+            typeof index === 'number' ? this.partialTools.get(index) : undefined
+          if (tool) tool.json += asString(delta?.partial_json) ?? ''
+        }
+        return
+      }
+      case 'content_block_stop': {
+        const index = event.index
+        if (typeof index !== 'number') return
+        const tool = this.partialTools.get(index)
+        if (!tool) return
+        this.partialTools.delete(index)
+        let input: unknown
+        try {
+          input = tool.json ? JSON.parse(tool.json) : {}
+        } catch {
+          input = {}
+        }
+        this.ctx.emit({
+          t: 'block',
+          block: { kind: 'tool_use', id: tool.id, name: tool.name, input },
+        })
+        return
+      }
+      // message_delta / message_stop: turn completion is driven by the
+      // top-level `result` line, so nothing to do here.
     }
   }
 
