@@ -28,7 +28,8 @@ import {
   claudeLogout,
   findClaudeBinary,
 } from './auth'
-import { ConfigWriteError } from '../../config-error'
+import { ConfigDiskError, ConfigWriteError } from '../../config-error'
+import { isDiskError, isPermissionError } from '../../os-errors'
 
 /** Grace period after SIGTERM before a still-running child is force-killed. */
 const KILL_ESCALATION_MS = 2500
@@ -354,7 +355,9 @@ export const claudeChatRuntime: ChatRuntime = {
     try {
       await fs.appendFile(found.filePath, line, 'utf8')
     } catch (err) {
-      throw new ConfigWriteError(found.filePath, err)
+      if (isDiskError(err)) throw new ConfigDiskError(found.filePath, err)
+      if (isPermissionError(err)) throw new ConfigWriteError(found.filePath, err)
+      throw err
     }
   },
 

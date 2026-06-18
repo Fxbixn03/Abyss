@@ -390,10 +390,14 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
     }))
     try {
       await ipc.chatRenameSession(agentId, sessionId, title)
-    } catch {
-      // Non-Claude agents throw a ConfigWriteError with 'not supported' — swallow
-      // silently since the optimistic update still gives a useful UX for Claude,
-      // and non-Claude agents will simply revert on the next list refresh.
+    } catch (err) {
+      if (isWritePermissionError(err)) {
+        reportWritePermissionError(err, (path) => void ipc.revealPath(path))
+      } else if (isDiskWriteError(err)) {
+        reportDiskWriteError(err)
+      }
+      // Otherwise swallow silently: non-Claude agents throw a ConfigWriteError
+      // with 'not supported' which should not surface as a toast.
     }
   },
 
