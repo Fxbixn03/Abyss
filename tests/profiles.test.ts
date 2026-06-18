@@ -20,7 +20,7 @@ import {
   deleteProfile,
   renameProfile,
 } from '@core/profiles'
-import { ConfigParseError } from '@core/config-error'
+import { ConfigParseError, ConfigWriteError } from '@core/config-error'
 import type { ExportBundle } from '@/shared/types/bundle'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -320,6 +320,35 @@ test('renameProfile: trims the new name before writing', async () => {
     const updated = await renameProfile(meta.id, '  Trimmed  ')
     assert.equal(updated?.name, 'Trimmed', 'Expected the name to be trimmed')
   } finally {
+    await fs.rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('renameProfile: surfaces ConfigWriteError on permission-denied write', async () => {
+  // Skip this test when running as root, because root bypasses file-mode checks.
+  if (process.getuid?.() === 0) return
+
+  const dir = await tmp('abyss-prof-rename-perm-')
+  try {
+    configureProfiles(dir)
+    const meta = await saveProfile('OrigName', makeBundle())
+
+    // Make the directory read-only so writeTextFileAtomic cannot create a temp file.
+    await fs.chmod(dir, 0o555)
+
+    await assert.rejects(
+      renameProfile(meta.id, 'NewName'),
+      (err: unknown) => {
+        assert.ok(
+          err instanceof ConfigWriteError,
+          `Expected ConfigWriteError, got ${String(err)}`,
+        )
+        return true
+      },
+    )
+  } finally {
+    // Restore write permission before cleanup so fs.rm can remove the directory.
+    await fs.chmod(dir, 0o755).catch(() => undefined)
     await fs.rm(dir, { recursive: true, force: true })
   }
 })

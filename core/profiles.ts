@@ -13,6 +13,8 @@ import {
   profileSchema,
 } from '@/shared/schemas/config.schemas'
 import { readJsonFile, writeTextFileAtomic } from './json-file'
+import { isPermissionError, isDiskError } from './os-errors'
+import { ConfigWriteError, ConfigDiskError } from './config-error'
 
 let root: string | null = null
 
@@ -107,6 +109,12 @@ export async function renameProfile(
   const profile = await readProfileFile(file)
   if (!profile) return null
   profile.meta.name = name.trim() || profile.meta.name
-  await writeTextFileAtomic(file, `${JSON.stringify(profile, null, 2)}\n`)
+  try {
+    await writeTextFileAtomic(file, `${JSON.stringify(profile, null, 2)}\n`)
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(file, err)
+    if (isDiskError(err)) throw new ConfigDiskError(file, err)
+    throw err
+  }
   return profile.meta
 }
