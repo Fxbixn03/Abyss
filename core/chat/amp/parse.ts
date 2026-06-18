@@ -27,7 +27,7 @@ import { blocksFromAnthropicContent, projectLabelFromCwd } from '../normalize'
 import { paginateByMtime } from '../paginate'
 import { ampSessionId, findAmpSessionFile, listAmpSessionFiles } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
-import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
+import { ConfigWriteError, ConfigNotFoundError, ConfigReadError } from '../../config-error'
 import { isPermissionError } from '../../os-errors'
 
 /** Top-level shape of an Amp conversation JSON file. */
@@ -47,7 +47,8 @@ async function readSessionFile(
   let raw: string
   try {
     raw = await fs.readFile(filePath, 'utf8')
-  } catch {
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigReadError(filePath, err)
     return null
   }
   if (raw.trim() === '') return null
