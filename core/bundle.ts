@@ -15,6 +15,7 @@ import {
 } from '@/shared/agents/defs'
 import { effectiveBasePath } from './agent-paths'
 import { readAgentConfigFile, writeAgentConfigFile } from './config-io'
+import { ConfigValidationError } from './config-error'
 import { readMcpServers, writeMcpServers } from './mcp'
 import { readPermissions, writePermissions } from './claude-settings'
 
@@ -72,6 +73,16 @@ export async function applyBundle(
   opts: ApplyOptions = {},
 ): Promise<ApplyChange[]> {
   const changes: ApplyChange[] = []
+
+  const activeIds = new Set(getActiveAgentDefinitions().map((d) => d.id))
+  for (const agent of bundle.agents) {
+    if (!activeIds.has(agent.agentId)) {
+      throw new ConfigValidationError(
+        'bundle',
+        `Unknown agent id in bundle: ${agent.agentId} — refusing to apply`,
+      )
+    }
+  }
 
   for (const agent of bundle.agents) {
     const def = getAgentDefinition(agent.agentId)
