@@ -27,6 +27,12 @@
       "title": "Editor line wrap",
       "desc": "Wrap long lines in the config editor instead of scrolling horizontally."
     },
+    "chatDensity": {
+      "title": "Chat density",
+      "desc": "Comfortable shows more padding between messages; compact is tighter.",
+      "comfortable": "Comfortable",
+      "compact": "Compact"
+    },
     "guidedTour": {
       "title": "Guided tour",
       "desc": "Replay the short walkthrough of the main areas of Abyss.",

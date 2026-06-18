@@ -160,6 +160,8 @@ export interface AppSettings {
   dateTimeFormat: 'locale' | 'iso' | 'us' | 'eu'
   /** Show beta-quality pages in the nav and let their shortcuts fire. On by default. */
   betaFeatures: boolean
+  /** Message density in the Chats transcript. Defaults to 'comfortable'. */
+  chatDensity: 'compact' | 'comfortable'
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -186,6 +188,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   autoDetectPaths: true,
   dateTimeFormat: 'locale',
   betaFeatures: true,
+  chatDensity: 'comfortable',
 }
 
 /** Auto-update lifecycle, pushed to the renderer as it progresses. */

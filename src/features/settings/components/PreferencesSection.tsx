@@ -134,6 +134,32 @@ export function PreferencesSection() {
             }
           />
           <SettingRow
+            title={t('preferences.chatDensity.title')}
+            description={t('preferences.chatDensity.desc')}
+            control={
+              <Select
+                value={settings.chatDensity ?? 'comfortable'}
+                onValueChange={(v) =>
+                  void updatePrefs({
+                    chatDensity: v as 'compact' | 'comfortable',
+                  })
+                }
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="comfortable">
+                    {t('preferences.chatDensity.comfortable')}
+                  </SelectItem>
+                  <SelectItem value="compact">
+                    {t('preferences.chatDensity.compact')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            }
+          />
+          <SettingRow
             title={t('preferences.guidedTour.title')}
             description={t('preferences.guidedTour.desc')}
             control={

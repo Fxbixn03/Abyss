@@ -27,6 +27,12 @@
       "title": "Zeilenumbruch im Editor",
       "desc": "Lange Zeilen im Konfigurations-Editor umbrechen statt horizontal zu scrollen."
     },
+    "chatDensity": {
+      "title": "Chat-Dichte",
+      "desc": "Komfortabel zeigt mehr Abstand zwischen Nachrichten; kompakt ist enger.",
+      "comfortable": "Komfortabel",
+      "compact": "Kompakt"
+    },
     "guidedTour": {
       "title": "Geführte Tour",
       "desc": "Die kurze Einführung in die wichtigsten Bereiche von Abyss erneut abspielen.",

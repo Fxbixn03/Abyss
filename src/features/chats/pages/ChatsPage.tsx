@@ -18,6 +18,7 @@ import { ipc } from '@/shared/ipc/ipc.client'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useProjectDir, joinPath } from '@/features/scope/hooks/useScopedBase'
+import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { useChatsStore } from '../store/chats.store'
 import { SessionList } from '../components/SessionList'
 import { ChatTranscript } from '../components/ChatTranscript'
@@ -83,8 +84,9 @@ export function ChatsPage() {
   const [transcriptSearchOpen, setTranscriptSearchOpen] = useState(false)
   // Imperative handle published by ChatTranscript so onSend can re-lock scroll.
   const scrollToBottomRef = useRef<() => void>(null)
-  // Message density: resets to comfortable on each page mount.
-  const [density, setDensity] = useState<'compact' | 'comfortable'>('comfortable')
+  // Message density: read from persisted settings so it survives navigation.
+  const density = useSettingsStore((s) => s.settings.chatDensity ?? 'comfortable')
+  const updateSettings = useSettingsStore((s) => s.updatePrefs)
 
   // Session replay: when set, the transcript reveals messages up to `index`.
   // `key` ties the replay to its session so it's ignored after switching chats.
@@ -313,7 +315,10 @@ export function ChatsPage() {
                     variant="ghost"
                     size="icon"
                     onClick={() =>
-                      setDensity((d) => (d === 'comfortable' ? 'compact' : 'comfortable'))
+                      void updateSettings({
+                        chatDensity:
+                          density === 'comfortable' ? 'compact' : 'comfortable',
+                      })
                     }
                     aria-label={
                       density === 'comfortable'
