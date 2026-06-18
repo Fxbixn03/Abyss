@@ -59,8 +59,9 @@ export async function paginateByMtime<F>(
       parse(f.ref).catch((err: unknown) => {
         if (err instanceof ConfigNotFoundError) {
           dropped += 1
+          return null
         }
-        return null
+        throw err
       }),
     ),
   )
