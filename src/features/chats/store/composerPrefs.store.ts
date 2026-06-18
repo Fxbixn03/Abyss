@@ -10,10 +10,14 @@ export interface ComposerPrefs {
 interface ComposerPrefsState {
   /** Maps sessionKey (sessionId or 'new') → { model, permissionMode }. */
   prefs: Record<string, ComposerPrefs>
+  /** Whether the settings bar (permission-mode + model selects) is collapsed. */
+  settingsBarCollapsed: boolean
   /** Update the model for a given key. */
   setModel: (key: string, model: string) => void
   /** Update the permissionMode for a given key. */
   setPermissionMode: (key: string, permissionMode: ChatPermissionMode) => void
+  /** Toggle or set the settings bar collapsed state. */
+  setSettingsBarCollapsed: (collapsed: boolean) => void
 }
 
 const DEFAULT_PREFS: ComposerPrefs = {
@@ -25,6 +29,7 @@ export const useComposerPrefsStore = create<ComposerPrefsState>()(
   persist(
     (set) => ({
       prefs: {},
+      settingsBarCollapsed: false,
       setModel: (key, model) =>
         set((s) => ({
           prefs: {
@@ -39,10 +44,15 @@ export const useComposerPrefsStore = create<ComposerPrefsState>()(
             [key]: { ...(s.prefs[key] ?? DEFAULT_PREFS), permissionMode },
           },
         })),
+      setSettingsBarCollapsed: (collapsed) =>
+        set({ settingsBarCollapsed: collapsed }),
     }),
     {
       name: 'abyss-composer-prefs',
-      partialize: (s) => ({ prefs: s.prefs }),
+      partialize: (s) => ({
+        prefs: s.prefs,
+        settingsBarCollapsed: s.settingsBarCollapsed,
+      }),
     },
   ),
 )

@@ -190,7 +190,11 @@
     "formLabel": "Nachricht senden",
     "stop": "Stopp",
     "send": "Senden (Enter / Cmd+Enter)",
-    "sendHint": "Enter zum Senden · Shift+Enter für Zeilenumbruch"
+    "sendHint": "Enter zum Senden · Shift+Enter für Zeilenumbruch",
+    "settingsBar": {
+      "expand": "Einstellungen ausklappen",
+      "collapse": "Einstellungen einklappen"
+    }
   },
   "loginGate": {
     "checking": "{{agent}} wird geprüft…",

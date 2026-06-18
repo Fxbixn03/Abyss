@@ -44,6 +44,11 @@ import { ChatStreamAnnouncer } from '../components/ChatStreamAnnouncer'
 import { REPLAY_SPEEDS } from '../lib/replay'
 
 const CLAUDE_MODELS = ['default', 'opus', 'sonnet', 'haiku'] as const
+type ClaudeModel = (typeof CLAUDE_MODELS)[number]
+
+function isClaudeModel(m: string): m is ClaudeModel {
+  return (CLAUDE_MODELS as readonly string[]).includes(m)
+}
 
 const PERMISSION_MODES: ChatPermissionMode[] = [
   'default',
@@ -80,6 +85,12 @@ export function ChatsPage() {
   const setStoredModel = useComposerPrefsStore((s) => s.setModel)
   const setStoredPermissionMode = useComposerPrefsStore(
     (s) => s.setPermissionMode,
+  )
+  const settingsBarCollapsed = useComposerPrefsStore(
+    (s) => s.settingsBarCollapsed,
+  )
+  const setSettingsBarCollapsed = useComposerPrefsStore(
+    (s) => s.setSettingsBarCollapsed,
   )
   const composerPrefsKey = activeSessionId ?? 'new'
   const { model, permissionMode } = getComposerPrefs(
@@ -627,56 +638,110 @@ export function ChatsPage() {
                     }}
                     onStop={() => void interrupt()}
                     settingsBar={
-                      <div className="flex flex-wrap items-center gap-2 border-b border-border/60 pb-2">
-                        <Select
-                          value={permissionMode}
-                          onValueChange={(v) =>
-                            setStoredPermissionMode(
-                              composerPrefsKey,
-                              v as ChatPermissionMode,
-                            )
-                          }
-                        >
-                          <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
-                            <Icon name="shield" className="size-3.5" />
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {PERMISSION_MODES.map((m) => (
-                              <SelectItem key={m} value={m}>
-                                {t(`permissionModes.${m}`)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-
-                        {agent.id === 'claude' && (
-                          <Select
-                            value={model}
-                            onValueChange={(v) =>
-                              setStoredModel(composerPrefsKey, v)
+                      <div className="border-b border-border/60 pb-2">
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            aria-expanded={!settingsBarCollapsed}
+                            aria-label={
+                              settingsBarCollapsed
+                                ? t('composer.settingsBar.expand')
+                                : t('composer.settingsBar.collapse')
                             }
+                            title={
+                              settingsBarCollapsed
+                                ? t('composer.settingsBar.expand')
+                                : t('composer.settingsBar.collapse')
+                            }
+                            onClick={() =>
+                              setSettingsBarCollapsed(!settingsBarCollapsed)
+                            }
+                            className="flex shrink-0 items-center text-muted-foreground hover:text-foreground"
                           >
-                            <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
-                              <Icon name="cpu" className="size-3.5" />
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {CLAUDE_MODELS.map((m) => (
-                                <SelectItem key={m} value={m}>
-                                  {t(`models.${m}`)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
+                            <Icon
+                              name={
+                                settingsBarCollapsed
+                                  ? 'chevron-right'
+                                  : 'chevron-down'
+                              }
+                              className="size-3.5"
+                            />
+                          </button>
+                          {settingsBarCollapsed && (
+                            <span className="truncate text-xs text-muted-foreground">
+                              {t(`permissionModes.${permissionMode}`)}
+                              {agent.id === 'claude' &&
+                                isClaudeModel(model) &&
+                                ` · ${t(`models.${model}`)}`}
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          aria-hidden={settingsBarCollapsed}
+                          className={cn(
+                            'grid motion-safe:transition-[grid-template-rows] motion-safe:duration-200 motion-safe:ease-in-out',
+                            settingsBarCollapsed
+                              ? 'grid-rows-[0fr]'
+                              : 'grid-rows-[1fr]',
+                          )}
+                        >
+                          <div className="overflow-hidden">
+                            <div className="flex flex-wrap items-center gap-2 pt-1.5">
+                              <Select
+                                value={permissionMode}
+                                onValueChange={(v) =>
+                                  setStoredPermissionMode(
+                                    composerPrefsKey,
+                                    v as ChatPermissionMode,
+                                  )
+                                }
+                              >
+                                <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
+                                  <Icon name="shield" className="size-3.5" />
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {PERMISSION_MODES.map((m) => (
+                                    <SelectItem key={m} value={m}>
+                                      {t(`permissionModes.${m}`)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
 
-                        {status === 'starting' && (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Spinner className="size-3" label={t('starting')} />
-                            {t('startingText')}
-                          </span>
-                        )}
+                              {agent.id === 'claude' && (
+                                <Select
+                                  value={model}
+                                  onValueChange={(v) =>
+                                    setStoredModel(composerPrefsKey, v)
+                                  }
+                                >
+                                  <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
+                                    <Icon name="cpu" className="size-3.5" />
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {CLAUDE_MODELS.map((m) => (
+                                      <SelectItem key={m} value={m}>
+                                        {t(`models.${m}`)}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+
+                              {status === 'starting' && (
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Spinner
+                                    className="size-3"
+                                    label={t('starting')}
+                                  />
+                                  {t('startingText')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     }
                   />

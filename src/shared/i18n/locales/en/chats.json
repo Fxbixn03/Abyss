@@ -193,7 +193,11 @@
     "formLabel": "Send a message",
     "stop": "Stop",
     "send": "Send (Enter / Cmd+Enter)",
-    "sendHint": "Enter to send · Shift+Enter for newline"
+    "sendHint": "Enter to send · Shift+Enter for newline",
+    "settingsBar": {
+      "expand": "Expand settings",
+      "collapse": "Collapse settings"
+    }
   },
   "loginGate": {
     "checking": "Checking {{agent}}…",
