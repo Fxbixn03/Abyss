@@ -158,6 +158,10 @@
     "thinking": "denkt nach…",
     "sentAt": "Gesendet {{time}}"
   },
+  "announcer": {
+    "responding": "Agent antwortet…",
+    "complete": "Antwort abgeschlossen"
+  },
   "composer": {
     "placeholderDisabled": "Anmelden, um zu chatten…",
     "placeholderActive": "Nachricht an den Agenten…",

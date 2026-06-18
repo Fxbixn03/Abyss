@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useChatsStore } from '../store/chats.store'
 
 /**
@@ -8,6 +9,7 @@ import { useChatsStore } from '../store/chats.store'
  * content swaps.
  */
 export function ChatStreamAnnouncer() {
+  const { t } = useTranslation('chats')
   const status = useChatsStore((s) => s.status)
 
   // Track whether a streaming turn just completed so we can announce
@@ -22,11 +24,11 @@ export function ChatStreamAnnouncer() {
     prevStatus.current = status
 
     if (status === 'streaming' && prev !== 'streaming') {
-      queueMicrotask(() => setAnnouncement('Agent is responding…'))
+      queueMicrotask(() => setAnnouncement(t('announcer.responding')))
     } else if (status === 'idle' && prev === 'streaming') {
-      queueMicrotask(() => setAnnouncement('Response complete'))
+      queueMicrotask(() => setAnnouncement(t('announcer.complete')))
     }
-  }, [status])
+  }, [status, t])
 
   return (
     <div

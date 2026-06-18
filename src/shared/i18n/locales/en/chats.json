@@ -158,6 +158,10 @@
     "thinking": "thinking…",
     "sentAt": "Sent {{time}}"
   },
+  "announcer": {
+    "responding": "Agent is responding…",
+    "complete": "Response complete"
+  },
   "composer": {
     "placeholderDisabled": "Sign in to start chatting…",
     "placeholderActive": "Message the agent…",
