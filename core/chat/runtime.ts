@@ -66,6 +66,18 @@ export interface ChatRuntime {
   listSessions(env: OsEnv, opts?: ChatListOptions): Promise<ChatSessionPage>
   readSession(env: OsEnv, sessionId: string): Promise<ChatTranscript>
   deleteSession(env: OsEnv, sessionId: string): Promise<void>
+  /**
+   * Optional: rename an existing session. When present, callers dispatch
+   * through this method; when absent, the caller throws a
+   * `ConfigWriteError('not supported')`. Moving this per-agent logic here
+   * means new runtimes that support renaming can implement it without editing
+   * the shared `history.ts` facade.
+   */
+  renameSession?(
+    env: OsEnv,
+    sessionId: string,
+    title: string,
+  ): Promise<void>
   /** Optional cheap, cacheable source for the usage aggregator. */
   usage?: ChatUsageSource
 

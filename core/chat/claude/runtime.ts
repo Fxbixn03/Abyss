@@ -9,6 +9,7 @@ import { spawn } from 'node:child_process'
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
 import { createInterface } from 'node:readline'
 import { randomUUID } from 'node:crypto'
+import { promises as fs } from 'node:fs'
 import type { OsEnv } from '@/shared/types/agent'
 import type { ChatPermissionDecision } from '@/shared/types/chat'
 import type { ChatRuntime, LiveSession, StartContext } from '../runtime'
@@ -20,13 +21,14 @@ import {
   deleteClaudeSession,
   readSessionMeta,
 } from './parse'
-import { listClaudeSessionFiles } from './paths'
+import { listClaudeSessionFiles, findClaudeSessionFile } from './paths'
 import {
   claudeAvailability,
   claudeLogin,
   claudeLogout,
   findClaudeBinary,
 } from './auth'
+import { ConfigWriteError } from '../../config-error'
 
 /** Grace period after SIGTERM before a still-running child is force-killed. */
 const KILL_ESCALATION_MS = 2500
@@ -333,6 +335,28 @@ export const claudeChatRuntime: ChatRuntime = {
     readClaudeSession(env, sessionId),
   deleteSession: (env: OsEnv, sessionId: string) =>
     deleteClaudeSession(env, sessionId),
+
+  /**
+   * Rename a Claude session by appending a `{ type: 'summary', summary: title
+   * }` line to the JSONL file. The existing parser prefers `summary` over the
+   * first-message title, so the rename takes effect on the next read.
+   */
+  async renameSession(
+    env: OsEnv,
+    sessionId: string,
+    title: string,
+  ): Promise<void> {
+    const found = await findClaudeSessionFile(env, sessionId)
+    if (!found) {
+      throw new ConfigWriteError(sessionId, new Error('Session file not found'))
+    }
+    const line = JSON.stringify({ type: 'summary', summary: title }) + '\n'
+    try {
+      await fs.appendFile(found.filePath, line, 'utf8')
+    } catch (err) {
+      throw new ConfigWriteError(found.filePath, err)
+    }
+  },
 
   usage: {
     listFiles: (env) => listClaudeSessionFiles(env),

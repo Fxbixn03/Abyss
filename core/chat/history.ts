@@ -3,7 +3,6 @@
  * of which agent backs a session.
  */
 
-import { promises as fs } from 'node:fs'
 import type { OsEnv } from '@/shared/types/agent'
 import type {
   ChatListOptions,
@@ -11,7 +10,6 @@ import type {
   ChatTranscript,
 } from '@/shared/types/chat'
 import { getChatRuntime, hasChatRuntime } from './registry'
-import { findClaudeSessionFile } from './claude/paths'
 import { ConfigWriteError } from '../config-error'
 
 export function listChatSessions(
@@ -42,11 +40,10 @@ export function deleteChatSession(
 /**
  * Rename a chat session by updating its title.
  *
- * For Claude (JSONL-backed sessions) this appends a `{ type: 'summary',
- * summary: title }` line; the existing parser already prefers `summary` over
- * the first-message title, so the change takes effect on the next read.
- *
- * All other runtimes do not currently support renaming and throw a
+ * Dispatches to the runtime's optional `renameSession` method when present.
+ * Runtimes that support renaming implement `renameSession` directly, so this
+ * facade never needs to know their agent-specific format. Runtimes that do not
+ * support renaming leave the method unimplemented and this function throws a
  * `ConfigWriteError` with a 'not supported' message that the caller can catch
  * silently.
  */
@@ -56,18 +53,9 @@ export async function renameChatSession(
   sessionId: string,
   title: string,
 ): Promise<void> {
-  if (agentId === 'claude') {
-    const found = await findClaudeSessionFile(env, sessionId)
-    if (!found) {
-      throw new ConfigWriteError(sessionId, new Error('Session file not found'))
-    }
-    const line = JSON.stringify({ type: 'summary', summary: title }) + '\n'
-    try {
-      await fs.appendFile(found.filePath, line, 'utf8')
-    } catch (err) {
-      throw new ConfigWriteError(found.filePath, err)
-    }
-    return
+  const runtime = hasChatRuntime(agentId) ? getChatRuntime(agentId) : null
+  if (runtime?.renameSession) {
+    return runtime.renameSession(env, sessionId, title)
   }
   throw new ConfigWriteError(
     sessionId,
