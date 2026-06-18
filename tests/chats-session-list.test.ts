@@ -8,6 +8,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  filterSessions,
   sortSessions,
   dateBucket,
   groupSessions,
@@ -443,5 +444,100 @@ test('groupSessions: multiple pinned sessions preserve their relative order', ()
   assert.deepEqual(
     items.map((s) => s.id),
     ['b', 'd', 'a', 'c'],
+  )
+})
+
+// ── filterSessions ────────────────────────────────────────────────────────────
+
+test('filterSessions: empty query returns all sessions unchanged (same reference)', () => {
+  const sessions = [
+    makeSession({ id: 'a', title: 'Alpha' }),
+    makeSession({ id: 'b', title: 'Beta' }),
+  ]
+  assert.strictEqual(filterSessions(sessions, ''), sessions)
+})
+
+test('filterSessions: whitespace-only query returns all sessions unchanged (same reference)', () => {
+  const sessions = [makeSession({ id: 'a' })]
+  assert.strictEqual(filterSessions(sessions, '   '), sessions)
+})
+
+test('filterSessions: matches by title (case-insensitive)', () => {
+  const sessions = [
+    makeSession({ id: 'a', title: 'Refactor database layer' }),
+    makeSession({ id: 'b', title: 'Add login page' }),
+    makeSession({ id: 'c', title: 'Fix REFACTOR typo' }),
+  ]
+  const result = filterSessions(sessions, 'REFACTOR')
+  assert.deepEqual(
+    result.map((s) => s.id),
+    ['a', 'c'],
+  )
+})
+
+test('filterSessions: matches by projectLabel (case-insensitive)', () => {
+  const sessions = [
+    makeSession({ id: 'a', projectLabel: 'MyProject' }),
+    makeSession({ id: 'b', projectLabel: 'other' }),
+    makeSession({ id: 'c', projectLabel: 'myproject-v2' }),
+  ]
+  const result = filterSessions(sessions, 'myproject')
+  assert.deepEqual(
+    result.map((s) => s.id),
+    ['a', 'c'],
+  )
+})
+
+test('filterSessions: matches by cwd (case-insensitive)', () => {
+  const sessions = [
+    makeSession({ id: 'a', cwd: '/home/user/src/backend' }),
+    makeSession({ id: 'b', cwd: '/home/user/src/frontend' }),
+    makeSession({ id: 'c', cwd: '/tmp/scratch' }),
+  ]
+  const result = filterSessions(sessions, 'Backend')
+  assert.deepEqual(
+    result.map((s) => s.id),
+    ['a'],
+  )
+})
+
+test('filterSessions: non-matching query returns empty array', () => {
+  const sessions = [
+    makeSession({ id: 'a', title: 'Alpha', projectLabel: 'proj', cwd: '/home/user/proj' }),
+    makeSession({ id: 'b', title: 'Beta', projectLabel: 'proj', cwd: '/home/user/proj' }),
+  ]
+  const result = filterSessions(sessions, 'zzznomatch')
+  assert.equal(result.length, 0)
+})
+
+test('filterSessions: returns empty array when sessions list is empty', () => {
+  const result = filterSessions([], 'anything')
+  assert.equal(result.length, 0)
+})
+
+test('filterSessions: query matches any of title, projectLabel, or cwd independently', () => {
+  const needle = 'needle'
+  const sessions = [
+    makeSession({ id: 'title-match', title: `has needle here`, projectLabel: 'proj', cwd: '/cwd' }),
+    makeSession({ id: 'label-match', title: 'unrelated', projectLabel: `needle-project`, cwd: '/cwd' }),
+    makeSession({ id: 'cwd-match', title: 'unrelated', projectLabel: 'proj', cwd: `/home/needle/src` }),
+    makeSession({ id: 'no-match', title: 'unrelated', projectLabel: 'proj', cwd: '/cwd' }),
+  ]
+  const result = filterSessions(sessions, needle)
+  assert.deepEqual(
+    result.map((s) => s.id),
+    ['title-match', 'label-match', 'cwd-match'],
+  )
+})
+
+test('filterSessions: trims leading/trailing whitespace from query before matching', () => {
+  const sessions = [
+    makeSession({ id: 'a', title: 'hello world' }),
+    makeSession({ id: 'b', title: 'something else' }),
+  ]
+  const result = filterSessions(sessions, '  hello  ')
+  assert.deepEqual(
+    result.map((s) => s.id),
+    ['a'],
   )
 })

@@ -22,6 +22,7 @@ import { usePinnedSessionsStore } from '../store/pinnedSessions.store'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { relativeTime } from '../lib/format'
 import {
+  filterSessions,
   sortSessions,
   groupSessions,
   DATE_BUCKET_KEY_ORDER,
@@ -118,18 +119,11 @@ export function SessionList({
   }
 
   const groups = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    const filtered = q
-      ? sessions.filter(
-          (s) =>
-            s.title.toLowerCase().includes(q) ||
-            s.projectLabel.toLowerCase().includes(q) ||
-            s.cwd.toLowerCase().includes(q),
-        )
-      : sessions
+    const filtered = filterSessions(sessions, query)
+    const isSearchActive = query.trim().length > 0
     // When a search is active, skip sorting (filtering order is fine); otherwise
     // apply the user-selected sort before grouping so groups and items both reflect it.
-    const sorted = q ? filtered : sortSessions(filtered, sortOrder)
+    const sorted = isSearchActive ? filtered : sortSessions(filtered, sortOrder)
     return groupSessions(sorted, groupBy, pinnedSessionIds)
   }, [sessions, query, sortOrder, groupBy, pinnedSessionIds])
 

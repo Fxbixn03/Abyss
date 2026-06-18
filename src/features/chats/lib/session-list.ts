@@ -9,6 +9,25 @@ export type SortOrder = 'recent' | 'longest' | 'costliest'
 export type GroupBy = 'project' | 'date'
 
 /**
+ * Returns the sessions whose title, projectLabel, or cwd contain `query`
+ * (case-insensitive substring match). An empty or blank query returns all
+ * sessions unchanged (same array reference).
+ */
+export function filterSessions(
+  sessions: ChatSessionMeta[],
+  query: string,
+): ChatSessionMeta[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return sessions
+  return sessions.filter(
+    (s) =>
+      s.title.toLowerCase().includes(q) ||
+      s.projectLabel.toLowerCase().includes(q) ||
+      s.cwd.toLowerCase().includes(q),
+  )
+}
+
+/**
  * Returns a sorted copy of `sessions` according to `sort`.
  * 'recent' preserves the original (already-recency-ordered) sequence.
  */
