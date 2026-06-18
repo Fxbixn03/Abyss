@@ -115,9 +115,10 @@ test('sortSessions: costliest falls back to inputTokens when outputTokens is und
 // ── dateBucket ────────────────────────────────────────────────────────────────
 
 test('dateBucket: timestamp from earlier today returns "today"', () => {
-  // 1 hour ago — definitely earlier today (unless test runs right after midnight)
-  const ts = new Date(Date.now() - 60 * 60 * 1000).toISOString()
-  assert.equal(dateBucket(ts), 'today')
+  // Use noon today — avoids the midnight edge case where "1 hour ago" is yesterday
+  const today = new Date()
+  today.setHours(12, 0, 0, 0)
+  assert.equal(dateBucket(today.toISOString()), 'today')
 })
 
 test('dateBucket: timestamp from exactly now returns "today"', () => {
