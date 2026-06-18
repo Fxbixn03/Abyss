@@ -96,6 +96,9 @@
   "densityCompact": "Zur kompakten Ansicht wechseln",
   "densityComfortable": "Zur komfortablen Ansicht wechseln",
   "jumpToMessage": "Zur Nachricht springen",
+  "exportSession": "Sitzung exportieren",
+  "exportMarkdown": "Als Markdown exportieren",
+  "exportJson": "Als JSON exportieren",
   "sessionList": {
     "newChat": "Neuer Chat",
     "searchPlaceholder": "Chats suchen…",

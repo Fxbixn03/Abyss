@@ -96,6 +96,9 @@
   "densityCompact": "Switch to compact density",
   "densityComfortable": "Switch to comfortable density",
   "jumpToMessage": "Jump to message",
+  "exportSession": "Export session",
+  "exportMarkdown": "Export as Markdown",
+  "exportJson": "Export as JSON",
   "sessionList": {
     "newChat": "New chat",
     "searchPlaceholder": "Search chats…",

@@ -20,6 +20,12 @@ import {
 } from '@/shared/components/ui/select'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { cn } from '@/shared/lib/utils'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
 import { useAgentIcon } from '@/features/agents/hooks/useAgentIcon'
 import { useProjectDir, joinPath } from '@/features/scope/hooks/useScopedBase'
@@ -68,6 +74,7 @@ export function ChatsPage() {
   const newChat = useChatsStore((s) => s.newChat)
   const send = useChatsStore((s) => s.send)
   const interrupt = useChatsStore((s) => s.interrupt)
+  const exportSession = useChatsStore((s) => s.exportSession)
 
   const composerPrefs = useComposerPrefsStore((s) => s.prefs)
   const setStoredModel = useComposerPrefsStore((s) => s.setModel)
@@ -386,6 +393,38 @@ export function ChatsPage() {
                       )}
                       {t('riskScan.scan')}
                     </Button>
+                  )}
+                  {activeSessionId !== null && messages.length > 0 && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          aria-label={t('exportSession')}
+                          title={t('exportSession')}
+                        >
+                          <Icon name="download" className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            void exportSession(activeSessionId, 'markdown')
+                          }
+                        >
+                          <Icon name="file-text" />
+                          {t('exportMarkdown')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            void exportSession(activeSessionId, 'json')
+                          }
+                        >
+                          <Icon name="braces" />
+                          {t('exportJson')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </div>
               </div>
