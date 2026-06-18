@@ -1,10 +1,13 @@
-import { useState, useRef, useLayoutEffect } from 'react'
+import { useState, useRef, useLayoutEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/components/ui/button'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { Icon } from '@/shared/components/Icon'
 import { useComposerDraft } from '../hooks/useComposerDraft'
+import { SlashCommandPopover } from './SlashCommandPopover'
+import { filterSlashCommands } from '../lib/slashCommands'
+import type { SlashCommand } from '../lib/slashCommands'
 
 // Character count thresholds for the live counter badge.
 const CHAR_COUNT_WARN = 1_000  // amber
@@ -31,6 +34,19 @@ interface ComposerInnerProps extends Omit<ComposerProps, 'draftKey'> {
 }
 
 /**
+ * Derive whether the slash-command popover should be open and what the query is.
+ * The popover opens when the text starts with '/' and has no whitespace
+ * (i.e. the user is still typing the command token).
+ */
+function getSlashState(text: string): { open: boolean; query: string } {
+  if (!text.startsWith('/')) return { open: false, query: '' }
+  // Stop showing the popover once the user types a space (argument mode).
+  if (text.includes(' ')) return { open: false, query: '' }
+  const query = text.slice(1) // everything after '/'
+  return { open: true, query }
+}
+
+/**
  * Inner implementation — always rendered once `draftKey` is resolved.
  * Accepts the initial text so the draft store can seed the textarea on mount.
  */
@@ -46,6 +62,13 @@ function ComposerInner({
 }: ComposerInnerProps) {
   const { t } = useTranslation('chats')
   const [text, setText] = useState(initialText)
+
+  // Slash-command popover state — declared before usage in callbacks.
+  const [slashActiveIndex, setSlashActiveIndex] = useState(0)
+  // A one-shot dismiss flag: if the user presses Escape while the popover is
+  // open, we hide it without altering their text. It resets the next time they
+  // type or change the input.
+  const [slashDismissed, setSlashDismissed] = useState(false)
 
   // Ref for the textarea DOM element — used for auto-grow height adjustment.
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -76,7 +99,55 @@ function ComposerInner({
     setText('')
   }
 
+  const { open: slashOpen, query: slashQuery } = getSlashState(text)
+  const filteredCount = filterSlashCommands(slashQuery).length
+  const showPopover = slashOpen && !slashDismissed && filteredCount > 0
+
+  const handleSelectSlashCommand = useCallback(
+    (cmd: SlashCommand) => {
+      setText(cmd.command)
+      onTextChange(cmd.command)
+      setSlashActiveIndex(0)
+      setSlashDismissed(false)
+      // Return focus to the textarea after selection.
+      textareaRef.current?.focus()
+    },
+    [onTextChange],
+  )
+
+  const handleDismissSlash = useCallback(() => {
+    setSlashDismissed(true)
+  }, [])
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Handle slash-command popover navigation first.
+    if (showPopover) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSlashActiveIndex((prev) => Math.min(prev + 1, filteredCount - 1))
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSlashActiveIndex((prev) => Math.max(prev - 1, 0))
+        return
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        const filtered = filterSlashCommands(slashQuery)
+        const cmd = filtered[slashActiveIndex]
+        if (cmd) {
+          handleSelectSlashCommand(cmd)
+        }
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        handleDismissSlash()
+        return
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       submit()
@@ -148,7 +219,15 @@ function ComposerInner({
       }}
     >
       {settingsBar}
-      <div className="flex items-end gap-2">
+      <div className="relative flex items-end gap-2">
+        {showPopover && (
+          <SlashCommandPopover
+            query={slashQuery}
+            activeIndex={slashActiveIndex}
+            onSelect={handleSelectSlashCommand}
+            onDismiss={handleDismissSlash}
+          />
+        )}
         <Textarea
           ref={textareaRef}
           value={text}
@@ -158,6 +237,9 @@ function ComposerInner({
             onTextChange(next)
             // Typing resets the history cursor.
             historyIndex.current = history.current.length
+            // Reset dismiss flag and active index when text changes.
+            setSlashDismissed(false)
+            setSlashActiveIndex(0)
           }}
           onKeyDown={handleKeyDown}
           placeholder={textareaLabel}
