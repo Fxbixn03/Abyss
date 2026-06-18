@@ -16,6 +16,7 @@ import {
 import { cn } from '@/shared/lib/utils'
 import { scrollBehavior } from '@/shared/lib/motion'
 import { ipc } from '@/shared/ipc/ipc.client'
+import { EmptyState } from '@/shared/components/EmptyState'
 import { estimateCostUsd, formatMoney } from '@/shared/lib/cost'
 import { useChatsStore } from '../store/chats.store'
 import { usePinnedSessionsStore } from '../store/pinnedSessions.store'
@@ -307,9 +308,20 @@ export function SessionList({
       >
         {loading ? (
           <p className="px-1 pt-2 text-sm text-muted-foreground">{t('sessionList.loading')}</p>
+        ) : groups.length === 0 && sessions.length === 0 ? (
+          <EmptyState
+            icon="messages-square"
+            title={t('sessionList.emptyTitle')}
+            description={t('sessionList.emptyDesc')}
+            action={
+              showNewChat ? (
+                <Button onClick={onNewChat}>{t('sessionList.newChatAction')}</Button>
+              ) : undefined
+            }
+          />
         ) : groups.length === 0 ? (
           <p className="px-1 pt-2 text-sm text-muted-foreground">
-            {sessions.length === 0 ? t('sessionList.noChatsYet') : t('sessionList.noMatches')}
+            {t('sessionList.noMatches')}
           </p>
         ) : (
           groups.map(([groupLabel, items]) => (
