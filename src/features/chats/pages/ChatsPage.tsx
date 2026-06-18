@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import {
+  useComposerPrefsStore,
+  getComposerPrefs,
+} from '../store/composerPrefs.store'
 import { useTranslation } from 'react-i18next'
 import type { ChatPermissionMode } from '@/shared/types/chat'
 import { Badge } from '@/shared/components/ui/badge'
@@ -65,9 +69,16 @@ export function ChatsPage() {
   const send = useChatsStore((s) => s.send)
   const interrupt = useChatsStore((s) => s.interrupt)
 
-  const [model, setModel] = useState('default')
-  const [permissionMode, setPermissionMode] =
-    useState<ChatPermissionMode>('default')
+  const composerPrefs = useComposerPrefsStore((s) => s.prefs)
+  const setStoredModel = useComposerPrefsStore((s) => s.setModel)
+  const setStoredPermissionMode = useComposerPrefsStore(
+    (s) => s.setPermissionMode,
+  )
+  const composerPrefsKey = activeSessionId ?? 'new'
+  const { model, permissionMode } = getComposerPrefs(
+    composerPrefs,
+    composerPrefsKey,
+  )
   const [loggingIn, setLoggingIn] = useState(false)
   // Suspicion scan results, tied to the session they were computed for.
   const [risks, setRisks] = useState<{
@@ -533,7 +544,10 @@ export function ChatsPage() {
                         <Select
                           value={permissionMode}
                           onValueChange={(v) =>
-                            setPermissionMode(v as ChatPermissionMode)
+                            setStoredPermissionMode(
+                              composerPrefsKey,
+                              v as ChatPermissionMode,
+                            )
                           }
                         >
                           <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
@@ -550,7 +564,12 @@ export function ChatsPage() {
                         </Select>
 
                         {agent.id === 'claude' && (
-                          <Select value={model} onValueChange={setModel}>
+                          <Select
+                            value={model}
+                            onValueChange={(v) =>
+                              setStoredModel(composerPrefsKey, v)
+                            }
+                          >
                             <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
                               <Icon name="cpu" className="size-3.5" />
                               <SelectValue />
