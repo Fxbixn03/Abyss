@@ -16,6 +16,13 @@ export const kiroAdapter: AgentAdapter = createAdapter(kiroDefinition, {
       description: 'Model Context Protocol servers',
     },
     {
+      id: 'hooks',
+      label: 'Hooks',
+      icon: 'webhook',
+      route: '/hooks',
+      description: 'Lifecycle hooks',
+    },
+    {
       id: 'settings-file',
       label: 'Settings (raw)',
       icon: 'braces',

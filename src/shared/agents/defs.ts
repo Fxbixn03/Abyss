@@ -575,7 +575,7 @@ export const kiroDefinition: AgentDefinition = {
     agents: false,
     commands: false,
     skills: false,
-    hooks: false,
+    hooks: true,
     rules: false,
     rawSettings: true,
     chats: true,

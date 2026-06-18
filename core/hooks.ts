@@ -82,6 +82,11 @@ function codexHooksPath(basePath: string): string {
   return path.join(basePath, 'hooks.json')
 }
 
+/** Kiro keeps hooks in a top-level `hooks.json`. */
+function kiroHooksPath(basePath: string): string {
+  return path.join(basePath, 'hooks.json')
+}
+
 /**
  * Return the on-disk path of the dedicated hooks file for the given agent, or
  * `null` when the agent embeds hooks inside `settings.json` (e.g. Claude).
@@ -92,6 +97,7 @@ export function getHooksFilePath(agentId: string, basePath: string): string | nu
   if (agentId === 'gemini') return geminiHooksPath(basePath)
   if (agentId === 'cursor') return cursorHooksPath(basePath)
   if (agentId === 'codex') return codexHooksPath(basePath)
+  if (agentId === 'kiro') return kiroHooksPath(basePath)
   return null
 }
 
@@ -103,6 +109,7 @@ export function readHooks(
   if (agentId === 'gemini') return readFlatHooks(geminiHooksPath(basePath))
   if (agentId === 'cursor') return readFlatHooks(cursorHooksPath(basePath))
   if (agentId === 'codex') return readFlatHooks(codexHooksPath(basePath))
+  if (agentId === 'kiro') return readFlatHooks(kiroHooksPath(basePath))
   return readClaudeHooks(basePath)
 }
 
@@ -120,6 +127,9 @@ export function writeHooks(
   }
   if (agentId === 'codex') {
     return writeFlatHooks(codexHooksPath(basePath), entries)
+  }
+  if (agentId === 'kiro') {
+    return writeFlatHooks(kiroHooksPath(basePath), entries)
   }
   return writeClaudeHooks(basePath, entries)
 }
