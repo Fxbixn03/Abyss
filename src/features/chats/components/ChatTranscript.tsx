@@ -451,6 +451,7 @@ export function ChatTranscript({
                 agentName={agentName}
                 agentIcon={agentIcon}
                 isStreaming={streaming === true && i === messages.length - 1}
+                density={density}
               />
             </div>
           )

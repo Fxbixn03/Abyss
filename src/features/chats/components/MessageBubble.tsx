@@ -190,6 +190,8 @@ type MessageBubbleProps = {
   agentIcon?: string
   /** When true, renders a blinking cursor after the last text block. */
   isStreaming?: boolean
+  /** Controls per-bubble padding and inter-block spacing. */
+  density?: 'compact' | 'comfortable'
 }
 
 function areEqual(prev: MessageBubbleProps, next: MessageBubbleProps): boolean {
@@ -201,7 +203,8 @@ function areEqual(prev: MessageBubbleProps, next: MessageBubbleProps): boolean {
     prev.message.outputTokens === next.message.outputTokens &&
     prev.isStreaming === next.isStreaming &&
     prev.agentName === next.agentName &&
-    prev.agentIcon === next.agentIcon
+    prev.agentIcon === next.agentIcon &&
+    prev.density === next.density
   )
 }
 
@@ -210,6 +213,7 @@ function MessageBubbleInner({
   agentName,
   agentIcon,
   isStreaming,
+  density = 'comfortable',
 }: MessageBubbleProps) {
   const { t } = useTranslation('chats')
   const [copied, setCopied] = useState(false)
@@ -245,7 +249,7 @@ function MessageBubbleInner({
   // Tool-result-only turns render as a standalone block group, not a bubble.
   if (onlyToolResults) {
     return (
-      <div className="ml-9 flex flex-col gap-1.5">
+      <div className={cn('ml-9 flex flex-col', density === 'compact' ? 'gap-1' : 'gap-1.5')}>
         {message.blocks.map((block, i) => (
           <BlockView key={i} block={block} />
         ))}
@@ -256,7 +260,8 @@ function MessageBubbleInner({
   return (
     <div
       className={cn(
-        'group flex gap-3 rounded-lg px-2 py-1.5',
+        'group flex gap-3 rounded-lg px-2',
+        density === 'compact' ? 'py-1' : 'py-1.5',
         message.isSidechain && 'ml-6 border-l border-border pl-3',
         message.role === 'user'
           ? 'bg-primary/8'
@@ -277,7 +282,7 @@ function MessageBubbleInner({
           <Icon name={icon} className="size-3.5" />
         )}
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+      <div className={cn('flex min-w-0 flex-1 flex-col', density === 'compact' ? 'gap-1' : 'gap-1.5')}>
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">
             {label}
