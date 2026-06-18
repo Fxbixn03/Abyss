@@ -78,14 +78,21 @@ test('paginateByMtime: newer file by mtime appears first in sessions', async () 
       { filePath: newer, ref: 'newer' },
     ]
 
+    // mtime drives which files land in the window; the final session order is
+    // by meta.updatedAt (byUpdatedDesc), so the fixtures' updatedAt must track
+    // their mtime for the "newer first" assertion to be meaningful.
+    const updatedByRef: Record<string, string> = {
+      older: new Date(olderMs).toISOString(),
+      newer: new Date(newerMs).toISOString(),
+    }
     const parse = async (ref: string): Promise<ChatSessionMeta | null> =>
-      makeMeta(ref, path.join(dir, `${ref}.jsonl`), new Date().toISOString())
+      makeMeta(ref, path.join(dir, `${ref}.jsonl`), updatedByRef[ref])
 
     const result = await paginateByMtime(files, undefined, parse)
 
     assert.equal(result.total, 2)
     assert.equal(result.sessions.length, 2)
-    // mtime ordering: newer first
+    // newest by updatedAt first
     assert.equal(result.sessions[0].id, 'newer')
     assert.equal(result.sessions[1].id, 'older')
   } finally {
