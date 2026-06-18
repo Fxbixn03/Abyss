@@ -49,5 +49,12 @@ export const codexAdapter: AgentAdapter = createAdapter(codexDefinition, {
       icon: 'shield',
       route: '/permissions',
     },
+    {
+      id: 'settings-file',
+      label: 'Settings (raw)',
+      icon: 'braces',
+      route: '/settings-file',
+      description: 'Raw config.yaml',
+    },
   ],
 })

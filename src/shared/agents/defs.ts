@@ -46,6 +46,14 @@ const codexInstructions: ConfigFileSpec = {
   description: 'Global instructions for OpenAI Codex.',
 }
 
+const codexSettings: ConfigFileSpec = {
+  id: 'settings',
+  filename: 'config.yaml',
+  scope: 'global',
+  language: 'yaml',
+  description: 'Codex CLI global config (model, approval mode, feature flags)',
+}
+
 const geminiInstructions: ConfigFileSpec = {
   id: 'instructions',
   filename: 'GEMINI.md',
@@ -135,7 +143,7 @@ export const codexDefinition: AgentDefinition = {
     skills: true,
     hooks: false,
     rules: false,
-    rawSettings: false,
+    rawSettings: true,
     chats: true,
   },
   // Codex stores slash commands as custom "prompts" in `~/.codex/prompts/`, and
@@ -146,7 +154,7 @@ export const codexDefinition: AgentDefinition = {
       label: { singular: 'Prompt', plural: 'Prompts' },
     },
   },
-  configFiles: [codexInstructions],
+  configFiles: [codexInstructions, codexSettings],
   resolvePaths: (env: OsEnv) => [
     joinPath(env.platform, env.home, '.codex'),
     env.platform === 'win32'
