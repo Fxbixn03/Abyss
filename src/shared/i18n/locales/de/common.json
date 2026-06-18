@@ -9,5 +9,27 @@
   "language": {
     "en": "English",
     "de": "Deutsch"
+  },
+  "commandPalette": {
+    "searchPlaceholder": "Agenten, Seiten, Konfigurationen suchen…",
+    "noResults": "Keine Ergebnisse gefunden.",
+    "toggleAppearance": "Hell / Dunkel umschalten",
+    "switchTo": "Wechseln zu {{agent}}",
+    "settingsLabel": "Einstellungen: {{label}}",
+    "applyTemplate": "Anwenden: {{title}}",
+    "applyTemplateAction": "Vorlage anwenden: {{title}}",
+    "applyThemeAction": "Design anwenden: {{label}}",
+    "custom": "benutzerdefiniert",
+    "groups": {
+      "recent": "Zuletzt verwendet",
+      "recentActions": "Letzte Aktionen",
+      "agents": "Agenten",
+      "goTo": "Gehe zu",
+      "settings": "Einstellungen",
+      "templates": "Prompt-Vorlagen",
+      "items": "Elemente",
+      "acrossAllAgents": "Alle Agenten",
+      "appearance": "Erscheinungsbild"
+    }
   }
 }

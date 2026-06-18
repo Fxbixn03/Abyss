@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import type { CollectionKind } from '@/shared/types/collections'
 import type {
@@ -121,6 +122,7 @@ export function CommandPalette() {
 }
 
 function PaletteBody({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation('common')
   const navigate = useNavigate()
 
   const agents = useAllAgents()
@@ -315,13 +317,13 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
       <CommandInput
         value={search}
         onValueChange={setSearch}
-        placeholder="Search agents, pages, configs…"
+        placeholder={t('commandPalette.searchPlaceholder')}
       />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandEmpty>{t('commandPalette.noResults')}</CommandEmpty>
 
         {search === '' && recentNavItems.length > 0 && (
-          <CommandGroup heading="Recent">
+          <CommandGroup heading={t('commandPalette.groups.recent')}>
             {recentNavItems.map((item) => (
               <CommandItem
                 key={`recent-${item.route}`}
@@ -336,7 +338,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
         )}
 
         {search === '' && recentActions.length > 0 && (
-          <CommandGroup heading="Recent actions">
+          <CommandGroup heading={t('commandPalette.groups.recentActions')}>
             {recentActions.slice(0, MAX_RECENT_ACTIONS_SHOWN).map((action) => (
               <CommandItem
                 key={`recent-action-${action.value}`}
@@ -361,7 +363,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
           </CommandGroup>
         )}
 
-        <CommandGroup heading="Agents">
+        <CommandGroup heading={t('commandPalette.groups.agents')}>
           {agents.map((agent) => (
             <CommandItem
               key={agent.id}
@@ -369,14 +371,14 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
               onSelect={run(() => {
                 setActiveAgent(agent.id)
                 pushRecentAction({
-                  label: `Switch to ${agent.displayName}`,
+                  label: t('commandPalette.switchTo', { agent: agent.displayName }),
                   value: `agent:${agent.id}`,
                   icon: 'bot',
                 })
               })}
             >
               <AgentGlyph agent={agent} className="size-4 rounded-[3px]" />
-              Switch to {agent.displayName}
+              {t('commandPalette.switchTo', { agent: agent.displayName })}
               {agent.id === activeAgent.id && (
                 <Icon name="check" className="ml-auto text-primary" />
               )}
@@ -384,7 +386,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
           ))}
         </CommandGroup>
 
-        <CommandGroup heading="Go to">
+        <CommandGroup heading={t('commandPalette.groups.goTo')}>
           {navItems.map((item) => {
             const actionId = ROUTE_SHORTCUT[item.route]
             const combo = actionId ? (bindings[actionId] ?? '') : ''
@@ -402,7 +404,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
           })}
         </CommandGroup>
 
-        <CommandGroup heading="Settings">
+        <CommandGroup heading={t('commandPalette.groups.settings')}>
           {SETTINGS_SECTIONS.filter(
             (section) =>
               !section.requiresCapability ||
@@ -415,33 +417,33 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
               onSelect={run(() => navigate(`/settings?s=${section.id}`))}
             >
               <Icon name={section.icon} />
-              Settings: {section.label}
+              {t('commandPalette.settingsLabel', { label: section.label })}
             </CommandItem>
           ))}
         </CommandGroup>
 
         {templates.length > 0 && (
-          <CommandGroup heading="Prompt Templates">
-            {templates.map((t) => (
+          <CommandGroup heading={t('commandPalette.groups.templates')}>
+            {templates.map((tpl) => (
               <CommandItem
-                key={`tpl-${t.id}`}
-                value={`template ${t.title} ${t.id}`}
-                keywords={[t.description, ...t.tags]}
+                key={`tpl-${tpl.id}`}
+                value={`template ${tpl.title} ${tpl.id}`}
+                keywords={[tpl.description, ...tpl.tags]}
                 onSelect={run(() => {
-                  requestApplyTemplate(t.id)
+                  requestApplyTemplate(tpl.id)
                   void navigate('/templates')
                   pushRecentAction({
-                    label: `Apply template: ${t.title}`,
-                    value: `template:${t.id}`,
+                    label: t('commandPalette.applyTemplateAction', { title: tpl.title }),
+                    value: `template:${tpl.id}`,
                     icon: 'library',
                   })
                 })}
               >
                 <Icon name="library" />
-                Apply: {t.title}
-                {!t.builtin && (
+                {t('commandPalette.applyTemplate', { title: tpl.title })}
+                {!tpl.builtin && (
                   <span className="ml-auto text-xs text-muted-foreground">
-                    custom
+                    {t('commandPalette.custom')}
                   </span>
                 )}
               </CommandItem>
@@ -450,7 +452,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
         )}
 
         {items.length > 0 && (
-          <CommandGroup heading="Items">
+          <CommandGroup heading={t('commandPalette.groups.items')}>
             {items.map((item) => (
               <CommandItem
                 key={`${item.kind}-${item.id}`}
@@ -477,7 +479,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
         )}
 
         {globalMatches.length > 0 && (
-          <CommandGroup heading="Across all agents">
+          <CommandGroup heading={t('commandPalette.groups.acrossAllAgents')}>
             {globalMatches.map((r, i) => (
               <CommandItem
                 key={`global-${r.agentId}-${r.kind}-${i}`}
@@ -511,13 +513,13 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
           </CommandGroup>
         )}
 
-        <CommandGroup heading="Appearance">
+        <CommandGroup heading={t('commandPalette.groups.appearance')}>
           <CommandItem
             value="toggle light dark appearance mode"
             onSelect={run(toggleAppearance)}
           >
             <Icon name="sun" />
-            Toggle light / dark
+            {t('commandPalette.toggleAppearance')}
             <ShortcutHint combo={bindings['appearance.toggle'] ?? ''} />
           </CommandItem>
           {themes.map((theme) => (
@@ -529,7 +531,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
               onSelect={run(() => {
                 setAgentTheme(activeAgent.id, theme.id)
                 pushRecentAction({
-                  label: `Apply theme: ${theme.label}`,
+                  label: t('commandPalette.applyThemeAction', { label: theme.label }),
                   value: `theme:${theme.id}`,
                   icon: 'palette',
                 })

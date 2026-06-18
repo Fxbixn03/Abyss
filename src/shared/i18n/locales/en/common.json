@@ -9,5 +9,27 @@
   "language": {
     "en": "English",
     "de": "Deutsch"
+  },
+  "commandPalette": {
+    "searchPlaceholder": "Search agents, pages, configs…",
+    "noResults": "No results found.",
+    "toggleAppearance": "Toggle light / dark",
+    "switchTo": "Switch to {{agent}}",
+    "settingsLabel": "Settings: {{label}}",
+    "applyTemplate": "Apply: {{title}}",
+    "applyTemplateAction": "Apply template: {{title}}",
+    "applyThemeAction": "Apply theme: {{label}}",
+    "custom": "custom",
+    "groups": {
+      "recent": "Recent",
+      "recentActions": "Recent actions",
+      "agents": "Agents",
+      "goTo": "Go to",
+      "settings": "Settings",
+      "templates": "Prompt Templates",
+      "items": "Items",
+      "acrossAllAgents": "Across all agents",
+      "appearance": "Appearance"
+    }
   }
 }
