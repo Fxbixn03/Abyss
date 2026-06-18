@@ -850,6 +850,65 @@ export const devinDefinition: AgentDefinition = {
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.devin')],
 }
 
+const voidInstructions: ConfigFileSpec = {
+  id: 'instructions',
+  filename: 'AGENTS.md',
+  scope: 'global',
+  language: 'markdown',
+  description: 'Global instructions for Void Editor (AGENTS.md).',
+}
+
+const voidMcpSettings: ConfigFileSpec = {
+  id: 'mcp',
+  filename: 'mcp.json',
+  scope: 'global',
+  language: 'json',
+  description: 'Void Editor MCP server config (standard { mcpServers } shape).',
+}
+
+const voidSettings: ConfigFileSpec = {
+  id: 'settings',
+  filename: 'settings.json',
+  scope: 'global',
+  language: 'json',
+  description: 'Void Editor user settings (model, preferences).',
+}
+
+/**
+ * Void Editor — an actively-developed open-source Cursor fork. Stores its
+ * config under `~/.void` (Linux) or `%APPDATA%\Void` (Windows): global
+ * instructions in `AGENTS.md`, MCP servers in `mcp.json` (standard
+ * `{ mcpServers }` shape), and a `settings.json` for raw preferences.
+ * `chats: false` keeps this out of the chat runtime.
+ */
+export const voidDefinition: AgentDefinition = {
+  id: 'void',
+  name: 'void',
+  displayName: 'Void Editor',
+  defaultThemeId: 'void-obsidian',
+  iconName: 'box',
+  docsUrl: 'https://voideditor.com',
+  capabilities: {
+    instructions: true,
+    mcp: true,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: true,
+    chats: false,
+  },
+  configFiles: [voidInstructions, voidMcpSettings, voidSettings],
+  resolvePaths: (env: OsEnv) => [
+    env.platform === 'win32'
+      ? joinPath(env.platform, env.appData, 'Void')
+      : joinPath(env.platform, env.home, '.void'),
+  ],
+}
+
 /** Every known agent definition, keyed by id. */
 export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   claude: claudeDefinition,
@@ -871,6 +930,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   zed: zedDefinition,
   cody: codyDefinition,
   devin: devinDefinition,
+  void: voidDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -894,6 +954,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'zed',
   'cody',
   'devin',
+  'void',
 ]
 
 /**
