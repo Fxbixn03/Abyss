@@ -17,5 +17,12 @@ export const aiderAdapter: AgentAdapter = createAdapter(aiderDefinition, {
       route: '/mcp',
       description: 'Model Context Protocol servers',
     },
+    {
+      id: 'settings-file',
+      label: 'Model Settings',
+      icon: 'braces',
+      route: '/settings-file',
+      description: 'Per-model overrides (.aider.model.settings.yml)',
+    },
   ],
 })
