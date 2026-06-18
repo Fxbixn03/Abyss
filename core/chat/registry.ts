@@ -30,6 +30,22 @@ function register(runtime: ChatRuntime): void {
   runtimes.set(runtime.agentId, runtime)
 }
 
+/**
+ * Register (or replace) a chat runtime. Exposed for test injection; production
+ * code should only call this at module-init time through the built-in list below.
+ */
+export function registerChatRuntime(runtime: ChatRuntime): void {
+  register(runtime)
+}
+
+/**
+ * Remove a previously registered runtime. Exposed for test teardown so injected
+ * test runtimes do not leak between test files.
+ */
+export function unregisterChatRuntime(agentId: string): void {
+  runtimes.delete(agentId)
+}
+
 export function getChatRuntime(agentId: string): ChatRuntime {
   const runtime = runtimes.get(agentId)
   if (!runtime)

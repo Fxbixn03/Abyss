@@ -101,6 +101,11 @@ async function collectMetas(
   return metas.filter((m): m is ChatSessionMeta => m !== null)
 }
 
+/** Clear all mtime-cache entries so the next call re-reads every transcript. */
+export function invalidateUsageCache(): void {
+  cache.clear()
+}
+
 export async function computeUsageStats(
   env: OsEnv,
   agentId: string,
