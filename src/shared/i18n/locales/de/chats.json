@@ -12,6 +12,19 @@
   "replayTooltip": "Diese Unterhaltung Schritt für Schritt wiedergeben",
   "replay": "Wiedergabe",
   "exitReplay": "Wiedergabe beenden",
+  "replayBar": {
+    "restart": "Neu starten",
+    "stepBack": "Schritt zurück",
+    "play": "Abspielen",
+    "pause": "Pause",
+    "stepForward": "Schritt vor",
+    "playbackSpeed": "Wiedergabegeschwindigkeit: {{speed}}x",
+    "replayProgress": "Wiedergabefortschritt",
+    "exitReplay": "Wiedergabe beenden",
+    "positionStart": "Anfang",
+    "positionEnd": "Ende",
+    "positionMessage": "Nachricht {{index}} von {{total}}"
+  },
   "riskScan": {
     "tooltip": "Dieses Transkript auf Risikoindikatoren prüfen",
     "scan": "Risiken prüfen",

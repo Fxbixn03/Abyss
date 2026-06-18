@@ -12,6 +12,19 @@
   "replayTooltip": "Replay this conversation step by step",
   "replay": "Replay",
   "exitReplay": "Exit replay",
+  "replayBar": {
+    "restart": "Restart",
+    "stepBack": "Step back",
+    "play": "Play",
+    "pause": "Pause",
+    "stepForward": "Step forward",
+    "playbackSpeed": "Playback speed: {{speed}}x",
+    "replayProgress": "Replay progress",
+    "exitReplay": "Exit replay",
+    "positionStart": "Start",
+    "positionEnd": "End",
+    "positionMessage": "Message {{index}} of {{total}}"
+  },
   "riskScan": {
     "tooltip": "Scan this transcript for risk indicators",
     "scan": "Scan risks",

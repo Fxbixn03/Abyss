@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/components/ui/button'
 import { Icon } from '@/shared/components/Icon'
 
@@ -25,6 +26,8 @@ export function ReplayBar({
   onSeek: (index: number) => void
   onClose: () => void
 }) {
+  const { t } = useTranslation('chats')
+
   const atEnd = index >= total
   const pct = total > 0 ? Math.round((index / total) * 100) : 0
 
@@ -81,8 +84,8 @@ export function ReplayBar({
         variant="ghost"
         size="icon-sm"
         onClick={onRestart}
-        aria-label="Restart"
-        title="Restart"
+        aria-label={t('replayBar.restart')}
+        title={t('replayBar.restart')}
       >
         <Icon name="rotate-ccw" />
       </Button>
@@ -91,8 +94,8 @@ export function ReplayBar({
         size="icon-sm"
         onClick={() => onStep(-1)}
         disabled={index <= 0}
-        aria-label="Step back"
-        title="Step back"
+        aria-label={t('replayBar.stepBack')}
+        title={t('replayBar.stepBack')}
       >
         <Icon name="chevron-left" />
       </Button>
@@ -101,8 +104,8 @@ export function ReplayBar({
         size="icon-sm"
         onClick={onPlayPause}
         disabled={atEnd}
-        aria-label={playing ? 'Pause' : 'Play'}
-        title={playing ? 'Pause' : 'Play'}
+        aria-label={playing ? t('replayBar.pause') : t('replayBar.play')}
+        title={playing ? t('replayBar.pause') : t('replayBar.play')}
       >
         <Icon name={playing ? 'pause' : 'play'} />
       </Button>
@@ -111,8 +114,8 @@ export function ReplayBar({
         size="icon-sm"
         onClick={() => onStep(1)}
         disabled={atEnd}
-        aria-label="Step forward"
-        title="Step forward"
+        aria-label={t('replayBar.stepForward')}
+        title={t('replayBar.stepForward')}
       >
         <Icon name="chevron-right" />
       </Button>
@@ -121,8 +124,8 @@ export function ReplayBar({
         type="button"
         onClick={onCycleSpeed}
         className="rounded border border-border px-1.5 py-0.5 font-code text-[11px] text-muted-foreground hover:text-foreground"
-        title="Playback speed"
-        aria-label={`Playback speed: ${speed}x`}
+        title={t('replayBar.playbackSpeed', { speed })}
+        aria-label={t('replayBar.playbackSpeed', { speed })}
       >
         {speed}×
       </button>
@@ -136,8 +139,14 @@ export function ReplayBar({
         aria-valuenow={index}
         aria-valuemin={0}
         aria-valuemax={total}
-        aria-valuetext={index >= total ? 'End' : index === 0 ? 'Start' : `Message ${index} of ${total}`}
-        aria-label="Replay progress"
+        aria-valuetext={
+          index >= total
+            ? t('replayBar.positionEnd')
+            : index === 0
+              ? t('replayBar.positionStart')
+              : t('replayBar.positionMessage', { index, total })
+        }
+        aria-label={t('replayBar.replayProgress')}
         onClick={handleClick}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -171,8 +180,8 @@ export function ReplayBar({
         variant="ghost"
         size="icon-sm"
         onClick={onClose}
-        aria-label="Exit replay"
-        title="Exit replay"
+        aria-label={t('replayBar.exitReplay')}
+        title={t('replayBar.exitReplay')}
       >
         <Icon name="x" />
       </Button>
