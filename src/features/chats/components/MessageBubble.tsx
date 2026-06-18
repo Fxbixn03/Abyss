@@ -242,8 +242,11 @@ function MessageBubbleInner({
   return (
     <div
       className={cn(
-        'group flex gap-3',
+        'group flex gap-3 rounded-lg px-2 py-1.5',
         message.isSidechain && 'ml-6 border-l border-border pl-3',
+        message.role === 'user'
+          ? 'bg-primary/8'
+          : 'bg-muted/30',
       )}
     >
       <div
