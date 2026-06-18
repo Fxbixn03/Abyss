@@ -318,7 +318,7 @@ export const continueDefinition: AgentDefinition = {
     skills: false,
     hooks: false,
     rules: false,
-    rawSettings: false,
+    rawSettings: true,
     chats: true,
   },
   configFiles: [continueConfig],
