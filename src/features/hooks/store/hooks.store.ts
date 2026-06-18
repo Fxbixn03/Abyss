@@ -6,10 +6,12 @@ import {
   isConfigParseError,
   isDiskWriteError,
   isPathScopeError,
+  isReadPermissionError,
   isWritePermissionError,
   reportDiskWriteError,
   reportError,
   reportPathScopeError,
+  reportReadPermissionError,
   reportWritePermissionError,
 } from '@/shared/lib/errors'
 import type { ConfigParseInfo } from '@/shared/lib/errors'
@@ -76,6 +78,9 @@ export const useHooksStore = create<HooksState>()((set, get) => ({
             parseError: { message: err.message, filePath: err.filePath },
           })
         }
+      } else if (isReadPermissionError(err)) {
+        if (current) set({ loading: false })
+        reportReadPermissionError(err, (path) => void ipc.revealPath(path))
       } else {
         if (current) set({ loading: false })
         reportError(err, { title: "Couldn't load hooks" })
