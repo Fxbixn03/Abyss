@@ -63,6 +63,12 @@ function ComposerInner({
   const { t } = useTranslation('chats')
   const [text, setText] = useState(initialText)
 
+  // Track whether the textarea has ever been focused and whether it's currently focused.
+  // The hint appears once the user has focused the textarea at least once and
+  // only when composer is not busy or disabled.
+  const [hasFocused, setHasFocused] = useState(false)
+  const [isFocused, setIsFocused] = useState(false)
+
   // Slash-command popover state — declared before usage in callbacks.
   const [slashActiveIndex, setSlashActiveIndex] = useState(0)
   // A one-shot dismiss flag: if the user presses Escape while the popover is
@@ -201,6 +207,8 @@ function ComposerInner({
 
   const charCount = text.length
   const showCounter = !busy && !disabled && charCount > 0
+  // Show the hint once the textarea has been focused at least once AND composer is active.
+  const showHint = !busy && !disabled && (isFocused ? text.length > 0 : hasFocused)
   const counterClass =
     charCount >= CHAR_COUNT_DANGER
       ? 'text-destructive'
@@ -241,6 +249,13 @@ function ComposerInner({
             setSlashDismissed(false)
             setSlashActiveIndex(0)
           }}
+          onFocus={() => {
+            setIsFocused(true)
+            setHasFocused(true)
+          }}
+          onBlur={() => {
+            setIsFocused(false)
+          }}
           onKeyDown={handleKeyDown}
           placeholder={textareaLabel}
           aria-label={textareaLabel}
@@ -272,6 +287,14 @@ function ComposerInner({
           </Button>
         )}
       </div>
+      {showHint && (
+        <p
+          aria-hidden="true"
+          className="select-none text-[11px] text-muted-foreground/50 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200"
+        >
+          {t('composer.sendHint')}
+        </p>
+      )}
       {showCounter && (
         <div className="flex justify-end">
           <span

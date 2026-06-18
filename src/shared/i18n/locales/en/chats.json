@@ -192,7 +192,8 @@
     "placeholderActive": "Message the agent…",
     "formLabel": "Send a message",
     "stop": "Stop",
-    "send": "Send (Enter / Cmd+Enter)"
+    "send": "Send (Enter / Cmd+Enter)",
+    "sendHint": "Enter to send · Shift+Enter for newline"
   },
   "loginGate": {
     "checking": "Checking {{agent}}…",
