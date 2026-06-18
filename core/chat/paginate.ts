@@ -12,6 +12,7 @@ import type {
   ChatSessionMeta,
   ChatSessionPage,
 } from '@/shared/types/chat'
+import { ConfigNotFoundError } from '../config-error'
 
 /** True when `child` is `parent` or nested below it (OS-separator agnostic). */
 export function isUnderDir(child: string, parent: string): boolean {
@@ -48,17 +49,25 @@ export async function paginateByMtime<F>(
   )
   stamped.sort((a, b) => b.mtime - a.mtime)
 
+  let dropped = 0
   const total = stamped.length
   const window = Number.isFinite(limit)
     ? stamped.slice(offset, offset + limit)
     : stamped.slice(offset)
   const metas = await Promise.all(
-    window.map((f) => parse(f.ref).catch(() => null)),
+    window.map((f) =>
+      parse(f.ref).catch((err: unknown) => {
+        if (err instanceof ConfigNotFoundError) {
+          dropped += 1
+        }
+        return null
+      }),
+    ),
   )
   const sessions = metas
     .filter((m): m is ChatSessionMeta => m !== null)
     .sort(byUpdatedDesc)
-  return { sessions, total }
+  return { sessions, total: total - dropped }
 }
 
 /**
