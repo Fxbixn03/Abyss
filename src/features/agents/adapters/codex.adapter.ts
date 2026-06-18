@@ -50,6 +50,13 @@ export const codexAdapter: AgentAdapter = createAdapter(codexDefinition, {
       route: '/permissions',
     },
     {
+      id: 'hooks',
+      label: 'Hooks',
+      icon: 'webhook',
+      route: '/hooks',
+      description: 'Lifecycle hooks',
+    },
+    {
       id: 'settings-file',
       label: 'Settings (raw)',
       icon: 'braces',

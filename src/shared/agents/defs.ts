@@ -141,7 +141,7 @@ export const codexDefinition: AgentDefinition = {
     agents: false,
     commands: true,
     skills: true,
-    hooks: false,
+    hooks: true,
     rules: false,
     rawSettings: true,
     chats: true,
