@@ -339,7 +339,13 @@ export async function duplicateCollectionItem(
       throw new Error(`A skill named "${to}" already exists.`)
     }
     await ensureDir(path.dirname(dest))
-    await fs.cp(src, dest, { recursive: true })
+    try {
+      await fs.cp(src, dest, { recursive: true })
+    } catch (err) {
+      if (isPermissionError(err)) throw new ConfigWriteError(src, err)
+      if (isDiskError(err)) throw new ConfigDiskError(src, err)
+      throw err
+    }
     return { success: true, id: to, path: path.join(dest, 'SKILL.md') }
   }
   const ext = collectionExt(kind)
