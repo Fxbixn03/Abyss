@@ -1,5 +1,6 @@
 /** Small presentation helpers for the Chats feature. */
 import type { TFunction } from 'i18next'
+import type { ChatMessage } from '@/shared/types/chat'
 
 export function relativeTime(iso: string | undefined, t: TFunction<'chats'>): string {
   if (!iso) return ''
@@ -25,4 +26,12 @@ export function formatBytes(bytes: number): string {
 export function formatCost(usd?: number): string {
   if (usd == null) return ''
   return `$${usd.toFixed(usd < 0.01 ? 4 : 2)}`
+}
+
+/** Extract all plain text from a message's text blocks, joined with a space. */
+export function extractMessageText(message: ChatMessage): string {
+  return message.blocks
+    .filter((b): b is Extract<typeof b, { kind: 'text' }> => b.kind === 'text')
+    .map((b) => b.text)
+    .join(' ')
 }

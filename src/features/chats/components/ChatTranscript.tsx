@@ -8,6 +8,7 @@ import { Icon } from '@/shared/components/Icon'
 import { MessageBubble } from './MessageBubble'
 import { cn } from '@/shared/lib/utils'
 import { scrollBehavior } from '@/shared/lib/motion'
+import { extractMessageText } from '@/features/chats/lib/format'
 
 /** Skeleton placeholder for a single bubble row while the transcript loads. */
 function SkeletonBubbleRow({
@@ -56,14 +57,6 @@ function TranscriptSkeleton() {
       />
     </div>
   )
-}
-
-/** Extract all plain text from a message's text blocks. */
-function extractText(message: ChatMessage): string {
-  return message.blocks
-    .filter((b): b is Extract<typeof b, { kind: 'text' }> => b.kind === 'text')
-    .map((b) => b.text)
-    .join(' ')
 }
 
 /** How many trailing messages render initially; older ones load on demand. */
@@ -192,7 +185,7 @@ export function ChatTranscript({
     if (query.trim() === '') return []
     const lower = query.toLowerCase()
     return messages.reduce<number[]>((acc, msg, i) => {
-      if (extractText(msg).toLowerCase().includes(lower)) acc.push(i)
+      if (extractMessageText(msg).toLowerCase().includes(lower)) acc.push(i)
       return acc
     }, [])
   }, [query, messages])
