@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useTranslation } from 'react-i18next'
 import { ipc } from '@/shared/ipc/ipc.client'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/components/ui/button'
@@ -22,6 +23,7 @@ import { Icon } from '@/shared/components/Icon'
  */
 function CodeBlock({ children }: { children: ReactNode }) {
   const [copied, setCopied] = useState(false)
+  const { t } = useTranslation('common')
 
   function handleCopy() {
     // Walk the React tree to collect the raw text content of the code element.
@@ -53,8 +55,8 @@ function CodeBlock({ children }: { children: ReactNode }) {
         variant="ghost"
         size="icon"
         className="absolute right-1.5 top-1.5 size-5 shrink-0 opacity-0 transition-opacity duration-150 group-hover/code:opacity-100"
-        title={copied ? 'Copied!' : 'Copy code'}
-        aria-label={copied ? 'Copied!' : 'Copy code to clipboard'}
+        title={copied ? t('codeBlock.copied') : t('codeBlock.copyCode')}
+        aria-label={copied ? t('codeBlock.copied') : t('codeBlock.copyCodeToClipboard')}
         onClick={handleCopy}
       >
         <Icon name={copied ? 'check' : 'copy'} className="size-3.5" />

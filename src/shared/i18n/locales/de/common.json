@@ -6,6 +6,11 @@
     "saving": "Wird gespeichert…",
     "cancel": "Abbrechen"
   },
+  "codeBlock": {
+    "copyCode": "Code kopieren",
+    "copyCodeToClipboard": "Code in die Zwischenablage kopieren",
+    "copied": "Kopiert!"
+  },
   "language": {
     "en": "English",
     "de": "Deutsch"
