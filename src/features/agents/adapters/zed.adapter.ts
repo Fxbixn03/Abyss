@@ -1,5 +1,6 @@
 import type { AgentAdapter, SidebarSection } from '@/shared/types/agent'
 import { zedDefinition } from '@/shared/agents/defs'
+import { validateJsonContent } from '@/features/agents/lib/validators'
 import { createAdapter } from './base.adapter'
 
 /**
@@ -9,6 +10,7 @@ import { createAdapter } from './base.adapter'
  */
 export const zedAdapter: AgentAdapter = createAdapter(zedDefinition, {
   icon: 'code-2',
+  validate: validateJsonContent,
   getSidebarSections: (): SidebarSection[] => [
     {
       id: 'settings-file',

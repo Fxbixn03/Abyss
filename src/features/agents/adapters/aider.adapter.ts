@@ -1,5 +1,6 @@
 import type { AgentAdapter, SidebarSection } from '@/shared/types/agent'
 import { aiderDefinition } from '@/shared/agents/defs'
+import { validateYamlContent } from '@/features/agents/lib/validators'
 import { createAdapter } from './base.adapter'
 
 /**
@@ -9,6 +10,7 @@ import { createAdapter } from './base.adapter'
  */
 export const aiderAdapter: AgentAdapter = createAdapter(aiderDefinition, {
   icon: 'terminal',
+  validate: validateYamlContent,
   getSidebarSections: (): SidebarSection[] => [
     {
       id: 'mcp',

@@ -1,10 +1,12 @@
 import type { AgentAdapter, SidebarSection } from '@/shared/types/agent'
 import { devinDefinition } from '@/shared/agents/defs'
+import { validateTomlContent } from '@/features/agents/lib/validators'
 import { createAdapter } from './base.adapter'
 
 /** Devin CLI (Cognition AI) — edits global config at `~/.devin/config.toml`. */
 export const devinAdapter: AgentAdapter = createAdapter(devinDefinition, {
   icon: 'bot',
+  validate: validateTomlContent,
   getSidebarSections: (): SidebarSection[] => [
     {
       id: 'settings-file',

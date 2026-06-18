@@ -1,5 +1,6 @@
 import type { AgentAdapter, SidebarSection } from '@/shared/types/agent'
 import { gooseDefinition } from '@/shared/agents/defs'
+import { validateYamlContent } from '@/features/agents/lib/validators'
 import { createAdapter } from './base.adapter'
 
 /**
@@ -8,6 +9,7 @@ import { createAdapter } from './base.adapter'
  */
 export const gooseAdapter: AgentAdapter = createAdapter(gooseDefinition, {
   icon: 'bird',
+  validate: validateYamlContent,
   getSidebarSections: (): SidebarSection[] => [
     {
       id: 'mcp',

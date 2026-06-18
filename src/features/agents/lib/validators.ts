@@ -1,3 +1,5 @@
+import { loadAll, YAMLException } from 'js-yaml'
+import { parse as parseToml, TomlError } from 'smol-toml'
 import type { ConfigFileSpec, ValidationIssue } from '@/shared/types/agent'
 import { checkInstructions } from '@/shared/lib/instructionChecks'
 
@@ -47,6 +49,46 @@ export function validateJsonContent(
         severity: 'error',
         message:
           error instanceof Error ? error.message : 'Invalid JSON syntax.',
+      },
+    ]
+  }
+}
+
+/** Validate YAML content (including multi-document), surfacing the parse error as an issue. */
+export function validateYamlContent(
+  _spec: ConfigFileSpec,
+  content: string,
+): ValidationIssue[] {
+  if (content.trim() === '') return []
+  try {
+    loadAll(content, () => undefined)
+    return []
+  } catch (error) {
+    return [
+      {
+        severity: 'error',
+        message:
+          error instanceof YAMLException ? error.message : 'Invalid YAML syntax.',
+      },
+    ]
+  }
+}
+
+/** Validate TOML content, surfacing the parse error as an issue. */
+export function validateTomlContent(
+  _spec: ConfigFileSpec,
+  content: string,
+): ValidationIssue[] {
+  if (content.trim() === '') return []
+  try {
+    parseToml(content)
+    return []
+  } catch (error) {
+    return [
+      {
+        severity: 'error',
+        message:
+          error instanceof TomlError ? error.message : 'Invalid TOML syntax.',
       },
     ]
   }
