@@ -92,6 +92,7 @@ export function ReplayBar({
         onClick={() => onStep(-1)}
         disabled={index <= 0}
         aria-label="Step back"
+        title="Step back"
       >
         <Icon name="chevron-left" />
       </Button>
@@ -101,6 +102,7 @@ export function ReplayBar({
         onClick={onPlayPause}
         disabled={atEnd}
         aria-label={playing ? 'Pause' : 'Play'}
+        title={playing ? 'Pause' : 'Play'}
       >
         <Icon name={playing ? 'pause' : 'play'} />
       </Button>
@@ -110,6 +112,7 @@ export function ReplayBar({
         onClick={() => onStep(1)}
         disabled={atEnd}
         aria-label="Step forward"
+        title="Step forward"
       >
         <Icon name="chevron-right" />
       </Button>
@@ -133,6 +136,7 @@ export function ReplayBar({
         aria-valuenow={index}
         aria-valuemin={0}
         aria-valuemax={total}
+        aria-valuetext={index >= total ? 'End' : index === 0 ? 'Start' : `Message ${index} of ${total}`}
         aria-label="Replay progress"
         onClick={handleClick}
         onPointerDown={handlePointerDown}
