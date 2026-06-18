@@ -73,6 +73,7 @@ export function ChatTranscript({
   messages,
   loading,
   agentName,
+  agentIcon,
   streaming,
   searchOpen: searchOpenProp,
   onSearchOpenChange,
@@ -84,6 +85,8 @@ export function ChatTranscript({
   messages: ChatMessage[]
   loading: boolean
   agentName?: string
+  /** Resolved icon string for the active agent — passed to each assistant MessageBubble. */
+  agentIcon?: string
   /** When true, the last message renders with a blinking typing cursor. */
   streaming?: boolean
   /** Controlled open state from the parent (optional). */
@@ -453,6 +456,7 @@ export function ChatTranscript({
               <MessageBubble
                 message={m}
                 agentName={agentName}
+                agentIcon={agentIcon}
                 isStreaming={streaming === true && i === messages.length - 1}
               />
             </div>

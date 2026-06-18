@@ -17,6 +17,7 @@ import {
 import { ipc } from '@/shared/ipc/ipc.client'
 import { cn } from '@/shared/lib/utils'
 import { useActiveAgent } from '@/features/agents/hooks/useActiveAgent'
+import { useAgentIcon } from '@/features/agents/hooks/useAgentIcon'
 import { useProjectDir, joinPath } from '@/features/scope/hooks/useScopedBase'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { useChatsStore } from '../store/chats.store'
@@ -44,6 +45,7 @@ const PERMISSION_MODES: ChatPermissionMode[] = [
 export function ChatsPage() {
   const { t } = useTranslation('chats')
   const agent = useActiveAgent()
+  const agentIcon = useAgentIcon(agent)
   const supported = agent.capabilities.chats
 
   const availability = useChatsStore((s) => s.availability)
@@ -498,6 +500,7 @@ export function ChatsPage() {
                   messages={shownMessages}
                   loading={transcriptLoading}
                   agentName={agent.displayName}
+                  agentIcon={agentIcon}
                   streaming={status === 'streaming'}
                   searchOpen={transcriptSearchOpen}
                   onSearchOpenChange={setTranscriptSearchOpen}

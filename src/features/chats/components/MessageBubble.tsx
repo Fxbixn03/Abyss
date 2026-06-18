@@ -10,6 +10,7 @@ import { relativeTime } from '@/features/chats/lib/format'
 import { Button } from '@/shared/components/ui/button'
 import { estimateCostUsd, formatMoney } from '@/shared/lib/cost'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
+import { AgentIcon } from '@/features/agents/components/AgentIcon'
 
 function CollapsibleBlock({
   icon,
@@ -176,6 +177,8 @@ type MessageBubbleProps = {
   message: ChatMessage
   /** Display name of the agent driving the chat (used for assistant turns). */
   agentName?: string
+  /** Resolved icon string for the active agent (lucide name, img:<key>, or data URL). */
+  agentIcon?: string
   /** When true, renders a blinking cursor after the last text block. */
   isStreaming?: boolean
 }
@@ -188,13 +191,15 @@ function areEqual(prev: MessageBubbleProps, next: MessageBubbleProps): boolean {
     prev.message.inputTokens === next.message.inputTokens &&
     prev.message.outputTokens === next.message.outputTokens &&
     prev.isStreaming === next.isStreaming &&
-    prev.agentName === next.agentName
+    prev.agentName === next.agentName &&
+    prev.agentIcon === next.agentIcon
   )
 }
 
 function MessageBubbleInner({
   message,
   agentName,
+  agentIcon,
   isStreaming,
 }: MessageBubbleProps) {
   const { t } = useTranslation('chats')
@@ -257,7 +262,11 @@ function MessageBubbleInner({
             : 'bg-muted text-muted-foreground',
         )}
       >
-        <Icon name={icon} className="size-3.5" />
+        {message.role === 'assistant' && agentIcon ? (
+          <AgentIcon icon={agentIcon} className="size-3.5" />
+        ) : (
+          <Icon name={icon} className="size-3.5" />
+        )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-center gap-2">
