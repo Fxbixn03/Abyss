@@ -78,6 +78,14 @@ const copilotInstructions: ConfigFileSpec = {
   description: 'Personal global instructions for GitHub Copilot CLI.',
 }
 
+const copilotSettings: ConfigFileSpec = {
+  id: 'settings',
+  filename: 'settings.json',
+  scope: 'global',
+  language: 'json',
+  description: 'Copilot CLI user settings (model, preferences)',
+}
+
 export const claudeDefinition: AgentDefinition = {
   id: 'claude',
   name: 'claude',
@@ -241,7 +249,7 @@ export const copilotDefinition: AgentDefinition = {
     rawSettings: true,
     chats: true,
   },
-  configFiles: [copilotInstructions],
+  configFiles: [copilotInstructions, copilotSettings],
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.copilot')],
 }
 
