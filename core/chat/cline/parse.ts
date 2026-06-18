@@ -32,8 +32,8 @@ import {
   listClineSessionFiles,
 } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
-import { ConfigWriteError, ConfigNotFoundError, ConfigReadError } from '../../config-error'
-import { isPermissionError } from '../../os-errors'
+import { ConfigWriteError, ConfigNotFoundError, ConfigReadError, ConfigDiskError } from '../../config-error'
+import { isPermissionError, isDiskError } from '../../os-errors'
 
 /**
  * A single raw entry in `api_conversation_history.json`. Cline uses the
@@ -203,6 +203,9 @@ export async function deleteClineSession(
   try {
     await fs.rm(taskDir, { recursive: true, force: true })
   } catch (err) {
+    if (isDiskError(err)) {
+      throw new ConfigDiskError(taskDir, err)
+    }
     if (isPermissionError(err)) {
       throw new ConfigWriteError(taskDir, err)
     }

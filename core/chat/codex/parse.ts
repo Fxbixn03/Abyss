@@ -26,8 +26,8 @@ import {
   findCodexSessionFile,
   listCodexSessionFiles,
 } from './paths'
-import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
-import { isPermissionError } from '../../os-errors'
+import { ConfigWriteError, ConfigNotFoundError, ConfigDiskError } from '../../config-error'
+import { isPermissionError, isDiskError } from '../../os-errors'
 
 /** Pull `{ role, text }` out of a rollout line, if it is a message item. */
 function extractMessage(
@@ -188,6 +188,9 @@ export async function deleteCodexSession(
   try {
     await fs.rm(filePath, { force: true })
   } catch (err) {
+    if (isDiskError(err)) {
+      throw new ConfigDiskError(filePath, err)
+    }
     if (isPermissionError(err)) {
       throw new ConfigWriteError(filePath, err)
     }

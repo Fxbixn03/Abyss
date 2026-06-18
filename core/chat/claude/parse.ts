@@ -27,8 +27,8 @@ import {
   findClaudeSessionFile,
   listClaudeSessionFiles,
 } from './paths'
-import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
-import { isPermissionError } from '../../os-errors'
+import { ConfigWriteError, ConfigNotFoundError, ConfigDiskError } from '../../config-error'
+import { isPermissionError, isDiskError } from '../../os-errors'
 
 const MESSAGE_TYPES = new Set(['user', 'assistant'])
 
@@ -211,6 +211,9 @@ export async function deleteClaudeSession(
   try {
     await fs.rm(found.filePath, { force: true })
   } catch (err) {
+    if (isDiskError(err)) {
+      throw new ConfigDiskError(found.filePath, err)
+    }
     if (isPermissionError(err)) {
       throw new ConfigWriteError(found.filePath, err)
     }

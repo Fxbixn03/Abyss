@@ -35,8 +35,8 @@ import {
   listGooseSessionFiles,
 } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
-import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
-import { isPermissionError } from '../../os-errors'
+import { ConfigWriteError, ConfigNotFoundError, ConfigDiskError } from '../../config-error'
+import { isPermissionError, isDiskError } from '../../os-errors'
 
 /**
  * Attempt to extract a role + content pair from a Goose JSONL event line.
@@ -263,6 +263,9 @@ export async function deleteGooseSession(
   try {
     await fs.rm(filePath, { force: true })
   } catch (err) {
+    if (isDiskError(err)) {
+      throw new ConfigDiskError(filePath, err)
+    }
     if (isPermissionError(err)) {
       throw new ConfigWriteError(filePath, err)
     }

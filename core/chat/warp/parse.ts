@@ -27,8 +27,8 @@ import { blocksFromAnthropicContent, projectLabelFromCwd } from '../normalize'
 import { paginateByMtime } from '../paginate'
 import { warpSessionId, findWarpSessionFile, listWarpSessionFiles } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
-import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
-import { isPermissionError } from '../../os-errors'
+import { ConfigWriteError, ConfigNotFoundError, ConfigDiskError } from '../../config-error'
+import { isPermissionError, isDiskError } from '../../os-errors'
 
 /** Read session-level metadata for the list view (one fast pass over the file). */
 export async function readWarpMeta(
@@ -197,6 +197,9 @@ export async function deleteWarpSession(
   try {
     await fs.rm(filePath, { force: true })
   } catch (err) {
+    if (isDiskError(err)) {
+      throw new ConfigDiskError(filePath, err)
+    }
     if (isPermissionError(err)) {
       throw new ConfigWriteError(filePath, err)
     }
