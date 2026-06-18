@@ -129,6 +129,7 @@
   "composer": {
     "placeholderDisabled": "Anmelden, um zu chatten…",
     "placeholderActive": "Nachricht an den Agenten…",
+    "formLabel": "Nachricht senden",
     "stop": "Stopp",
     "send": "Senden (Enter / Cmd+Enter)"
   },

@@ -125,7 +125,15 @@ function ComposerInner({
     : t('composer.placeholderActive')
 
   return (
-    <div aria-busy={busy} className="flex flex-col gap-2 rounded-lg border border-border bg-card/40 p-2.5">
+    <form
+      aria-label={t('composer.formLabel')}
+      aria-busy={busy}
+      className="flex flex-col gap-2 rounded-lg border border-border bg-card/40 p-2.5"
+      onSubmit={(e) => {
+        e.preventDefault()
+        submit()
+      }}
+    >
       {settingsBar}
       <div className="flex items-end gap-2">
         <Textarea
@@ -147,6 +155,7 @@ function ComposerInner({
         />
         {busy ? (
           <Button
+            type="button"
             variant="destructive"
             size="icon"
             onClick={onStop}
@@ -157,6 +166,7 @@ function ComposerInner({
           </Button>
         ) : (
           <Button
+            type="button"
             size="icon"
             onClick={submit}
             disabled={disabled || text.trim() === ''}
@@ -167,7 +177,7 @@ function ComposerInner({
           </Button>
         )}
       </div>
-    </div>
+    </form>
   )
 }
 

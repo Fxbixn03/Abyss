@@ -129,6 +129,7 @@
   "composer": {
     "placeholderDisabled": "Sign in to start chatting…",
     "placeholderActive": "Message the agent…",
+    "formLabel": "Send a message",
     "stop": "Stop",
     "send": "Send (Enter / Cmd+Enter)"
   },
