@@ -105,6 +105,7 @@
   "sessionList": {
     "newChat": "New chat",
     "searchPlaceholder": "Search chats…",
+    "searchAriaLabel": "Search sessions",
     "sortGroup": "Sort sessions",
     "groupGroup": "Group sessions",
     "sort": {

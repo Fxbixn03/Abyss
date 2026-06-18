@@ -227,6 +227,7 @@ export function SessionList({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('sessionList.searchPlaceholder')}
+          aria-label={t('sessionList.searchAriaLabel')}
           className="pl-8"
         />
       </div>

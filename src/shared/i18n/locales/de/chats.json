@@ -105,6 +105,7 @@
   "sessionList": {
     "newChat": "Neuer Chat",
     "searchPlaceholder": "Chats suchen…",
+    "searchAriaLabel": "Sitzungen durchsuchen",
     "sortGroup": "Sitzungen sortieren",
     "groupGroup": "Sitzungen gruppieren",
     "sort": {
