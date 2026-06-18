@@ -89,11 +89,20 @@ function CollapsibleBlock({
           className={cn('size-3.5 shrink-0', copyText === undefined && 'ml-auto')}
         />
       </div>
-      {open && (
-        <div id={contentId} className="border-t border-border/60 px-2.5 py-2">
-          {children}
+      <div
+        id={contentId}
+        aria-hidden={!open}
+        className={cn(
+          'collapsible-block grid transition-[grid-template-rows] duration-200 ease-in-out',
+          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-border/60 px-2.5 py-2">
+            {children}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

@@ -245,3 +245,10 @@
     animation: none;
   }
 }
+
+/* CollapsibleBlock: disable grid-rows height animation for reduced-motion users */
+@media (prefers-reduced-motion: reduce) {
+  .collapsible-block {
+    transition: none;
+  }
+}
