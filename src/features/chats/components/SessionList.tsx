@@ -417,6 +417,15 @@ export function SessionList({
                               {s.gitBranch}
                             </span>
                           )}
+                          {groupBy !== 'project' && s.projectLabel && (
+                            <span
+                              className="flex min-w-0 items-center gap-0.5 truncate"
+                              title={s.cwd || s.projectLabel}
+                            >
+                              <Icon name="folder" className="size-3 shrink-0" />
+                              <span className="truncate">{s.projectLabel}</span>
+                            </span>
+                          )}
                           {(() => {
                             const cost = estimateCostUsd(
                               s.inputTokens ?? 0,
