@@ -296,6 +296,11 @@ export function SessionList({
         role="listbox"
         aria-label={t('title')}
         aria-multiselectable="false"
+        aria-activedescendant={
+          effectiveCursor >= 0 && flatSessions[effectiveCursor]
+            ? `session-opt-${flatSessions[effectiveCursor]!.id}`
+            : undefined
+        }
         tabIndex={-1}
         onScroll={onScroll}
         onKeyDown={onKeyDown}
@@ -338,6 +343,7 @@ export function SessionList({
                   <ContextMenu key={s.id}>
                     <ContextMenuTrigger asChild>
                       <button
+                        id={`session-opt-${s.id}`}
                         data-session-id={s.id}
                         type="button"
                         role="option"
