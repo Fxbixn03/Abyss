@@ -261,10 +261,19 @@ const windsurfRules: ConfigFileSpec = {
   description: 'Global rules applied to every Windsurf Cascade session.',
 }
 
+const windsurfSettings: ConfigFileSpec = {
+  id: 'settings',
+  filename: 'settings.json',
+  scope: 'global',
+  language: 'json',
+  description: 'Windsurf user settings (model, telemetry, preferences)',
+}
+
 /**
- * Windsurf (Codeium) — global rules at `memories/global_rules.md` and MCP
+ * Windsurf (Codeium) — global rules at `memories/global_rules.md`, MCP
  * servers in `mcp_config.json` (the standard `{ mcpServers }` JSON shape, stdio
- * servers use plain command/args), all under `~/.codeium/windsurf`.
+ * servers use plain command/args), and user preferences in `settings.json`,
+ * all under `~/.codeium/windsurf`.
  */
 export const windsurfDefinition: AgentDefinition = {
   id: 'windsurf',
@@ -283,10 +292,10 @@ export const windsurfDefinition: AgentDefinition = {
     skills: false,
     hooks: false,
     rules: false,
-    rawSettings: false,
+    rawSettings: true,
     chats: true,
   },
-  configFiles: [windsurfRules],
+  configFiles: [windsurfRules, windsurfSettings],
   resolvePaths: (env: OsEnv) => [
     joinPath(env.platform, env.home, '.codeium', 'windsurf'),
   ],

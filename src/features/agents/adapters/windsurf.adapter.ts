@@ -4,8 +4,8 @@ import { validateMarkdownInstructions } from '../lib/validators'
 import { createAdapter } from './base.adapter'
 
 /**
- * Windsurf (Codeium) — global Cascade rules and MCP servers under
- * `~/.codeium/windsurf`.
+ * Windsurf (Codeium) — global Cascade rules, MCP servers, and user settings
+ * under `~/.codeium/windsurf`.
  */
 export const windsurfAdapter: AgentAdapter = createAdapter(windsurfDefinition, {
   icon: 'img:windsurf',
@@ -17,6 +17,13 @@ export const windsurfAdapter: AgentAdapter = createAdapter(windsurfDefinition, {
       icon: 'plug',
       route: '/mcp',
       description: 'Model Context Protocol servers',
+    },
+    {
+      id: 'settings-file',
+      label: 'Settings (raw)',
+      icon: 'braces',
+      route: '/settings-file',
+      description: 'Raw settings.json',
     },
   ],
 })
