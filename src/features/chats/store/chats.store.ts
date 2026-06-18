@@ -14,6 +14,7 @@ import type {
 import { ipc } from '@/shared/ipc/ipc.client'
 import { genId } from '@/shared/lib/id'
 import {
+  getErrorMessage,
   isDiskWriteError,
   isNotFoundError,
   isReadPermissionError,
@@ -308,9 +309,11 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
         liveId = result.liveId
         set({ liveId, status: 'streaming' })
       } catch (err) {
+        reportError(err, { title: "Couldn't send message" })
         set({
           status: 'idle',
-          error: err instanceof Error ? err.message : 'Failed to start chat',
+          liveId: null,
+          error: getErrorMessage(err),
         })
         return
       }
@@ -321,10 +324,11 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
     try {
       await ipc.chatSend(liveId, text)
     } catch (err) {
+      reportError(err, { title: "Couldn't send message" })
       set({
         status: 'idle',
         liveId: null,
-        error: err instanceof Error ? err.message : 'Failed to send message',
+        error: getErrorMessage(err),
       })
     }
   },
