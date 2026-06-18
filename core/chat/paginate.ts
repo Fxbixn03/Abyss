@@ -12,7 +12,11 @@ import type {
   ChatSessionMeta,
   ChatSessionPage,
 } from '@/shared/types/chat'
-import { ConfigNotFoundError } from '../config-error'
+import {
+  ConfigNotFoundError,
+  ConfigParseError,
+  ConfigReadError,
+} from '../config-error'
 
 /** True when `child` is `parent` or nested below it (OS-separator agnostic). */
 export function isUnderDir(child: string, parent: string): boolean {
@@ -59,6 +63,18 @@ export async function paginateByMtime<F>(
       parse(f.ref).catch((err: unknown) => {
         if (err instanceof ConfigNotFoundError) {
           dropped += 1
+          return null
+        }
+        if (
+          err instanceof ConfigReadError ||
+          err instanceof ConfigParseError
+        ) {
+          // File exists but is unreadable or corrupt — exclude from sessions
+          // but do not decrement total (the file is still counted in the list).
+          console.warn(
+            `[paginateByMtime] skipping unreadable/corrupt session:`,
+            err,
+          )
           return null
         }
         throw err
