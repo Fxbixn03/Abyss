@@ -9,6 +9,13 @@ export const warpAdapter: AgentAdapter = createAdapter(warpDefinition, {
   validate: validateMarkdownInstructions,
   getSidebarSections: (): SidebarSection[] => [
     {
+      id: 'agents',
+      label: 'Agent Personas',
+      icon: 'bot',
+      route: '/agents',
+      description: 'Named Warp agent instruction files',
+    },
+    {
       id: 'mcp',
       label: 'MCP Servers',
       icon: 'plug',

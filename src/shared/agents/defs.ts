@@ -694,7 +694,9 @@ const warpInstructions: ConfigFileSpec = {
 /**
  * Warp terminal AI — reads global instructions from `~/.warp/agents/default.md`
  * (Warp 2025+ global agent config). On Windows, the config lives under
- * `%APPDATA%\warp\agents`.
+ * `%APPDATA%\warp\agents`. Every `.md` file in that directory is a named agent
+ * persona, so the whole directory is also exposed as an `agents` collection with
+ * `dir: '.'` (the base path already points at the agents folder).
  */
 export const warpDefinition: AgentDefinition = {
   id: 'warp',
@@ -708,13 +710,19 @@ export const warpDefinition: AgentDefinition = {
     mcp: true,
     permissions: false,
     modelEnv: false,
-    agents: false,
+    agents: true,
     commands: false,
     skills: false,
     hooks: false,
     rules: false,
     rawSettings: false,
     chats: true,
+  },
+  collections: {
+    agents: {
+      dir: '.',
+      label: { singular: 'Agent Persona', plural: 'Agent Personas' },
+    },
   },
   configFiles: [warpInstructions],
   resolvePaths: (env: OsEnv) => [
