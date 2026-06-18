@@ -226,7 +226,7 @@ function MessageBubbleInner({
     })
   }
 
-  const timestamp = relativeTime(message.timestamp)
+  const timestamp = relativeTime(message.timestamp, t)
 
   // Tool-result-only turns render as a standalone block group, not a bubble.
   if (onlyToolResults) {

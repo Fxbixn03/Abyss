@@ -325,13 +325,13 @@ export function SessionList({
                   ? t('sessionList.sessionAriaLabelPinned', {
                       title: s.title,
                       project: s.projectLabel,
-                      time: relativeTime(s.updatedAt),
+                      time: relativeTime(s.updatedAt, t),
                       count: s.messageCount,
                     })
                   : t('sessionList.sessionAriaLabel', {
                       title: s.title,
                       project: s.projectLabel,
-                      time: relativeTime(s.updatedAt),
+                      time: relativeTime(s.updatedAt, t),
                       count: s.messageCount,
                     })
                 return (
@@ -392,7 +392,7 @@ export function SessionList({
                           </span>
                         )}
                         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                          <span>{relativeTime(s.updatedAt)}</span>
+                          <span>{relativeTime(s.updatedAt, t)}</span>
                           <span>· {s.messageCount} msg</span>
                           {s.gitBranch && (
                             <span className="flex items-center gap-0.5 truncate">

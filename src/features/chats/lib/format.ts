@@ -1,17 +1,18 @@
 /** Small presentation helpers for the Chats feature. */
+import type { TFunction } from 'i18next'
 
-export function relativeTime(iso?: string): string {
+export function relativeTime(iso: string | undefined, t: TFunction<'chats'>): string {
   if (!iso) return ''
   const then = new Date(iso).getTime()
   if (Number.isNaN(then)) return ''
   const diff = Date.now() - then
   const min = Math.round(diff / 60000)
-  if (min < 1) return 'just now'
-  if (min < 60) return `${min}m ago`
+  if (min < 1) return t('relativeTime.justNow')
+  if (min < 60) return t('relativeTime.minutesAgo', { count: min })
   const hours = Math.round(min / 60)
-  if (hours < 24) return `${hours}h ago`
+  if (hours < 24) return t('relativeTime.hoursAgo', { count: hours })
   const days = Math.round(hours / 24)
-  if (days < 30) return `${days}d ago`
+  if (days < 30) return t('relativeTime.daysAgo', { count: days })
   return new Date(iso).toLocaleDateString()
 }
 

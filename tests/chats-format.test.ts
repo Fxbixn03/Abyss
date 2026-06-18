@@ -7,51 +7,59 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
+import type { TFunction } from 'i18next'
 import {
   relativeTime,
   formatBytes,
   formatCost,
 } from '@/features/chats/lib/format'
 
+// Minimal stub t: returns the key as-is so tests remain deterministic.
+// Cast to TFunction<'chats'> since the stub does not need full type fidelity.
+const stubT = ((key: string, opts?: { count?: number }) => {
+  if (opts?.count !== undefined) return `${key}:${String(opts.count)}`
+  return key
+}) as unknown as TFunction<'chats'>
+
 // ── relativeTime ──────────────────────────────────────────────────────────────
 
 test('relativeTime: undefined input returns empty string', () => {
-  assert.equal(relativeTime(undefined), '')
+  assert.equal(relativeTime(undefined, stubT), '')
 })
 
 test('relativeTime: null input (cast) returns empty string', () => {
   // The type signature accepts undefined; pass null via cast to verify guard.
-  assert.equal(relativeTime(null as unknown as string | undefined), '')
+  assert.equal(relativeTime(null as unknown as string | undefined, stubT), '')
 })
 
 test('relativeTime: invalid ISO string returns empty string', () => {
-  assert.equal(relativeTime('not-a-date'), '')
+  assert.equal(relativeTime('not-a-date', stubT), '')
 })
 
 test('relativeTime: timestamp less than 1 minute ago returns "just now"', () => {
   const iso = new Date(Date.now() - 10_000).toISOString() // 10 seconds ago
-  assert.equal(relativeTime(iso), 'just now')
+  assert.equal(relativeTime(iso, stubT), 'relativeTime.justNow')
 })
 
-test('relativeTime: a 45-minute-old timestamp returns "45m ago"', () => {
+test('relativeTime: a 45-minute-old timestamp returns minutesAgo key', () => {
   const iso = new Date(Date.now() - 45 * 60_000).toISOString()
-  assert.equal(relativeTime(iso), '45m ago')
+  assert.equal(relativeTime(iso, stubT), 'relativeTime.minutesAgo:45')
 })
 
-test('relativeTime: a 5-hour-old timestamp returns "5h ago"', () => {
+test('relativeTime: a 5-hour-old timestamp returns hoursAgo key', () => {
   const iso = new Date(Date.now() - 5 * 60 * 60_000).toISOString()
-  assert.equal(relativeTime(iso), '5h ago')
+  assert.equal(relativeTime(iso, stubT), 'relativeTime.hoursAgo:5')
 })
 
-test('relativeTime: a 3-day-old timestamp returns "3d ago"', () => {
+test('relativeTime: a 3-day-old timestamp returns daysAgo key', () => {
   const iso = new Date(Date.now() - 3 * 24 * 60 * 60_000).toISOString()
-  assert.equal(relativeTime(iso), '3d ago')
+  assert.equal(relativeTime(iso, stubT), 'relativeTime.daysAgo:3')
 })
 
 test('relativeTime: a timestamp older than 30 days returns a locale date string', () => {
   const oldDate = new Date(Date.now() - 31 * 24 * 60 * 60_000)
   const iso = oldDate.toISOString()
-  const result = relativeTime(iso)
+  const result = relativeTime(iso, stubT)
   // Must match what Date.toLocaleDateString() returns for the same date.
   assert.equal(result, oldDate.toLocaleDateString())
 })
