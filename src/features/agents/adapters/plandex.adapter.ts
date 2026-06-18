@@ -3,7 +3,7 @@ import { plandexDefinition } from '@/shared/agents/defs'
 import { validateMarkdownInstructions } from '../lib/validators'
 import { createAdapter } from './base.adapter'
 
-/** Plandex — edits global instructions at `~/.plandex/instructions.md`. */
+/** Plandex — edits global instructions at `~/.plandex/instructions.md` and raw settings at `~/.plandex/config.yaml`. */
 export const plandexAdapter: AgentAdapter = createAdapter(plandexDefinition, {
   icon: 'layers',
   validate: validateMarkdownInstructions,
@@ -13,6 +13,13 @@ export const plandexAdapter: AgentAdapter = createAdapter(plandexDefinition, {
       label: 'MCP Servers',
       icon: 'plug',
       route: '/mcp',
+    },
+    {
+      id: 'settings-file',
+      label: 'Settings (raw)',
+      icon: 'braces',
+      route: '/settings-file',
+      description: 'Raw config.yaml',
     },
   ],
 })

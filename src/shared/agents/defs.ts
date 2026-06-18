@@ -638,10 +638,18 @@ const plandexInstructions: ConfigFileSpec = {
   description: 'Global instructions for Plandex (stored at ~/.plandex/instructions.md).',
 }
 
+const plandexSettings: ConfigFileSpec = {
+  id: 'settings',
+  filename: 'config.yaml',
+  scope: 'global',
+  language: 'yaml',
+  description: 'Plandex global settings (model, plan behavior)',
+}
+
 /**
  * Plandex (open-source AI coding CLI) — global instructions at
- * `~/.plandex/instructions.md`. Instructions-only agent; no MCP or other
- * advanced features at the Abyss level.
+ * `~/.plandex/instructions.md` and model/plan settings at
+ * `~/.plandex/config.yaml`.
  */
 export const plandexDefinition: AgentDefinition = {
   id: 'plandex',
@@ -660,10 +668,10 @@ export const plandexDefinition: AgentDefinition = {
     skills: false,
     hooks: false,
     rules: false,
-    rawSettings: false,
+    rawSettings: true,
     chats: true,
   },
-  configFiles: [plandexInstructions],
+  configFiles: [plandexInstructions, plandexSettings],
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.plandex')],
 }
 
