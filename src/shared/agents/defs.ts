@@ -667,6 +667,14 @@ const amazonqInstructions: ConfigFileSpec = {
   description: 'Global system prompt for Amazon Q Developer CLI.',
 }
 
+const amazonqSettings: ConfigFileSpec = {
+  id: 'settings',
+  filename: 'settings.json',
+  scope: 'global',
+  language: 'json',
+  description: 'Amazon Q Developer CLI user settings (model, preferences)',
+}
+
 const warpInstructions: ConfigFileSpec = {
   id: 'instructions',
   filename: 'default.md',
@@ -730,10 +738,10 @@ export const amazonqDefinition: AgentDefinition = {
     skills: false,
     hooks: false,
     rules: false,
-    rawSettings: false,
+    rawSettings: true,
     chats: true,
   },
-  configFiles: [amazonqInstructions],
+  configFiles: [amazonqInstructions, amazonqSettings],
   resolvePaths: (env: OsEnv) => [
     joinPath(env.platform, env.home, '.aws', 'amazonq'),
   ],
