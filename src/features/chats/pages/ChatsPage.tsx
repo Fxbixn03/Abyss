@@ -93,6 +93,8 @@ export function ChatsPage() {
     markers: SuspicionMarker[]
   } | null>(null)
   const [scanning, setScanning] = useState(false)
+  // Whether the risk panel is filtered to warnings only.
+  const [showWarningsOnly, setShowWarningsOnly] = useState(false)
   // Index of the message to jump to when a risk-panel Jump button is clicked.
   // Stored as { index, seq } so that clicking the same marker twice re-triggers the scroll.
   const [riskJumpTarget, setRiskJumpTarget] = useState<{
@@ -189,7 +191,13 @@ export function ChatsPage() {
   const canChat = cwd.trim() !== '' || activeSessionId !== null
 
   const sessionKey = activeSessionId ?? 'live'
-  const shownRisks = risks && risks.key === sessionKey ? risks.markers : null
+  const allRisks = risks && risks.key === sessionKey ? risks.markers : null
+  const hasWarnings = allRisks != null && allRisks.some((m) => m.severity === 'warning')
+  const hasInfo = allRisks != null && allRisks.some((m) => m.severity === 'info')
+  const hasMultipleSeverities = hasWarnings && hasInfo
+  const shownRisks = allRisks != null && showWarningsOnly
+    ? allRisks.filter((m) => m.severity === 'warning')
+    : allRisks
   const activeReplay = replay && replay.key === sessionKey ? replay : null
   const shownMessages = activeReplay
     ? messages.slice(0, activeReplay.index)
@@ -477,23 +485,63 @@ export function ChatsPage() {
                 />
               )}
 
-              {shownRisks && (
+              {shownRisks && allRisks && (
                 <div className="border-b border-border bg-muted/20 px-4 py-2">
                   <div className="mb-1 flex items-center justify-between">
                     <span className="flex items-center gap-1.5 text-xs font-medium">
                       <Icon name="flag" className="size-3.5" />
-                      {shownRisks.length === 0
+                      {allRisks.length === 0
                         ? t('risks.none')
-                        : t('risks.count', { count: shownRisks.length })}
+                        : showWarningsOnly && shownRisks.length !== allRisks.length
+                          ? t('risks.countFiltered', {
+                              shown: shownRisks.length,
+                              total: allRisks.length,
+                            })
+                          : t('risks.count', { count: allRisks.length })}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setRisks(null)}
-                      className="text-muted-foreground hover:text-foreground"
-                      aria-label={t('riskScan.dismiss')}
-                    >
-                      <Icon name="x" className="size-3.5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {hasMultipleSeverities && (
+                        <div className="flex items-center rounded-full border border-border text-[11px]">
+                          <button
+                            type="button"
+                            onClick={() => setShowWarningsOnly(false)}
+                            className={cn(
+                              'rounded-l-full px-2 py-0.5 transition-colors',
+                              !showWarningsOnly
+                                ? 'bg-primary text-primary-foreground'
+                                : 'text-muted-foreground hover:text-foreground',
+                            )}
+                            aria-pressed={!showWarningsOnly}
+                          >
+                            {t('risks.filterAll')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowWarningsOnly(true)}
+                            className={cn(
+                              'rounded-r-full px-2 py-0.5 transition-colors',
+                              showWarningsOnly
+                                ? 'bg-primary text-primary-foreground'
+                                : 'text-muted-foreground hover:text-foreground',
+                            )}
+                            aria-pressed={showWarningsOnly}
+                          >
+                            {t('risks.filterWarnings')}
+                          </button>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRisks(null)
+                          setShowWarningsOnly(false)
+                        }}
+                        className="text-muted-foreground hover:text-foreground"
+                        aria-label={t('riskScan.dismiss')}
+                      >
+                        <Icon name="x" className="size-3.5" />
+                      </button>
+                    </div>
                   </div>
                   <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
                     {shownRisks.map((marker, i) => (

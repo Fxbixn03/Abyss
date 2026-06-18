@@ -34,7 +34,10 @@
   "risks": {
     "none": "No risk indicators found",
     "count_one": "{{count}} risk indicator",
-    "count_other": "{{count}} risk indicators"
+    "count_other": "{{count}} risk indicators",
+    "countFiltered": "{{shown}} of {{total}} risks",
+    "filterAll": "All",
+    "filterWarnings": "Warnings only"
   },
   "missingFile": {
     "title": "Referenced file not found",
