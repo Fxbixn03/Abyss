@@ -131,7 +131,7 @@ function StatSkeleton() {
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-[60px] animate-pulse rounded-lg bg-muted" />
+        <div key={i} className="h-[60px] motion-safe:animate-pulse rounded-lg bg-muted" />
       ))}
     </div>
   )
@@ -203,11 +203,11 @@ export function UsagePanel() {
     return (
       <section className="space-y-3">
         {heading}
-        <div className="h-[92px] animate-pulse rounded-lg bg-muted" />
+        <div className="h-[92px] motion-safe:animate-pulse rounded-lg bg-muted" />
         <StatSkeleton />
         <div className="grid gap-3 lg:grid-cols-2">
-          <div className="h-40 animate-pulse rounded-lg bg-muted" />
-          <div className="h-40 animate-pulse rounded-lg bg-muted" />
+          <div className="h-40 motion-safe:animate-pulse rounded-lg bg-muted" />
+          <div className="h-40 motion-safe:animate-pulse rounded-lg bg-muted" />
         </div>
       </section>
     )

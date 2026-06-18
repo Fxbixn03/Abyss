@@ -32,7 +32,7 @@ function SkeletonBubbleRow({
         {bars.map((width, i) => (
           <div
             key={i}
-            className={cn('h-3 animate-pulse rounded-full bg-muted/60', width)}
+            className={cn('h-3 motion-safe:animate-pulse rounded-full bg-muted/60', width)}
           />
         ))}
       </div>
