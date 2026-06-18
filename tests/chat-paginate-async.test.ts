@@ -13,7 +13,11 @@ import path from 'node:path'
 import { promises as fs } from 'node:fs'
 
 import { paginateByMtime } from '@core/chat/paginate'
-import { ConfigNotFoundError } from '@core/config-error'
+import {
+  ConfigNotFoundError,
+  ConfigReadError,
+  ConfigParseError,
+} from '@core/config-error'
 import type { ChatSessionMeta } from '@/shared/types/chat'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -243,6 +247,70 @@ test('paginateByMtime: non-ConfigNotFoundError parse rejection propagates (not s
         return true
       },
     )
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('paginateByMtime: ConfigReadError excludes session from sessions but does NOT decrement total', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'abyss-paginate-async-'))
+  try {
+    const base = Date.now()
+    const fileA = await writeWithMtime(dir, 'a.jsonl', '', base + 2000)
+    const fileB = await writeWithMtime(dir, 'b.jsonl', '', base + 1000)
+
+    const files = [
+      { filePath: fileA, ref: 'a' },
+      { filePath: fileB, ref: 'b' },
+    ]
+
+    // 'a' simulates a permission-denied read (file exists but is unreadable)
+    const parse = async (ref: string): Promise<ChatSessionMeta | null> => {
+      if (ref === 'a') {
+        throw new ConfigReadError(path.join(dir, 'a.jsonl'))
+      }
+      return makeMeta(ref, path.join(dir, `${ref}.jsonl`), new Date().toISOString())
+    }
+
+    const result = await paginateByMtime(files, undefined, parse)
+
+    // total must NOT be decremented for ConfigReadError (file exists, just unreadable)
+    assert.equal(result.total, 2)
+    // only the readable session appears in the list
+    assert.equal(result.sessions.length, 1)
+    assert.equal(result.sessions[0].id, 'b')
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('paginateByMtime: ConfigParseError excludes session from sessions but does NOT decrement total', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'abyss-paginate-async-'))
+  try {
+    const base = Date.now()
+    const fileA = await writeWithMtime(dir, 'a.jsonl', '', base + 2000)
+    const fileB = await writeWithMtime(dir, 'b.jsonl', '', base + 1000)
+
+    const files = [
+      { filePath: fileA, ref: 'a' },
+      { filePath: fileB, ref: 'b' },
+    ]
+
+    // 'a' simulates a corrupt/unparseable file (e.g. truncated JSON)
+    const parse = async (ref: string): Promise<ChatSessionMeta | null> => {
+      if (ref === 'a') {
+        throw new ConfigParseError(path.join(dir, 'a.jsonl'), new SyntaxError('{broken'))
+      }
+      return makeMeta(ref, path.join(dir, `${ref}.jsonl`), new Date().toISOString())
+    }
+
+    const result = await paginateByMtime(files, undefined, parse)
+
+    // total must NOT be decremented for ConfigParseError (file exists, just corrupt)
+    assert.equal(result.total, 2)
+    // only the parseable session appears in the list
+    assert.equal(result.sessions.length, 1)
+    assert.equal(result.sessions[0].id, 'b')
   } finally {
     await fs.rm(dir, { recursive: true, force: true })
   }
