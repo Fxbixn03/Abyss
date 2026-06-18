@@ -96,7 +96,13 @@ export async function readProfile(id: string): Promise<Profile | null> {
 export async function deleteProfile(id: string): Promise<boolean> {
   const file = fileFor(id)
   if (!file) return false
-  await fs.rm(file, { force: true })
+  try {
+    await fs.rm(file, { force: true })
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(file, err)
+    if (isDiskError(err)) throw new ConfigDiskError(file, err)
+    throw err
+  }
   return true
 }
 
