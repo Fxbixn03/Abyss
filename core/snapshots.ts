@@ -73,11 +73,17 @@ export async function recordSnapshot(
   try {
     const dir = path.join(config.root, hashPath(filePath))
     await fs.mkdir(dir, { recursive: true })
-    await fs.writeFile(
-      path.join(dir, 'meta.json'),
-      JSON.stringify({ originalPath: path.resolve(filePath) }),
-      'utf8',
-    )
+    const metaPath = path.join(dir, 'meta.json')
+    const metaContent = JSON.stringify({ originalPath: path.resolve(filePath) })
+    const metaTmp = uniqueTempPath(metaPath)
+    await fs.writeFile(metaTmp, metaContent, 'utf8')
+    let metaRenamed = false
+    try {
+      await fs.rename(metaTmp, metaPath)
+      metaRenamed = true
+    } finally {
+      if (!metaRenamed) await fs.rm(metaTmp, { force: true })
+    }
 
     let stamp = Date.now()
     let snapPath = path.join(dir, `${stamp}.snap`)
