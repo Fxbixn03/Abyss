@@ -33,7 +33,7 @@ import {
   listRooSessionFiles,
 } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
-import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
+import { ConfigWriteError, ConfigNotFoundError, ConfigReadError } from '../../config-error'
 import { isPermissionError } from '../../os-errors'
 
 /**
@@ -81,7 +81,15 @@ async function parseHistoryFile(
   filePath: string,
 ): Promise<{ messages: ChatMessage[]; taskId: string }> {
   const taskId = rooSessionId(filePath)
-  const raw = await fs.readFile(filePath, 'utf-8')
+  let raw: string
+  try {
+    raw = await fs.readFile(filePath, 'utf-8')
+  } catch (err) {
+    if (isPermissionError(err)) {
+      throw new ConfigReadError(filePath, err)
+    }
+    throw err
+  }
   const parsed: unknown = JSON.parse(raw)
 
   if (!Array.isArray(parsed)) return { messages: [], taskId }
