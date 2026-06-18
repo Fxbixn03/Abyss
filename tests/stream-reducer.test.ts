@@ -245,3 +245,64 @@ test('finalizeStreaming: is idempotent when streaming was already false', () => 
   const result = finalizeStreaming(messages, 'msg-1')
   assert.equal(result[0].streaming, false)
 })
+
+// ── error-event path (appendBlock + finalizeStreaming together) ───────────────
+// These mirror what the store's 'error' case does:
+// finalizeStreaming(appendBlock(messages, currentId, errorBlock), currentId)
+
+test('error path: appendBlock + finalizeStreaming appends error block and clears streaming flag', () => {
+  const messages: ChatMessage[] = [makeMessage('msg-1', [], { streaming: true })]
+  const errorBlock: ChatBlock = { kind: 'error', message: 'CLI crashed' }
+  const afterBlock = appendBlock(messages, 'msg-1', errorBlock)
+  const result = finalizeStreaming(afterBlock, 'msg-1')
+  // streaming is cleared
+  assert.equal(result[0].streaming, false)
+  // error block was appended
+  assert.equal(result[0].blocks.length, 1)
+  assert.deepEqual(result[0].blocks[0], errorBlock)
+})
+
+test('error path: streaming flag is false on current message even when it had text deltas', () => {
+  const messages: ChatMessage[] = [
+    makeMessage('msg-1', [{ kind: 'text', text: 'partial response…' }], { streaming: true }),
+  ]
+  const errorBlock: ChatBlock = { kind: 'error', message: 'stderr line' }
+  const afterBlock = appendBlock(messages, 'msg-1', errorBlock)
+  const result = finalizeStreaming(afterBlock, 'msg-1')
+  assert.equal(result[0].streaming, false)
+  assert.equal(result[0].blocks.length, 2)
+  assert.equal(result[0].blocks[0].kind, 'text')
+  assert.equal(result[0].blocks[1].kind, 'error')
+})
+
+test('error path: non-current messages are not affected by error finalization', () => {
+  const messages: ChatMessage[] = [
+    makeMessage('msg-1', [{ kind: 'text', text: 'user msg' }], { streaming: false }),
+    makeMessage('msg-2', [], { streaming: true }),
+  ]
+  const errorBlock: ChatBlock = { kind: 'error', message: 'error occurred' }
+  const afterBlock = appendBlock(messages, 'msg-2', errorBlock)
+  const result = finalizeStreaming(afterBlock, 'msg-2')
+  // msg-1 is untouched
+  assert.equal(result[0].streaming, false)
+  assert.equal(result[0].blocks.length, 1)
+  // msg-2 is finalized with the error block
+  assert.equal(result[1].streaming, false)
+  assert.equal(result[1].blocks.length, 1)
+  assert.deepEqual(result[1].blocks[0], errorBlock)
+})
+
+test('error path: null currentMessageId leaves all messages unchanged', () => {
+  const messages: ChatMessage[] = [
+    makeMessage('msg-1', [], { streaming: true }),
+  ]
+  const errorBlock: ChatBlock = { kind: 'error', message: 'error with no current message' }
+  // When currentMessageId is null, appendBlock is a no-op
+  const afterBlock = appendBlock(messages, null, errorBlock)
+  assert.strictEqual(afterBlock, messages)
+  // finalizeStreaming is also a no-op
+  const result = finalizeStreaming(afterBlock, null)
+  assert.strictEqual(result, messages)
+  // streaming remains true since there was no current message to finalize
+  assert.equal(result[0].streaming, true)
+})

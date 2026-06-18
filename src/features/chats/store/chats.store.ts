@@ -488,7 +488,12 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
         const block: ChatBlock = { kind: 'error', message: event.message }
         set((s) => ({
           error: event.message,
-          messages: appendBlock(s.messages, s.currentMessageId, block),
+          status: 'idle',
+          currentMessageId: null,
+          messages: finalizeStreaming(
+            appendBlock(s.messages, s.currentMessageId, block),
+            s.currentMessageId,
+          ),
         }))
         break
       }
