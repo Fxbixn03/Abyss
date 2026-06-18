@@ -1,7 +1,7 @@
 /**
  * Pure-logic tests for src/features/chats/lib/format.ts (node:test).
- * relativeTime, formatBytes, and formatCost are deterministic presentation
- * helpers with no disk access, IPC, or DOM dependencies.
+ * relativeTime, formatBytes, formatCost, and highlightText are deterministic
+ * presentation helpers with no disk access, IPC, or DOM dependencies.
  */
 
 import { test } from 'node:test'
@@ -12,6 +12,7 @@ import {
   relativeTime,
   formatBytes,
   formatCost,
+  highlightText,
 } from '@/features/chats/lib/format'
 
 // Minimal stub t: returns the key as-is so tests remain deterministic.
@@ -96,4 +97,74 @@ test('formatCost: a value below $0.01 uses 4 decimal places', () => {
 
 test('formatCost: a value of $0.50 uses 2 decimal places', () => {
   assert.equal(formatCost(0.5), '$0.50')
+})
+
+// ── highlightText ─────────────────────────────────────────────────────────────
+
+test('highlightText: empty query returns html unchanged', () => {
+  const html = '<p>hello world</p>'
+  assert.equal(highlightText(html, ''), html)
+})
+
+test('highlightText: blank-only query returns html unchanged', () => {
+  const html = '<p>hello world</p>'
+  assert.equal(highlightText(html, '   '), html)
+})
+
+test('highlightText: wraps a single match in a mark element', () => {
+  const result = highlightText('hello world', 'world')
+  assert.ok(
+    result.includes('<mark class="highlight-match">world</mark>'),
+    `expected mark element, got: ${result}`,
+  )
+})
+
+test('highlightText: matching is case-insensitive', () => {
+  const result = highlightText('Hello World', 'hello')
+  assert.ok(
+    result.includes('<mark class="highlight-match">Hello</mark>'),
+    `expected case-insensitive match, got: ${result}`,
+  )
+})
+
+test('highlightText: wraps multiple occurrences', () => {
+  const result = highlightText('foo bar foo', 'foo')
+  const matches = result.match(/<mark class="highlight-match">foo<\/mark>/g)
+  assert.equal(matches?.length, 2, `expected 2 marks, got: ${result}`)
+})
+
+test('highlightText: does not highlight inside HTML tag attributes', () => {
+  // 'href' contains no match but 'hello' is in the text node
+  const html = '<a href="/hello">hello</a>'
+  const result = highlightText(html, 'hello')
+  // The href attribute must not be touched
+  assert.ok(result.includes('href="/hello"'), `href must be unchanged, got: ${result}`)
+  // The text content must be wrapped
+  assert.ok(
+    result.includes('<mark class="highlight-match">hello</mark>'),
+    `text node must be highlighted, got: ${result}`,
+  )
+})
+
+test('highlightText: does not highlight tag names', () => {
+  const html = '<div>div content</div>'
+  const result = highlightText(html, 'div')
+  // The opening/closing tags must remain unchanged
+  assert.ok(result.startsWith('<div>'), `opening tag must be unchanged, got: ${result}`)
+  assert.ok(result.endsWith('</div>'), `closing tag must be unchanged, got: ${result}`)
+  // The text node must be highlighted
+  assert.ok(
+    result.includes('<mark class="highlight-match">div</mark>'),
+    `text node must be highlighted, got: ${result}`,
+  )
+})
+
+test('highlightText: regex special chars in query are escaped', () => {
+  // A query with "." should match only a literal dot, not every character.
+  const html = '<p>version 1.0 is here</p>'
+  const result = highlightText(html, '1.0')
+  assert.ok(
+    result.includes('<mark class="highlight-match">1.0</mark>'),
+    `literal dot must match, got: ${result}`,
+  )
 })

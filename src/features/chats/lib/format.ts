@@ -2,6 +2,35 @@
 import type { TFunction } from 'i18next'
 import type { ChatMessage } from '@/shared/types/chat'
 
+/**
+ * Wrap every case-insensitive occurrence of `query` inside `html` with a
+ * `<mark>` element, but only in text nodes — never inside tag attributes or
+ * tag names.  The regex splits the string into alternating tag / text chunks
+ * and only replaces within the text chunks.
+ *
+ * Returns `html` unchanged when `query` is empty or blank.
+ */
+export function highlightText(html: string, query: string): string {
+  const q = query.trim()
+  if (!q) return html
+
+  // Split HTML into an alternating sequence: text, tag, text, tag, …
+  // The capturing group keeps the tags in the result array.
+  const parts = html.split(/(<[^>]*>)/g)
+  const re = new RegExp(
+    q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+    'gi',
+  )
+
+  return parts
+    .map((part) => {
+      // Tags start with '<' — leave them untouched.
+      if (part.startsWith('<')) return part
+      return part.replace(re, (match) => `<mark class="highlight-match">${match}</mark>`)
+    })
+    .join('')
+}
+
 export function relativeTime(iso: string | undefined, t: TFunction<'chats'>): string {
   if (!iso) return ''
   const then = new Date(iso).getTime()

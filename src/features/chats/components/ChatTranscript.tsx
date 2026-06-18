@@ -452,6 +452,7 @@ export function ChatTranscript({
                 agentIcon={agentIcon}
                 isStreaming={streaming === true && i === messages.length - 1}
                 density={density}
+                searchQuery={searchOpen && query.trim() !== '' ? query : undefined}
               />
             </div>
           )

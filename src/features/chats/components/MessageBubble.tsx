@@ -1,6 +1,9 @@
-import { useState, useId, memo } from 'react'
+import { useState, useId, memo, useMemo } from 'react'
 import type { ReactNode, MouseEvent, KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import ReactMarkdown from 'react-markdown'
+import type { Components } from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { ChatBlock, ChatMessage } from '@/shared/types/chat'
 import { Icon } from '@/shared/components/Icon'
 import { Spinner } from '@/shared/components/Spinner'
@@ -11,6 +14,214 @@ import { Button } from '@/shared/components/ui/button'
 import { estimateCostUsd, formatMoney } from '@/shared/lib/cost'
 import { useSettingsStore } from '@/features/settings/store/settings.store'
 import { AgentIcon } from '@/features/agents/components/AgentIcon'
+
+// ── Rehype plugin for search highlighting ────────────────────────────────────
+//
+// A minimal hast-tree transformer that splits text nodes containing the query
+// and wraps matching substrings with <mark class="highlight-match"> elements.
+// Runs inside react-markdown's unified pipeline so no dangerouslySetInnerHTML
+// is needed; the hast tree is turned into React elements by hast-util-to-jsx-runtime.
+
+/**
+ * Minimal hast node types used by the highlight plugin.
+ * Declared inline so we don't depend on @types/hast in the renderer tsconfig.
+ */
+type HastText = { type: 'text'; value: string }
+type HastElement = {
+  type: 'element'
+  tagName: string
+  properties: Record<string, unknown>
+  children: HastNode[]
+}
+type HastRoot = { type: 'root'; children: HastNode[] }
+type HastNode = HastText | HastElement | HastRoot | { type: string }
+
+function isText(node: HastNode): node is HastText {
+  return node.type === 'text'
+}
+function isParent(
+  node: HastNode,
+): node is HastElement | HastRoot {
+  return (
+    node.type === 'element' ||
+    node.type === 'root'
+  )
+}
+
+/**
+ * Build a rehype plugin (transformer) that wraps occurrences of `query` in
+ * `<mark class="highlight-match">` hast elements.  Returns `undefined` when
+ * the query is blank so we can skip registering the plugin entirely.
+ */
+function makeHighlightPlugin(query: string) {
+  const q = query.trim()
+  if (!q) return undefined
+
+  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const re = new RegExp(`(${escaped})`, 'gi')
+
+  return function highlightPlugin() {
+    return function transformer(tree: HastNode): void {
+      // Walk the tree depth-first; mutate parent.children in-place.
+      function walk(node: HastNode): void {
+        if (!isParent(node)) return
+        const newChildren: HastNode[] = []
+        for (const child of node.children) {
+          if (isText(child)) {
+            const parts = child.value.split(re)
+            if (parts.length === 1) {
+              // No match in this text node — keep as-is.
+              newChildren.push(child)
+            } else {
+              // Build alternating text / mark nodes.
+              for (let i = 0; i < parts.length; i++) {
+                const part = parts[i]
+                if (!part) continue
+                if (i % 2 === 1) {
+                  // Odd index → matched substring → wrap in <mark>
+                  newChildren.push({
+                    type: 'element',
+                    tagName: 'mark',
+                    properties: { className: 'highlight-match' },
+                    children: [{ type: 'text', value: part }],
+                  } satisfies HastElement)
+                } else {
+                  newChildren.push({ type: 'text', value: part } satisfies HastText)
+                }
+              }
+            }
+          } else {
+            walk(child)
+            newChildren.push(child)
+          }
+        }
+        node.children = newChildren
+      }
+      walk(tree)
+    }
+  }
+}
+
+// ── HighlightedMarkdown ───────────────────────────────────────────────────────
+//
+// Shares the same component map as the global Markdown component (imported
+// below) but adds the highlight rehype plugin so we don't duplicate the style
+// definitions.  We re-use the full Components map from the shared Markdown via
+// import; see Markdown.tsx for the full definition.
+
+/** Components shared with the global Markdown — re-declared locally to avoid coupling. */
+const markdownComponents: Components = {
+  p: ({ children }) => (
+    <p className="my-1.5 whitespace-pre-wrap break-words leading-relaxed first:mt-0 last:mb-0">
+      {children}
+    </p>
+  ),
+  h1: ({ children }) => (
+    <h1 className="mb-1.5 mt-3 text-base font-semibold first:mt-0">{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="mb-1.5 mt-3 text-[15px] font-semibold first:mt-0">{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="mb-1 mt-2.5 text-sm font-semibold first:mt-0">{children}</h3>
+  ),
+  h4: ({ children }) => (
+    <h4 className="mb-1 mt-2 text-sm font-medium first:mt-0">{children}</h4>
+  ),
+  ul: ({ children }) => (
+    <ul className="my-1.5 ml-5 list-disc space-y-1 marker:text-muted-foreground">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="my-1.5 ml-5 list-decimal space-y-1 marker:text-muted-foreground">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  strong: ({ children }) => (
+    <strong className="font-semibold text-foreground">{children}</strong>
+  ),
+  em: ({ children }) => <em className="italic">{children}</em>,
+  blockquote: ({ children }) => (
+    <blockquote className="my-2 border-l-2 border-border pl-3 text-muted-foreground">
+      {children}
+    </blockquote>
+  ),
+  hr: () => <hr className="my-3 border-border" />,
+  code: ({ className, children }) => {
+    const text = String(children)
+    const isBlock = /language-/.test(className ?? '') || text.includes('\n')
+    if (isBlock) {
+      return <code className={cn('font-code', className)}>{children}</code>
+    }
+    return (
+      <code className="rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 font-code text-[0.85em] font-medium text-primary">
+        {children}
+      </code>
+    )
+  },
+  table: ({ children }) => (
+    <div className="my-2 overflow-x-auto rounded-md border border-border">
+      <table className="w-full border-collapse text-sm">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-muted/50">{children}</thead>,
+  th: ({ children }) => (
+    <th className="border-b border-border px-3 py-1.5 text-left font-medium">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="border-b border-border/50 px-3 py-1.5 align-top">
+      {children}
+    </td>
+  ),
+  img: ({ alt }) => (
+    <span className="text-xs italic text-muted-foreground">
+      [image{alt ? `: ${alt}` : ''}]
+    </span>
+  ),
+  // mark: styled highlight for search matches
+  mark: ({ children }) => (
+    <mark className="highlight-match rounded bg-primary/20 px-0.5 text-foreground">
+      {children}
+    </mark>
+  ),
+}
+
+/**
+ * Renders markdown content with occurrences of `searchQuery` visually
+ * highlighted using `<mark class="highlight-match">` elements.
+ */
+function HighlightedMarkdown({
+  content,
+  searchQuery,
+}: {
+  content: string
+  searchQuery: string
+}) {
+  // Build the rehype plugin tuple memoised on the query so it's stable across
+  // re-renders unless the query changes (avoids unnecessary react-markdown work).
+  const rehypePlugins = useMemo(() => {
+    const plugin = makeHighlightPlugin(searchQuery)
+    return plugin ? [plugin] : []
+  }, [searchQuery])
+
+  return (
+    <div className="text-sm">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={rehypePlugins}
+        components={markdownComponents}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  )
+}
+
+// ── CollapsibleBlock ─────────────────────────────────────────────────────────
 
 function CollapsibleBlock({
   icon,
@@ -110,9 +321,11 @@ function CollapsibleBlock({
 function BlockView({
   block,
   showCursor,
+  searchQuery,
 }: {
   block: ChatBlock
   showCursor?: boolean
+  searchQuery?: string
 }) {
   const { t } = useTranslation('chats')
 
@@ -120,7 +333,11 @@ function BlockView({
     case 'text':
       return (
         <>
-          <Markdown content={block.text} />
+          {searchQuery ? (
+            <HighlightedMarkdown content={block.text} searchQuery={searchQuery} />
+          ) : (
+            <Markdown content={block.text} />
+          )}
           {showCursor && (
             <span
               aria-hidden="true"
@@ -192,6 +409,11 @@ type MessageBubbleProps = {
   isStreaming?: boolean
   /** Controls per-bubble padding and inter-block spacing. */
   density?: 'compact' | 'comfortable'
+  /**
+   * When non-empty and search is active, occurrences of this term inside text
+   * blocks are visually highlighted with a <mark> element.
+   */
+  searchQuery?: string
 }
 
 function areEqual(prev: MessageBubbleProps, next: MessageBubbleProps): boolean {
@@ -204,7 +426,8 @@ function areEqual(prev: MessageBubbleProps, next: MessageBubbleProps): boolean {
     prev.isStreaming === next.isStreaming &&
     prev.agentName === next.agentName &&
     prev.agentIcon === next.agentIcon &&
-    prev.density === next.density
+    prev.density === next.density &&
+    prev.searchQuery === next.searchQuery
   )
 }
 
@@ -214,6 +437,7 @@ function MessageBubbleInner({
   agentIcon,
   isStreaming,
   density = 'comfortable',
+  searchQuery,
 }: MessageBubbleProps) {
   const { t } = useTranslation('chats')
   const [copied, setCopied] = useState(false)
@@ -350,6 +574,7 @@ function MessageBubbleInner({
               key={i}
               block={block}
               showCursor={i === lastTextIdx}
+              searchQuery={searchQuery}
             />
           ))
         })()}
