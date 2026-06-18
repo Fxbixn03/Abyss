@@ -7,7 +7,7 @@
 export function isPermissionError(err: unknown): boolean {
   if (err && typeof err === 'object' && 'code' in err) {
     const code = (err as { code: unknown }).code
-    return code === 'EACCES' || code === 'EPERM'
+    return code === 'EACCES' || code === 'EPERM' || code === 'EROFS'
   }
   return false
 }

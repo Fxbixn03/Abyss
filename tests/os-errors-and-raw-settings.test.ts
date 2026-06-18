@@ -33,6 +33,10 @@ test('isPermissionError: returns true for { code: "EPERM" }', () => {
   assert.equal(isPermissionError({ code: 'EPERM' }), true)
 })
 
+test('isPermissionError: returns true for { code: "EROFS" }', () => {
+  assert.equal(isPermissionError({ code: 'EROFS' }), true)
+})
+
 test('isPermissionError: returns false for { code: "ENOENT" }', () => {
   assert.equal(isPermissionError({ code: 'ENOENT' }), false)
 })
