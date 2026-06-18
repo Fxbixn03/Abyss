@@ -33,8 +33,8 @@ import {
   listWindsurfSessionFiles,
 } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
-import { ConfigWriteError, ConfigNotFoundError, ConfigReadError } from '../../config-error'
-import { isPermissionError } from '../../os-errors'
+import { ConfigWriteError, ConfigNotFoundError, ConfigReadError, ConfigDiskError } from '../../config-error'
+import { isPermissionError, isDiskError } from '../../os-errors'
 
 /** Top-level shape of a Windsurf conversation JSON file. */
 interface WindsurfConversationFile {
@@ -239,6 +239,8 @@ export async function deleteWindsurfSession(
   } catch (err) {
     if (isPermissionError(err)) {
       throw new ConfigWriteError(filePath, err)
+    } else if (isDiskError(err)) {
+      throw new ConfigDiskError(filePath, err)
     }
     throw err
   }

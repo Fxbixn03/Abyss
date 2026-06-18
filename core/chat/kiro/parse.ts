@@ -27,8 +27,8 @@ import { blocksFromAnthropicContent, projectLabelFromCwd } from '../normalize'
 import { paginateByMtime } from '../paginate'
 import { kiroSessionId, findKiroSessionFile, listKiroSessionFiles } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
-import { ConfigWriteError, ConfigNotFoundError, ConfigReadError } from '../../config-error'
-import { isPermissionError } from '../../os-errors'
+import { ConfigWriteError, ConfigNotFoundError, ConfigReadError, ConfigDiskError } from '../../config-error'
+import { isPermissionError, isDiskError } from '../../os-errors'
 
 /** Top-level shape of a Kiro session JSON file. */
 interface KiroSessionFile {
@@ -236,6 +236,8 @@ export async function deleteKiroSession(
   } catch (err) {
     if (isPermissionError(err)) {
       throw new ConfigWriteError(filePath, err)
+    } else if (isDiskError(err)) {
+      throw new ConfigDiskError(filePath, err)
     }
     throw err
   }

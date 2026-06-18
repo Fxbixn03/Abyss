@@ -26,8 +26,8 @@ import type {
   ChatTranscript,
 } from '@/shared/types/chat'
 import { readJsonlLines, asString, asRecord } from '../jsonl'
-import { ConfigWriteError, ConfigNotFoundError } from '../../config-error'
-import { isPermissionError } from '../../os-errors'
+import { ConfigWriteError, ConfigNotFoundError, ConfigDiskError } from '../../config-error'
+import { isPermissionError, isDiskError } from '../../os-errors'
 import { blocksFromAnthropicContent, projectLabelFromCwd } from '../normalize'
 import { paginateByMtime } from '../paginate'
 import {
@@ -281,6 +281,8 @@ export async function deleteCursorSession(
   } catch (err) {
     if (isPermissionError(err)) {
       throw new ConfigWriteError(filePath, err)
+    } else if (isDiskError(err)) {
+      throw new ConfigDiskError(filePath, err)
     }
     throw err
   }
