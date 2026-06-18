@@ -33,8 +33,8 @@ import {
   listRooSessionFiles,
 } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
-import { ConfigWriteError, ConfigNotFoundError, ConfigReadError, ConfigDiskError } from '../../config-error'
-import { isPermissionError, isDiskError } from '../../os-errors'
+import { ConfigWriteError, ConfigNotFoundError, ConfigReadError, ConfigDiskError, ConfigParseError } from '../../config-error'
+import { isPermissionError, isDiskError, isNotFoundOsError } from '../../os-errors'
 
 /**
  * A single raw entry in `api_conversation_history.json`. Roo Code uses the
@@ -85,12 +85,20 @@ async function parseHistoryFile(
   try {
     raw = await fs.readFile(filePath, 'utf-8')
   } catch (err) {
+    if (isNotFoundOsError(err)) {
+      throw new ConfigNotFoundError(filePath, err)
+    }
     if (isPermissionError(err)) {
       throw new ConfigReadError(filePath, err)
     }
     throw err
   }
-  const parsed: unknown = JSON.parse(raw)
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch (err) {
+    throw new ConfigParseError(filePath, err)
+  }
 
   if (!Array.isArray(parsed)) return { messages: [], taskId }
 
