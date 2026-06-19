@@ -338,6 +338,76 @@ test('runValidation: corrupt gemini hooks file emits an error finding', async ()
   }
 })
 
+// ── checkHooks read-permission tests ─────────────────────────────────────────
+
+test('runValidation: permission-denied hooks.json emits a permissions-specific finding', async () => {
+  const base = await tmp('abyss-val-hooks-perm-')
+  const hooksFile = path.join(base, 'hooks.json')
+  try {
+    // Write a valid JSON file, then revoke read permission to trigger ConfigReadError
+    await fs.writeFile(hooksFile, JSON.stringify({ hooks: [] }), 'utf8')
+    await fs.chmod(hooksFile, 0o000)
+
+    const def = withCapabilities(cursorDefinition, { hooks: true })
+    const input: ValidationAgentInput[] = [{ def, basePath: base }]
+    const findings = await runValidation(input)
+
+    assert.equal(findings.length, 1)
+    const [f] = findings
+    assert.equal(f.severity, 'error')
+    assert.equal(f.agentId, 'cursor')
+    assert.ok(
+      f.message.toLowerCase().includes('could not be read'),
+      `expected "could not be read" in message, got: "${f.message}"`,
+    )
+    assert.ok(
+      f.message.toLowerCase().includes('permissions'),
+      `expected "permissions" in message, got: "${f.message}"`,
+    )
+    assert.equal(f.route, '/hooks')
+    assert.equal(f.suggestedAction, 'open-hooks')
+  } finally {
+    // Restore permissions before cleanup so fs.rm can delete the file
+    await fs.chmod(hooksFile, 0o644).catch(() => undefined)
+    await fs.rm(base, { recursive: true, force: true })
+  }
+})
+
+// ── checkMcpConfig read-permission tests ─────────────────────────────────────
+
+test('runValidation: permission-denied mcp.json emits a permissions-specific finding', async () => {
+  const base = await tmp('abyss-val-mcp-perm-')
+  const mcpFile = path.join(base, 'mcp.json')
+  try {
+    // Write a valid MCP config, then revoke read permission to trigger ConfigReadError
+    await fs.writeFile(mcpFile, JSON.stringify({ mcpServers: {} }), 'utf8')
+    await fs.chmod(mcpFile, 0o000)
+
+    const def = withCapabilities(cursorDefinition, { mcp: true })
+    const input: ValidationAgentInput[] = [{ def, basePath: base }]
+    const findings = await runValidation(input)
+
+    assert.equal(findings.length, 1)
+    const [f] = findings
+    assert.equal(f.severity, 'error')
+    assert.equal(f.agentId, 'cursor')
+    assert.ok(
+      f.message.toLowerCase().includes('could not be read'),
+      `expected "could not be read" in message, got: "${f.message}"`,
+    )
+    assert.ok(
+      f.message.toLowerCase().includes('permissions'),
+      `expected "permissions" in message, got: "${f.message}"`,
+    )
+    assert.equal(f.route, '/mcp')
+    assert.equal(f.suggestedAction, 'open-mcp')
+  } finally {
+    // Restore permissions before cleanup so fs.rm can delete the file
+    await fs.chmod(mcpFile, 0o644).catch(() => undefined)
+    await fs.rm(base, { recursive: true, force: true })
+  }
+})
+
 // ── runValidation sort order test ─────────────────────────────────────────────
 
 test('runValidation: errors sort before warnings in results', async () => {

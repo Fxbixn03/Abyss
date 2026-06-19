@@ -129,6 +129,21 @@ async function checkMcpConfig(
     await readMcpServers(def.id, basePath)
     return []
   } catch (err) {
+    // ConfigReadError means EACCES/EPERM — the file is inaccessible, not malformed.
+    if (err instanceof ConfigReadError) {
+      return [
+        {
+          severity: 'error',
+          agentId: def.id,
+          agentName: def.displayName,
+          file: err.filePath,
+          message: 'MCP config could not be read — check permissions',
+          route: '/mcp',
+          suggestedAction: 'open-mcp',
+        },
+      ]
+    }
+
     // ConfigParseError already carries filePath; fall back to the path helper
     // for any unexpected error type so the finding always has a file reference.
     const filePath =
@@ -173,6 +188,21 @@ async function checkHooks(
     await readHooks(def.id, basePath)
     return []
   } catch (err) {
+    // ConfigReadError means EACCES/EPERM — the file is inaccessible, not malformed.
+    if (err instanceof ConfigReadError) {
+      return [
+        {
+          severity: 'error',
+          agentId: def.id,
+          agentName: def.displayName,
+          file: err.filePath,
+          message: 'Hooks file could not be read — check permissions',
+          route: '/hooks',
+          suggestedAction: 'open-hooks',
+        },
+      ]
+    }
+
     // ConfigParseError carries filePath; fall back to the path helper for any
     // unexpected error type so the finding always has a file reference.
     const filePath =
