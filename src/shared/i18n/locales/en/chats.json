@@ -131,6 +131,8 @@
     "emptyDesc": "Start a new chat to begin a conversation with your agent.",
     "newChatAction": "New Chat",
     "noMatches": "No matches.",
+    "messageCount_one": "{{count}} message",
+    "messageCount_other": "{{count}} messages",
     "loadMore": "Load {{count}} more · {{remaining}} left",
     "sessionAriaLabel": "{{title}} — {{project}}, {{time}}, {{count}} messages",
     "sessionAriaLabelPinned": "Pinned: {{title}} — {{project}}, {{time}}, {{count}} messages",

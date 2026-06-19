@@ -128,6 +128,8 @@
     "loadingMore": "Weitere werden geladen…",
     "noChatsYet": "Noch keine Chats.",
     "noMatches": "Keine Treffer.",
+    "messageCount_one": "{{count}} Nachricht",
+    "messageCount_other": "{{count}} Nachrichten",
     "loadMore": "{{count}} weitere laden · {{remaining}} übrig",
     "sessionAriaLabel": "{{title}} — {{project}}, {{time}}, {{count}} Nachrichten",
     "sessionAriaLabelPinned": "Angeheftet: {{title}} — {{project}}, {{time}}, {{count}} Nachrichten",

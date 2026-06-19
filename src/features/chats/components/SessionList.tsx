@@ -417,7 +417,7 @@ export function SessionList({
                         )}
                         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
                           <span>{relativeTime(s.updatedAt, t)}</span>
-                          <span>· {s.messageCount} msg</span>
+                          <span>· {t('sessionList.messageCount', { count: s.messageCount })}</span>
                           {s.gitBranch && (
                             <span className="flex items-center gap-0.5 truncate">
                               <Icon name="git-branch" className="size-3" />
