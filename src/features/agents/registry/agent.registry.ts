@@ -19,6 +19,7 @@ import { zedAdapter } from '../adapters/zed.adapter'
 import { codyAdapter } from '../adapters/cody.adapter'
 import { devinAdapter } from '../adapters/devin.adapter'
 import { voidAdapter } from '../adapters/void.adapter'
+import { openhandsAdapter } from '../adapters/openhands.adapter'
 
 /**
  * Central registry of agent adapters. The single place the app discovers which
@@ -75,3 +76,4 @@ agentRegistry.register(zedAdapter)
 agentRegistry.register(codyAdapter)
 agentRegistry.register(devinAdapter)
 agentRegistry.register(voidAdapter)
+agentRegistry.register(openhandsAdapter)

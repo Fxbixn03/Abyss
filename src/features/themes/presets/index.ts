@@ -19,6 +19,7 @@ import { zedThemes } from './zed.theme'
 import { codyThemes } from './cody.theme'
 import { devinThemes } from './devin.theme'
 import { voidThemes } from './void.theme'
+import { openhandsThemes } from './openhands.theme'
 import { abyssThemes } from './abyss.theme'
 
 /**
@@ -46,5 +47,6 @@ export const BUILTIN_THEMES: ThemeConfig[] = [
   ...codyThemes,
   ...devinThemes,
   ...voidThemes,
+  ...openhandsThemes,
   ...abyssThemes,
 ]

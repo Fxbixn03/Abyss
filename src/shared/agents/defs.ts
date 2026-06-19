@@ -850,6 +850,47 @@ export const devinDefinition: AgentDefinition = {
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.devin')],
 }
 
+const openhandsConfig: ConfigFileSpec = {
+  id: 'settings',
+  filename: 'config.toml',
+  scope: 'global',
+  language: 'toml',
+  description: 'OpenHands global config (~/.openhands/config.toml).',
+}
+
+/**
+ * OpenHands (all-hands.dev, formerly OpenDevin) — global config at
+ * `~/.openhands/config.toml` (TOML with [core], [llm], [agent], [sandbox]).
+ * On Windows the config lives under `%APPDATA%\OpenHands`.
+ */
+export const openhandsDefinition: AgentDefinition = {
+  id: 'openhands',
+  name: 'openhands',
+  displayName: 'OpenHands',
+  defaultThemeId: 'openhands-studio',
+  iconName: 'brain',
+  docsUrl: 'https://docs.all-hands.dev/',
+  capabilities: {
+    instructions: false,
+    mcp: false,
+    permissions: false,
+    modelEnv: false,
+    agents: false,
+    commands: false,
+    skills: false,
+    hooks: false,
+    rules: false,
+    rawSettings: true,
+    chats: false,
+  },
+  configFiles: [openhandsConfig],
+  resolvePaths: (env: OsEnv) => [
+    env.platform === 'win32'
+      ? joinPath(env.platform, env.appData, 'OpenHands')
+      : joinPath(env.platform, env.home, '.openhands'),
+  ],
+}
+
 const voidInstructions: ConfigFileSpec = {
   id: 'instructions',
   filename: 'AGENTS.md',
@@ -931,6 +972,7 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinition> = {
   cody: codyDefinition,
   devin: devinDefinition,
   void: voidDefinition,
+  openhands: openhandsDefinition,
 }
 
 /** Agents enabled in v1 (registered in the renderer + detected by main/CLI). */
@@ -955,6 +997,7 @@ export const ACTIVE_AGENT_IDS: string[] = [
   'cody',
   'devin',
   'void',
+  'openhands',
 ]
 
 /**
