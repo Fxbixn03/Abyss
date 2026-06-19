@@ -184,6 +184,11 @@ function plandexMcpPath(basePath: string): string {
   return path.join(basePath, 'mcp.json')
 }
 
+/** Void Editor keeps its `mcpServers` map in `<base>/mcp.json` (standard `{ mcpServers }` JSON shape). */
+function voidMcpPath(basePath: string): string {
+  return path.join(basePath, 'mcp.json')
+}
+
 /**
  * Cody CLI stores its full config (including `mcpServers`) in `config.json`
  * alongside `customInstructions` and other fields. The `writeJsonMcp` read-
@@ -597,6 +602,7 @@ export function getMcpConfigPath(
   if (agentId === 'kiro') return kiroMcpPath(basePath)
   if (agentId === 'amazonq') return amazonqMcpPath(basePath)
   if (agentId === 'plandex') return plandexMcpPath(basePath)
+  if (agentId === 'void') return voidMcpPath(basePath)
   if (agentId === 'cody') return codyMcpPath(basePath)
   if (agentId === 'amp') return ampMcpPath(basePath)
   if (agentId === 'warp') return warpMcpPath(basePath)
@@ -629,6 +635,7 @@ export function readMcpServers(
   if (agentId === 'kiro') return readJsonMcp(kiroMcpPath(basePath))
   if (agentId === 'amazonq') return readJsonMcp(amazonqMcpPath(basePath))
   if (agentId === 'plandex') return readJsonMcp(plandexMcpPath(basePath))
+  if (agentId === 'void') return readJsonMcp(voidMcpPath(basePath))
   if (agentId === 'cody') return readJsonMcp(codyMcpPath(basePath))
   if (agentId === 'amp') return readJsonMcp(ampMcpPath(basePath))
   if (agentId === 'warp') return readJsonMcp(warpMcpPath(basePath))
@@ -663,6 +670,8 @@ export function writeMcpServers(
     return writeJsonMcp(amazonqMcpPath(basePath), entries)
   if (agentId === 'plandex')
     return writeJsonMcp(plandexMcpPath(basePath), entries)
+  if (agentId === 'void')
+    return writeJsonMcp(voidMcpPath(basePath), entries)
   if (agentId === 'cody')
     return writeJsonMcp(codyMcpPath(basePath), entries)
   if (agentId === 'amp')
