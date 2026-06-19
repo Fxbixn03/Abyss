@@ -185,6 +185,10 @@
     "quote": {
       "quoteMessage": "Quote message",
       "quoteMessageAriaLabel": "Quote message in composer"
+    },
+    "collapsedOutput": {
+      "showMore": "Show {{count}} more lines",
+      "showLess": "Show less"
     }
   },
   "announcer": {

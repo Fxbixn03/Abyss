@@ -182,6 +182,10 @@
     "quote": {
       "quoteMessage": "Nachricht zitieren",
       "quoteMessageAriaLabel": "Nachricht im Composer zitieren"
+    },
+    "collapsedOutput": {
+      "showMore": "{{count}} weitere Zeilen anzeigen",
+      "showLess": "Weniger anzeigen"
     }
   },
   "announcer": {

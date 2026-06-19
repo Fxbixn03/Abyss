@@ -318,6 +318,57 @@ function CollapsibleBlock({
   )
 }
 
+// ── CollapsedOutput ───────────────────────────────────────────────────────────
+
+/**
+ * Renders pre-formatted text output with a line-count threshold.
+ * When the text exceeds `maxLines` lines, only the first `maxLines` lines are
+ * shown along with a 'Show N more lines' button. Clicking expands to the full
+ * output; a 'Show less' button collapses it again.
+ */
+function CollapsedOutput({
+  text,
+  maxLines = 20,
+}: {
+  text: string
+  maxLines?: number
+}) {
+  const { t } = useTranslation('chats')
+  const [expanded, setExpanded] = useState(false)
+  const lines = text.split('\n')
+  const isTruncated = lines.length > maxLines
+
+  if (!isTruncated) {
+    return (
+      <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words font-code">
+        {text || '(empty)'}
+      </pre>
+    )
+  }
+
+  const visibleText = expanded ? text : lines.slice(0, maxLines).join('\n')
+  const hiddenCount = lines.length - maxLines
+
+  return (
+    <div className="flex flex-col gap-1">
+      <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words font-code">
+        {visibleText}
+      </pre>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-6 self-start px-2 text-xs text-muted-foreground hover:text-foreground"
+        onClick={() => setExpanded((e) => !e)}
+      >
+        {expanded
+          ? t('messageBubble.collapsedOutput.showLess')
+          : t('messageBubble.collapsedOutput.showMore', { count: hiddenCount })}
+      </Button>
+    </div>
+  )
+}
+
 function BlockView({
   block,
   showCursor,
@@ -374,9 +425,7 @@ function BlockView({
           tone={block.isError ? 'error' : 'muted'}
           copyText={block.output}
         >
-          <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words font-code">
-            {block.output || '(empty)'}
-          </pre>
+          <CollapsedOutput text={block.output || '(empty)'} />
         </CollapsibleBlock>
       )
     case 'image':
