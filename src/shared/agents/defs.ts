@@ -299,7 +299,7 @@ export const windsurfDefinition: AgentDefinition = {
     commands: false,
     skills: false,
     hooks: false,
-    rules: false,
+    rules: true,
     rawSettings: true,
     chats: true,
   },

@@ -12,6 +12,13 @@ export const windsurfAdapter: AgentAdapter = createAdapter(windsurfDefinition, {
   validate: validateMarkdownInstructions,
   getSidebarSections: (): SidebarSection[] => [
     {
+      id: 'rules',
+      label: 'Rules',
+      icon: 'book-open',
+      route: '/rules',
+      description: 'Always-on Cascade rules (.md)',
+    },
+    {
       id: 'mcp',
       label: 'MCP Servers',
       icon: 'plug',
