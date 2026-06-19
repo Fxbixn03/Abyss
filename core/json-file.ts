@@ -39,7 +39,13 @@ export async function readTextFile(p: string): Promise<string> {
 }
 
 export async function ensureDir(dir: string): Promise<void> {
-  await fs.mkdir(dir, { recursive: true })
+  try {
+    await fs.mkdir(dir, { recursive: true })
+  } catch (err) {
+    if (isPermissionError(err)) throw new ConfigWriteError(dir, err)
+    if (isDiskError(err)) throw new ConfigDiskError(dir, err)
+    throw err
+  }
 }
 
 /** Write via a temp file + rename so a crash can't leave a half-written config. */
