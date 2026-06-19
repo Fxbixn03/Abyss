@@ -29,7 +29,10 @@ function specFilePath(
   const def = getAgentDefinition(agentId)
   const spec = def.configFiles.find((s) => s.id === specId)
   if (!spec) {
-    throw new Error(`Unknown config spec '${specId}' for agent '${agentId}'`)
+    throw new ConfigValidationError(
+      path.join(basePath, '?'),
+      `Unknown config spec '${specId}' for agent '${agentId}'`,
+    )
   }
   const base = path.resolve(basePath)
   const resolved = path.resolve(base, spec.filename)
@@ -92,7 +95,10 @@ export async function writeAgentConfigFile(
   const def = getAgentDefinition(agentId)
   const spec = def.configFiles.find((s) => s.id === specId)
   if (!spec) {
-    throw new Error(`Unknown config spec '${specId}' for agent '${agentId}'`)
+    throw new ConfigValidationError(
+      path.join(basePath, '?'),
+      `Unknown config spec '${specId}' for agent '${agentId}'`,
+    )
   }
   const filePath = specFilePath(agentId, specId, basePath)
   validateContent(spec, filePath, content)

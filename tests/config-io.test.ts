@@ -11,7 +11,7 @@ import path from 'node:path'
 import { promises as fs } from 'node:fs'
 
 import { z } from 'zod'
-import { validateContent } from '@core/config-io'
+import { validateContent, readAgentConfigFile } from '@core/config-io'
 import { writeJsonFile } from '@core/json-file'
 import { ConfigValidationError } from '@core/config-error'
 import type { ConfigFileSpec } from '@/shared/types/agent'
@@ -259,5 +259,28 @@ test('writeJsonFile: no schema writes the value without validation', async () =>
   const written = JSON.parse(await fs.readFile(file, 'utf8')) as unknown
   assert.deepEqual(written, value)
 
+  await fs.rm(dir, { recursive: true, force: true })
+})
+
+// ---------------------------------------------------------------------------
+// readAgentConfigFile — unknown spec ID
+// ---------------------------------------------------------------------------
+
+test('readAgentConfigFile: invalid specId throws ConfigValidationError', async () => {
+  const dir = await tmp('abyss-specid-')
+  await assert.rejects(
+    readAgentConfigFile('claude', 'nonexistent-spec-id', dir),
+    (err: unknown) => {
+      assert.ok(
+        err instanceof ConfigValidationError,
+        `Expected ConfigValidationError, got ${err instanceof Error ? err.constructor.name : String(err)}`,
+      )
+      assert.ok(
+        (err as ConfigValidationError).message.includes('nonexistent-spec-id'),
+        'message should reference the unknown spec ID',
+      )
+      return true
+    },
+  )
   await fs.rm(dir, { recursive: true, force: true })
 })
