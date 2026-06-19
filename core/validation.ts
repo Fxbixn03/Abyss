@@ -33,8 +33,22 @@ async function checkInstructionFile(
   let result: { content: string; exists: boolean; path: string }
   try {
     result = await readAgentConfigFile(def.id, 'instructions', basePath)
-  } catch {
-    // basePath doesn't exist yet — treat as missing
+  } catch (err) {
+    if (err instanceof ConfigReadError) {
+      // The file exists but is unreadable due to EACCES/EPERM — surface as an
+      // actionable error rather than silently demoting to "does not exist".
+      out.push({
+        severity: 'error',
+        agentId: def.id,
+        agentName: def.displayName,
+        file: err.filePath,
+        message: 'Instruction file could not be read — check permissions',
+        route: '/editor',
+        suggestedAction: 'open-raw-editor',
+      })
+      return out
+    }
+    // basePath doesn't exist yet (ENOENT) or path-traversal guard — treat as missing
     result = {
       content: '',
       exists: false,
