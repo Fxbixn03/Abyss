@@ -27,6 +27,19 @@ export const SLASH_COMMANDS: readonly SlashCommand[] = [
 ] as const
 
 /**
+ * Derive whether the slash-command popover should be open and what the query is.
+ * The popover opens when the text starts with '/' and has no whitespace
+ * (i.e. the user is still typing the command token).
+ */
+export function getSlashState(text: string): { open: boolean; query: string } {
+  if (!text.startsWith('/')) return { open: false, query: '' }
+  // Stop showing the popover once the user types a space (argument mode).
+  if (text.includes(' ')) return { open: false, query: '' }
+  const query = text.slice(1) // everything after '/'
+  return { open: true, query }
+}
+
+/**
  * Filter slash commands by a query string (the text typed after the '/').
  * Returns all commands when the query is empty.
  */

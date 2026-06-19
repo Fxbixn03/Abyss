@@ -6,7 +6,7 @@ import { Textarea } from '@/shared/components/ui/textarea'
 import { Icon } from '@/shared/components/Icon'
 import { useComposerDraft } from '../hooks/useComposerDraft'
 import { SlashCommandPopover } from './SlashCommandPopover'
-import { filterSlashCommands } from '../lib/slashCommands'
+import { filterSlashCommands, getSlashState } from '../lib/slashCommands'
 import type { SlashCommand } from '../lib/slashCommands'
 
 // Character count thresholds for the live counter badge.
@@ -31,19 +31,6 @@ interface ComposerInnerProps extends Omit<ComposerProps, 'draftKey'> {
   initialText: string
   onTextChange: (text: string) => void
   onSubmitClear: () => void
-}
-
-/**
- * Derive whether the slash-command popover should be open and what the query is.
- * The popover opens when the text starts with '/' and has no whitespace
- * (i.e. the user is still typing the command token).
- */
-function getSlashState(text: string): { open: boolean; query: string } {
-  if (!text.startsWith('/')) return { open: false, query: '' }
-  // Stop showing the popover once the user types a space (argument mode).
-  if (text.includes(' ')) return { open: false, query: '' }
-  const query = text.slice(1) // everything after '/'
-  return { open: true, query }
 }
 
 /**
