@@ -15,6 +15,10 @@
     "en": "English",
     "de": "Deutsch"
   },
+  "kbdBadge": {
+    "searchShortcut": "Strg+F",
+    "searchShortcutMac": "⌘F"
+  },
   "commandPalette": {
     "searchPlaceholder": "Agenten, Seiten, Konfigurationen suchen…",
     "noResults": "Keine Ergebnisse gefunden.",

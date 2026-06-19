@@ -11,6 +11,7 @@ import { Button } from '@/shared/components/ui/button'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { Icon } from '@/shared/components/Icon'
+import { KbdBadge } from '@/shared/components/KbdBadge'
 import { Spinner } from '@/shared/components/Spinner'
 import {
   Select,
@@ -58,8 +59,11 @@ const PERMISSION_MODES: ChatPermissionMode[] = [
   'bypassPermissions',
 ]
 
+const isMac = navigator.platform.startsWith('Mac')
+
 export function ChatsPage() {
   const { t } = useTranslation('chats')
+  const { t: tCommon } = useTranslation('common')
   const agent = useActiveAgent()
   const agentIcon = useAgentIcon(agent)
   const supported = agent.capabilities.chats
@@ -356,7 +360,7 @@ export function ChatsPage() {
                   {messages.length > 0 && (
                     <Button
                       variant={transcriptSearchOpen ? 'secondary' : 'outline'}
-                      size="icon"
+                      size={transcriptSearchOpen ? 'icon' : 'sm'}
                       onClick={() =>
                         setTranscriptSearchOpen((o) => !o)
                       }
@@ -364,6 +368,13 @@ export function ChatsPage() {
                       title={t('searchTranscriptHint')}
                     >
                       <Icon name="search" className="size-4" />
+                      {!transcriptSearchOpen && (
+                        <KbdBadge>
+                          {isMac
+                            ? tCommon('kbdBadge.searchShortcutMac')
+                            : tCommon('kbdBadge.searchShortcut')}
+                        </KbdBadge>
+                      )}
                     </Button>
                   )}
                   <Button
