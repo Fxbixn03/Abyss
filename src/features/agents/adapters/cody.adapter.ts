@@ -14,5 +14,11 @@ export const codyAdapter: AgentAdapter = createAdapter(codyDefinition, {
       icon: 'plug',
       route: '/mcp',
     },
+    {
+      id: 'settings-file',
+      label: 'Config (raw)',
+      icon: 'braces',
+      route: '/settings-file',
+    },
   ],
 })
