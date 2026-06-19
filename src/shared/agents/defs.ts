@@ -478,6 +478,14 @@ const ampInstructions: ConfigFileSpec = {
   description: 'Global instructions for Amp (Sourcegraph).',
 }
 
+const ampSettings: ConfigFileSpec = {
+  id: 'settings',
+  filename: 'settings.json',
+  scope: 'global',
+  language: 'json',
+  description: 'Amp global settings (model, preferences)',
+}
+
 /** Amp (Sourcegraph) — global instructions at `~/.amp/AGENTS.md`. */
 export const ampDefinition: AgentDefinition = {
   id: 'amp',
@@ -499,7 +507,7 @@ export const ampDefinition: AgentDefinition = {
     rawSettings: true,
     chats: true,
   },
-  configFiles: [ampInstructions],
+  configFiles: [ampInstructions, ampSettings],
   resolvePaths: (env: OsEnv) => [joinPath(env.platform, env.home, '.amp')],
 }
 
