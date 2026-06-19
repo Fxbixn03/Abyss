@@ -6,5 +6,27 @@
   "noConfigPath": "no config path",
   "cliNotFound": "The {{agent}} CLI was not found on your system. Install it, or point Abyss at an existing config folder.",
   "setConfigPath": "Set config path",
-  "agents": "Agents"
+  "agents": "Agents",
+  "getStarted": {
+    "heading": "Get started",
+    "introChatHistory": "No chat history yet for {{agent}}.",
+    "introConfig": "Configure {{agent}} to get the most out of Abyss.",
+    "begin": "Here are a few places to begin:",
+    "editInstructions": {
+      "title": "Edit instructions",
+      "description": "Tell {{agent}} how to work in your projects."
+    },
+    "validateConfig": {
+      "title": "Validate configuration",
+      "description": "Lint your instruction files for common mistakes."
+    },
+    "connectMcp": {
+      "title": "Connect MCP servers",
+      "description": "Give the agent tools via the Model Context Protocol."
+    },
+    "startChat": {
+      "title": "Start a chat",
+      "description": "Talk to {{agent}} and build up some history."
+    }
+  }
 }

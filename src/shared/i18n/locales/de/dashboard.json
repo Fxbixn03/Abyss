@@ -6,5 +6,27 @@
   "noConfigPath": "kein Konfigurationspfad",
   "cliNotFound": "Das {{agent}}-CLI wurde auf deinem System nicht gefunden. Installiere es oder verweise Abyss auf einen vorhandenen Konfigurationsordner.",
   "setConfigPath": "Konfigurationspfad festlegen",
-  "agents": "Agents"
+  "agents": "Agents",
+  "getStarted": {
+    "heading": "Erste Schritte",
+    "introChatHistory": "Noch kein Chat-Verlauf für {{agent}}.",
+    "introConfig": "Konfiguriere {{agent}}, um das Beste aus Abyss herauszuholen.",
+    "begin": "Hier sind einige Möglichkeiten, um zu beginnen:",
+    "editInstructions": {
+      "title": "Anweisungen bearbeiten",
+      "description": "Erkläre {{agent}}, wie er in deinen Projekten arbeiten soll."
+    },
+    "validateConfig": {
+      "title": "Konfiguration validieren",
+      "description": "Prüfe deine Anweisungsdateien auf häufige Fehler."
+    },
+    "connectMcp": {
+      "title": "MCP-Server verbinden",
+      "description": "Gib dem Agenten Werkzeuge über das Model Context Protocol."
+    },
+    "startChat": {
+      "title": "Chat starten",
+      "description": "Chatte mit {{agent}} und baue Verlauf auf."
+    }
+  }
 }

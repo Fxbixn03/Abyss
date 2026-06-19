@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { AgentAdapter } from '@/shared/types/agent'
 import { Card } from '@/shared/components/ui/card'
 import { Icon } from '@/shared/components/Icon'
@@ -17,36 +18,41 @@ interface QuickLink {
  */
 export function GetStarted({ agent }: { agent: AgentAdapter }) {
   const navigate = useNavigate()
+  const { t } = useTranslation('dashboard')
   const caps = agent.capabilities
 
   const links: QuickLink[] = []
   if (caps.instructions) {
     links.push({
       icon: 'file-text',
-      title: 'Edit instructions',
-      description: `Tell ${agent.displayName} how to work in your projects.`,
+      title: t('getStarted.editInstructions.title'),
+      description: t('getStarted.editInstructions.description', {
+        agent: agent.displayName,
+      }),
       route: '/config',
     })
     links.push({
       icon: 'clipboard-check',
-      title: 'Validate configuration',
-      description: 'Lint your instruction files for common mistakes.',
+      title: t('getStarted.validateConfig.title'),
+      description: t('getStarted.validateConfig.description'),
       route: '/validation',
     })
   }
   if (caps.mcp) {
     links.push({
       icon: 'plug',
-      title: 'Connect MCP servers',
-      description: 'Give the agent tools via the Model Context Protocol.',
+      title: t('getStarted.connectMcp.title'),
+      description: t('getStarted.connectMcp.description'),
       route: '/mcp',
     })
   }
   if (caps.chats) {
     links.push({
       icon: 'messages-square',
-      title: 'Start a chat',
-      description: `Talk to ${agent.displayName} and build up some history.`,
+      title: t('getStarted.startChat.title'),
+      description: t('getStarted.startChat.description', {
+        agent: agent.displayName,
+      }),
       route: '/chats',
     })
   }
@@ -55,13 +61,17 @@ export function GetStarted({ agent }: { agent: AgentAdapter }) {
 
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-medium text-muted-foreground">Get started</h2>
+      <h2 className="text-sm font-medium text-muted-foreground">
+        {t('getStarted.heading')}
+      </h2>
       <Card className="space-y-1 p-4">
         <p className="text-sm">
           {caps.chats
-            ? `No chat history yet for ${agent.displayName}.`
-            : `Configure ${agent.displayName} to get the most out of Abyss.`}{' '}
-          Here are a few places to begin:
+            ? t('getStarted.introChatHistory', { agent: agent.displayName })
+            : t('getStarted.introConfig', {
+                agent: agent.displayName,
+              })}{' '}
+          {t('getStarted.begin')}
         </p>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {links.map((link) => (
