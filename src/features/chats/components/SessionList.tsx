@@ -49,6 +49,7 @@ export function SessionList({
 }) {
   const { t } = useTranslation('chats')
   const sessions = useChatsStore((s) => s.sessions)
+  const status = useChatsStore((s) => s.status)
   const loading = useChatsStore((s) => s.sessionsLoading)
   const loadingMore = useChatsStore((s) => s.sessionsLoadingMore)
   const total = useChatsStore((s) => s.sessionsTotal)
@@ -374,12 +375,18 @@ export function SessionList({
                         aria-selected={active}
                         aria-label={sessionAriaLabel}
                         className={cn(
-                          'flex flex-col gap-0.5 rounded-md border px-2.5 py-2 text-left transition-colors',
+                          'relative flex flex-col gap-0.5 rounded-md border px-2.5 py-2 text-left transition-colors',
                           active
                             ? 'border-primary/50 bg-accent'
                             : 'border-transparent hover:bg-accent/60',
                         )}
                       >
+                        {active && (status === 'streaming' || status === 'starting') && (
+                          <span
+                            aria-hidden="true"
+                            className="absolute right-2 top-2 size-2 rounded-full bg-primary motion-safe:animate-pulse"
+                          />
+                        )}
                         {renaming?.sessionId === s.id ? (
                           <input
                             ref={renameInputRef}
