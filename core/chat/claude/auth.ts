@@ -11,7 +11,7 @@ import type { ChatAvailability } from '@/shared/types/chat'
 import { readJsonFile } from '../../json-file'
 import { findExecutable, runCommand } from '../cli'
 
-interface ClaudeCredentials {
+export interface ClaudeCredentials {
   claudeAiOauth?: {
     accessToken?: string
     refreshToken?: string
@@ -20,8 +20,13 @@ interface ClaudeCredentials {
   }
 }
 
-function credentialsPath(env: OsEnv): string {
+export function credentialsPath(env: OsEnv): string {
   return path.join(env.home, '.claude', '.credentials.json')
+}
+
+/** Reads the CLI credential store, returning an empty object when absent. */
+export function readClaudeCredentials(env: OsEnv): Promise<ClaudeCredentials> {
+  return readJsonFile<ClaudeCredentials>(credentialsPath(env), {})
 }
 
 let cachedBinary: string | null | undefined
@@ -48,7 +53,7 @@ export async function claudeAvailability(
     return { installed: true, authenticated: true, account: 'API key' }
   }
 
-  const creds = await readJsonFile<ClaudeCredentials>(credentialsPath(env), {})
+  const creds = await readClaudeCredentials(env)
   const oauth = creds.claudeAiOauth
   // A refresh token means the CLI can re-mint access even once expired.
   const authenticated = Boolean(oauth?.accessToken || oauth?.refreshToken)

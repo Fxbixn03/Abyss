@@ -225,5 +225,28 @@
     "useApiKeyInstead": "Use an API key instead",
     "saveCredentials": "Save credentials",
     "saveCredentialsDesc": "Stay signed in after closing Abyss."
+  },
+  "planUsage": {
+    "button": "Usage",
+    "tooltip": "Plan usage limits",
+    "title": "Plan usage limits",
+    "loading": "Loading usage…",
+    "session": "Current session",
+    "weekly": "Weekly limits",
+    "allModels": "All models",
+    "sonnetOnly": "Sonnet only",
+    "opusOnly": "Opus only",
+    "percentUsed": "{{pct}}% used",
+    "resetsNow": "Resetting now",
+    "resetsInM": "Resets in {{minutes}}m",
+    "resetsInHm": "Resets in {{hours}}h {{minutes}}m",
+    "resetsInDays_one": "Resets in {{count}} day",
+    "resetsInDays_other": "Resets in {{count}} days",
+    "updated": "Updated {{when}}",
+    "refresh": "Refresh",
+    "empty": "No usage limits reported for this plan.",
+    "unauthenticated": "Sign in to Claude to see your plan usage.",
+    "unsupported": "Plan usage isn't available for this agent.",
+    "error": "Couldn't load plan usage."
   }
 }

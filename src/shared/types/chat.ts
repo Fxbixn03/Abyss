@@ -244,6 +244,47 @@ export interface ChatAvailability {
   readOnly?: boolean
 }
 
+/**
+ * One rate-limit window from a subscription plan (e.g. the rolling session
+ * window or a weekly window).
+ */
+export interface PlanUsageWindow {
+  /** Fraction of the limit consumed, clamped to 0..1. */
+  utilization: number
+  /** ISO-8601 timestamp when this window resets, when the plan reports it. */
+  resetsAt?: string
+}
+
+/**
+ * A snapshot of the user's subscription plan usage, as surfaced by the agent's
+ * own usage endpoint. Every window is optional — a plan may not track all of
+ * them (e.g. only Max plans expose per-model weekly windows).
+ */
+export interface PlanUsage {
+  /** Subscription tier label from the credential store, e.g. 'max' / 'pro'. */
+  subscriptionType?: string
+  /** Rolling ~5-hour session window. */
+  session?: PlanUsageWindow
+  /** Weekly window across all models. */
+  weeklyAllModels?: PlanUsageWindow
+  /** Weekly window for Sonnet-class usage. */
+  weeklySonnet?: PlanUsageWindow
+  /** Weekly window for Opus-class usage, when the plan tracks it. */
+  weeklyOpus?: PlanUsageWindow
+  /** When Abyss fetched this snapshot (ISO-8601). */
+  fetchedAt: string
+}
+
+/**
+ * Result of a plan-usage lookup. Modeled as a discriminated union so the UI can
+ * distinguish "not signed in" from a transient network/endpoint failure.
+ */
+export type PlanUsageResult =
+  | { status: 'ok'; usage: PlanUsage }
+  | { status: 'unsupported' }
+  | { status: 'unauthenticated' }
+  | { status: 'unavailable'; reason: string }
+
 /** How tools are auto-approved while the agent runs. Safe default = 'default'. */
 export type ChatPermissionMode =
   | 'default'

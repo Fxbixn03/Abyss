@@ -42,6 +42,7 @@ import { formatCost } from '../lib/format'
 import type { SuspicionMarker } from '../lib/suspicion'
 import { analyzeTranscript, extractReferencedPaths } from '../lib/suspicion'
 import { ReplayBar } from '../components/ReplayBar'
+import { PlanUsagePanel } from '../components/PlanUsagePanel'
 import { ChatStreamAnnouncer } from '../components/ChatStreamAnnouncer'
 import { REPLAY_SPEEDS } from '../lib/replay'
 
@@ -270,11 +271,16 @@ export function ChatsPage() {
         description={t('headerDescription', { agent: agent.displayName })}
         icon="messages-square"
         actions={
-          authed && availability?.account ? (
-            <Badge variant="muted">
-              <Icon name="user" />
-              {availability.account}
-            </Badge>
+          authed ? (
+            <div className="flex items-center gap-2">
+              {agent.id === 'claude' && <PlanUsagePanel agentId={agent.id} />}
+              {availability?.account && (
+                <Badge variant="muted">
+                  <Icon name="user" />
+                  {availability.account}
+                </Badge>
+              )}
+            </div>
           ) : undefined
         }
       />

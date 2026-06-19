@@ -394,6 +394,8 @@ export const ipc = {
     agentId: AgentId,
     opts?: { cwd?: string; limit?: number },
   ) => invoke(IpcChannel.ChatInsights, { agentId, ...opts }),
+  chatPlanUsage: (agentId: AgentId, force?: boolean) =>
+    invoke(IpcChannel.ChatPlanUsage, { agentId, force }),
 
   // --- Chats: auth ----------------------------------------------------------
   chatAvailability: (agentId: AgentId) =>

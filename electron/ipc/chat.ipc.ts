@@ -9,6 +9,7 @@ import {
 } from '@core/chat/history'
 import { computeUsageStats, computeUsageAnalytics } from '@core/chat/usage'
 import { computeInsights } from '@core/chat/insights'
+import { getClaudePlanUsage } from '@core/chat/claude/usage-limits'
 import { getChatRuntime } from '@core/chat/registry'
 import { markEphemeralLogin, clearEphemeralLogin } from '@core/chat/auth'
 import {
@@ -45,6 +46,13 @@ export function registerChatIpc(ctx: IpcContext): void {
   )
   handle(IpcChannel.ChatInsights, ({ agentId, cwd, limit }) =>
     computeInsights(ctx.env, agentId, { cwd, limit }),
+  )
+  handle(IpcChannel.ChatPlanUsage, ({ agentId, force }) =>
+    // The OAuth usage endpoint is Claude-specific; other agents have no
+    // equivalent surface, so report it as unsupported rather than erroring.
+    agentId === 'claude'
+      ? getClaudePlanUsage(ctx.env, { force })
+      : Promise.resolve({ status: 'unsupported' as const }),
   )
   handle(
     IpcChannel.ChatExportSession,

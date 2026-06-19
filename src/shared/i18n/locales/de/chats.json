@@ -222,5 +222,28 @@
     "useApiKeyInstead": "Stattdessen API-Schlüssel verwenden",
     "saveCredentials": "Anmeldedaten speichern",
     "saveCredentialsDesc": "Angemeldet bleiben, nachdem Abyss geschlossen wurde."
+  },
+  "planUsage": {
+    "button": "Nutzung",
+    "tooltip": "Plan-Nutzungslimits",
+    "title": "Plan-Nutzungslimits",
+    "loading": "Nutzung wird geladen…",
+    "session": "Aktuelle Sitzung",
+    "weekly": "Wöchentliche Limits",
+    "allModels": "Alle Modelle",
+    "sonnetOnly": "Nur Sonnet",
+    "opusOnly": "Nur Opus",
+    "percentUsed": "{{pct}} % verwendet",
+    "resetsNow": "Wird zurückgesetzt",
+    "resetsInM": "Zurücksetzung in {{minutes}} Min.",
+    "resetsInHm": "Zurücksetzung in {{hours}} Std. {{minutes}} Min.",
+    "resetsInDays_one": "Zurücksetzung in {{count}} Tag",
+    "resetsInDays_other": "Zurücksetzung in {{count}} Tagen",
+    "updated": "Aktualisiert {{when}}",
+    "refresh": "Aktualisieren",
+    "empty": "Für diesen Plan wurden keine Nutzungslimits gemeldet.",
+    "unauthenticated": "Melde dich bei Claude an, um deine Plan-Nutzung zu sehen.",
+    "unsupported": "Plan-Nutzung ist für diesen Agenten nicht verfügbar.",
+    "error": "Plan-Nutzung konnte nicht geladen werden."
   }
 }

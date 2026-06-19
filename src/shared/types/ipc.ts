@@ -35,6 +35,7 @@ import type {
   ChatTranscript,
   ChatUsageStats,
   InsightsReport,
+  PlanUsageResult,
   UsageAnalytics,
 } from './chat'
 import type { SandboxRunResult } from './sandbox'
@@ -200,6 +201,7 @@ export enum IpcChannel {
   ChatUsageStats = 'chat:usage-stats',
   ChatUsageAnalytics = 'chat:usage-analytics',
   ChatInsights = 'chat:insights',
+  ChatPlanUsage = 'chat:plan-usage',
 
   // Chats — auth (subscription login lifecycle)
   ChatAvailability = 'chat:availability',
@@ -694,6 +696,10 @@ export interface IpcMap {
   [IpcChannel.ChatInsights]: {
     request: { agentId: AgentId; cwd?: string; limit?: number }
     response: InsightsReport
+  }
+  [IpcChannel.ChatPlanUsage]: {
+    request: { agentId: AgentId; force?: boolean }
+    response: PlanUsageResult
   }
 
   [IpcChannel.ChatAvailability]: {

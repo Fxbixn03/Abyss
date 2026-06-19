@@ -1,4 +1,8 @@
-import type { AppearanceMode, ThemeConfig } from '@/shared/types/theme'
+import type {
+  AppearanceMode,
+  FontFamily,
+  ThemeConfig,
+} from '@/shared/types/theme'
 
 export const RADIUS_PX: Record<ThemeConfig['borderRadius'], string> = {
   none: '0px',
@@ -12,8 +16,41 @@ export const SANS_STACK =
 export const MONO_STACK =
   "'JetBrains Mono', 'SFMono-Regular', 'Fira Code', ui-monospace, 'Cascadia Code', monospace"
 
-export function fontStack(family: ThemeConfig['fontFamily']): string {
-  return family === 'mono' ? MONO_STACK : SANS_STACK
+/**
+ * Font-family registry. Each entry is a full CSS stack with robust system
+ * fallbacks — no web fonts are loaded, so unavailable faces degrade gracefully
+ * to a native equivalent. `mixed` is kept as an alias of `sans` for backwards
+ * compatibility with themes authored before the expanded font set.
+ */
+export const FONT_STACKS: Record<FontFamily, string> = {
+  mono: MONO_STACK,
+  sans: SANS_STACK,
+  mixed: SANS_STACK,
+  system: "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif",
+  serif:
+    "'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, Cambria, 'Times New Roman', serif",
+  rounded:
+    "'SF Pro Rounded', 'Nunito', 'Varela Round', 'Segoe UI', system-ui, sans-serif",
+  grotesk:
+    "'Space Grotesk', 'Eurostile', 'Avenir Next', 'Segoe UI', system-ui, sans-serif",
+  humanist:
+    "'Optima', 'Gill Sans', 'Segoe UI', Candara, 'Trebuchet MS', sans-serif",
+}
+
+/** Human-readable labels for the font picker, in display order. */
+export const FONT_LABELS: Record<FontFamily, string> = {
+  sans: 'Sans (Inter)',
+  mono: 'Mono (JetBrains)',
+  mixed: 'Mixed',
+  system: 'System',
+  serif: 'Serif',
+  rounded: 'Rounded',
+  grotesk: 'Grotesk',
+  humanist: 'Humanist',
+}
+
+export function fontStack(family: FontFamily): string {
+  return FONT_STACKS[family] ?? SANS_STACK
 }
 
 /**
@@ -56,7 +93,7 @@ export function applyTheme(
     '--success': c.success ?? '#30a46c',
     '--warning': c.warning ?? '#f5a524',
     '--radius': RADIUS_PX[theme.borderRadius],
-    '--font-ui': theme.fontFamily === 'mono' ? MONO_STACK : SANS_STACK,
+    '--font-ui': fontStack(theme.fontFamily),
   }
 
   for (const [key, value] of Object.entries(vars)) {

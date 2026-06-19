@@ -13,7 +13,15 @@ export type AppearanceMode = 'light' | 'dark'
 
 export type BorderRadius = 'none' | 'sm' | 'md' | 'lg'
 
-export type FontFamily = 'mono' | 'sans' | 'mixed'
+export type FontFamily =
+  | 'mono'
+  | 'sans'
+  | 'mixed'
+  | 'system'
+  | 'serif'
+  | 'rounded'
+  | 'grotesk'
+  | 'humanist'
 
 /**
  * The full set of design tokens a palette must define. Names map 1:1 to the

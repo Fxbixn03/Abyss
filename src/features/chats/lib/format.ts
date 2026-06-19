@@ -46,6 +46,29 @@ export function relativeTime(iso: string | undefined, t: TFunction<'chats'>): st
   return new Date(iso).toLocaleDateString()
 }
 
+/**
+ * Forward-looking duration until a reset timestamp, e.g. "Resets in 3h 30m".
+ * Returns the "resets now" string once the window has elapsed.
+ */
+export function formatResetIn(
+  iso: string | undefined,
+  t: TFunction<'chats'>,
+): string {
+  if (!iso) return ''
+  const target = new Date(iso).getTime()
+  if (Number.isNaN(target)) return ''
+  const min = Math.round((target - Date.now()) / 60000)
+  if (min <= 0) return t('planUsage.resetsNow')
+  const hours = Math.floor(min / 60)
+  const minutes = min % 60
+  if (hours >= 24) {
+    const days = Math.round(hours / 24)
+    return t('planUsage.resetsInDays', { count: days })
+  }
+  if (hours > 0) return t('planUsage.resetsInHm', { hours, minutes })
+  return t('planUsage.resetsInM', { minutes })
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`

@@ -31,6 +31,7 @@ import {
   useAllAgents,
 } from '@/features/agents/hooks/useActiveAgent'
 import { useThemeStore } from '../store/theme.store'
+import { FONT_LABELS } from '../lib/applyTheme'
 import { ColorField } from './ColorField'
 import { ThemePreview } from './ThemePreview'
 import {
@@ -42,7 +43,7 @@ import {
 } from '../lib/builder'
 
 const RADII: BorderRadius[] = ['none', 'sm', 'md', 'lg']
-const FONTS: FontFamily[] = ['sans', 'mono', 'mixed']
+const FONTS = Object.keys(FONT_LABELS) as FontFamily[]
 const VARIANTS: AppearanceMode[] = ['light', 'dark']
 
 export function ThemeBuilder() {
@@ -232,7 +233,7 @@ export function ThemeBuilder() {
                   <SelectContent>
                     {FONTS.map((f) => (
                       <SelectItem key={f} value={f}>
-                        {f}
+                        {FONT_LABELS[f]}
                       </SelectItem>
                     ))}
                   </SelectContent>
