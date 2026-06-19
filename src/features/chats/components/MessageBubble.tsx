@@ -414,6 +414,12 @@ type MessageBubbleProps = {
    * blocks are visually highlighted with a <mark> element.
    */
   searchQuery?: string
+  /**
+   * When provided, a hover-visible Quote button appears next to the Copy button.
+   * The callback receives a Markdown blockquote of the first non-empty line of
+   * the message's first text block (e.g. `'> Hello world\n'`).
+   */
+  onQuote?: (text: string) => void
 }
 
 function areEqual(prev: MessageBubbleProps, next: MessageBubbleProps): boolean {
@@ -427,7 +433,8 @@ function areEqual(prev: MessageBubbleProps, next: MessageBubbleProps): boolean {
     prev.agentName === next.agentName &&
     prev.agentIcon === next.agentIcon &&
     prev.density === next.density &&
-    prev.searchQuery === next.searchQuery
+    prev.searchQuery === next.searchQuery &&
+    prev.onQuote === next.onQuote
   )
 }
 
@@ -438,6 +445,7 @@ function MessageBubbleInner({
   isStreaming,
   density = 'comfortable',
   searchQuery,
+  onQuote,
 }: MessageBubbleProps) {
   const { t } = useTranslation('chats')
   const [copied, setCopied] = useState(false)
@@ -466,6 +474,14 @@ function MessageBubbleInner({
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     })
+  }
+
+  function handleQuote() {
+    if (!onQuote) return
+    const firstLine = textContent
+      .split('\n')
+      .find((line) => line.trim() !== '') ?? textContent
+    onQuote(`> ${firstLine}\n`)
   }
 
   const timestamp = relativeTime(message.timestamp, t)
@@ -539,12 +555,28 @@ function MessageBubbleInner({
               {timestamp}
             </span>
           )}
-          {hasTextContent && (
+          {hasTextContent && onQuote && (
             <Button
               type="button"
               variant="ghost"
               size="icon"
               className="ml-auto size-5 shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+              title={t('messageBubble.quote.quoteMessage')}
+              aria-label={t('messageBubble.quote.quoteMessageAriaLabel')}
+              onClick={handleQuote}
+            >
+              <Icon name="corner-down-left" className="size-3.5" />
+            </Button>
+          )}
+          {hasTextContent && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className={cn(
+                'size-5 shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100',
+                onQuote ? '' : 'ml-auto',
+              )}
               title={copied ? t('messageBubble.copy.copiedMessage') : t('messageBubble.copy.copyMessage')}
               aria-label={copied ? t('messageBubble.copy.copiedMessage') : t('messageBubble.copy.copyMessage')}
               onClick={handleCopy}

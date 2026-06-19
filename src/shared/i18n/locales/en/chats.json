@@ -181,7 +181,11 @@
       "copiedToClipboard": "Copied!"
     },
     "thinking": "thinking…",
-    "sentAt": "Sent {{time}}"
+    "sentAt": "Sent {{time}}",
+    "quote": {
+      "quoteMessage": "Quote message",
+      "quoteMessageAriaLabel": "Quote message in composer"
+    }
   },
   "announcer": {
     "responding": "Agent is responding…",

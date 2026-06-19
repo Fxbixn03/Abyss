@@ -178,7 +178,11 @@
       "copiedToClipboard": "Kopiert!"
     },
     "thinking": "denkt nach…",
-    "sentAt": "Gesendet {{time}}"
+    "sentAt": "Gesendet {{time}}",
+    "quote": {
+      "quoteMessage": "Nachricht zitieren",
+      "quoteMessageAriaLabel": "Nachricht im Composer zitieren"
+    }
   },
   "announcer": {
     "responding": "Agent antwortet…",

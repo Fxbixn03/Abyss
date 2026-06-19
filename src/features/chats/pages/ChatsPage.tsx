@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   useComposerPrefsStore,
   getComposerPrefs,
 } from '../store/composerPrefs.store'
+import { useComposerDraftsStore } from '../store/composerDrafts.store'
 import { useTranslation } from 'react-i18next'
 import type { ChatPermissionMode } from '@/shared/types/chat'
 import { Badge } from '@/shared/components/ui/badge'
@@ -81,6 +82,9 @@ export function ChatsPage() {
   const interrupt = useChatsStore((s) => s.interrupt)
   const exportSession = useChatsStore((s) => s.exportSession)
 
+  const setDraft = useComposerDraftsStore((s) => s.setDraft)
+  const drafts = useComposerDraftsStore((s) => s.drafts)
+
   const composerPrefs = useComposerPrefsStore((s) => s.prefs)
   const setStoredModel = useComposerPrefsStore((s) => s.setModel)
   const setStoredPermissionMode = useComposerPrefsStore(
@@ -97,6 +101,18 @@ export function ChatsPage() {
     composerPrefs,
     composerPrefsKey,
   )
+
+  // Stable callback: appends the quoted text to the active Composer draft.
+  const handleQuote = useCallback(
+    (quoted: string) => {
+      const key = activeSessionId ?? 'new'
+      const current = drafts[key] ?? ''
+      const separator = current.length > 0 && !current.endsWith('\n') ? '\n' : ''
+      setDraft(key, current + separator + quoted)
+    },
+    [activeSessionId, drafts, setDraft],
+  )
+
   const [loggingIn, setLoggingIn] = useState(false)
   // Suspicion scan results, tied to the session they were computed for.
   const [risks, setRisks] = useState<{
@@ -619,6 +635,7 @@ export function ChatsPage() {
                   }}
                   jumpToIndex={riskJumpTarget}
                   pending={status === 'starting'}
+                  onQuote={handleQuote}
                 />
               </div>
 

@@ -74,6 +74,7 @@ export function ChatTranscript({
   scrollToBottom: scrollToBottomRef,
   jumpToIndex,
   pending = false,
+  onQuote,
 }: {
   messages: ChatMessage[]
   loading: boolean
@@ -103,6 +104,11 @@ export function ChatTranscript({
   jumpToIndex?: { index: number; seq: number } | null
   /** Agent is working but hasn't produced visible output yet → show typing dots. */
   pending?: boolean
+  /**
+   * When provided, a hover-visible Quote button is shown on each MessageBubble.
+   * The callback receives a Markdown blockquote of the message's first text line.
+   */
+  onQuote?: (text: string) => void
 }) {
   const { t } = useTranslation('chats')
   const endRef = useRef<HTMLDivElement>(null)
@@ -453,6 +459,7 @@ export function ChatTranscript({
                 isStreaming={streaming === true && i === messages.length - 1}
                 density={density}
                 searchQuery={searchOpen && query.trim() !== '' ? query : undefined}
+                onQuote={onQuote}
               />
             </div>
           )
