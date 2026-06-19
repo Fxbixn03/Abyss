@@ -498,6 +498,67 @@ test('bundle export → apply round-trips an instruction file', async () => {
     await fs.rm(d, { recursive: true, force: true })
 })
 
+test('exportBundle: ConfigReadError on one agent skips it and exports the rest', async () => {
+  const goodSrc = await tmp('abyss-bundle-good-')
+  const badSrc = await tmp('abyss-bundle-bad-')
+  const env = testEnv(
+    await tmp('abyss-bundle-skip-home-'),
+    await tmp('abyss-bundle-skip-app-'),
+  )
+  await fs.writeFile(
+    path.join(goodSrc, 'instructions.md'),
+    '# good agent\n',
+    'utf8',
+  )
+  // Codex reads 'AGENTS.md'; write it and make it unreadable so a ConfigReadError fires.
+  const badFile = path.join(badSrc, 'AGENTS.md')
+  await fs.writeFile(badFile, '# bad agent\n', 'utf8')
+  await fs.chmod(badFile, 0o000)
+
+  let bundle: ExportBundle
+  try {
+    bundle = await exportBundle(env, {
+      agentIds: ['cline', 'codex'],
+      basePaths: { cline: goodSrc, codex: badSrc },
+    })
+  } finally {
+    // Restore perms so cleanup succeeds.
+    await fs.chmod(badFile, 0o644).catch(() => undefined)
+  }
+
+  // The good agent must be present and readable.
+  assert.equal(bundle.agents.length, 1)
+  assert.equal(bundle.agents[0].agentId, 'cline')
+  assert.equal(bundle.agents[0].files.instructions, '# good agent\n')
+  assert.ok(!bundle.agents[0].skipped)
+
+  // The bad agent must appear in skippedAgents.
+  assert.deepEqual(bundle.skippedAgents, ['codex'])
+
+  for (const d of [goodSrc, badSrc, env.home, env.appData])
+    await fs.rm(d, { recursive: true, force: true })
+})
+
+test('exportBundle: skippedAgents is absent when all agents export successfully', async () => {
+  const src = await tmp('abyss-bundle-noskip-')
+  const env = testEnv(
+    await tmp('abyss-bundle-noskip-home-'),
+    await tmp('abyss-bundle-noskip-app-'),
+  )
+  await fs.writeFile(path.join(src, 'instructions.md'), '# clean\n', 'utf8')
+
+  const bundle = await exportBundle(env, {
+    agentIds: ['cline'],
+    basePaths: { cline: src },
+  })
+
+  assert.equal(bundle.agents.length, 1)
+  assert.equal(bundle.skippedAgents, undefined)
+
+  for (const d of [src, env.home, env.appData])
+    await fs.rm(d, { recursive: true, force: true })
+})
+
 test('redactBundleSecrets masks secret MCP env values, keeps the rest', () => {
   const bundle: ExportBundle = {
     $schema: 'abyss-bundle/v1',

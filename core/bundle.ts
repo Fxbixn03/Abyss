@@ -15,7 +15,12 @@ import {
 } from '@/shared/agents/defs'
 import { effectiveBasePath } from './agent-paths'
 import { readAgentConfigFile, writeAgentConfigFile } from './config-io'
-import { ConfigValidationError } from './config-error'
+import {
+  ConfigValidationError,
+  ConfigReadError,
+  ConfigParseError,
+  ConfigNotFoundError,
+} from './config-error'
 import { readMcpServers, writeMcpServers } from './mcp'
 import { readPermissions, writePermissions } from './claude-settings'
 
@@ -36,31 +41,56 @@ export async function exportBundle(
 ): Promise<ExportBundle> {
   const ids = opts.agentIds ?? getActiveAgentDefinitions().map((d) => d.id)
   const agents: AgentBundle[] = []
+  const skippedAgents: string[] = []
 
   for (const id of ids) {
-    const def = getAgentDefinition(id)
-    const basePath = await effectiveBasePath(id, env, opts.basePaths?.[id])
-    const files: Record<string, string> = {}
-    for (const spec of def.configFiles) {
-      const result = await readAgentConfigFile(id, spec.id, basePath)
-      files[spec.id] = result.content
+    try {
+      const def = getAgentDefinition(id)
+      const basePath = await effectiveBasePath(id, env, opts.basePaths?.[id])
+      const files: Record<string, string> = {}
+      for (const spec of def.configFiles) {
+        const result = await readAgentConfigFile(id, spec.id, basePath)
+        files[spec.id] = result.content
+      }
+      const bundle: AgentBundle = { agentId: id, basePath, files }
+      if (def.capabilities.mcp) {
+        bundle.mcpServers = await readMcpServers(id, basePath)
+      }
+      if (def.capabilities.permissions) {
+        bundle.permissions = await readPermissions(basePath)
+      }
+      agents.push(bundle)
+    } catch (err) {
+      if (
+        err instanceof ConfigReadError ||
+        err instanceof ConfigParseError ||
+        err instanceof ConfigNotFoundError
+      ) {
+        const reason = err instanceof Error ? err.message : String(err)
+        agents.push({
+          agentId: id,
+          basePath: opts.basePaths?.[id] ?? '',
+          files: {},
+          skipped: true,
+          skipReason: reason,
+        })
+        skippedAgents.push(id)
+      } else {
+        throw err
+      }
     }
-    const bundle: AgentBundle = { agentId: id, basePath, files }
-    if (def.capabilities.mcp) {
-      bundle.mcpServers = await readMcpServers(id, basePath)
-    }
-    if (def.capabilities.permissions) {
-      bundle.permissions = await readPermissions(basePath)
-    }
-    agents.push(bundle)
   }
 
-  return {
+  const result: ExportBundle = {
     $schema: 'abyss-bundle/v1',
     version: 1,
     exportedAt: new Date().toISOString(),
-    agents,
+    agents: agents.filter((a) => !a.skipped),
   }
+  if (skippedAgents.length > 0) {
+    result.skippedAgents = skippedAgents
+  }
+  return result
 }
 
 export interface ApplyOptions {
