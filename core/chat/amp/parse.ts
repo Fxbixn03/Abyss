@@ -27,7 +27,7 @@ import { blocksFromAnthropicContent, projectLabelFromCwd } from '../normalize'
 import { paginateByMtime } from '../paginate'
 import { ampSessionId, findAmpSessionFile, listAmpSessionFiles } from './paths'
 import type { ChatSessionFileRef } from '../runtime'
-import { ConfigWriteError, ConfigNotFoundError, ConfigReadError, ConfigDiskError } from '../../config-error'
+import { ConfigWriteError, ConfigNotFoundError, ConfigReadError, ConfigDiskError, ConfigParseError } from '../../config-error'
 import { isPermissionError, isDiskError } from '../../os-errors'
 
 /** Top-level shape of an Amp conversation JSON file. */
@@ -40,9 +40,13 @@ interface AmpSessionFile {
 /**
  * Parse the raw JSON content of an Amp session file. Returns the parsed
  * object or null if it does not look like a valid session file.
+ *
+ * When `throwOnParseError` is true (used by `readAmpSession`), a malformed
+ * JSON file raises `ConfigParseError` instead of returning null.
  */
 async function readSessionFile(
   filePath: string,
+  throwOnParseError?: boolean,
 ): Promise<AmpSessionFile | null> {
   let raw: string
   try {
@@ -57,8 +61,9 @@ async function readSessionFile(
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       return parsed as AmpSessionFile
     }
-  } catch {
-    // malformed JSON — skip this file
+  } catch (err) {
+    if (throwOnParseError) throw new ConfigParseError(filePath, err)
+    // malformed JSON — skip this file during listing
   }
   return null
 }
@@ -153,7 +158,7 @@ export async function readAmpSession(
   const filePath = await findAmpSessionFile(env, sessionId)
   if (!filePath) throw new ConfigNotFoundError(sessionId)
 
-  const data = await readSessionFile(filePath)
+  const data = await readSessionFile(filePath, true)
   if (!data) throw new ConfigNotFoundError(sessionId)
 
   const rawMessages = Array.isArray(data.messages) ? data.messages : []
